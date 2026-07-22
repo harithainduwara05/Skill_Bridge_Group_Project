@@ -1,3 +1,65 @@
+<?php
+    require_once "../Config/db.php";
+    require_once "../Session/Sessionn.php";
+    
+    $emailError = "";
+    $passwordError = "";
+    
+    if($_SERVER['REQUEST_METHOD'] === 'POST'){
+        if(!empty($_POST["email"]) && !empty($_POST["password"])){
+            $email = $_POST["email"];
+            $password = $_POST["password"];
+
+            $hashPassword = sha1($password);
+
+            try {
+                $sql = "SELECT Fname, Email, role, password FROM User WHERE email=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("s", $email);
+                $stmt->execute();
+                $result = $stmt->get_result();
+            
+                if($result->num_rows === 1){
+                    $user = $result->fetch_assoc();
+                    
+                    if($user['password'] === $hashPassword){
+                        $_SESSION['user'] = [
+                            'username' => $user['Fname'],
+                            'email' => $user['Email'],
+                            'role' => $user['role'],
+                        ];
+                        
+                        switch($user['role']){
+                            case 'admin':
+                                header('Location:../function/adminDashbord.php');
+                                exit();
+                            case 'organization':
+                                header('Location:../function/organizationDashbord.php');
+                                exit();
+                            case 'company':
+                                header('Location:../function/companyDashbord.php');
+                                exit();
+                            case 'student':
+                                header('Location:../function/studentDashbord.php');
+                                exit();
+                            default:
+                                $emailError = "Cannot find role";
+                        }
+                    } else {
+                        $passwordError = "Invalid password!";
+                    }
+                } else {
+                    $emailError = "Invalid user!";
+                }
+            } catch(Exception $e) {
+                $emailError = "Error: " . $e->getMessage();
+            }
+        } else {
+            if(empty($_POST["email"])) { $emailError = "Email is required!"; }
+            if(empty($_POST["password"])) { $passwordError = "Password is required!"; }
+        }
+    }       
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,9 +85,14 @@
                 <h1 class="welcome-title">Welcome Back</h1>
                 <p class="welcome-subtitle">Bridge the gap between learning and career success.</p>
                 
-                <form id="loginForm" action="#" method="POST">
+                <form id="loginForm" action="" method="POST">
                     <div class="form-group">
                         <label for="email">Email Address</label>
+                        
+                        <?php if(!empty($emailError)): ?>
+                            <span style="color: #ff3333; font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;"><?php echo $emailError; ?></span>
+                        <?php endif; ?>
+                        
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
                             <input type="email" id="email" name="email" placeholder="john@university.edu" required>
@@ -34,6 +101,11 @@
                     
                     <div class="form-group">
                         <label for="password">Password</label>
+                        
+                        <?php if(!empty($passwordError)): ?>
+                            <span style="color: #ff3333; font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;"><?php echo $passwordError; ?></span>
+                        <?php endif; ?>
+
                         <div class="input-wrapper">
                             <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                             <input type="password" id="password" name="password" placeholder="••••••••" required>
@@ -42,21 +114,6 @@
                             </button>
                         </div>
                     </div>
-                    
-                   <!--<div class="form-group">
-                        <label for="role">I am a...</label>
-                        <div class="input-wrapper">
-                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                            <select id="role" name="role" required>
-                                <option value="" disabled selected>Select your role</option>
-                                <option value="student">Student</option>
-                                <option value="organization">Organization</option>
-                                <option value="company">Company</option>
-                                <option value="admin">Admin</option>
-                            </select>
-                            <svg class="select-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </div>
-                    </div>-->
                     
                     <div class="form-options">
                         <label class="remember-me">

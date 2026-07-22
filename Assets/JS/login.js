@@ -1,14 +1,14 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Password toggle functionality
     const togglePasswordBtn = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
 
     if (togglePasswordBtn && passwordInput) {
-        togglePasswordBtn.addEventListener('click', function() {
+        togglePasswordBtn.addEventListener('click', function () {
             // Toggle the type attribute
             const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
             passwordInput.setAttribute('type', type);
-            
+
             // Toggle the eye icon visual state
             const icon = this.querySelector('svg');
             if (type === 'text') {
@@ -28,15 +28,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = loginForm ? loginForm.querySelector('.submit-btn') : null;
 
     if (loginForm && submitBtn) {
-        loginForm.addEventListener('submit', function(e) {
+        loginForm.addEventListener('submit', function (e) {
             e.preventDefault(); // Prevent actual submission since it's frontend only
-            
+
             // Basic validation
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
 
-            if (!email || !password || !role) {
+            if (!email || !password) {
                 // Shake effect on button for validation error
                 submitBtn.style.animation = 'shake 0.5s';
                 setTimeout(() => {
@@ -57,10 +56,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 submitBtn.innerHTML = originalText;
                 submitBtn.style.opacity = '1';
                 submitBtn.style.pointerEvents = 'all';
-                
-                // Show success message
-                alert(`Login successful for ${role} with email: ${email}!`);
-                
+
+                // Submit the form to PHP backend
+                loginForm.submit();
             }, 1500);
         });
     }
