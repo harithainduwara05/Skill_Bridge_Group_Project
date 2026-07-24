@@ -1,10 +1,5 @@
 <?php include 'includes/header.php'; ?>
 
-
-<!-- =====================================================
-     HERO SECTION
-===================================================== -->
-
 <section class="hero-section">
 
     <div class="hero-container">
@@ -74,10 +69,7 @@
 
             <div class="hero-image-card">
 
-                <img
-                    src="Assets/Images/landing.jpeg"
-                    alt="Students working on projects"
-                >
+                <img src="Assets/Images/landing.jpeg" alt="Students working on projects">
 
             </div>
 
@@ -254,10 +246,7 @@
             </div>
 
             <div class="small-feature-image">
-                <img
-                    src="Assets/Images/landing.jpeg"
-                    alt="Project collaboration"
-                >
+                <img src="Assets/Images/landing.jpeg" alt="Project collaboration">
             </div>
 
         </div>
@@ -269,10 +258,7 @@
 
             <div class="small-feature-image">
 
-                <img
-                    src="Assets/Images/landing.jpeg"
-                    alt="Team workspace"
-                >
+                <img src="Assets/Images/landing.jpeg" alt="Team workspace">
 
             </div>
 
@@ -471,10 +457,7 @@
 
         <div class="career-image">
 
-            <img
-                src="Assets/Images/landing.jpeg"
-                alt="Technology career"
-            >
+            <img src="Assets/Images/landing.jpeg" alt="Technology career">
 
         </div>
 
@@ -610,7 +593,7 @@
             top-tier tech companies. Your career starts here.
         </p>
 
-        <a href="register.php" class="cta-button">
+        <a href="Auth/login.php" class="cta-button">
             Get Started for Free
         </a>
 

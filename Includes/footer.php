@@ -1,7 +1,3 @@
-<!-- =====================================================
-     FOOTER
-===================================================== -->
-
 <footer class="site-footer" id="contact">
 
     <div class="footer-main">
@@ -12,10 +8,7 @@
 
             <a href="index.php">
 
-                <img
-                    src="Assets/Images/logo.png"
-                    alt="SkillBridge Logo"
-                >
+                <img src="<?php echo $base_url; ?>Assets/Images/logo.png" alt="SkillBridge Logo">
 
             </a>
 
@@ -36,19 +29,19 @@
                 PLATFORM
             </h4>
 
-            <a href="#projects">
+            <a href="<?php echo $base_url; ?>/landingPage content/Projects.php">
                 Projects Marketplace
             </a>
 
-            <a href="#how-it-works">
+            <a href="<?php echo $base_url; ?>/landingPage content/Projects.php">
                 Skills Tracker
             </a>
 
-            <a href="#internships">
+            <a href="<?php echo $base_url; ?>/landingPage content/internships.php">
                 Internship Board
             </a>
 
-            <a href="#">
+            <a href="<?php echo $base_url; ?>/index.php">
                 CV Generator
             </a>
 
@@ -67,15 +60,15 @@
                 Home
             </a>
 
-            <a href="#about">
+            <a href="<?php echo $base_url; ?>/landingPage content/about.php">
                 About
             </a>
 
-            <a href="#projects">
+            <a href="<?php echo $base_url; ?>/landingPage content/Projects.php">
                 Projects
             </a>
 
-            <a href="#contact">
+            <a href="<?php echo $base_url; ?>/landingPage content/contact.php">
                 Contact Us
             </a>
 
@@ -98,11 +91,7 @@
 
             <form class="newsletter-form">
 
-                <input
-                    type="email"
-                    placeholder="Email"
-                    required
-                >
+                <input type="email" placeholder="Email" required>
 
                 <button type="submit">
                     ➤

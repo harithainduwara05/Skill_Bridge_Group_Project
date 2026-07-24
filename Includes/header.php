@@ -1,6 +1,7 @@
 <?php
 // Includes/header.php
 require_once __DIR__ . '/../Session/Sessionn.php';
+$base_url = '/Skill_Bridge_Group_Project/';
 ?>
 
 <!DOCTYPE html>
@@ -14,7 +15,10 @@ require_once __DIR__ . '/../Session/Sessionn.php';
 
     <title>SkillBridge</title>
 
-    <link rel="stylesheet" href="Assets/CSS/landing.css">
+    <link rel="stylesheet" href="<?php echo $base_url; ?>Assets/CSS/landing.css">
+    <?php if(isset($page_css)): ?>
+    <link rel="stylesheet" href="<?php echo $base_url . htmlspecialchars($page_css); ?>">
+    <?php endif; ?>
 
 </head>
 
@@ -25,8 +29,8 @@ require_once __DIR__ . '/../Session/Sessionn.php';
     <nav class="navbar">
 
         <!-- Logo -->
-        <a href="index.php" class="brand-logo">
-            <img src="Assets/Images/logo.png" alt="SkillBridge Logo">
+        <a href="<?php echo $base_url; ?>index.php" class="brand-logo">
+            <img src="<?php echo $base_url; ?>Assets/Images/logo.png" alt="SkillBridge Logo">
         </a>
 
 
@@ -34,23 +38,23 @@ require_once __DIR__ . '/../Session/Sessionn.php';
         <ul class="nav-links">
 
             <li>
-                <a href="index.php" class="active">Home</a>
+                <a href="<?php echo $base_url; ?>index.php" <?php if(basename($_SERVER['PHP_SELF']) == 'index.php') echo 'class="active"'; ?>>Home</a>
             </li>
 
             <li>
-                <a href="#about">About</a>
+                <a href="<?php echo $base_url; ?>landingPage content/about.php" <?php if(basename($_SERVER['PHP_SELF']) == 'about.php') echo 'class="active"'; ?>>About</a>
             </li>
 
             <li>
-                <a href="#projects">Projects</a>
+                <a href="<?php echo $base_url; ?>landingPage content/projects.php" <?php if(basename($_SERVER['PHP_SELF']) == 'projects.php') echo 'class="active"'; ?>>Projects</a>
             </li>
 
             <li>
-                <a href="#internships">Internships</a>
+                <a href="<?php echo $base_url; ?>landingPage content/internships.php" <?php if(basename($_SERVER['PHP_SELF']) == 'internships.php') echo 'class="active"'; ?>>Internships</a>
             </li>
 
             <li>
-                <a href="#contact">Contact Us</a>
+                <a href="<?php echo $base_url; ?>landingPage content/contact.php" <?php if(basename($_SERVER['PHP_SELF']) == 'contact.php') echo 'class="active"'; ?>>Contact Us</a>
             </li>
 
         </ul>
@@ -59,11 +63,11 @@ require_once __DIR__ . '/../Session/Sessionn.php';
         <!-- Navigation Buttons -->
         <div class="nav-actions">
 
-            <a href="Auth/login.php" class="login-link">
+            <a href="<?php echo $base_url; ?>Auth/login.php" class="login-link">
                 Login
             </a>
 
-            <a href="register.php" class="signup-link">
+            <a href="<?php echo $base_url; ?>register.php" class="signup-link">
                 Sign Up
             </a>
 
