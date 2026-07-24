@@ -1,0 +1,161 @@
+:root {
+    --primary-blue: #0044cc;
+    --light-blue: #e8f0fe;
+    --border-blue: #0056b3;
+    --text-dark: #1a1a1a;
+    --text-light: #5f6368;
+    --bg-color: #f0f4f8;
+    --white: #ffffff;
+    --border-color: #dadce0;
+    --error-red: #d93025;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.verify-wrapper {
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+}
+
+.verify-card {
+    background-color: var(--white);
+    padding: 50px 40px;
+    border-radius: 20px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    text-align: center;
+}
+
+/* Success Icon Styles - Exact Match */
+.success-icon-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+}
+
+.circle-outer {
+    width: 250px;
+    height: 250px;
+    background-color: var(--light-blue);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circle-inner {
+    width: 120px;
+    height: 120px;
+    border: 3px solid var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.solid-circle {
+    width: 50px;
+    height: 50px;
+    background-color: var(--primary-blue);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--white);
+}
+
+.check-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Typography */
+.verify-title {
+    color: var(--text-dark);
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.verify-subtitle {
+    color: var(--text-light);
+    font-size: 15px;
+    line-height: 1.6;
+    margin-bottom: 35px;
+}
+
+/* Form Styles */
+.form-header {
+    margin-bottom: 30px;
+}
+
+.error-msg {
+    background-color: #fce8e6;
+    color: var(--error-red);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 24px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.code-input {
+    width: 100%;
+    padding: 16px;
+    font-size: 32px;
+    text-align: center;
+    letter-spacing: 12px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 30px;
+    color: var(--text-dark);
+    font-weight: 600;
+}
+
+.code-input:focus {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 4px rgba(0, 68, 204, 0.1);
+}
+
+.code-input::placeholder {
+    color: #cbd0d6;
+}
+
+/* Button */
+.btn-primary {
+    display: inline-block;
+    width: 200px;
+    padding: 14px 0;
+    background-color: var(--primary-blue);
+    color: var(--white);
+    border: none;
+    border-radius: 50px; /* Pill shape */
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+.btn-primary:hover {
+    background-color: #0036a3;
+}
+
+.btn-primary:active {
+    transform: translateY(1px);
+}
