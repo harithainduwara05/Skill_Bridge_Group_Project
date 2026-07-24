@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashPassword = sha1($password);
 
         try {
-            $sql = "SELECT fname,Email, role, password FROM User WHERE Email=?";
+            $sql = "SELECT Email, role, password FROM User WHERE Email=?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $email);
             $stmt->execute();
