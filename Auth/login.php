@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashPassword = sha1($password);
 
         try {
-            $sql = "SELECT Fname, Email, role, password FROM User WHERE email=?";
+            $sql = "SELECT fname,Email, role, password FROM User WHERE Email=?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -21,10 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-
+                $sql = "SELECT name from  {$user['role']} where Email=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("s",$email);
+                $stmt->execute();
+                $forignResult = $stmt->get_result();
+                $forignUser = $forignResult->fetch_assoc();
                 if ($user['password'] === $hashPassword) {
                     $_SESSION['user'] = [
-                        'username' => $user['Fname'],
+                        'username' => $forignUser['name'],
                         'email' => $user['Email'],
                         'role' => $user['role'],
                     ];
