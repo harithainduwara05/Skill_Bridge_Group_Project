@@ -80,8 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Left Side: Form -->
             <div class="login-left">
                 <div class="logo-container">
-                    <img src="../Assets/Images/logo.png" alt="SkillBridge Logo" class="logo-icon">
-                    <span class="logo-text">SkillBridge</span>
+                    <img src="../Assets/Images/logoLog.png" alt="SkillBridge Logo" class="logo-icon">
+                    <span class="logo-text">Skill</span>
                 </div>
 
                 <h1 class="welcome-title">Welcome Back</h1>

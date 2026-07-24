@@ -48,13 +48,13 @@ body {
 .logo-container {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 1px;
     margin-bottom: 20px;
 }
 
 .logo-icon {
-    width: 48px;
-    height: 48px;
+    width: 70px;
+    height: 50px;
 }
 
 .logo-text {
@@ -279,7 +279,7 @@ body {
     right: 0;
     bottom: 0;
     background: radial-gradient(circle at 100% 0%, rgba(245, 130, 32, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 0% 100%, rgba(0, 86, 179, 0.2) 0%, transparent 50%);
+        radial-gradient(circle at 0% 100%, rgba(0, 86, 179, 0.2) 0%, transparent 50%);
     z-index: 1;
 }
 
@@ -359,9 +359,26 @@ body {
 
 /* Animations */
 @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px);
+    }
 }
 
 .spinner {
@@ -377,13 +394,26 @@ body {
 }
 
 @keyframes rotate {
-    100% { transform: rotate(360deg); }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes dash {
-    0% { stroke-dasharray: 1, 150; stroke-dashoffset: 0; }
-    50% { stroke-dasharray: 90, 150; stroke-dashoffset: -35; }
-    100% { stroke-dasharray: 90, 150; stroke-dashoffset: -124; }
+    0% {
+        stroke-dasharray: 1, 150;
+        stroke-dashoffset: 0;
+    }
+
+    50% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -35;
+    }
+
+    100% {
+        stroke-dasharray: 90, 150;
+        stroke-dashoffset: -124;
+    }
 }
 
 /* Responsive Design */
@@ -392,11 +422,11 @@ body {
         flex-direction: column;
         max-width: 600px;
     }
-    
+
     .login-right {
         padding: 40px 30px;
     }
-    
+
     .hero-image-container {
         max-width: 300px;
     }
@@ -406,11 +436,11 @@ body {
     .login-left {
         padding: 40px 20px;
     }
-    
+
     .welcome-title {
         font-size: 24px;
     }
-    
+
     .form-options {
         flex-direction: column;
         align-items: flex-start;
