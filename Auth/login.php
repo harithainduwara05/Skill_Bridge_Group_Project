@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $hashPassword = sha1($password);
 
         try {
-            $sql = "SELECT Fname, Email, role, password FROM User WHERE email=?";
+            $sql = "SELECT Email, role, password FROM User WHERE Email=?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("s", $email);
             $stmt->execute();
@@ -21,10 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-
+                $sql = "SELECT name from  {$user['role']} where Email=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("s",$email);
+                $stmt->execute();
+                $forignResult = $stmt->get_result();
+                $forignUser = $forignResult->fetch_assoc();
                 if ($user['password'] === $hashPassword) {
                     $_SESSION['user'] = [
-                        'username' => $user['Fname'],
+                        'username' => $forignUser['name'],
                         'email' => $user['Email'],
                         'role' => $user['role'],
                     ];
@@ -80,8 +85,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <!-- Left Side: Form -->
             <div class="login-left">
                 <div class="logo-container">
-                    <img src="../Assets/Images/logo.png" alt="SkillBridge Logo" class="logo-icon">
-                    <span class="logo-text">SkillBridge</span>
+                    <img src="../Assets/Images/logoLog.png" alt="SkillBridge Logo" class="logo-icon">
+                    <span class="logo-text">Skill</span>
                 </div>
 
                 <h1 class="welcome-title">Welcome Back</h1>

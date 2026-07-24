@@ -42,12 +42,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $status = 'De-Active';
 
                         // Insert new user
-                        $sql = "INSERT INTO User (Fname, Email, University, Degree, AcademicYear, password, role, status, verification_code) VALUES (?,?,?,?,?,?,?,?,?)";
+                        $sql = "INSERT INTO User (Email,password,role,status, verification_code) VALUES (?,?,?,?,?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("sssssssss", $name, $email, $university, $degree, $academicYear, $hashPassword, $role, $status, $verificationCode);
+                        $stmt->bind_param("sssss", $email, $hashPassword, $role, $status, $verificationCode);
+                        $_SESSION['userData'] = [
+                            'name' => $name,
+                            'university' => $university,
+                            'degree' => $degree,
+                            'academicYear' => $academicYear,
+                            'role' => $role
+                        ];
 
                         if ($stmt->execute()) {
                             // Send Email
+
                             try {
                                 send_verification_email($email, $verificationCode);
                                 $_SESSION['verify_email'] = $email;
@@ -59,9 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         } else {
                             $flash = ['type' => 'error', 'message' => 'Registration failed. Please try again.'];
                         }
-                    }
-                    else {
-                           $flash = ['type' => 'error', 'message' => 'This email is not valid for this Email plz request to admin'];
+                    } else {
+                        $flash = ['type' => 'error', 'message' => 'This email is not valid for this platfome. Plz contact admin'];
                     }
                 }
             } else {
