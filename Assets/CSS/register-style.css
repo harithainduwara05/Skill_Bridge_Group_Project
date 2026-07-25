@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; }
 body { background: #fff; color: #1a1a1a; }
 
@@ -42,19 +40,19 @@ body { background: #fff; color: #1a1a1a; }
 .form-inner h2 { font-size: 26px; margin-bottom: 6px; }
 .form-inner .subtitle { color: #667085; margin-bottom: 24px; font-size: 14px; }
 
-.tabs { display: flex; background: #f1f3f5; border-radius: 8px; padding: 4px; margin-bottom: 24px; }
+.tabs { display: flex; background: #f1f3f5; border-radius: 8px; padding: 4px; margin-bottom: 16px; }
 .tabs button {
   flex: 1; padding: 10px; border: none; background: transparent; border-radius: 6px;
   font-size: 14px; font-weight: 600; color: #555; cursor: pointer;
 }
 .tabs button.active { background: #0b3d66; color: #fff; }
 
-.form-row { display: flex; gap: 16px; margin-bottom: 16px; }
-.form-group { flex: 1; margin-bottom: 16px; }
+.form-row { display: flex; gap: 16px; margin-bottom: 12px; }
+.form-group { flex: 1; margin-bottom: 12px; }
 .form-row .form-group { margin-bottom: 0; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
 .form-group input, .form-group select {
-  width: 100%; padding: 10px 12px; border: 1px solid #d9dce1; border-radius: 6px;
+  width: 100%; padding: 8px 12px; border: 1px solid #d9dce1; border-radius: 6px;
   background: #f9fafb; font-size: 14px;
 }
 .form-group input:focus, .form-group select:focus { outline: 2px solid #0b3d66; background: #fff; }
@@ -65,11 +63,11 @@ body { background: #fff; color: #1a1a1a; }
   cursor: pointer; color: #667085; background: none; border: none;
 }
 
-.terms { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; margin: 14px 0 20px; color: #444; }
+.terms { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; margin: 10px 0 16px; color: #444; }
 .terms a { color: #0b3d66; font-weight: 600; text-decoration: none; }
 
 .btn-submit {
-  width: 100%; padding: 13px; background: #f5820b; color: #fff; border: none;
+  width: 100%; padding: 10px; background: #f5820b; color: #fff; border: none;
   border-radius: 6px; font-size: 15px; font-weight: 700; cursor: pointer;
 }
 .btn-submit:hover { background: #d97008; }

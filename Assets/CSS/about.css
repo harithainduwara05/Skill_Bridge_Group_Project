@@ -1,0 +1,320 @@
+/* About Page CSS */
+.about-hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    align-items: center;
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 25px;
+}
+
+.hero-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0284c7;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.about-hero h1 {
+    color: #042a47;
+    font-size: 42px;
+    line-height: 1.2;
+    margin-bottom: 20px;
+}
+
+.about-hero p {
+    color: #555;
+    font-size: 16px;
+    margin-bottom: 30px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 15px;
+}
+
+.btn-primary, .btn-secondary {
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-primary {
+    background: #0056b3;
+    color: white;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #004494;
+}
+
+.btn-secondary {
+    background: transparent;
+    color: #0056b3;
+    border: 1px solid #cbd5e1;
+}
+
+.btn-secondary:hover {
+    background: #f8fafc;
+}
+
+.hero-image img {
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.mission-section {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+    padding: 0 25px;
+}
+
+.mission-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 40px;
+    display: flex;
+    align-items: flex-start;
+    gap: 30px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+}
+
+.mission-icon {
+    background: #042a47;
+    color: white;
+    width: 80px;
+    height: 80px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    flex-shrink: 0;
+}
+
+.mission-content h2 {
+    color: #042a47;
+    font-size: 28px;
+    margin-bottom: 15px;
+}
+
+.mission-content p {
+    color: #555;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Section Common */
+.section-title {
+    text-align: center;
+    color: #042a47;
+    font-size: 32px;
+    margin-bottom: 15px;
+}
+
+.section-desc {
+    text-align: center;
+    color: #555;
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-inline: auto;
+}
+
+/* Why SkillBridge */
+.why-section {
+    background: #f8fafc;
+    padding: 80px 25px;
+}
+
+.features-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.feature-card {
+    background: #fff;
+    padding: 30px 20px;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.feature-icon {
+    width: 50px;
+    height: 50px;
+    background: #e0f2fe;
+    color: #0284c7;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.feature-card h3 {
+    color: #042a47;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.feature-card p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* How It Works */
+.how-it-works {
+    padding: 80px 25px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 30px;
+    text-align: center;
+}
+
+.step-card {
+    position: relative;
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: #0056b3;
+    color: white;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 2;
+}
+
+.step-card h3 {
+    color: #042a47;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.step-card p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Ecosystem */
+.ecosystem-section {
+    padding: 0 25px 80px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.eco-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 30px;
+}
+
+.eco-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.eco-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin: 0 auto 20px;
+    background: #e2e8f0;
+    display: block;
+}
+
+.eco-card h3 {
+    color: #042a47;
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+.eco-card p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* CTA */
+.cta-banner {
+    background: #003366;
+    color: white;
+    border-radius: 16px;
+    padding: 60px 30px;
+    text-align: center;
+    max-width: 1200px;
+    margin: 0 auto 80px;
+    background-image: linear-gradient(135deg, #003366 0%, #001a33 100%);
+}
+
+.cta-banner h2 {
+    font-size: 32px;
+    margin-bottom: 15px;
+}
+
+.cta-banner p {
+    font-size: 16px;
+    opacity: 0.9;
+    margin-bottom: 30px;
+    max-width: 500px;
+    margin-inline: auto;
+}
+
+.btn-cta {
+    background: white;
+    color: #003366;
+    padding: 12px 30px;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+@media (max-width: 992px) {
+    .about-hero, .features-grid, .steps-grid, .eco-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-hero, .features-grid, .steps-grid, .eco-grid, .mission-card {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .mission-icon {
+        margin-bottom: 20px;
+    }
+}

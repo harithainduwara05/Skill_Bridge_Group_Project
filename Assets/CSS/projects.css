@@ -1,0 +1,359 @@
+/* Projects Page CSS */
+.projects-container {
+    max-width: 1300px;
+    margin: 40px auto;
+    padding: 0 25px;
+    display: grid;
+    grid-template-columns: 2.5fr 1fr;
+    gap: 30px;
+}
+
+/* Left Column */
+.projects-main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.projects-header-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.projects-header-card h1 {
+    color: #042a47;
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.projects-header-card p {
+    color: #555;
+    font-size: 15px;
+    max-width: 700px;
+}
+
+.filter-bar {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.filter-group.search {
+    flex: 2;
+}
+
+.filter-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+.filter-group input, .filter-group select {
+    padding: 10px 15px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    background: #f8fafc;
+}
+
+.projects-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.project-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 25px;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    transition: 0.3s;
+}
+
+.project-card:hover {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.project-icon {
+    width: 40px;
+    height: 40px;
+    background: #e6f0fa;
+    color: #0056b3;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.project-card .tag {
+    position: absolute;
+    top: 25px;
+    right: 25px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.tag.high-demand {
+    background: #e0f2fe;
+    color: #0284c7;
+}
+
+.tag.ui-ux {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.project-title {
+    color: #042a47;
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+.project-company {
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.tech-stack {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.tech-badge {
+    border: 1px solid #cbd5e1;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    color: #475569;
+}
+
+.project-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 15px;
+}
+
+.project-deadline {
+    font-size: 13px;
+    color: #ef4444;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.project-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-outline, .btn-fill {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid #042a47;
+    color: #042a47;
+}
+
+.btn-outline:hover {
+    background: #f8fafc;
+}
+
+.btn-fill {
+    background: #e85d04;
+    border: 1px solid #e85d04;
+    color: white;
+}
+
+.btn-fill:hover {
+    background: #d05303;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 20px;
+}
+
+.page-btn {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #fff;
+    color: #333;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.page-btn.active {
+    background: #042a47;
+    color: #fff;
+    border-color: #042a47;
+}
+
+/* Right Sidebar */
+.projects-sidebar {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 0;
+    position: sticky;
+    top: 80px;
+    height: fit-content;
+    overflow: hidden;
+}
+
+.sidebar-header {
+    background: #0056b3;
+    color: white;
+    padding: 20px;
+}
+
+.sidebar-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.sidebar-header p {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.sidebar-content {
+    padding: 25px 20px;
+}
+
+.sidebar-section {
+    margin-bottom: 25px;
+}
+
+.sidebar-label {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.sidebar-title {
+    color: #042a47;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.sidebar-desc {
+    color: #475569;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.skills-list {
+    list-style: none;
+}
+
+.skills-list li {
+    font-size: 14px;
+    color: #334155;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.skills-list li::before {
+    content: "✓";
+    color: #16a34a;
+    font-weight: bold;
+}
+
+.status-box {
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.status-text {
+    font-size: 14px;
+    color: #475569;
+}
+
+.status-value {
+    font-weight: 700;
+    color: #042a47;
+    font-size: 16px;
+}
+
+.btn-submit-app {
+    width: 100%;
+    background: #e85d04;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+@media (max-width: 992px) {
+    .projects-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .projects-grid {
+        grid-template-columns: 1fr;
+    }
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
