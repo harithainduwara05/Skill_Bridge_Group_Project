@@ -33,10 +33,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                 $_SESSION['verified'] = true;
                 unset($_SESSION['verify_email']); // cleanup
                 $roleTable = $_SESSION['userData']['role'];
-                $updateUserData = $conn->prepare("Insert into $roleTable(Email,name,University,degree,Year)VALUES(?,?,?,?,?)");
-                $updateUserData->bind_param("sssss", $emailToVerify, $_SESSION['userData']['name'], $_SESSION['userData']['university'], $_SESSION['userData']['degree'], $_SESSION['userData']['academicYear']);
-                $updateUserData->execute();
-                unset($_SESSION['userData']);
+                if (strtolower($roleTable) === 'student') {
+                    $updateUserData = $conn->prepare("Insert into student(Email,name,University,degree,Year)VALUES(?,?,?,?,?)");
+                    $updateUserData->bind_param("sssss", $emailToVerify, $_SESSION['userData']['name'], $_SESSION['userData']['university'], $_SESSION['userData']['degree'], $_SESSION['userData']['academicYear']);
+                    $updateUserData->execute();
+                    unset($_SESSION['userData']);
+                } else if (strtolower($roleTable) === 'organization') {
+                    $updateUserData = $conn->prepare("INSERT INTO organization(Email,organizationName,orgtype,contactPersonName,contactNumber,website,location) VALUES (?,?,?,?,?,?,?)");
+                    $updateUserData->bind_param("sssssss", $emailToVerify, $_SESSION['userData']['name'], $_SESSION['userData']['type'], $_SESSION['userData']['contactPersonName'], $_SESSION['userData']['contactNumber'], $_SESSION['userData']['website'], $_SESSION['userData']['location']);
+                    $updateUserData->execute();
+                    unset($_SESSION['userData']);
+                } else if (strtolower($roleTable) === 'company') {
+                    $updateUserData = $conn->prepare("INSERT INTO company(Email,companyName,companytype,contactPersonName,contactNumber,website,location) VALUES (?,?,?,?,?,?,?)");
+                    $updateUserData->bind_param("sssssss", $emailToVerify, $_SESSION['userData']['name'], $_SESSION['userData']['type'], $_SESSION['userData']['contactPersonName'], $_SESSION['userData']['contactNumber'], $_SESSION['userData']['website'], $_SESSION['userData']['location']);
+                    $updateUserData->execute();
+                    unset($_SESSION['userData']);
+                }
+
             } else {
                 $error = "Something went wrong. Please try again.";
             }

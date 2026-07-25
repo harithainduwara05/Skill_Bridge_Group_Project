@@ -25,13 +25,30 @@ require_once __DIR__ . '/Includes/register-header.php';
 
   <div class="form-panel">
     <div class="form-inner">
-      <h2 id="form-title">Create a Student Account</h2>
-      <p class="subtitle" id="form-subtitle">Start your journey today by choosing your role.</p>
+      <?php 
+        $activeRole = 'student';
+        if (isset($flash['role']) && !empty($flash['role'])) {
+            $activeRole = strtolower($flash['role']);
+        } elseif (isset($_POST['role']) && !empty($_POST['role'])) {
+            $activeRole = strtolower($_POST['role']);
+        }
+        if (!in_array($activeRole, ['student', 'organization', 'company'])) {
+            $activeRole = 'student';
+        }
+
+        $titles = [
+            'student' => ['title' => 'Create a Student Account', 'subtitle' => 'Start your journey today by choosing your role.'],
+            'organization' => ['title' => 'Create Organization Account', 'subtitle' => 'Register your organization and connect with talented students through SkillBridge.'],
+            'company' => ['title' => 'Create Company Account', 'subtitle' => 'Join SkillBridge to discover talented students and provide internship opportunities.']
+        ];
+      ?>
+      <h2 id="form-title"><?= $titles[$activeRole]['title'] ?></h2>
+      <p class="subtitle" id="form-subtitle"><?= $titles[$activeRole]['subtitle'] ?></p>
 
       <div class="tabs">
-        <button type="button" class="active" data-role="student">Student</button>
-        <button type="button" data-role="organization">Organization</button>
-        <button type="button" data-role="company">Company</button>
+        <button type="button" class="<?= $activeRole === 'student' ? 'active' : '' ?>" data-role="student">Student</button>
+        <button type="button" class="<?= $activeRole === 'organization' ? 'active' : '' ?>" data-role="organization">Organization</button>
+        <button type="button" class="<?= $activeRole === 'company' ? 'active' : '' ?>" data-role="company">Company</button>
       </div>
 
       <?php if ($flash): ?>
@@ -45,7 +62,7 @@ require_once __DIR__ . '/Includes/register-header.php';
            UNCHANGED — same fields/names as before, just wrapped in .role-form
            so it can be shown/hidden by the tab-switch JS below.
       ===================================================================== -->
-      <form action="" method="POST" novalidate class="role-form active" data-role-form="student">
+      <form action="" method="POST" novalidate class="role-form <?= $activeRole === 'student' ? 'active' : '' ?>" data-role-form="student">
 
         <div class="form-group">
           <label for="full_name">Full Name</label>
@@ -115,7 +132,7 @@ require_once __DIR__ . '/Includes/register-header.php';
            ORGANIZATION FORM
            Built to match the provided Organization design screenshot.
       ===================================================================== -->
-      <form action="" method="POST" novalidate class="role-form" data-role-form="organization">
+      <form action="" method="POST" novalidate class="role-form <?= $activeRole === 'organization' ? 'active' : '' ?>" data-role-form="organization">
         <input type="hidden" name="role" value="organization">
 
         <div class="form-group">
@@ -162,11 +179,20 @@ require_once __DIR__ . '/Includes/register-header.php';
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="org_password">Password</label>
-          <div class="password-wrap">
-            <input type="password" id="org_password" name="password" placeholder="••••••••" required minlength="8">
-            <button type="button" class="toggle-eye">👁</button>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="org_password">Password</label>
+            <div class="password-wrap">
+              <input type="password" id="org_password" name="password" placeholder="••••••••" required minlength="8">
+              <button type="button" class="toggle-eye">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="org_re_password">Re-Password</label>
+            <div class="password-wrap">
+              <input type="password" id="org_re_password" name="Re-password" placeholder="••••••••" required minlength="8">
+              <button type="button" class="toggle-eye">👁</button>
+            </div>
           </div>
         </div>
 
@@ -182,7 +208,7 @@ require_once __DIR__ . '/Includes/register-header.php';
            COMPANY FORM
            Built to match the provided Company design screenshot.
       ===================================================================== -->
-      <form action="" method="POST" novalidate class="role-form" data-role-form="company">
+      <form action="" method="POST" novalidate class="role-form <?= $activeRole === 'company' ? 'active' : '' ?>" data-role-form="company">
         <input type="hidden" name="role" value="company">
 
         <div class="form-group">
@@ -230,11 +256,20 @@ require_once __DIR__ . '/Includes/register-header.php';
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="company_password">Password</label>
-          <div class="password-wrap">
-            <input type="password" id="company_password" name="password" placeholder="••••••••" required minlength="8">
-            <button type="button" class="toggle-eye">👁</button>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="company_password">Password</label>
+            <div class="password-wrap">
+              <input type="password" id="company_password" name="password" placeholder="••••••••" required minlength="8">
+              <button type="button" class="toggle-eye">👁</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="company_re_password">Re-Password</label>
+            <div class="password-wrap">
+              <input type="password" id="company_re_password" name="Re-password" placeholder="••••••••" required minlength="8">
+              <button type="button" class="toggle-eye">👁</button>
+            </div>
           </div>
         </div>
 

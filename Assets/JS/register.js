@@ -21,6 +21,13 @@ document.addEventListener('DOMContentLoaded', function () {
     company: { title: 'Create Company Account', subtitle: 'Join SkillBridge to discover talented students and provide internship opportunities.' }
   };
 
+  // Set initial heading text based on the active tab (in case page reloaded on error)
+  const activeTab = document.querySelector('.tabs button.active');
+  if (activeTab && titleEl && subtitleEl && titles[activeTab.dataset.role]) {
+    titleEl.textContent = titles[activeTab.dataset.role].title;
+    subtitleEl.textContent = titles[activeTab.dataset.role].subtitle;
+  }
+
   tabs.forEach(tab => {
     tab.addEventListener('click', function () {
       const role = this.dataset.role;
@@ -53,45 +60,47 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Password Match Validation (Student form only)
-  const studentForm = document.querySelector('.role-form[data-role-form="student"]');
-  const pwdInput = document.querySelector('#password');
-  const rePwdInput = document.querySelector('#Re-password');
+  // Password Match Validation for all role forms
+  const allRoleForms = document.querySelectorAll('.role-form');
+  allRoleForms.forEach(form => {
+    const pwdInput = form.querySelector('input[name="password"]');
+    const rePwdInput = form.querySelector('input[name="Re-password"]');
 
-  if (studentForm && pwdInput && rePwdInput) {
-    studentForm.addEventListener('submit', function (e) {
-      if (pwdInput.value !== rePwdInput.value) {
-        e.preventDefault(); // Stop form submission
+    if (pwdInput && rePwdInput) {
+      form.addEventListener('submit', function (e) {
+        if (pwdInput.value !== rePwdInput.value) {
+          e.preventDefault(); // Stop form submission
 
-        // Turn the re-password box red
-        rePwdInput.style.borderColor = 'red';
+          // Turn the re-password box red
+          rePwdInput.style.borderColor = 'red';
 
-        // Check if error message already exists, if not create one
-        let errorMsg = document.querySelector('#pwd-error-msg');
-        if (!errorMsg) {
-          errorMsg = document.createElement('span');
-          errorMsg.id = 'pwd-error-msg';
-          errorMsg.style.color = 'red';
-          errorMsg.style.fontSize = '12px';
-          errorMsg.style.marginTop = '5px';
-          errorMsg.style.display = 'block';
-          errorMsg.textContent = 'Passwords do not match!';
-          // Insert after the password wrap
-          rePwdInput.closest('.password-wrap').insertAdjacentElement('afterend', errorMsg);
+          // Check if error message already exists, if not create one
+          let errorMsg = form.querySelector('.pwd-error-msg');
+          if (!errorMsg) {
+            errorMsg = document.createElement('span');
+            errorMsg.className = 'pwd-error-msg';
+            errorMsg.style.color = 'red';
+            errorMsg.style.fontSize = '12px';
+            errorMsg.style.marginTop = '5px';
+            errorMsg.style.display = 'block';
+            errorMsg.textContent = 'Passwords do not match!';
+            // Insert after the password wrap
+            rePwdInput.closest('.password-wrap').insertAdjacentElement('afterend', errorMsg);
+          }
+        } else {
+          // Reset styles if they match (in case it was previously wrong)
+          rePwdInput.style.borderColor = '';
+          const errorMsg = form.querySelector('.pwd-error-msg');
+          if (errorMsg) errorMsg.remove();
         }
-      } else {
-        // Reset styles if they match (in case it was previously wrong)
-        rePwdInput.style.borderColor = '';
-        const errorMsg = document.querySelector('#pwd-error-msg');
-        if (errorMsg) errorMsg.remove();
-      }
-    });
+      });
 
-    // Remove red styling when user starts typing to correct the mistake
-    rePwdInput.addEventListener('input', function() {
+      // Remove red styling when user starts typing to correct the mistake
+      rePwdInput.addEventListener('input', function() {
         rePwdInput.style.borderColor = '';
-        const errorMsg = document.querySelector('#pwd-error-msg');
+        const errorMsg = form.querySelector('.pwd-error-msg');
         if (errorMsg) errorMsg.remove();
-    });
-  }
+      });
+    }
+  });
 });
