@@ -25,8 +25,8 @@ require_once __DIR__ . '/Includes/register-header.php';
 
   <div class="form-panel">
     <div class="form-inner">
-      <h2>Create a Student Account</h2>
-      <p class="subtitle">Start your journey today by choosing your role.</p>
+      <h2 id="form-title">Create a Student Account</h2>
+      <p class="subtitle" id="form-subtitle">Start your journey today by choosing your role.</p>
 
       <div class="tabs">
         <button type="button" class="active" data-role="student">Student</button>
@@ -40,7 +40,12 @@ require_once __DIR__ . '/Includes/register-header.php';
         </div>
       <?php endif; ?>
 
-      <form action="" method="POST" novalidate>
+      <!-- =====================================================================
+           STUDENT FORM
+           UNCHANGED — same fields/names as before, just wrapped in .role-form
+           so it can be shown/hidden by the tab-switch JS below.
+      ===================================================================== -->
+      <form action="" method="POST" novalidate class="role-form active" data-role-form="student">
 
         <div class="form-group">
           <label for="full_name">Full Name</label>
@@ -104,6 +109,141 @@ require_once __DIR__ . '/Includes/register-header.php';
         </label>
 
         <button type="submit" class="btn-submit">Create Student Account</button>
+      </form>
+
+      <!-- =====================================================================
+           ORGANIZATION FORM
+           Built to match the provided Organization design screenshot.
+      ===================================================================== -->
+      <form action="" method="POST" novalidate class="role-form" data-role-form="organization">
+        <input type="hidden" name="role" value="organization">
+
+        <div class="form-group">
+          <label for="org_name">Organization Name</label>
+          <input type="text" id="org_name" name="name" placeholder="University Career Center" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="org_email">Organization Email</label>
+            <input type="email" id="org_email" name="email" placeholder="contact@organization.edu" required>
+          </div>
+          <div class="form-group">
+            <label for="org_type">Organization Type</label>
+            <select id="org_type" name="org_type" required>
+              <option value="">Select Type</option>
+              <option value="University">University</option>
+              <option value="NGO">NGO</option>
+              <option value="Government">Government</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="org_contact_person">Contact Person Name</label>
+            <input type="text" id="org_contact_person" name="contact_person" placeholder="e.g. John Smith" required>
+          </div>
+          <div class="form-group">
+            <label for="org_contact_number">Contact Number</label>
+            <input type="tel" id="org_contact_number" name="contact_number" placeholder="+94 77 123 4567" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="org_website">Website</label>
+            <input type="text" id="org_website" name="website" placeholder="www.organization.edu">
+          </div>
+          <div class="form-group">
+            <label for="org_location">Location</label>
+            <input type="text" id="org_location" name="location" placeholder="Colombo, Sri Lanka" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="org_password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="org_password" name="password" placeholder="••••••••" required minlength="8">
+            <button type="button" class="toggle-eye">👁</button>
+          </div>
+        </div>
+
+        <label class="terms">
+          <input type="checkbox" name="agree" required>
+          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
+        </label>
+
+        <button type="submit" class="btn-submit">Create Organization Account</button>
+      </form>
+
+      <!-- =====================================================================
+           COMPANY FORM
+           Built to match the provided Company design screenshot.
+      ===================================================================== -->
+      <form action="" method="POST" novalidate class="role-form" data-role-form="company">
+        <input type="hidden" name="role" value="company">
+
+        <div class="form-group">
+          <label for="company_name">Company Name</label>
+          <input type="text" id="company_name" name="name" placeholder="ABC Technologies Pvt Ltd" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="company_email">Business Email</label>
+            <input type="email" id="company_email" name="email" placeholder="hr@company.com" required>
+          </div>
+          <div class="form-group">
+            <label for="company_industry">Industry Sector</label>
+            <select id="company_industry" name="org_type" required>
+              <option value="">Select Sector</option>
+              <option value="Technology">Technology</option>
+              <option value="Finance">Finance</option>
+              <option value="Healthcare">Healthcare</option>
+              <option value="Manufacturing">Manufacturing</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="company_contact_person">Contact Person Name</label>
+            <input type="text" id="company_contact_person" name="contact_person" placeholder="e.g. John Smith" required>
+          </div>
+          <div class="form-group">
+            <label for="company_contact_number">Contact Number</label>
+            <input type="tel" id="company_contact_number" name="contact_number" placeholder="+94 77 123 4567" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="company_website">Website</label>
+            <input type="text" id="company_website" name="website" placeholder="www.company.com">
+          </div>
+          <div class="form-group">
+            <label for="company_location">Location</label>
+            <input type="text" id="company_location" name="location" placeholder="Colombo, Sri Lanka" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="company_password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="company_password" name="password" placeholder="••••••••" required minlength="8">
+            <button type="button" class="toggle-eye">👁</button>
+          </div>
+        </div>
+
+        <label class="terms">
+          <input type="checkbox" name="agree" required>
+          <span>I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</span>
+        </label>
+
+        <button type="submit" class="btn-submit">Create Company Account</button>
       </form>
 
       <p class="signin-link">Already have an account? <a href="Auth/login.php">Sign In</a></p>

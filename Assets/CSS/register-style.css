@@ -80,6 +80,10 @@ body { background: #fff; color: #1a1a1a; }
 .flash.success { background: #eaf7ee; color: #1e7a34; border: 1px solid #bfe6c9; }
 .field-error { color: #b3261e; font-size: 12px; margin-top: 4px; }
 
+/* Show only the active role form (Student / Organization / Company) */
+.role-form { display: none; }
+.role-form.active { display: block; }
+
 @media (max-width: 900px) {
   .page-wrap { flex-direction: column; }
   .side-panel { padding: 32px; }
