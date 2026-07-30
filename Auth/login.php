@@ -36,16 +36,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     switch ($user['role']) {
                         case 'admin':
-                            header('Location:../function/adminDashbord.php');
+                            header('Location:../Functions/Dashboards/Admin/dashboard.php');
                             exit();
                         case 'organization':
-                            header('Location:../function/organizationDashbord.php');
+                            header('Location:../Functions/Dashboards/Organization/dashboard.php');
                             exit();
                         case 'company':
-                            header('Location:../function/companyDashbord.php');
+                            header('Location:../Functions/Dashboards/Company/dashboard.php');
                             exit();
                         case 'student':
-                            header('Location:../function/studentDashbord.php');
+                            header('Location:../Functions/Dashboards/Student/dashboard.php');
                             exit();
                         default:
                             $emailError = "Cannot find role";

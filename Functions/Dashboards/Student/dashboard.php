@@ -1,6 +1,6 @@
 <?php
 include "../../../Config/db.php";
-include "../../../Session/session.php";
+include "../../../Session/Session.php";
 
 is_logged_in();
 $user = current_user();
@@ -9,10 +9,6 @@ include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
 
 ?>
-
-
-
-
 
 
 <main class="content">
