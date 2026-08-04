@@ -2,7 +2,7 @@
 
 // App config
 $APP_NAME     = 'Skill Bridge';
-$BASE_URL     = '/Skill_Bridge';
+$BASE_URL     = '/Skill_Bridge_Group_Project';
 $SESSION_NAME = 'skill_bridge_sess';
 
 // Session
@@ -24,7 +24,7 @@ function current_user()
 function require_login(): void
 {
     if (!is_logged_in()) {
-        header('Location: ' . $GLOBALS['BASE_URL'] . '/auth/login.php');
+        header('Location: ' . $GLOBALS['BASE_URL'] . '/Auth/login.php');
         exit;
     }
 }
@@ -32,7 +32,7 @@ function require_login(): void
 function require_role($role): void
 {
     if (!is_logged_in() || current_user()['role'] !== $role) {
-        header('Location: ' . $GLOBALS['BASE_URL'] . 'auth/login.php');
+        header('Location: ' . $GLOBALS['BASE_URL'] . '/Auth/login.php');
         exit;
     }
 }

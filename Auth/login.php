@@ -1,6 +1,6 @@
 <?php
 require_once "../Config/db.php";
-require_once "../Session/Sessionn.php";
+require_once "../Session/Session.php";
 
 $emailError = "";
 $passwordError = "";

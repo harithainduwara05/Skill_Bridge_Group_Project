@@ -12,12 +12,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     $hashPassword = sha1($password);
-
+    $today = date("d/m/Y");
     if (strtolower($role) === 'student') {    
         $university = $_POST['university'];
         $degree = $_POST['degree'];
         $academicYear = $_POST['academicYear']; 
-
+        
         try {
             if (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($university)) && !empty(trim($degree)) && !empty(trim($academicYear)) && !empty(trim($password))) {
 
@@ -43,9 +43,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $status = 'De-Active';
 
                         // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code) VALUES (?,?,?,?,?)";
+                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("sssss", $email, $hashPassword, $role, $status, $verificationCode);
+                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
                         $_SESSION['userData'] = [
                             'name' => $name,
                             'university' => $university,
@@ -111,9 +111,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $status = 'De-Active';
 
                         // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code) VALUES (?,?,?,?,?)";
+                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("sssss", $email, $hashPassword, $role, $status, $verificationCode);
+                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
                         $_SESSION['userData'] = [
                             'name' => $name,
                             'type' => $orgtype,
@@ -182,9 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $status = 'De-Active';
 
                         // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code) VALUES (?,?,?,?,?)";
+                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("sssss", $email, $hashPassword, $role, $status, $verificationCode);
+                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
                         $_SESSION['userData'] = [
                             'name' => $name,
                             'type' => $corg_type,
