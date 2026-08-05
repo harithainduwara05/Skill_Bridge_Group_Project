@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../Session/Sessionn.php';
+require_once __DIR__ . '/../Session/Session.php';
 require_once __DIR__ . '/../Config/db.php';
 require_once __DIR__ . '/../Config/env_loader.php';
 require_once __DIR__ . '/../Includes/simple_smtp.php';
