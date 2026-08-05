@@ -4,6 +4,8 @@ include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
 is_logged_in();
+require_role('organization');
+
 $user = current_user();
 
 include "../../../Includes/org_sidebar.php";

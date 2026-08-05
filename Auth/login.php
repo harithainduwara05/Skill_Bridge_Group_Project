@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $forignUser = $forignResult->fetch_assoc();
                 if ($user['password'] === $hashPassword) {
                     $_SESSION['user'] = [
-                        'username' => $forignUser['name'],
+                        'username' => $forignUser['Name'],
                         'email' => $user['Email'],
                         'role' => $user['role'],
                     ];

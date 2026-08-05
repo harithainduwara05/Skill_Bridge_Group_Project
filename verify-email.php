@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/Session/Sessionn.php';
+require_once __DIR__ . '/Session/Session.php';
 require_once __DIR__ . '/Config/db.php';
 
 // Ensure user actually needs to verify or has just verified
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                 <p class="verify-subtitle">Your account is now fully active. Welcome to the<br>SkillBridge academic
                     workspace.</p>
 
-                <a href="Auth/login.php" class="btn-primary">Go to Dashboard</a>
+                <a href="Auth/login.php" class="btn-primary">Go to Login Page</a>
                 <?php unset($_SESSION['verified']); ?>
             <?php else: ?>
                 <!-- Verification Form State -->
