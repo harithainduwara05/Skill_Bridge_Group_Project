@@ -59,6 +59,21 @@ class DashboardManager
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     }
+    public function getAll($sqlback)
+    {
+        global $conn;
+        $sql = "SELECT * FROM $sqlback";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    public function update_db($sqlback, $tableName)
+    {
+        global $conn;
+        $sql = "UPDATE $tableName SET $sqlback";
+        $stmt = $conn->prepare($sql);
+        return $stmt->execute();
+    }
 }
 
 $dashboardManager = new DashboardManager();
@@ -72,6 +87,7 @@ $tot_Ongoin_projects = $dashboardManager->getTotalCount("projects WHERE STR_TO_D
 $tot_internship = $dashboardManager->getTotalCount("internships WHERE STR_TO_DATE(deadline, '%b %d, %Y') >= CURRENT_DATE()");
 //All Users
 $allusers = $dashboardManager->getUsers();
-
+//Get All COmplain 
+$complains = $dashboardManager->getAll("complain");
 
 ?>

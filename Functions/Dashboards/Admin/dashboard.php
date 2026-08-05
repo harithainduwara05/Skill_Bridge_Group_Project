@@ -8,6 +8,13 @@ $user = current_user();
 
 
 require_once "AdminBackend.php";
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'dismiss') {
+    $dashboardManager->update_db("status = 'DISMISSED' where id = " . intval($_POST['complaint_id']), "complain");
+    echo "<script>window.location.href = 'dashboard.php';</script>";
+    exit();
+}
+
 include "../../../Includes/admin_sidebar.php";
 include "../../../Includes/dash_header.php";
 ?>
@@ -247,24 +254,49 @@ include "../../../Includes/dash_header.php";
                 </div>
             </div>
             <div class="card-body">
+                <?php
+                $hasComplaints = false;
+                $limit = (count($complains) < 5) ? count($complains) : 5;
+                for ($i = 0; $i < $limit; $i++) {
+                    if (($complains[$i]['status'] === "DISMISS")) {
+                        $hasComplaints = true;
+                        ?>
+                        <div class="complaint-item">
+                            <div class="complaint-meta">
+                                <span class="complaint-id"><?php echo $complains[$i]['id']; ?></span>
+                                <span class="complaint-priority high"><?php echo $complains[$i]['priority']; ?></span>
+                            </div>
+                            <div class="complaint-title"><?php echo $complains[$i]['title']; ?></div>
+                            <div class="complaint-desc">
+                                <?php echo $complains[$i]['discription']; ?>
+                            </div>
+                            <div class="complaint-actions">
+                                <button class="btn-sm primary">Review</button>
+                                <form method="POST" style="display:inline-block;">
+                                    <input type="hidden" name="action" value="dismiss">
+                                    <input type="hidden" name="complaint_id" value="<?php echo $complains[$i]['id']; ?>">
+                                    <button type="submit" class="btn-sm secondary">Dismiss</button>
+                                </form>
+                            </div>
+                        </div>
+                        <?php
+                    }
+                }
 
-                <div class="complaint-item">
-                    <div class="complaint-meta">
-                        <span class="complaint-id">ID #5612</span>
-                        <span class="complaint-priority high">High Priority</span>
+                if (!$hasComplaints) { ?>
+                    <div
+                        style="text-align: center; padding: 40px 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #f9fafb; border-radius: 8px; margin: 10px 0; border: 1px dashed #d1d5db;">
+                        <span class="material-symbols-outlined"
+                            style="font-size: 48px; color: #9ca3af; margin-bottom: 12px;">inbox</span>
+                        <h4 style="margin: 0; font-size: 16px; color: #4b5563; font-weight: 600;">No Complaints Found</h4>
+                        <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">There are no complaints to display at
+                            the moment.</p>
                     </div>
-                    <div class="complaint-title">Contract Violation</div>
-                    <div class="complaint-desc">
-                        "Company failed to provide necessary software licenses for project..."
-                    </div>
-                    <div class="complaint-actions">
-                        <button class="btn-sm primary">Review</button>
-                        <button class="btn-sm secondary">Dismiss</button>
-                    </div>
-                </div>
+                <?php } ?>
 
             </div>
-            <a href="complaints.php" class="see-all-link">See all <!--Replace with complain no-->complaints</a>
+            <a href="complaints.php" class="see-all-link">See all
+                (<?php echo $dashboardManager->getTotalCount("complain where status != 'DISMISSED'"); ?>) complaints</a>
         </div>
 
     </div>
