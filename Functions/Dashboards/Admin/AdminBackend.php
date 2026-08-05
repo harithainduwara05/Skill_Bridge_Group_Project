@@ -28,7 +28,7 @@ class DashboardManager
             c.contactPersonName AS user_name, 
             c.Email AS email, 
             'Company' AS role, 
-            c.companyName AS organization_name, 
+            c.Name AS organization_name, 
             u.status AS status
         FROM company c
         INNER JOIN user u ON c.Email = u.Email
@@ -39,7 +39,7 @@ class DashboardManager
             o.contactPersonName AS user_name, 
             o.Email AS email, 
             'Organization' AS role, 
-            o.organizationName AS organization_name, 
+            o.Name AS organization_name, 
             u.status AS status
         FROM organization o
         INNER JOIN user u ON o.Email = u.Email
@@ -55,6 +55,28 @@ class DashboardManager
         FROM admin a
         INNER JOIN user u ON a.Email = u.Email
         ";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    }
+    public function getpopularUni()
+    {
+        global $conn;
+        $sql = "SELECT 
+                ue.University AS 'UNIVERSITY NAME',
+                COUNT(DISTINCT s.Email) AS 'STUDENTS',
+                COUNT(DISTINCT sp.project_id) AS 'ACTIVE PROJECTS',
+                ue.Status AS 'status'
+                FROM 
+                student s
+                JOIN 
+                universityemails ue ON SUBSTRING_INDEX(s.Email, '@', -1) = ue.emailEx
+                LEFT JOIN 
+                student_projects sp ON s.Email = sp.Email AND sp.status = 'Active'
+                GROUP BY 
+                ue.University
+                ORDER BY 
+                `ACTIVE PROJECTS` DESC;";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
         return $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -89,5 +111,8 @@ $tot_internship = $dashboardManager->getTotalCount("internships WHERE STR_TO_DAT
 $allusers = $dashboardManager->getUsers();
 //Get All COmplain 
 $complains = $dashboardManager->getAll("complain");
-
+//popular Universities
+$popularUni = $dashboardManager->getpopularUni();
+//Active project
+$totalAcPro = $dashboardManager->getTotalCount("student_projects where status = 'Active'");
 ?>

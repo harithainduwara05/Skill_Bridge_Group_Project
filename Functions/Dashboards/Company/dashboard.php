@@ -3,7 +3,7 @@ include "../../../Config/db.php";
 include "../../../Session/session.php";
 
 is_logged_in();
-$user=current_user();
+$user = current_user();
 
 include "../../../Includes/company_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -19,7 +19,7 @@ include "../../../Includes/dash_header.php";
 
 
             <h1>
-                Welcome back, <?php echo $user['name']; ?>!
+                Welcome back, <?php echo $user['username']; ?>!
             </h1>
 
             <p>

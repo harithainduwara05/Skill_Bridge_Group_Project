@@ -19,7 +19,7 @@ include "../../../Includes/dash_header.php";
 
 
             <h1>
-                Welcome <?php echo $user['name']; ?>!
+                Welcome <?php echo $user['username']; ?>!
             </h1>
 
             <p>

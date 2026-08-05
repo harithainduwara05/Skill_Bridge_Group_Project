@@ -12,12 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'];
 
     $hashPassword = sha1($password);
-    $today = date("d/m/Y");
-    if (strtolower($role) === 'student') {    
+    if (strtolower($role) === 'student') {
         $university = $_POST['university'];
         $degree = $_POST['degree'];
-        $academicYear = $_POST['academicYear']; 
-        
+        $academicYear = $_POST['academicYear'];
+
         try {
             if (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($university)) && !empty(trim($degree)) && !empty(trim($academicYear)) && !empty(trim($password))) {
 
@@ -43,9 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $status = 'De-Active';
 
                         // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
+                        $sql = "INSERT INTO User (Email,password,role,status, verification_code) VALUES (?,?,?,?,?)";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
+                        $stmt->bind_param("sssss", $email, $hashPassword, $role, $status, $verificationCode);
                         $_SESSION['userData'] = [
                             'name' => $name,
                             'university' => $university,
@@ -86,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $website = $_POST['website'];
         $location = $_POST['location'];
 
-         try {
+        try {
             if (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($contacPName)) && !empty(trim($contacNo)) && !empty(trim($website)) && !empty(trim($location)) && !empty(trim($password))) {
 
                 // Check if email already exists
@@ -106,41 +105,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute();
                     $stmt->store_result();
                     if ($stmt->num_rows > 0) {*/
-                        // Generate random verification code
-                        $verificationCode = rand(100000, 999999);
-                        $status = 'De-Active';
+                    // Generate random verification code
+                    $verificationCode = rand(100000, 999999);
+                    $status = 'De-Active';
 
-                        // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
-                        $_SESSION['userData'] = [
-                            'name' => $name,
-                            'type' => $orgtype,
-                            'contactPersonName' => $contacPName,
-                            'contactNumber' => $contacNo,
-                            'website' => $website,
-                            'location' => $location,
-                            'role' => $role
-                        ];
+                    // Insert new user
+                    $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode, $today);
+                    $_SESSION['userData'] = [
+                        'name' => $name,
+                        'type' => $orgtype,
+                        'contactPersonName' => $contacPName,
+                        'contactNumber' => $contacNo,
+                        'website' => $website,
+                        'location' => $location,
+                        'role' => $role
+                    ];
 
-                        if ($stmt->execute()) {
-                            // Send Email
+                    if ($stmt->execute()) {
+                        // Send Email
 
-                            try {
-                                send_verification_email($email, $verificationCode);
-                                $_SESSION['verify_email'] = $email;
-                                header("Location: verify-email.php");
-                                exit;
-                            } catch (Exception $mailEx) {
-                                $flash = ['type' => 'error', 'message' => 'User registered but failed to send email: ' . $mailEx->getMessage()];
-                            }
-                        } else {
-                            $flash = ['type' => 'error', 'message' => 'Registration failed. Please try again.'];
+                        try {
+                            send_verification_email($email, $verificationCode);
+                            $_SESSION['verify_email'] = $email;
+                            header("Location: verify-email.php");
+                            exit;
+                        } catch (Exception $mailEx) {
+                            $flash = ['type' => 'error', 'message' => 'User registered but failed to send email: ' . $mailEx->getMessage()];
                         }
-                   /*} else {
-                        $flash = ['type' => 'error', 'message' => 'This email is not valid for this platfome. Plz contact admin'];
-                    }*/
+                    } else {
+                        $flash = ['type' => 'error', 'message' => 'Registration failed. Please try again.'];
+                    }
+                    /*} else {
+                         $flash = ['type' => 'error', 'message' => 'This email is not valid for this platfome. Plz contact admin'];
+                     }*/
                 }
             } else {
                 $flash = ['type' => 'error', 'message' => 'Please fill in all the required fields.'];
@@ -157,7 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $Cwebsite = $_POST['website'];
         $Clocation = $_POST['location'];
 
-         try {
+        try {
             if (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($CcontacPName)) && !empty(trim($CcontacNo)) && !empty(trim($Cwebsite)) && !empty(trim($Clocation)) && !empty(trim($password))) {
 
                 // Check if email already exists
@@ -168,7 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $checkStmt->store_result();
 
                 if ($checkStmt->num_rows > 0) {
-                    $flash = ['type' => 'error', 'message' => 'This email already exists!','role'=> $role];
+                    $flash = ['type' => 'error', 'message' => 'This email already exists!', 'role' => $role];
                 } else {
                     //check this is valid Email
                     /*$domain = substr($email, strpos($email, '@') + 1);
@@ -177,47 +176,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute();
                     $stmt->store_result();
                     if ($stmt->num_rows > 0) {*/
-                        // Generate random verification code
-                        $verificationCode = rand(100000, 999999);
-                        $status = 'De-Active';
+                    // Generate random verification code
+                    $verificationCode = rand(100000, 999999);
+                    $status = 'De-Active';
 
-                        // Insert new user
-                        $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
-                        $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode,$today);
-                        $_SESSION['userData'] = [
-                            'name' => $name,
-                            'type' => $corg_type,
-                            'contactPersonName' => $CcontacPName,
-                            'contactNumber' => $CcontacNo,
-                            'website' => $Cwebsite,
-                            'location' => $Clocation,
-                            'role' => $role
-                        ];
+                    // Insert new user
+                    $sql = "INSERT INTO User (Email,password,role,status, verification_code,created_at) VALUES (?,?,?,?,?,?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ssssss", $email, $hashPassword, $role, $status, $verificationCode, $today);
+                    $_SESSION['userData'] = [
+                        'name' => $name,
+                        'type' => $corg_type,
+                        'contactPersonName' => $CcontacPName,
+                        'contactNumber' => $CcontacNo,
+                        'website' => $Cwebsite,
+                        'location' => $Clocation,
+                        'role' => $role
+                    ];
 
-                        if ($stmt->execute()) {
-                            // Send Email
+                    if ($stmt->execute()) {
+                        // Send Email
 
-                            try {
-                                send_verification_email($email, $verificationCode);
-                                $_SESSION['verify_email'] = $email;
-                                header("Location: verify-email.php");
-                                exit;
-                            } catch (Exception $mailEx) {
-                                $flash = ['type' => 'error', 'message' => 'User registered but failed to send email: ' . $mailEx->getMessage(),'role'=> $role];
-                            }
-                        } else {
-                            $flash = ['type' => 'error', 'message' => 'Registration failed. Please try again.','role'=> $role];
+                        try {
+                            send_verification_email($email, $verificationCode);
+                            $_SESSION['verify_email'] = $email;
+                            header("Location: verify-email.php");
+                            exit;
+                        } catch (Exception $mailEx) {
+                            $flash = ['type' => 'error', 'message' => 'User registered but failed to send email: ' . $mailEx->getMessage(), 'role' => $role];
                         }
-                   /*} else {
-                        $flash = ['type' => 'error', 'message' => 'This email is not valid for this platfome. Plz contact admin'];
-                    }*/
+                    } else {
+                        $flash = ['type' => 'error', 'message' => 'Registration failed. Please try again.', 'role' => $role];
+                    }
+                    /*} else {
+                         $flash = ['type' => 'error', 'message' => 'This email is not valid for this platfome. Plz contact admin'];
+                     }*/
                 }
             } else {
-                $flash = ['type' => 'error', 'message' => 'Please fill in all the required fields.','role'=> $role];
+                $flash = ['type' => 'error', 'message' => 'Please fill in all the required fields.', 'role' => $role];
             }
         } catch (Exception $e) {
-            $flash = ['type' => 'error', 'message' => 'Error :' . $e->getMessage(),'role'=> $role];
+            $flash = ['type' => 'error', 'message' => 'Error :' . $e->getMessage(), 'role' => $role];
         }
 
 

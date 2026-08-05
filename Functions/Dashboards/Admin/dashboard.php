@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     exit();
 }
 
+
 include "../../../Includes/admin_sidebar.php";
 include "../../../Includes/dash_header.php";
 ?>
@@ -258,7 +259,7 @@ include "../../../Includes/dash_header.php";
                 $hasComplaints = false;
                 $limit = (count($complains) < 5) ? count($complains) : 5;
                 for ($i = 0; $i < $limit; $i++) {
-                    if (($complains[$i]['status'] === "DISMISS")) {
+                    if (($complains[$i]['status'] != "DISMISSED")) {
                         $hasComplaints = true;
                         ?>
                         <div class="complaint-item">
@@ -318,30 +319,39 @@ include "../../../Includes/dash_header.php";
                             <th>Active Projects</th>
                             <th>Completion Rate</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <!-- <th>Actions</th> -->
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>
-                                <div class="university-info">
-                                    <div class="university-logo mit">MIT</div>
-                                    <span class="university-name">Massachusetts Institute of Tech</span>
-                                </div>
-                            </td>
-                            <td>1,240</td>
-                            <td>42</td>
-                            <td>
-                                <div class="progress-bar-container">
-                                    <div class="progress-bar">
-                                        <div class="progress-bar-fill high" style="width:94%;"></div>
+                        <?php
+                        $limit = (count($popularUni) < 3) ? count($popularUni) : 3;
+                        for ($x = 0; $x < $limit; $x++) {
+                            $acurate = ($popularUni[$x]["ACTIVE PROJECTS"] / $totalAcPro) * 100;
+                            ?>
+                            <tr>
+                                <td>
+                                    <div class="university-info">
+                                        <div class="university-logo mit">
+                                            <?php echo $popularUni[$x]['UNIVERSITY NAME'][0]; ?></div>
+                                        <span
+                                            class="university-name"><?php echo $popularUni[$x]['UNIVERSITY NAME']; ?></span>
                                     </div>
-                                    <span class="progress-text">94%</span>
-                                </div>
-                            </td>
-                            <td><span class="badge-status active">Active</span></td>
-                            <td><button class="action-btn">⋮</button></td>
-                        </tr>
+                                </td>
+                                <td><?php echo $popularUni[$x]['STUDENTS']; ?></td>
+                                <td><?php echo $popularUni[$x]['ACTIVE PROJECTS']; ?></td>
+                                <td>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar">
+                                            <div class="progress-bar-fill high" style="width:<?php echo $acurate; ?>%;">
+                                            </div>
+                                        </div>
+                                        <span class="progress-text"><?php echo $acurate; ?>%</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge-status active"><?php echo $popularUni[$x]['status']; ?></span></td>
+                                <!--<td><button class="action-btn">⋮</button></td>-->
+                            </tr>
+                        <?php } ?>
                     </tbody>
                 </table>
             </div>
