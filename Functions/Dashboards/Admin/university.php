@@ -8,29 +8,59 @@ require_once "AdminBackend.php";
 include "../../../Includes/dash_header.php";
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $university = trim($_POST['university']);
-    $faculty = trim($_POST['faculty']);
-    $domain = trim($_POST['domain']);
-    $location = trim($_POST['location']);
-    $status = trim($_POST['status']);
-    try {
-        $result = $rudManager->get_db('emailEx', 'universityEmails where emailEx=\'' . $domain . '\'');
-        if ($result->num_rows > 0) {
-            $flash = ['type' => 'error', 'message' => 'Email Domain already exists'];
-        } else {
-            if (!empty($university) && !empty($faculty) && !empty($domain) && !empty($location) && !empty($status)) {
-                $sql = "INSERT into universityemails(University,faculty,emailEx,Status,Location)Values(?,?,?,?,?)";
-                $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sssss", $university, $faculty, $domain, $status, $location);
-                $stmt->execute();
+    $action = $_POST['action'] ?? 'add';
+
+    if ($action === 'add') {
+        $university = trim($_POST['university']);
+        $faculty = trim($_POST['faculty']);
+        $domain = trim($_POST['domain']);
+        $location = trim($_POST['location']);
+        $status = trim($_POST['status']);
+        try {
+            $result = $rudManager->get_db('emailEx', 'universityEmails where emailEx=\'' . $conn->real_escape_string($domain) . '\'');
+            if ($result->num_rows > 0) {
+                $flash = ['type' => 'error', 'message' => 'Email Domain already exists'];
             } else {
-                $flash = ['type' => 'error', 'message' => 'All fields are required'];
+                if (!empty($university) && !empty($faculty) && !empty($domain) && !empty($location) && !empty($status)) {
+                    $sql = "INSERT into universityemails(University,faculty,emailEx,Status,Location)Values(?,?,?,?,?)";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("sssss", $university, $faculty, $domain, $status, $location);
+                    $stmt->execute();
+                    $flash = ['type' => 'success', 'message' => 'University added successfully'];
+                } else {
+                    $flash = ['type' => 'error', 'message' => 'All fields are required'];
+                }
             }
+        } catch (mysqli_sql_exception $e) {
+            $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
         }
-    } catch (mysqli_sql_exception $e) {
-        $flash = ['type' => 'error', 'message' => 'Error :' . $e->getMessage()];
+    } elseif ($action === 'edit') {
+        $origDomain = trim($_POST['original_domain']);
+        $university = trim($_POST['university']);
+        $faculty = trim($_POST['faculty']);
+        $domain = trim($_POST['domain']);
+        $location = trim($_POST['location']);
+        $status = trim($_POST['status']);
+        try {
+            $sql = "UPDATE universityemails SET University=?, faculty=?, emailEx=?, Status=?, Location=? WHERE emailEx=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssss", $university, $faculty, $domain, $status, $location, $origDomain);
+            $stmt->execute();
+            $flash = ['type' => 'success', 'message' => 'University updated successfully'];
+        } catch (mysqli_sql_exception $e) {
+            $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+        }
+    } elseif ($action === 'delete') {
+        $domainToDelete = trim($_POST['delete_domain']);
+        try {
+            $rudManager->delete_db("emailEx = '" . $conn->real_escape_string($domainToDelete) . "'", "universityemails");
+            $flash = ['type' => 'success', 'message' => 'University deleted successfully'];
+        } catch (mysqli_sql_exception $e) {
+            $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+        }
     }
 }
+
 
 ?>
 
@@ -188,7 +218,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </td>
                             <td><span class="univ-domain-badge">@<?= htmlspecialchars($row['emailEx']) ?></span></td>
                             <td><?= htmlspecialchars($row['Location'] ?? '—') ?></td>
-                            <td><?= $dashboardManager->getTotalCount("student WHERE Email LIKE '%@" . $conn->real_escape_string($row['emailEx']) . "'") ?></td>
+                            <?php $stuCount = $dashboardManager->getTotalCount("student WHERE Email LIKE '%@" . $conn->real_escape_string($row['emailEx']) . "'"); ?>
+                            <td><?= $stuCount ?></td>
                             <td><span class="badge-status <?= $badgeCls ?>"><?= htmlspecialchars($row['Status'] ?? '') ?></span></td>
                             <td>
                                 <div class="univ-actions-cell">
@@ -197,15 +228,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             '<?= htmlspecialchars(addslashes($row['University'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['emailEx'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>',
-                                            '—',
+                                            '<?= $stuCount ?>',
                                             '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>',
                                             '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
                                     </button>
-                                    <button class="action-btn" type="button" title="Edit">
+                                    <button class="action-btn" type="button" title="Edit"
+                                        onclick="openEditModal(
+                                            '<?= htmlspecialchars(addslashes($row['University'])) ?>',
+                                            '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>',
+                                            '<?= htmlspecialchars(addslashes($row['emailEx'])) ?>',
+                                            '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>',
+                                            '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                     </button>
-                                    <button class="action-btn" type="button" title="Delete" style="color:#dc2626;">
+                                    <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
+                                        onclick="confirmDelete('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
                                     </button>
                                 </div>
@@ -256,6 +294,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </button>
         </div>
         <form class="univ-modal-body" action="" method="post">
+            <input type="hidden" name="action" value="add">
             <div class="form-group">
                 <label class="form-label">University Name <span style="color:#ef4444;">*</span></label>
                 <input type="text" class="form-input" name="university" placeholder="e.g. University of Colombo">
@@ -295,6 +334,56 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
+<!-- ─── Edit University Modal ─────────────────────────────────────────────────── -->
+<div class="univ-modal-overlay" id="editModal">
+    <div class="univ-modal">
+        <div class="univ-modal-header">
+            <h3>Edit University</h3>
+            <button class="univ-modal-close" id="closeEditModal" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form class="univ-modal-body" action="" method="post">
+            <input type="hidden" name="action" value="edit">
+            <input type="hidden" name="original_domain" id="editOrigDomain">
+            
+            <div class="form-group">
+                <label class="form-label">University Name <span style="color:#ef4444;">*</span></label>
+                <input type="text" class="form-input" name="university" id="editUni" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Faculty Name <span style="color:#ef4444;">*</span></label>
+                <input type="text" class="form-input" name="faculty" id="editFac" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Domain <span style="color:#ef4444;">*</span></label>
+                <input type="text" name="domain" id="editDomain" class="form-input" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" id="editLocation" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select class="form-input" name="status" id="editStatus">
+                        <option value="Active">Active</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="univ-modal-footer">
+                <button type="button" class="btn-outline" id="cancelEditModal">Cancel</button>
+                <button type="submit" class="btn-add-university" style="margin:0;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">save</span>
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- ─── View University Modal ────────────────────────────────────────────────── -->
 <div class="univ-modal-overlay" id="viewModal">
     <div class="univ-modal">
@@ -307,6 +396,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <div class="univ-modal-body" id="viewModalContent"></div>
     </div>
 </div>
+
+<!-- ─── Hidden Delete Form ───────────────────────────────────────────────────── -->
+<form id="deleteForm" action="" method="post" style="display:none;">
+    <input type="hidden" name="action" value="delete">
+    <input type="hidden" name="delete_domain" id="deleteDomainInput">
+</form>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>

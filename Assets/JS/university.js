@@ -76,3 +76,39 @@ document.getElementById('exportBtn').addEventListener('click', function () {
     a.click();
     URL.revokeObjectURL(url);
 });
+
+// ── Edit Modal ────────────────────────────────────────────────────────────────
+const editModal = document.getElementById('editModal');
+if (editModal) {
+    document.getElementById('closeEditModal').addEventListener('click',  () => editModal.classList.remove('open'));
+    document.getElementById('cancelEditModal').addEventListener('click', () => editModal.classList.remove('open'));
+    editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.remove('open'); });
+}
+
+function openEditModal(uni, faculty, domain, location, status) {
+    document.getElementById('editOrigDomain').value = domain;
+    document.getElementById('editUni').value = uni;
+    document.getElementById('editFac').value = faculty;
+    document.getElementById('editDomain').value = domain;
+    document.getElementById('editLocation').value = location;
+    
+    const statusSelect = document.getElementById('editStatus');
+    if (statusSelect) {
+        for (let i = 0; i < statusSelect.options.length; i++) {
+            if (statusSelect.options[i].value.toLowerCase() === (status || '').toLowerCase()) {
+                statusSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    
+    if (editModal) editModal.classList.add('open');
+}
+
+// ── Delete Confirmation ───────────────────────────────────────────────────────
+function confirmDelete(domain) {
+    if (confirm("Are you sure you want to delete the university with domain '@" + domain + "'?\nThis action cannot be undone.")) {
+        document.getElementById('deleteDomainInput').value = domain;
+        document.getElementById('deleteForm').submit();
+    }
+}
