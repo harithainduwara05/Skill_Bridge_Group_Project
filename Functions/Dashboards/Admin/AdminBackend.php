@@ -97,8 +97,31 @@ class DashboardManager
         return $stmt->execute();
     }
 }
+class RUDManager{
+    public $conn;
+    public function __construct($conn){
+        $this->conn = $conn;
+    }
+    public function get_db($requreidF,$sqlback){
+        $sql="SELECT $requreidF from $sqlback";
+        $stmt=$this->conn->prepare($sql);
+        $stmt->execute();
+        return $stmt->get_result();
+    }
+    public function delete_db($sqlback,$tableName){
+        $sql = "DELETE FROM $tableName WHERE $sqlback";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute();
+    }
+    public function update_db($sqlback,$tableName){
+        $sql = "UPDATE $tableName SET $sqlback";
+        $stmt = $this->conn->prepare($sql);
+        return $stmt->execute();
+    }
+}
 
 $dashboardManager = new DashboardManager();
+$rudManager=new RUDManager($conn);
 //get total users
 $totalUsers = $dashboardManager->getTotalCount("user");
 //get total university
@@ -115,4 +138,7 @@ $complains = $dashboardManager->getAll("complain");
 $popularUni = $dashboardManager->getpopularUni();
 //Active project
 $totalAcPro = $dashboardManager->getTotalCount("student_projects where status = 'Active'");
+
+
+
 ?>
