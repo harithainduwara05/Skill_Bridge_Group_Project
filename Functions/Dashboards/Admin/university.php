@@ -17,19 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $location = trim($_POST['location']);
         $status = trim($_POST['status']);
         try {
-            $result = $rudManager->get_db('emailEx', 'universityEmails where emailEx=\'' . $conn->real_escape_string($domain) . '\'');
-            if ($result->num_rows > 0) {
+            if ($adminDB->domainExists($domain)) {
                 $flash = ['type' => 'error', 'message' => 'Email Domain already exists'];
+            } elseif (!empty($university) && !empty($faculty) && !empty($domain) && !empty($location) && !empty($status)) {
+                $adminDB->addUniversity($university, $faculty, $domain, $status, $location);
+                $flash = ['type' => 'success', 'message' => 'University added successfully'];
             } else {
-                if (!empty($university) && !empty($faculty) && !empty($domain) && !empty($location) && !empty($status)) {
-                    $sql = "INSERT into universityemails(University,faculty,emailEx,Status,Location)Values(?,?,?,?,?)";
-                    $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("sssss", $university, $faculty, $domain, $status, $location);
-                    $stmt->execute();
-                    $flash = ['type' => 'success', 'message' => 'University added successfully'];
-                } else {
-                    $flash = ['type' => 'error', 'message' => 'All fields are required'];
-                }
+                $flash = ['type' => 'error', 'message' => 'All fields are required'];
             }
         } catch (mysqli_sql_exception $e) {
             $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -42,10 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $location = trim($_POST['location']);
         $status = trim($_POST['status']);
         try {
-            $sql = "UPDATE universityemails SET University=?, faculty=?, emailEx=?, Status=?, Location=? WHERE emailEx=?";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssss", $university, $faculty, $domain, $status, $location, $origDomain);
-            $stmt->execute();
+            $adminDB->updateUniversity($university, $faculty, $domain, $status, $location, $origDomain);
             $flash = ['type' => 'success', 'message' => 'University updated successfully'];
         } catch (mysqli_sql_exception $e) {
             $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -53,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif ($action === 'delete') {
         $domainToDelete = trim($_POST['delete_domain']);
         try {
-            $rudManager->delete_db("emailEx = '" . $conn->real_escape_string($domainToDelete) . "'", "universityemails");
+            $adminDB->deleteUniversity($domainToDelete);
             $flash = ['type' => 'success', 'message' => 'University deleted successfully'];
         } catch (mysqli_sql_exception $e) {
             $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -119,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="univ-stat-info">
                 <div class="univ-stat-label">ACTIVE DOMAINS</div>
                 <div class="univ-stat-value">
-                    <?php echo $dashboardManager->getTotalCount("universityemails WHERE status = 'Active'"); ?>
+                    <?php echo $adminDB->getCountWhere("universityemails", "status", "Active"); ?>
                 </div>
             </div>
         </div>
@@ -131,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="univ-stat-info">
                 <div class="univ-stat-label">PENDING APPROVAL</div>
                 <div class="univ-stat-value">
-                    <?php echo $dashboardManager->getTotalCount("universityemails WHERE status = 'Pending'"); ?>
+                    <?php echo $adminDB->getCountWhere("universityemails", "status", "Pending"); ?>
                 </div>
             </div>
         </div>
@@ -142,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
             <div class="univ-stat-info">
                 <div class="univ-stat-label">TOTAL STUDENTS</div>
-                <div class="univ-stat-value"><?php echo $dashboardManager->getTotalCount("student") ?></div>
+                <div class="univ-stat-value"><?php echo $adminDB->getCount("student") ?></div>
             </div>
         </div>
 
@@ -185,7 +176,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </thead>
                     <tbody>
                     <?php
-                        $uniResult = $rudManager->get_db("*", "universityemails");
+                        $uniResult = $adminDB->getAllUniversities();
                         
                         // Pagination Setup
                         $recordsPerPage = 5;
@@ -218,7 +209,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </td>
                             <td><span class="univ-domain-badge">@<?= htmlspecialchars($row['emailEx']) ?></span></td>
                             <td><?= htmlspecialchars($row['Location'] ?? '—') ?></td>
-                            <?php $stuCount = $dashboardManager->getTotalCount("student WHERE Email LIKE '%@" . $conn->real_escape_string($row['emailEx']) . "'"); ?>
+                            <?php $stuCount = $adminDB->getStudentCountByDomain($row['emailEx']); ?>
                             <td><?= $stuCount ?></td>
                             <td><span class="badge-status <?= $badgeCls ?>"><?= htmlspecialchars($row['Status'] ?? '') ?></span></td>
                             <td>
@@ -284,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </main>
 
-<!-- ─── Add University Modal ──────────────────────────────────────────────────── -->
+<!-- Add University Modal  -->
 <div class="univ-modal-overlay" id="addModal">
     <div class="univ-modal">
         <div class="univ-modal-header">
@@ -334,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
-<!-- ─── Edit University Modal ─────────────────────────────────────────────────── -->
+<!-- Edit University Modal -->
 <div class="univ-modal-overlay" id="editModal">
     <div class="univ-modal">
         <div class="univ-modal-header">
@@ -384,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
-<!-- ─── View University Modal ────────────────────────────────────────────────── -->
+<!-- View University Modal -->
 <div class="univ-modal-overlay" id="viewModal">
     <div class="univ-modal">
         <div class="univ-modal-header">
@@ -397,7 +388,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
-<!-- ─── Hidden Delete Form ───────────────────────────────────────────────────── -->
+<!-- Hidden Delete Form-->
 <form id="deleteForm" action="" method="post" style="display:none;">
     <input type="hidden" name="action" value="delete">
     <input type="hidden" name="delete_domain" id="deleteDomainInput">

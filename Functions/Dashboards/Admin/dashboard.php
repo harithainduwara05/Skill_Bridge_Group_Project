@@ -10,7 +10,7 @@ $user = current_user();
 require_once "AdminBackend.php";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'dismiss') {
-    $dashboardManager->update_db("status = 'DISMISSED' where id = " . intval($_POST['complaint_id']), "complain");
+    $adminDB->dismissComplaint(intval($_POST['complaint_id']));
     echo "<script>window.location.href = 'dashboard.php';</script>";
     exit();
 }
@@ -297,7 +297,7 @@ include "../../../Includes/dash_header.php";
 
             </div>
             <a href="complaints.php" class="see-all-link">See all
-                (<?php echo $dashboardManager->getTotalCount("complain where status != 'DISMISSED'"); ?>) complaints</a>
+                (<?php echo $adminDB->getUndismissedComplaintCount(); ?>) complaints</a>
         </div>
 
     </div>
