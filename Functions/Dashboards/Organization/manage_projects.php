@@ -4,63 +4,51 @@ include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
 require_role('organization');
-
 $user = current_user();
+$organization_email = $user['email'];
+
+// ---- Delete action (must run before any HTML/include output) ----
+if (isset($_GET['delete'])) {
+    $delId = (int)$_GET['delete'];
+    $delStmt = $conn->prepare("DELETE FROM projects WHERE id=? AND organization_email=?");
+    $delStmt->bind_param("is", $delId, $organization_email);
+    $delStmt->execute();
+    header("Location: manage_projects.php");
+    exit;
+}
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
 
-// ===================== TEMP DEMO DATA =====================
-// Replace this with a real query against your `projects` table, e.g.
-// SELECT * FROM projects WHERE organization_id = ? ORDER BY posted_at DESC LIMIT 10 OFFSET ?
-$projects = [
-    [
-        'title'      => 'Cloud Architecture Redesign',
-        'posted'     => 'Posted Oct 24, 2023',
-        'category'   => 'devops',
-        'category_label' => 'DevOps',
-        'applicants' => 14,
-        'team'       => 'Nexus Systems',
-        'deadline'   => 'Dec 15, 2023',
-        'status'     => 'reviewing',
-        'status_label' => 'Reviewing',
-    ],
-    [
-        'title'      => 'AI Content Moderator',
-        'posted'     => 'Posted Oct 20, 2023',
-        'category'   => 'aiml',
-        'category_label' => 'AI/ML',
-        'applicants' => 8,
-        'team'       => null, // pending assignment
-        'deadline'   => 'Jan 05, 2024',
-        'status'     => 'open',
-        'status_label' => 'Open',
-    ],
-    [
-        'title'      => 'Mobile Learning App Prototype',
-        'posted'     => 'Posted Oct 12, 2023',
-        'category'   => 'frontend',
-        'category_label' => 'Frontend',
-        'applicants' => 22,
-        'team'       => 'Skyline Devs',
-        'deadline'   => 'Nov 28, 2023',
-        'status'     => 'inprogress',
-        'status_label' => 'Active',
-    ],
-    [
-        'title'      => 'Data Science Bootcamp Platform',
-        'posted'     => 'Posted Sep 30, 2023',
-        'category'   => 'backend',
-        'category_label' => 'Backend',
-        'applicants' => 5,
-        'team'       => 'Vortex Group',
-        'deadline'   => 'Oct 30, 2023',
-        'status'     => 'closed',
-        'status_label' => 'Closed',
-    ],
-];
+// ---- Filters ----
+$statusFilter   = $_GET['status'] ?? 'all';
+$categoryFilter = $_GET['category'] ?? 'all';
 
-$totalProjects = 34;
+$sql    = "SELECT * FROM projects WHERE organization_email = ?";
+$types  = "s";
+$params = [$organization_email];
+
+if ($statusFilter !== 'all') {
+    $sql .= " AND status = ?";
+    $types .= "s";
+    $params[] = $statusFilter;
+}
+if ($categoryFilter !== 'all') {
+    $sql .= " AND category = ?";
+    $types .= "s";
+    $params[] = $categoryFilter;
+}
+$sql .= " ORDER BY posted_at DESC";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$countStmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
+$countStmt->bind_param("s", $organization_email);
+$countStmt->execute();
+$totalProjects = $countStmt->get_result()->fetch_row()[0];
 $shownCount    = count($projects);
 ?>
 
@@ -137,40 +125,33 @@ $shownCount    = count($projects);
                         <tr>
                             <td class="project-title-cell">
                                 <div class="project-title"><?= htmlspecialchars($p['title']) ?></div>
-                                <div class="project-meta"><?= htmlspecialchars($p['posted']) ?></div>
+                                <div class="project-meta">Posted <?= htmlspecialchars(date('M d, Y', strtotime($p['posted_at']))) ?></div>
                             </td>
                             <td>
-                                <span class="category-tag <?= $p['category'] ?>"><?= htmlspecialchars($p['category_label']) ?></span>
+                                <span class="category-tag"><?= htmlspecialchars($p['category']) ?></span>
                             </td>
-                            <td><?= (int)$p['applicants'] ?></td>
+                            <td>0</td>
                             <td>
-                                <?php if ($p['team']): ?>
-                                    <div class="team-cell">
-                                        <span class="team-dot"></span>
-                                        <?= htmlspecialchars($p['team']) ?>
-                                    </div>
-                                <?php else: ?>
-                                    <div class="team-cell pending">
-                                        <span class="team-dot"></span>
-                                        Pending
-                                    </div>
-                                <?php endif; ?>
+                                <div class="team-cell pending">
+                                    <span class="team-dot"></span>
+                                    Pending
+                                </div>
                             </td>
                             <td><?= htmlspecialchars($p['deadline']) ?></td>
                             <td>
-                                <span class="badge-status <?= $p['status'] ?>"><?= htmlspecialchars($p['status_label']) ?></span>
+                                <span class="badge-status <?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(ucfirst($p['status'])) ?></span>
                             </td>
                             <td>
                                 <div class="row-actions">
                                     <button class="action-btn" title="View">
                                         <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
                                     </button>
-                                    <button class="action-btn" title="Edit">
+                                    <a class="action-btn" title="Edit" href="edit_project.php?id=<?= (int)$p['id'] ?>">
                                         <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
-                                    </button>
-                                    <button class="action-btn danger" title="Delete">
+                                    </a>
+                                    <a class="action-btn danger" title="Delete" href="manage_projects.php?delete=<?= (int)$p['id'] ?>" onclick="return confirm('Delete this project?')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
