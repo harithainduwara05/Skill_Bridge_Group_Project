@@ -88,7 +88,7 @@ include "../../../Includes/dash_header.php";
             <p>Welcome back, <?php echo htmlspecialchars($user['username'] ?? 'there'); ?>, here's what's happening with your projects today.</p>
         </div>
 
-        <a href="#" class="btn-outline">
+        <a href="download_report.php" class="btn-outline">
             <span class="material-symbols-outlined">download</span>
             Download Report
         </a>
