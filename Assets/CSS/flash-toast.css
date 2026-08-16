@@ -1,0 +1,18 @@
+/* ── Flash Toast Notification ── */
+/* Standalone file so it can be included on any dashboard page
+   without editing the shared dashboard.css */
+
+.flash-toast {
+    position: fixed; top: 20px; right: 24px; z-index: 9999;
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; border-radius: 12px; min-width: 280px; max-width: 400px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    font-size: 13px; font-weight: 500;
+    animation: toastSlideIn .3s ease both;
+}
+@keyframes toastSlideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+.flash-toast.flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+.flash-toast.flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }

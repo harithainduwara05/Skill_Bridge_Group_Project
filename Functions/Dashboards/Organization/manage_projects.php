@@ -82,10 +82,14 @@ $shownCount    = count($projects);
 
             <select name="category" class="select-filter" onchange="this.form.submit()">
                 <option value="all" <?= (($_GET['category'] ?? 'all') == 'all') ? 'selected' : '' ?>>Category: All</option>
-                <option value="devops">DevOps</option>
-                <option value="aiml">AI/ML</option>
-                <option value="frontend">Frontend</option>
-                <option value="backend">Backend</option>
+                <option value="Web Development" <?= (($_GET['category'] ?? '') == 'Web Development') ? 'selected' : '' ?>>Web Development</option>
+                <option value="Mobile Development" <?= (($_GET['category'] ?? '') == 'Mobile Development') ? 'selected' : '' ?>>Mobile Development</option>
+                <option value="AI / Machine Learning" <?= (($_GET['category'] ?? '') == 'AI / Machine Learning') ? 'selected' : '' ?>>AI / Machine Learning</option>
+                <option value="Data Science" <?= (($_GET['category'] ?? '') == 'Data Science') ? 'selected' : '' ?>>Data Science</option>
+                <option value="UI/UX Design" <?= (($_GET['category'] ?? '') == 'UI/UX Design') ? 'selected' : '' ?>>UI/UX Design</option>
+                <option value="Cloud & DevOps" <?= (($_GET['category'] ?? '') == 'Cloud & DevOps') ? 'selected' : '' ?>>Cloud & DevOps</option>
+                <option value="Cybersecurity" <?= (($_GET['category'] ?? '') == 'Cybersecurity') ? 'selected' : '' ?>>Cybersecurity</option>
+                <option value="Other" <?= (($_GET['category'] ?? '') == 'Other') ? 'selected' : '' ?>>Other</option>
             </select>
         </form>
 

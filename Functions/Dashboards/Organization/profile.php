@@ -20,20 +20,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $twitter       = trim($_POST['twitter'] ?? '');
     $facebook      = trim($_POST['facebook'] ?? '');
 
-    $sql = "UPDATE organization
-            SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?
-            WHERE Email=?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param(
-        "ssssssssss",
-        $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $organization_email
-    );
+    // ---- Logo upload (optional) ----
+    $logoPath = null;
+    if (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $maxSizeBytes = 2 * 1024 * 1024; // 2MB
 
-    if ($stmt->execute()) {
-        $_SESSION['user']['username'] = $name;
-        $flash = ['type' => 'success', 'message' => 'Profile updated successfully.'];
-    } else {
-        $flash = ['type' => 'error', 'message' => 'Update failed. Please try again.'];
+        $fileType = mime_content_type($_FILES['logo']['tmp_name']);
+        $fileSize = $_FILES['logo']['size'];
+
+        if (!in_array($fileType, $allowedTypes)) {
+            $flash = ['type' => 'error', 'message' => 'Logo must be a JPG, PNG, GIF or WEBP image.'];
+        } elseif ($fileSize > $maxSizeBytes) {
+            $flash = ['type' => 'error', 'message' => 'Logo file is too large (max 2MB).'];
+        } else {
+            $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+            $safeEmail = preg_replace('/[^a-zA-Z0-9]/', '_', $organization_email);
+            $fileName = $safeEmail . '_' . time() . '.' . $ext;
+            $destDir  = __DIR__ . '/../../../Assets/Uploads/org_logos/';
+            $destPath = $destDir . $fileName;
+
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $destPath)) {
+                $logoPath = 'Assets/Uploads/org_logos/' . $fileName;
+            } else {
+                $flash = ['type' => 'error', 'message' => 'Failed to save the uploaded logo.'];
+            }
+        }
+    }
+
+    if (empty($flash)) {
+        if ($logoPath !== null) {
+            $sql = "UPDATE organization
+                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?, logo=?
+                    WHERE Email=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "sssssssssss",
+                $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $logoPath, $organization_email
+            );
+        } else {
+            $sql = "UPDATE organization
+                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?
+                    WHERE Email=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "ssssssssss",
+                $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $organization_email
+            );
+        }
+
+        if ($stmt->execute()) {
+            $_SESSION['user']['username'] = $name;
+            $flash = ['type' => 'success', 'message' => 'Profile updated successfully.'];
+        } else {
+            $flash = ['type' => 'error', 'message' => 'Update failed. Please try again.'];
+        }
     }
 }
 
@@ -75,7 +116,7 @@ include "../../../Includes/dash_header.php";
     </div>
     <?php endif; ?>
 
-    <form method="POST" action="">
+    <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
 
     <!-- ===================== STAT CARDS ===================== -->
     <div class="stats-grid">
@@ -138,9 +179,10 @@ include "../../../Includes/dash_header.php";
             <div class="card">
                 <div class="avatar-wrap">
                     <div class="avatar-circle">
-                        <img src="../../../Assets/Images/logo.png" alt="Organization Logo">
+                        <img src="<?= !empty($org['logo']) ? '../../../' . htmlspecialchars($org['logo']) : '../../../Assets/Images/logo.png' ?>" alt="Organization Logo" id="logoPreview">
                     </div>
-                    <a href="#" class="upload-link">Upload New Logo</a>
+                    <label for="logoInput" class="upload-link" style="cursor:pointer;">Upload New Logo</label>
+                    <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').submit();">
                     <span class="badge-status verified">Verified</span>
                 </div>
             </div>
@@ -225,6 +267,23 @@ include "../../../Includes/dash_header.php";
     </form>
 
 </main>
+
+<script>
+    // Auto-hide the flash toast message after a few seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        const toast = document.querySelector('.flash-toast');
+        if (toast) {
+            setTimeout(function () {
+                toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(function () {
+                    toast.remove();
+                }, 400);
+            }, 3000); // visible for 3 seconds
+        }
+    });
+</script>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
