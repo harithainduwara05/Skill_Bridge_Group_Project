@@ -50,6 +50,25 @@ $countStmt->bind_param("s", $organization_email);
 $countStmt->execute();
 $totalProjects = $countStmt->get_result()->fetch_row()[0];
 $shownCount    = count($projects);
+
+// ---- Bottom summary stat cards (real data) ----
+$stmt = $conn->prepare("SELECT COUNT(*) FROM student_projects sp
+                         JOIN projects p ON sp.project_id = p.id
+                         WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$activeApplications = (int)$stmt->get_result()->fetch_row()[0];
+
+// "Assigned Teams" = number of this org's projects that have at least one student attached
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT sp.project_id) FROM student_projects sp
+                         JOIN projects p ON sp.project_id = p.id
+                         WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$assignedTeams = (int)$stmt->get_result()->fetch_row()[0];
+
+// No timestamp data exists yet to measure real response time
+$avgResponseTime = null;
 ?>
 
 <main class="content">
@@ -134,12 +153,32 @@ $shownCount    = count($projects);
                             <td>
                                 <span class="category-tag"><?= htmlspecialchars($p['category']) ?></span>
                             </td>
-                            <td>0</td>
                             <td>
-                                <div class="team-cell pending">
-                                    <span class="team-dot"></span>
-                                    Pending
-                                </div>
+                                <?php
+                                    $appStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+                                    $appStmt->bind_param("i", $p['id']);
+                                    $appStmt->execute();
+                                    echo (int)$appStmt->get_result()->fetch_row()[0];
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $teamStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+                                    $teamStmt->bind_param("i", $p['id']);
+                                    $teamStmt->execute();
+                                    $assignedCount = (int)$teamStmt->get_result()->fetch_row()[0];
+                                ?>
+                                <?php if ($assignedCount > 0): ?>
+                                    <div class="team-cell" style="color:#16a34a; font-size:12px; font-style:italic;">
+                                        <span class="team-dot" style="background:#16a34a;"></span>
+                                        Assigned (<?= $assignedCount ?>)
+                                    </div>
+                                <?php else: ?>
+                                    <div class="team-cell pending">
+                                        <span class="team-dot"></span>
+                                        Pending
+                                    </div>
+                                <?php endif; ?>
                             </td>
                             <td><?= htmlspecialchars($p['deadline']) ?></td>
                             <td>
@@ -187,11 +226,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon blue">
                     <span class="material-symbols-outlined">rocket_launch</span>
                 </div>
-                <span class="stat-trend up">↑ 12%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Total Projects Posted</div>
-                <div class="stat-value">34</div>
+                <div class="stat-value"><?= (int)$totalProjects ?></div>
             </div>
         </div>
 
@@ -200,11 +238,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon green">
                     <span class="material-symbols-outlined">groups</span>
                 </div>
-                <span class="stat-trend up">↑ 5%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Active Applications</div>
-                <div class="stat-value">156</div>
+                <div class="stat-value"><?= $activeApplications ?></div>
             </div>
         </div>
 
@@ -213,11 +250,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon slate">
                     <span class="material-symbols-outlined">sentiment_neutral</span>
                 </div>
-                <span class="stat-trend down">↓ 2%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Assigned Teams</div>
-                <div class="stat-value">08</div>
+                <div class="stat-value"><?= $assignedTeams ?></div>
             </div>
         </div>
 
@@ -226,11 +262,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon navy">
                     <span class="material-symbols-outlined">timer</span>
                 </div>
-                <span class="stat-trend up">Steady</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Avg. Response Time</div>
-                <div class="stat-value">4.2d</div>
+                <div class="stat-value"><?= $avgResponseTime ?? 'N/A' ?></div>
             </div>
         </div>
 
