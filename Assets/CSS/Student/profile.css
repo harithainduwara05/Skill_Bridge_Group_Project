@@ -1,21 +1,13 @@
-body{
 
-    margin:0;
-    background:#f5f7fb;
-    font-family:'Inter',Arial,sans-serif;
-    color:#082544;
-
-}
 
 
 /* MAIN */
 
-.profile-container{
-
-    margin-left:220px;
-    padding:30px;
-    width:calc(100% - 260px);
-
+.profile-container {
+    padding: 30px;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0;
 }
 
 

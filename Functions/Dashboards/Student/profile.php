@@ -518,36 +518,14 @@ $completion = calculateProfileCompletion(
 
 ?>
 <?php
+$extra_css = '
+<link rel="stylesheet" href="../../../Assets/CSS/Student/profile.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+';
 
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
-
 ?>
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-
-<title>
-My Profile
-</title>
-
-
-<link rel="stylesheet"
-href="../../../Assets/CSS/Student/profile.css">
-
-
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-
-</head>
-
-
-<body>
 
 
 <div class="profile-container">
@@ -1196,9 +1174,7 @@ function shareProfile(){
 
 
 
-</body>
 
-</html>
 
 
 

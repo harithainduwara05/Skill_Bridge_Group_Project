@@ -259,35 +259,14 @@ function getSkillLetters($skill)
 }
 
 
+$extra_css = '
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="../../../Assets/CSS/Student/skills.css">
+';
+
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
-
 ?>
-
-
-
-<!DOCTYPE html>
-
-<html>
-
-<head>
-
-<link 
-rel="stylesheet" 
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<title>
-My Skills | SkillBridge
-</title>
-
-
-<link rel="stylesheet" 
-href="../../../Assets/CSS/Student/skills.css">
-
-
-</head>
-
-
-<body>
 
 
 
@@ -390,8 +369,10 @@ Experience
 
 
 <strong>
-<?php echo  htmlspecialchars($skill['experience']); ?>
- Years
+<?php 
+$exp = htmlspecialchars($skill['experience']); 
+echo (stripos($exp, 'year') === false && stripos($exp, 'yr') === false) ? $exp . ' Years' : $exp; 
+?>
 </strong>
 
 
@@ -688,9 +669,7 @@ function closeSkillModal(){
 
 
 
-</body>
 
-</html>
 
 
 

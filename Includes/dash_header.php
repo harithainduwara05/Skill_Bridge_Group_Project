@@ -1,7 +1,27 @@
 <?php
 // Generate avatar color based on name
-$avatarName = isset($user['username']) ? $user['username'] : 'Admin User';
-$roleLabel  = isset($user['role']) ? ucfirst($user['role']) : 'Super Admin';
+$avatarName = 'User';
+if (!empty($user['username'])) {
+    $avatarName = $user['username'];
+} elseif (isset($student['Name'])) {
+    $avatarName = $student['Name'];
+} else {
+    // Fallback: try to fetch it if session is old
+    global $conn;
+    if (isset($conn) && isset($user['Email']) && isset($user['role'])) {
+        $stmt = $conn->prepare("SELECT Name FROM " . $user['role'] . " WHERE Email=?");
+        if ($stmt) {
+            $stmt->bind_param("s", $user['Email']);
+            $stmt->execute();
+            $res = $stmt->get_result()->fetch_assoc();
+            if ($res && !empty($res['Name'])) {
+                $avatarName = $res['Name'];
+            }
+        }
+    }
+}
+
+$roleLabel  = !empty($user['role']) ? ucfirst($user['role']) : 'User';
 $initial    = strtoupper(substr($avatarName, 0, 1));
 
 // Pick a consistent color based on first letter
