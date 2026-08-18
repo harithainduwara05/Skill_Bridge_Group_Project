@@ -94,7 +94,7 @@ require_once __DIR__ . '/Includes/register-header.php';
             <label for="year">Academic Year</label>
             <select id="year" name="academicYear" required>
               <option value="">Select year</option>
-              <?php foreach (['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'] as $y): ?>
+              <?php foreach (['Year 1', 'Year 2', 'Year 3', 'Year 4'] as $y): ?>
                 <option value="<?= $y ?>" <?= (($_SESSION['old']['academicYear'] ?? '') === $y) ? 'selected' : '' ?>>
                   <?= $y ?>
                 </option>
