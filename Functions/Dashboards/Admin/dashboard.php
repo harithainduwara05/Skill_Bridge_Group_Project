@@ -326,7 +326,7 @@ include "../../../Includes/dash_header.php";
                         <?php
                         $limit = (count($popularUni) < 3) ? count($popularUni) : 3;
                         for ($x = 0; $x < $limit; $x++) {
-                            $acurate = ($popularUni[$x]["ACTIVE PROJECTS"] / $totalAcPro) * 100;
+                            $acurate = ($totalAcPro > 0) ? ($popularUni[$x]["ACTIVE PROJECTS"] / $totalAcPro) * 100 : 0;
                             ?>
                             <tr>
                                 <td>
