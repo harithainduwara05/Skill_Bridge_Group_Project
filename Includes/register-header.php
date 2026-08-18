@@ -1,6 +1,6 @@
 <?php
 // Includes/header.php
-require_once __DIR__ . '/../Session/Sessionn.php';
+require_once __DIR__ . '/../Session/Session.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">

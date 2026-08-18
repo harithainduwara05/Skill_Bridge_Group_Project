@@ -1,0 +1,199 @@
+/* ─── University Registry Styles ──────────────────────────────────────────── */
+
+.univ-page-header { padding: 24px 28px 0; }
+
+.univ-breadcrumb {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; color: #9ca3af; margin-bottom: 10px;
+}
+.univ-breadcrumb a { color: #6b7280; text-decoration: none; transition: color .2s; }
+.univ-breadcrumb a:hover { color: #1e3a5f; }
+
+.univ-title-row {
+    display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 16px;
+    flex-wrap: wrap; padding-bottom: 20px;
+}
+.univ-title    { font-size: 26px; font-weight: 800; color: #111827; line-height: 1.2; margin-bottom: 6px; }
+.univ-subtitle { font-size: 13px; color: #6b7280; max-width: 540px; line-height: 1.6; }
+
+.btn-add-university {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 11px 20px; background: #1e293b; color: #fff;
+    border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: 'Inter', sans-serif;
+    transition: all .25s ease; white-space: nowrap;
+}
+.btn-add-university:hover {
+    background: #0f172a; transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(30,41,59,.3);
+}
+
+/* ── Stats ── */
+.univ-stats-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 16px; padding: 0 28px 20px;
+}
+.univ-stat-card {
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 14px;
+    padding: 18px 20px; display: flex; align-items: center; gap: 16px;
+    transition: all .3s ease; animation: fadeInUp .4s ease both;
+}
+.univ-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
+.univ-stat-card:nth-child(1) { animation-delay: .05s; }
+.univ-stat-card:nth-child(2) { animation-delay: .10s; }
+.univ-stat-card:nth-child(3) { animation-delay: .15s; }
+.univ-stat-card:nth-child(4) { animation-delay: .20s; }
+
+.univ-stat-icon-wrap {
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.univ-stat-icon-wrap .material-symbols-outlined { font-size: 22px; }
+.univ-stat-icon-wrap.grey   { background: #f3f4f6; color: #6b7280; }
+.univ-stat-icon-wrap.green  { background: #dcfce7; color: #16a34a; }
+.univ-stat-icon-wrap.orange { background: #ffedd5; color: #ea580c; }
+.univ-stat-icon-wrap.blue   { background: #dbeafe; color: #2563eb; }
+
+.univ-stat-label {
+    font-size: 10px; font-weight: 700; color: #9ca3af;
+    letter-spacing: .6px; text-transform: uppercase; margin-bottom: 4px;
+}
+.univ-stat-value { font-size: 28px; font-weight: 800; color: #111827; line-height: 1.1; }
+
+/* ── Table toolbar ── */
+.univ-table-actions { display: flex; align-items: center; gap: 8px; }
+
+.univ-search-box {
+    display: flex; align-items: center; gap: 6px;
+    background: #f9fafb; border: 1px solid #e5e7eb;
+    border-radius: 8px; padding: 6px 12px; width: 260px; transition: all .25s;
+}
+.univ-search-box:focus-within {
+    border-color: #3b82f6; background: #fff;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+.univ-search-box input {
+    border: none; background: transparent; outline: none;
+    font-size: 13px; color: #1a1a2e; width: 100%; font-family: 'Inter', sans-serif;
+}
+.univ-search-box input::placeholder { color: #9ca3af; }
+
+.univ-icon-btn {
+    width: 34px; height: 34px; border: 1px solid #e5e7eb;
+    background: #fff; border-radius: 8px; display: flex;
+    align-items: center; justify-content: center;
+    cursor: pointer; color: #6b7280; transition: all .2s;
+}
+.univ-icon-btn:hover { background: #f9fafb; color: #1e3a5f; border-color: #d1d5db; }
+
+/* ── Table extras ── */
+.univ-sub-location { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+.univ-domain-badge {
+    display: inline-flex; align-items: center; padding: 3px 9px;
+    background: #eff6ff; color: #1d4ed8; border-radius: 6px;
+    font-size: 12px; font-weight: 600; font-family: 'Courier New', monospace;
+}
+
+.badge-status.inactive-badge { background: #f3f4f6; color: #6b7280; }
+.badge-status.inactive-badge::before { content: '●'; font-size: 8px; margin-right: 4px; }
+
+.univ-actions-cell { display: flex; align-items: center; gap: 2px; }
+
+/* ── Pagination ── */
+.univ-pagination {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; border-top: 1px solid #f3f4f6;
+}
+.univ-pagination-info { font-size: 12px; color: #9ca3af; }
+.univ-pagination-controls { display: flex; align-items: center; gap: 4px; }
+
+.univ-page-btn {
+    padding: 6px 12px; border: 1px solid #e5e7eb; border-radius: 8px;
+    font-size: 13px; font-weight: 500; color: #374151; background: #fff;
+    text-decoration: none; transition: all .2s; cursor: pointer; display: inline-block;
+}
+.univ-page-btn:hover:not(.disabled):not(.univ-page-active) { background: #f9fafb; border-color: #d1d5db; }
+.univ-page-btn.univ-page-active { background: #1e293b; color: #fff; border-color: #1e293b; }
+.univ-page-btn.disabled { color: #d1d5db; pointer-events: none; cursor: default; }
+
+/* ── Modal ── */
+.univ-modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45);
+    z-index: 1000; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+}
+.univ-modal-overlay.open { display: flex; }
+
+.univ-modal {
+    background: #fff; border-radius: 16px; width: 100%; max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.18);
+    animation: slideModalUp .25s ease; overflow: hidden;
+}
+@keyframes slideModalUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+
+.univ-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid #f3f4f6;
+}
+.univ-modal-header h3 { font-size: 16px; font-weight: 700; color: #111827; }
+.univ-modal-close {
+    background: none; border: none; cursor: pointer; color: #9ca3af;
+    display: flex; align-items: center; border-radius: 6px; padding: 2px; transition: all .2s;
+}
+.univ-modal-close:hover { color: #111827; background: #f3f4f6; }
+
+.univ-modal-body { padding: 20px 24px; }
+.univ-modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    margin-top: 20px; padding-top: 16px; border-top: 1px solid #f3f4f6;
+}
+
+/* ── View detail rows ── */
+.univ-detail-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid #f9fafb; font-size: 13px;
+}
+.univ-detail-row:last-child { border-bottom: none; }
+.univ-detail-label {
+    min-width: 120px; font-weight: 600; color: #6b7280; font-size: 11px;
+    text-transform: uppercase; letter-spacing: .4px; padding-top: 2px;
+}
+.univ-detail-value { color: #111827; font-weight: 500; }
+
+/* ── Responsive ── */
+@media (max-width: 1200px) { .univ-stats-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 768px) {
+    .univ-stats-grid { grid-template-columns: 1fr; }
+    .univ-title-row  { flex-direction: column; }
+    .univ-search-box { width: 160px; }
+}
+
+/* ── Flash Toast Notification ── */
+.flash-toast {
+    position: fixed; top: 20px; right: 24px; z-index: 9999;
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 18px; border-radius: 12px; min-width: 280px; max-width: 400px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.12);
+    font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;
+    animation: toastSlideIn .3s ease both;
+}
+@keyframes toastSlideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+}
+.flash-toast.flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
+.flash-toast.flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+.flash-icon { font-size: 20px; flex-shrink: 0; }
+.flash-msg  { flex: 1; line-height: 1.4; }
+.flash-close {
+    background: none; border: none; cursor: pointer; padding: 2px;
+    color: inherit; opacity: .6; display: flex; align-items: center;
+    border-radius: 4px; transition: opacity .2s;
+}
+.flash-close:hover { opacity: 1; }
