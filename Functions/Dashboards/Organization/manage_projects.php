@@ -4,64 +4,71 @@ include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
 require_role('organization');
-
 $user = current_user();
+$organization_email = $user['email'];
+
+// ---- Delete action (must run before any HTML/include output) ----
+if (isset($_GET['delete'])) {
+    $delId = (int)$_GET['delete'];
+    $delStmt = $conn->prepare("DELETE FROM projects WHERE id=? AND organization_email=?");
+    $delStmt->bind_param("is", $delId, $organization_email);
+    $delStmt->execute();
+    header("Location: manage_projects.php");
+    exit;
+}
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
 
-// ===================== TEMP DEMO DATA =====================
-// Replace this with a real query against your `projects` table, e.g.
-// SELECT * FROM projects WHERE organization_id = ? ORDER BY posted_at DESC LIMIT 10 OFFSET ?
-$projects = [
-    [
-        'title'      => 'Cloud Architecture Redesign',
-        'posted'     => 'Posted Oct 24, 2023',
-        'category'   => 'devops',
-        'category_label' => 'DevOps',
-        'applicants' => 14,
-        'team'       => 'Nexus Systems',
-        'deadline'   => 'Dec 15, 2023',
-        'status'     => 'reviewing',
-        'status_label' => 'Reviewing',
-    ],
-    [
-        'title'      => 'AI Content Moderator',
-        'posted'     => 'Posted Oct 20, 2023',
-        'category'   => 'aiml',
-        'category_label' => 'AI/ML',
-        'applicants' => 8,
-        'team'       => null, // pending assignment
-        'deadline'   => 'Jan 05, 2024',
-        'status'     => 'open',
-        'status_label' => 'Open',
-    ],
-    [
-        'title'      => 'Mobile Learning App Prototype',
-        'posted'     => 'Posted Oct 12, 2023',
-        'category'   => 'frontend',
-        'category_label' => 'Frontend',
-        'applicants' => 22,
-        'team'       => 'Skyline Devs',
-        'deadline'   => 'Nov 28, 2023',
-        'status'     => 'inprogress',
-        'status_label' => 'Active',
-    ],
-    [
-        'title'      => 'Data Science Bootcamp Platform',
-        'posted'     => 'Posted Sep 30, 2023',
-        'category'   => 'backend',
-        'category_label' => 'Backend',
-        'applicants' => 5,
-        'team'       => 'Vortex Group',
-        'deadline'   => 'Oct 30, 2023',
-        'status'     => 'closed',
-        'status_label' => 'Closed',
-    ],
-];
+// ---- Filters ----
+$statusFilter   = $_GET['status'] ?? 'all';
+$categoryFilter = $_GET['category'] ?? 'all';
 
-$totalProjects = 34;
+$sql    = "SELECT * FROM projects WHERE organization_email = ?";
+$types  = "s";
+$params = [$organization_email];
+
+if ($statusFilter !== 'all') {
+    $sql .= " AND status = ?";
+    $types .= "s";
+    $params[] = $statusFilter;
+}
+if ($categoryFilter !== 'all') {
+    $sql .= " AND category = ?";
+    $types .= "s";
+    $params[] = $categoryFilter;
+}
+$sql .= " ORDER BY posted_at DESC";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$countStmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
+$countStmt->bind_param("s", $organization_email);
+$countStmt->execute();
+$totalProjects = $countStmt->get_result()->fetch_row()[0];
 $shownCount    = count($projects);
+
+// ---- Bottom summary stat cards (real data) ----
+$stmt = $conn->prepare("SELECT COUNT(*) FROM student_projects sp
+                         JOIN projects p ON sp.project_id = p.id
+                         WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$activeApplications = (int)$stmt->get_result()->fetch_row()[0];
+
+// "Assigned Teams" = number of this org's projects that have at least one student attached
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT sp.project_id) FROM student_projects sp
+                         JOIN projects p ON sp.project_id = p.id
+                         WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$assignedTeams = (int)$stmt->get_result()->fetch_row()[0];
+
+// No timestamp data exists yet to measure real response time
+$avgResponseTime = null;
 ?>
 
 <main class="content">
@@ -94,10 +101,14 @@ $shownCount    = count($projects);
 
             <select name="category" class="select-filter" onchange="this.form.submit()">
                 <option value="all" <?= (($_GET['category'] ?? 'all') == 'all') ? 'selected' : '' ?>>Category: All</option>
-                <option value="devops">DevOps</option>
-                <option value="aiml">AI/ML</option>
-                <option value="frontend">Frontend</option>
-                <option value="backend">Backend</option>
+                <option value="Web Development" <?= (($_GET['category'] ?? '') == 'Web Development') ? 'selected' : '' ?>>Web Development</option>
+                <option value="Mobile Development" <?= (($_GET['category'] ?? '') == 'Mobile Development') ? 'selected' : '' ?>>Mobile Development</option>
+                <option value="AI / Machine Learning" <?= (($_GET['category'] ?? '') == 'AI / Machine Learning') ? 'selected' : '' ?>>AI / Machine Learning</option>
+                <option value="Data Science" <?= (($_GET['category'] ?? '') == 'Data Science') ? 'selected' : '' ?>>Data Science</option>
+                <option value="UI/UX Design" <?= (($_GET['category'] ?? '') == 'UI/UX Design') ? 'selected' : '' ?>>UI/UX Design</option>
+                <option value="Cloud & DevOps" <?= (($_GET['category'] ?? '') == 'Cloud & DevOps') ? 'selected' : '' ?>>Cloud & DevOps</option>
+                <option value="Cybersecurity" <?= (($_GET['category'] ?? '') == 'Cybersecurity') ? 'selected' : '' ?>>Cybersecurity</option>
+                <option value="Other" <?= (($_GET['category'] ?? '') == 'Other') ? 'selected' : '' ?>>Other</option>
             </select>
         </form>
 
@@ -137,17 +148,30 @@ $shownCount    = count($projects);
                         <tr>
                             <td class="project-title-cell">
                                 <div class="project-title"><?= htmlspecialchars($p['title']) ?></div>
-                                <div class="project-meta"><?= htmlspecialchars($p['posted']) ?></div>
+                                <div class="project-meta">Posted <?= htmlspecialchars(date('M d, Y', strtotime($p['posted_at']))) ?></div>
                             </td>
                             <td>
-                                <span class="category-tag <?= $p['category'] ?>"><?= htmlspecialchars($p['category_label']) ?></span>
+                                <span class="category-tag"><?= htmlspecialchars($p['category']) ?></span>
                             </td>
-                            <td><?= (int)$p['applicants'] ?></td>
                             <td>
-                                <?php if ($p['team']): ?>
-                                    <div class="team-cell">
-                                        <span class="team-dot"></span>
-                                        <?= htmlspecialchars($p['team']) ?>
+                                <?php
+                                    $appStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+                                    $appStmt->bind_param("i", $p['id']);
+                                    $appStmt->execute();
+                                    echo (int)$appStmt->get_result()->fetch_row()[0];
+                                ?>
+                            </td>
+                            <td>
+                                <?php
+                                    $teamStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+                                    $teamStmt->bind_param("i", $p['id']);
+                                    $teamStmt->execute();
+                                    $assignedCount = (int)$teamStmt->get_result()->fetch_row()[0];
+                                ?>
+                                <?php if ($assignedCount > 0): ?>
+                                    <div class="team-cell" style="color:#16a34a; font-size:12px; font-style:italic;">
+                                        <span class="team-dot" style="background:#16a34a;"></span>
+                                        Assigned (<?= $assignedCount ?>)
                                     </div>
                                 <?php else: ?>
                                     <div class="team-cell pending">
@@ -158,19 +182,19 @@ $shownCount    = count($projects);
                             </td>
                             <td><?= htmlspecialchars($p['deadline']) ?></td>
                             <td>
-                                <span class="badge-status <?= $p['status'] ?>"><?= htmlspecialchars($p['status_label']) ?></span>
+                                <span class="badge-status <?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(ucfirst($p['status'])) ?></span>
                             </td>
                             <td>
                                 <div class="row-actions">
                                     <button class="action-btn" title="View">
                                         <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
                                     </button>
-                                    <button class="action-btn" title="Edit">
+                                    <a class="action-btn" title="Edit" href="edit_project.php?id=<?= (int)$p['id'] ?>">
                                         <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
-                                    </button>
-                                    <button class="action-btn danger" title="Delete">
+                                    </a>
+                                    <a class="action-btn danger" title="Delete" href="manage_projects.php?delete=<?= (int)$p['id'] ?>" onclick="return confirm('Delete this project?')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -202,11 +226,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon blue">
                     <span class="material-symbols-outlined">rocket_launch</span>
                 </div>
-                <span class="stat-trend up">↑ 12%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Total Projects Posted</div>
-                <div class="stat-value">34</div>
+                <div class="stat-value"><?= (int)$totalProjects ?></div>
             </div>
         </div>
 
@@ -215,11 +238,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon green">
                     <span class="material-symbols-outlined">groups</span>
                 </div>
-                <span class="stat-trend up">↑ 5%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Active Applications</div>
-                <div class="stat-value">156</div>
+                <div class="stat-value"><?= $activeApplications ?></div>
             </div>
         </div>
 
@@ -228,11 +250,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon slate">
                     <span class="material-symbols-outlined">sentiment_neutral</span>
                 </div>
-                <span class="stat-trend down">↓ 2%</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Assigned Teams</div>
-                <div class="stat-value">08</div>
+                <div class="stat-value"><?= $assignedTeams ?></div>
             </div>
         </div>
 
@@ -241,11 +262,10 @@ $shownCount    = count($projects);
                 <div class="stat-icon navy">
                     <span class="material-symbols-outlined">timer</span>
                 </div>
-                <span class="stat-trend up">Steady</span>
             </div>
             <div class="stat-info">
                 <div class="stat-label">Avg. Response Time</div>
-                <div class="stat-value">4.2d</div>
+                <div class="stat-value"><?= $avgResponseTime ?? 'N/A' ?></div>
             </div>
         </div>
 

@@ -1,10 +1,66 @@
 <?php
 
+include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
 require_role('organization');
-
 $user = current_user();
+
+$flash = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $title               = trim($_POST['title'] ?? '');
+    $category            = trim($_POST['category'] ?? '');
+    $keywords            = trim($_POST['keywords'] ?? '');
+    $description         = trim($_POST['description'] ?? '');
+    $learning_objectives = trim($_POST['learning_objectives'] ?? '');
+    $expected_outcomes   = trim($_POST['expected_outcomes'] ?? '');
+    $difficulty          = trim($_POST['difficulty'] ?? 'Intermediate');
+    $duration_weeks      = trim($_POST['duration_weeks'] ?? '');
+    $students_required   = (int)($_POST['students_required'] ?? 1);
+    $preferred_year      = trim($_POST['preferred_year'] ?? 'Any Year');
+    $deadline            = trim($_POST['deadline'] ?? '');
+    $visibility          = trim($_POST['visibility'] ?? 'Public');
+    $action              = trim($_POST['action'] ?? 'publish'); // draft | publish
+
+    $status        = ($action === 'draft') ? 'draft' : 'open';
+    $duration_text = $duration_weeks !== '' ? $duration_weeks . ' Weeks' : null;
+
+    if (empty($title) || empty($category) || empty($description)) {
+        $flash = ['type' => 'error', 'message' => 'Please fill Title, Category and Description.'];
+    } else {
+        try {
+            $company            = $user['username'] ?? '';
+            $organization_email = $user['email'];
+            $tech_stack         = $keywords; // reused for landing-page display cards
+
+            $sql = "INSERT INTO projects
+                    (title, company, organization_email, category, keywords, description,
+                     learning_objectives, expected_outcomes, difficulty, duration, members,
+                     preferred_year, deadline, visibility, status, tech_stack)
+                    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "ssssssssssisssss",
+                $title, $company, $organization_email, $category, $keywords,
+                $description, $learning_objectives, $expected_outcomes, $difficulty,
+                $duration_text, $students_required, $preferred_year, $deadline,
+                $visibility, $status, $tech_stack
+            );
+
+            if ($stmt->execute()) {
+                header("Location: manage_projects.php?posted=1");
+                exit;
+            } else {
+                $flash = ['type' => 'error', 'message' => 'Failed to save project.'];
+            }
+        } catch (Exception $e) {
+            $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+        }
+    }
+}
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -19,7 +75,12 @@ include "../../../Includes/dash_header.php";
         </div>
     </div>
 
-    <!-- Frontend only for now — hook this form's "action" up to your backend handler when ready -->
+    <?php if (!empty($flash)): ?>
+    <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" style="margin:0 28px 16px;">
+        <?= htmlspecialchars($flash['message']) ?>
+    </div>
+    <?php endif; ?>
+
     <form id="postProjectForm" action="" method="POST" enctype="multipart/form-data">
 
         <div class="post-form-card">

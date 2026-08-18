@@ -5,6 +5,95 @@ include "../../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
+$organization_email = $user['email'];
+
+$flash = null;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name          = trim($_POST['org_name'] ?? '');
+    $orgtype       = trim($_POST['industry'] ?? '');
+    $contactNumber = trim($_POST['contact_number'] ?? '');
+    $website       = trim($_POST['website'] ?? '');
+    $location      = trim($_POST['address'] ?? '');
+    $about         = trim($_POST['about'] ?? '');
+    $linkedin      = trim($_POST['linkedin'] ?? '');
+    $twitter       = trim($_POST['twitter'] ?? '');
+    $facebook      = trim($_POST['facebook'] ?? '');
+
+    // ---- Logo upload (optional) ----
+    $logoPath = null;
+    if (!empty($_FILES['logo']['name']) && $_FILES['logo']['error'] === UPLOAD_ERR_OK) {
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $maxSizeBytes = 2 * 1024 * 1024; // 2MB
+
+        $fileType = mime_content_type($_FILES['logo']['tmp_name']);
+        $fileSize = $_FILES['logo']['size'];
+
+        if (!in_array($fileType, $allowedTypes)) {
+            $flash = ['type' => 'error', 'message' => 'Logo must be a JPG, PNG, GIF or WEBP image.'];
+        } elseif ($fileSize > $maxSizeBytes) {
+            $flash = ['type' => 'error', 'message' => 'Logo file is too large (max 2MB).'];
+        } else {
+            $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+            $safeEmail = preg_replace('/[^a-zA-Z0-9]/', '_', $organization_email);
+            $fileName = $safeEmail . '_' . time() . '.' . $ext;
+            $destDir  = __DIR__ . '/../../../Assets/Uploads/org_logos/';
+            $destPath = $destDir . $fileName;
+
+            if (move_uploaded_file($_FILES['logo']['tmp_name'], $destPath)) {
+                $logoPath = 'Assets/Uploads/org_logos/' . $fileName;
+            } else {
+                $flash = ['type' => 'error', 'message' => 'Failed to save the uploaded logo.'];
+            }
+        }
+    }
+
+    if (empty($flash)) {
+        if ($logoPath !== null) {
+            $sql = "UPDATE organization
+                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?, logo=?
+                    WHERE Email=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "sssssssssss",
+                $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $logoPath, $organization_email
+            );
+        } else {
+            $sql = "UPDATE organization
+                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?
+                    WHERE Email=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param(
+                "ssssssssss",
+                $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $organization_email
+            );
+        }
+
+        if ($stmt->execute()) {
+            $_SESSION['user']['username'] = $name;
+            $flash = ['type' => 'success', 'message' => 'Profile updated successfully.'];
+        } else {
+            $flash = ['type' => 'error', 'message' => 'Update failed. Please try again.'];
+        }
+    }
+}
+
+// Fetch current organization data (also picks up the just-saved values)
+$stmt = $conn->prepare("SELECT * FROM organization WHERE Email=?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$org = $stmt->get_result()->fetch_assoc();
+
+// Stat cards
+$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$totalProjects = $stmt->get_result()->fetch_row()[0];
+
+$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status='closed'");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$completedProjects = $stmt->get_result()->fetch_row()[0];
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -19,12 +108,15 @@ include "../../../Includes/dash_header.php";
             <p>Manage your public organization profile and contact information.</p>
         </div>
 
-        <div style="display:flex; gap:10px;">
-            <a href="#" class="btn-outline">Edit Profile</a>
-            <a href="#" class="btn-solid">Save Changes</a>
-        </div>
-
     </div>
+
+    <?php if (!empty($flash)): ?>
+    <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" style="margin:0 28px 16px;">
+        <?= htmlspecialchars($flash['message']) ?>
+    </div>
+    <?php endif; ?>
+
+    <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
 
     <!-- ===================== STAT CARDS ===================== -->
     <div class="stats-grid">
@@ -37,7 +129,7 @@ include "../../../Includes/dash_header.php";
             </div>
             <div class="stat-info">
                 <div class="stat-label">Total Projects</div>
-                <div class="stat-value">24</div>
+                <div class="stat-value"><?= (int)$totalProjects ?></div>
             </div>
         </div>
 
@@ -49,7 +141,7 @@ include "../../../Includes/dash_header.php";
             </div>
             <div class="stat-info">
                 <div class="stat-label">Completed Projects</div>
-                <div class="stat-value">18</div>
+                <div class="stat-value"><?= (int)$completedProjects ?></div>
             </div>
         </div>
 
@@ -87,9 +179,10 @@ include "../../../Includes/dash_header.php";
             <div class="card">
                 <div class="avatar-wrap">
                     <div class="avatar-circle">
-                        <img src="../../../Assets/Images/logo.png" alt="Organization Logo">
+                        <img src="<?= !empty($org['logo']) ? '../../../' . htmlspecialchars($org['logo']) : '../../../Assets/Images/logo.png' ?>" alt="Organization Logo" id="logoPreview">
                     </div>
-                    <a href="#" class="upload-link">Upload New Logo</a>
+                    <label for="logoInput" class="upload-link" style="cursor:pointer;">Upload New Logo</label>
+                    <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').submit();">
                     <span class="badge-status verified">Verified</span>
                 </div>
             </div>
@@ -102,17 +195,17 @@ include "../../../Includes/dash_header.php";
 
                     <div class="form-group">
                         <label class="form-label">LinkedIn</label>
-                        <input type="text" class="form-input" value="linkedin.com/company/techcorp">
+                        <input type="text" name="linkedin" class="form-input" value="<?= htmlspecialchars($org['linkedin'] ?? '') ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Twitter</label>
-                        <input type="text" class="form-input" value="twitter.com/techcorp">
+                        <input type="text" name="twitter" class="form-input" value="<?= htmlspecialchars($org['twitter'] ?? '') ?>">
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Facebook</label>
-                        <input type="text" class="form-input" value="facebook.com/techcorp">
+                        <input type="text" name="facebook" class="form-input" value="<?= htmlspecialchars($org['facebook'] ?? '') ?>">
                     </div>
 
                 </div>
@@ -129,46 +222,68 @@ include "../../../Includes/dash_header.php";
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Organization Name</label>
-                        <input type="text" class="form-input" value="TechCorp Solutions">
+                        <input type="text" name="org_name" class="form-input" value="<?= htmlspecialchars($org['Name'] ?? '') ?>">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Industry</label>
-                        <input type="text" class="form-input" value="Software Development">
+                        <input type="text" name="industry" class="form-input" value="<?= htmlspecialchars($org['orgtype'] ?? '') ?>">
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Official Email</label>
-                        <input type="email" class="form-input" value="contact@techcorp.com">
+                        <input type="email" class="form-input" value="<?= htmlspecialchars($org['Email'] ?? '') ?>" readonly>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Contact Number</label>
-                        <input type="text" class="form-input" value="+1 (555) 012-3456">
+                        <input type="text" name="contact_number" class="form-input" value="<?= htmlspecialchars($org['contactNumber'] ?? '') ?>">
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Website URL</label>
-                    <input type="text" class="form-input" value="www.techcorp.com">
+                    <input type="text" name="website" class="form-input" value="<?= htmlspecialchars($org['website'] ?? '') ?>">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Address</label>
-                    <input type="text" class="form-input" value="123 Innovation Way, Silicon Valley, CA">
+                    <input type="text" name="address" class="form-input" value="<?= htmlspecialchars($org['location'] ?? '') ?>">
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">About Organization</label>
-                    <textarea class="form-textarea">TechCorp Solutions is a leading provider of innovative software solutions, specializing in cloud migration and AI optimization for enterprise clients worldwide.</textarea>
+                    <textarea name="about" class="form-textarea"><?= htmlspecialchars($org['about'] ?? '') ?></textarea>
+                </div>
+
+                <div style="text-align:right; margin-top:10px;">
+                    <button type="submit" class="btn-solid">Save Changes</button>
                 </div>
 
             </div>
         </div>
 
     </div>
+    </form>
 
 </main>
+
+<script>
+    // Auto-hide the flash toast message after a few seconds
+    document.addEventListener('DOMContentLoaded', function () {
+        const toast = document.querySelector('.flash-toast');
+        if (toast) {
+            setTimeout(function () {
+                toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(function () {
+                    toast.remove();
+                }, 400);
+            }, 3000); // visible for 3 seconds
+        }
+    });
+</script>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
