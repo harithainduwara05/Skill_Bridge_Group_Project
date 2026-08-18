@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['code'])) {
                     $updateUserData->execute();
                     unset($_SESSION['userData']);
                 } else if (strtolower($roleTable) === 'organization') {
-                    $updateUserData = $conn->prepare("INSERT INTO organization(Email,organizationName,orgtype,contactPersonName,contactNumber,website,location) VALUES (?,?,?,?,?,?,?)");
+                    $updateUserData = $conn->prepare("INSERT INTO organization(Email,Name,orgtype,contactPersonName,contactNumber,website,location) VALUES (?,?,?,?,?,?,?)");
                     $updateUserData->bind_param("sssssss", $emailToVerify, $_SESSION['userData']['name'], $_SESSION['userData']['type'], $_SESSION['userData']['contactPersonName'], $_SESSION['userData']['contactNumber'], $_SESSION['userData']['website'], $_SESSION['userData']['location']);
                     $updateUserData->execute();
                     unset($_SESSION['userData']);
