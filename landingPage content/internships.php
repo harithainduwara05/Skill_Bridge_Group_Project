@@ -1,176 +1,183 @@
-<?php
-require_once __DIR__ . '/../Config/db.php';
-
-// Fetch internships
-$sql_internships = "SELECT * FROM internships";
-$result_internships = $conn->query($sql_internships);
-
-$page_css = "Assets/CSS/internships.css";
-include '../Includes/header.php';
+<?php 
+include '../Includes/header.php'; 
 ?>
 
+<link rel="stylesheet" href="../Assets/CSS/internships.css">
+
 <div class="internships-container">
-    
     <div class="internships-header">
-        <h1>Find Your Next Internship Opportunity</h1>
-        <p>Connect with leading technology companies and start your professional journey through high-impact roles designed for growth.</p>
+        <h1>Explore Internship Opportunities</h1>
+        <p>Find real-world industry experience provided by top partner companies. Apply directly with your SkillBridge verified student profile.</p>
     </div>
 
+    <!-- Filter Bar -->
     <div class="filter-bar">
         <div class="filter-group keyword">
-            <label>Keyword</label>
-            <input type="text" placeholder="🔍 Design, Dev...">
+            <label>Search Keyword</label>
+            <input type="text" placeholder="Title, skill, or company...">
         </div>
         <div class="filter-group">
             <label>Industry</label>
             <select>
-                <option>All Industries</option>
-                <option>IT Services</option>
-                <option>Software Development</option>
-                <option>Healthcare Tech</option>
+                <option value="">All Industries</option>
+                <option>Software Engineering</option>
+                <option>Data Science</option>
+                <option>UI/UX Design</option>
+                <option>Cybersecurity</option>
             </select>
         </div>
         <div class="filter-group">
-            <label>Location</label>
+            <label>Location / Type</label>
             <select>
+                <option value="">All Types</option>
                 <option>Remote</option>
                 <option>On-site</option>
                 <option>Hybrid</option>
             </select>
         </div>
-        <div class="filter-group">
-            <label>Duration</label>
-            <select>
-                <option>3 Months</option>
-                <option>6 Months</option>
-            </select>
-        </div>
-        <button class="btn-filter" onclick="window.location.href='../Auth/login.php'">♈ Apply Filters</button>
+        <button class="btn-filter">
+            <i class="fa-solid fa-filter"></i> Filter Results
+        </button>
     </div>
 
+    <!-- Main Content Layout -->
     <div class="internships-layout">
-        <!-- Left List -->
+        
+        <!-- Internship List (Left Column) -->
         <div class="internships-list">
             
-            <?php if(isset($result_internships) && $result_internships->num_rows > 0): ?>
-                <?php while($internship = $result_internships->fetch_assoc()): ?>
-                    <div class="internship-card">
-                        <div class="company-logo" style="<?php echo htmlspecialchars($internship['logo_style'] ?? ''); ?>">
-                            <?php if(!empty($internship['logo_text'])): ?>
-                                <?php echo htmlspecialchars($internship['logo_text']); ?>
-                            <?php else: ?>
-                                <img src="<?php echo $base_url; ?>Assets/Images/logo.png" alt="Logo" style="width: 30px; height: auto;">
-                            <?php endif; ?>
-                        </div>
-                        <div class="internship-info">
-                            <h3 class="internship-title"><?php echo htmlspecialchars($internship['title']); ?></h3>
-                            <div class="internship-company"><?php echo htmlspecialchars($internship['company']); ?></div>
-                            <div class="internship-industry">🏢 <?php echo htmlspecialchars($internship['industry']); ?></div>
-                            
-                            <div class="tech-tags">
-                                <?php 
-                                if (!empty($internship['tech_tags'])) {
-                                    $tags = explode(',', $internship['tech_tags']);
-                                    foreach($tags as $tag): 
-                                ?>
-                                        <span class="tech-tag"><?php echo htmlspecialchars(trim($tag)); ?></span>
-                                <?php 
-                                    endforeach; 
-                                }
-                                ?>
-                            </div>
-
-                            <div class="internship-meta">
-                                <span>🕒 <?php echo htmlspecialchars($internship['duration']); ?></span>
-                                <span>📅 <?php echo htmlspecialchars($internship['deadline']); ?></span>
-                            </div>
-                        </div>
-                        <div class="bookmark" style="opacity: 0.5;">🔖</div>
+            <!-- Card 1 -->
+            <div class="internship-card active">
+                <div class="company-logo">TC</div>
+                <div class="internship-info">
+                    <h3 class="internship-title">Frontend Developer Intern</h3>
+                    <div class="internship-company">TechCorp Solutions</div>
+                    <div class="internship-industry"><i class="fa-solid fa-location-dot"></i> Colombo, Sri Lanka (Hybrid)</div>
+                    <div class="tech-tags">
+                        <span class="tech-tag">React.js</span>
+                        <span class="tech-tag">TypeScript</span>
+                        <span class="tech-tag">CSS3</span>
                     </div>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <p style="color: #555;">No internships available at the moment.</p>
-            <?php endif; ?>
+                    <div class="internship-meta">
+                        <span><i class="fa-regular fa-clock"></i> 6 Months</span>
+                        <span>Posted 2 days ago</span>
+                    </div>
+                </div>
+                <div class="bookmark"><i class="fa-solid fa-bookmark"></i></div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="internship-card">
+                <div class="company-logo" style="background:#fef3c7; color:#d97706;">DS</div>
+                <div class="internship-info">
+                    <h3 class="internship-title">Data Science Trainee</h3>
+                    <div class="internship-company">DataScale Labs</div>
+                    <div class="internship-industry"><i class="fa-solid fa-globe"></i> Remote</div>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Python</span>
+                        <span class="tech-tag">Pandas</span>
+                        <span class="tech-tag">SQL</span>
+                    </div>
+                    <div class="internship-meta">
+                        <span><i class="fa-regular fa-clock"></i> 3 Months</span>
+                        <span>Posted 5 days ago</span>
+                    </div>
+                </div>
+                <div class="bookmark"><i class="fa-regular fa-bookmark"></i></div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="internship-card">
+                <div class="company-logo" style="background:#e0e7ff; color:#4338ca;">NX</div>
+                <div class="internship-info">
+                    <h3 class="internship-title">UI/UX Product Design Intern</h3>
+                    <div class="internship-company">NextGen Innovations</div>
+                    <div class="internship-industry"><i class="fa-solid fa-location-dot"></i> Kandy, Sri Lanka</div>
+                    <div class="tech-tags">
+                        <span class="tech-tag">Figma</span>
+                        <span class="tech-tag">Prototyping</span>
+                    </div>
+                    <div class="internship-meta">
+                        <span><i class="fa-regular fa-clock"></i> 6 Months</span>
+                        <span>Posted 1 week ago</span>
+                    </div>
+                </div>
+                <div class="bookmark"><i class="fa-regular fa-bookmark"></i></div>
+            </div>
 
         </div>
 
-        <!-- Right Details -->
+        <!-- Internship Details View (Right Column) -->
         <div class="internship-details">
             <div class="details-hero">
-                <img src="<?php echo $base_url; ?>Assets/Images/landing.jpeg" alt="Working">
+                <img src="../Assets/Images/landing.jpeg" alt="Company Banner">
                 <div class="details-company-logo">
-                    <img src="<?php echo $base_url; ?>Assets/Images/logo.png" alt="Logo" style="width: 50px;">
+                    <strong style="font-size:24px; color:#0056b3;">TC</strong>
                 </div>
             </div>
-            
+
             <div class="details-content">
                 <div class="details-header">
                     <div class="details-title">
-                        <h2>UI/UX Designer Intern</h2>
-                        <p>TechFlow Solutions</p>
+                        <h2>Frontend Developer Intern</h2>
+                        <p>TechCorp Solutions • Colombo (Hybrid)</p>
                     </div>
                     <div class="details-actions">
-                        <button class="btn-view" onclick="window.location.href='../Auth/login.php'">View Company</button>
                         <button class="btn-apply" onclick="window.location.href='../Auth/login.php'">Apply Now</button>
                     </div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-box">
-                        <div class="stat-label">STIPEND</div>
-                        <div class="stat-value">$1,200/mo</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-label">DURATION</div>
+                        <div class="stat-label">Duration</div>
                         <div class="stat-value">6 Months</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">COMMITMENT</div>
-                        <div class="stat-value">Full-time</div>
+                        <div class="stat-label">Stipend</div>
+                        <div class="stat-value">LKR 45,000 / mo</div>
                     </div>
                     <div class="stat-box">
-                        <div class="stat-label">LOCATION</div>
-                        <div class="stat-value">Remote</div>
+                        <div class="stat-label">Deadline</div>
+                        <div class="stat-value">30 Sep 2026</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Openings</div>
+                        <div class="stat-value">3 Positions</div>
                     </div>
                 </div>
 
                 <div class="details-section">
-                    <h3>About TechFlow Solutions</h3>
-                    <p>TechFlow Solutions is a leading innovation lab focusing on academic-to-industry transition tools. We believe in empowering students by providing them with real-world problems that require creative, human-centric solutions.</p>
+                    <h3>About the Internship</h3>
+                    <p>We are seeking a motivated Frontend Developer Intern to join our digital transformation team. You will work alongside senior software engineers to build responsive, accessible web applications using modern web technologies.</p>
                 </div>
 
                 <div class="details-section">
-                    <h3>Role Description</h3>
-                    <p>Join our design team to help build the next generation of SkillBridge features. You will work closely with senior designers and product managers to translate user needs into intuitive digital experiences.</p>
-                </div>
-
-                <div class="details-section">
-                    <h3>Responsibilities</h3>
+                    <h3>Key Responsibilities</h3>
                     <ul class="responsibilities-list">
-                        <li>Conducting user research and synthesizing findings.</li>
-                        <li>Creating wireframes and task flows for new features.</li>
-                        <li>Building high-fidelity interactive prototypes.</li>
-                        <li>Collaborating on developer handoff and QA.</li>
+                        <li>Develop UI components using React.js and maintain web style guides.</li>
+                        <li>Collaborate with UI/UX designers to translate Figma mockups into code.</li>
+                        <li>Participate in daily agile standups and code reviews.</li>
+                        <li>Write clean, modular, and reusable code for front-facing platforms.</li>
                     </ul>
                 </div>
 
                 <div class="details-section">
-                    <h3>Application Process</h3>
+                    <h3>Application & Selection Process</h3>
                     <div class="process-flow">
-                        <div class="process-step">Submit portfolio</div>
-                        <div class="process-arrow">→</div>
-                        <div class="process-step">Initial screening</div>
-                        <div class="process-arrow">→</div>
-                        <div class="process-step">Design challenge</div>
-                        <div class="process-arrow">→</div>
-                        <div class="process-step">Final interview</div>
+                        <span class="process-step">SkillBridge Profile Review</span>
+                        <i class="fa-solid fa-arrow-right process-arrow"></i>
+                        <span class="process-step">Online Coding Assessment</span>
+                        <i class="fa-solid fa-arrow-right process-arrow"></i>
+                        <span class="process-step">Technical Interview</span>
                     </div>
                 </div>
 
             </div>
         </div>
-    </div>
 
+    </div>
 </div>
 
-<?php include '../Includes/footer.php'; ?>
+<?php 
+include '../Includes/footer.php'; 
+?>

@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Dashboard - SkillBridge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        *::-webkit-scrollbar {
+            display: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f8;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        .dashboard-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar {
+            width: 210px;
+            background-color: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-shadow: 2px 0 8px rgba(0,0,0,0.04);
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar .logo {
+            padding: 10px 16px 8px;
+            border-bottom: 1px solid #f3f4f6;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar .logo img {
+            width: 160px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .sidebar nav {
+            flex: 1;
+            padding: 4px 0;
+            overflow-y: auto;
+        }
+
+        .sidebar nav a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 14px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            margin: 1px 8px;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .sidebar nav a:hover {
+            color: #1e3a5f;
+            background-color: #f0f4ff;
+        }
+
+        .sidebar nav a.active {
+            color: #1e40af;
+            background-color: #eff6ff;
+            font-weight: 600;
+        }
+
+        .sidebar nav a .icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar nav a .icon .material-symbols-outlined {
+            font-size: 18px;
+            color: #9ca3af;
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .sidebar nav a.active .icon .material-symbols-outlined {
+            color: #1e40af;
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .sidebar nav a .badge {
+            margin-left: auto;
+            background: #ef4444;
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+
+        .sidebar .post-internship-btn {
+            margin: 10px 12px 6px;
+            padding: 11px 16px;
+            background: #082544;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: calc(100% - 24px);
+        }
+
+        .sidebar .post-internship-btn:hover {
+            background: #05192d;
+        }
+
+        .sidebar .logout {
+            margin: 10px 12px 20px;
+            padding: 11px 16px;
+            background: #f97316;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: calc(100% - 24px);
+        }
+
+        .sidebar .logout:hover {
+            background: #ea580c;
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .main-content {
+            margin-left: 210px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+        }
+
+        .dashboard-header {
+            padding: 2rem;
+            margin-bottom: 0;
+        }
+
+        .dashboard-header h1 {
+            font-size: 2rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .dashboard-header p {
+            color: #64748b;
+            font-size: 0.95rem;
+        }
+
+        /* ============ COMPANY INFO CARD ============ */
+        .company-info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 0 2rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .company-info-main {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .company-avatar {
+            width: 80px;
+            height: 80px;
+            background: #e0f2fe;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .company-details h2 {
+            font-size: 1.25rem;
+            color: #0f172a;
+            margin-bottom: 0.5rem;
+        }
+
+        .company-details p {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin: 0.25rem 0;
+        }
+
+        .company-stats {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #082544;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-top: 0.25rem;
+        }
+
+        /* ============ STATS GRID ============ */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin: 0 2rem 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.07);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .stat-card-title {
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-badge {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #082544;
+        }
+
+        /* ============ SECTIONS ============ */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-header h3 {
+            font-size: 1.1rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .view-all {
+            color: #082544;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .view-all:hover {
+            text-decoration: underline;
+        }
+
+        /* ============ TABLE ============ */
+        .content-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 0 2rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table thead {
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        table th {
+            padding: 1rem;
+            text-align: left;
+            font-size: 0.85rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+            color: #334155;
+        }
+
+        table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .candidate-name {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .candidate-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #dbeafe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #1e40af;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-shortlisted {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .action-btn {
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* ============ GRID LAYOUT ============ */
+        .dashboard-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin: 0 2rem 2rem;
+        }
+
+        .dashboard-col-full {
+            grid-column: 1 / -1;
+        }
+
+        /* ============ INTERNSHIP CARDS ============ */
+        .internship-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .internship-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-left: 4px solid #082544;
+        }
+
+        .internship-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .internship-title {
+            font-size: 1.1rem;
+            color: #0f172a;
+            font-weight: 700;
+        }
+
+        .internship-status {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 0.35rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .internship-desc {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .internship-meta {
+            display: flex;
+            gap: 1.5rem;
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        /* ============ INTERVIEW SECTION ============ */
+        .interview-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .interview-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .interview-item:last-child {
+            border-bottom: none;
+        }
+
+        .interview-candidate {
+            flex: 1;
+        }
+
+        .interview-name {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        .interview-position {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .interview-time {
+            text-align: right;
+        }
+
+        .interview-date {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #082544;
+        }
+
+        .interview-timerange {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .interview-type {
+            font-size: 0.8rem;
+            color: #94a3b8;
+        }
+
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-row {
+                grid-template-columns: 1fr;
+            }
+
+            .internship-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 180px;
+            }
+
+            .main-content {
+                margin-left: 180px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                margin: 0 1rem 2rem;
+            }
+
+            .company-info-card {
+                margin: 0 1rem 2rem;
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .company-stats {
+                justify-content: center;
+            }
+
+            .dashboard-row {
+                margin: 0 1rem 2rem;
+            }
+
+            .content-section {
+                margin: 0 1rem 2rem;
+            }
+
+            table {
+                font-size: 0.8rem;
+            }
+
+            table th, table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- SIDEBAR -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="../Assets/Images/logo.png" alt="SkillBridge">
+            </div>
+
+            <nav>
+                <a href="#" class="active">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">dashboard</span>
+                    </span>
+                    Dashboard
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">business</span>
+                    </span>
+                    Company Profile
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">work</span>
+                    </span>
+                    Internships
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">description</span>
+                    </span>
+                    Applications
+                    <span class="badge">12</span>
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">people</span>
+                    </span>
+                    Candidates
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">event_note</span>
+                    </span>
+                    Interviews
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">bar_chart</span>
+                    </span>
+                    Reports & Analytics
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">notifications</span>
+                    </span>
+                    Notifications
+                </a>
+                <a href="#">
+                    <span class="icon">
+                        <span class="material-symbols-outlined">settings</span>
+                    </span>
+                    Settings
+                </a>
+            </nav>
+
+            <button class="post-internship-btn">
+                <span class="material-symbols-outlined">add</span>
+                Post Internship
+            </button>
+
+            <button class="logout">
+                <span class="material-symbols-outlined">logout</span>
+                Logout
+            </button>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- Dashboard Header -->
+            <div class="dashboard-header">
+                <h1>Welcome back, ABC Technologies</h1>
+                <p>Here is an overview of your recruitment momentum today.</p>
+            </div>
+
+            <!-- Company Info Card -->
+            <div class="company-info-card">
+                <div class="company-info-main">
+                    <div class="company-avatar">🏢</div>
+                    <div class="company-details">
+                        <h2>ABC Technologies</h2>
+                        <p>📍 San Francisco, CA</p>
+                        <p>👥 500-1000 Employees</p>
+                    </div>
+                </div>
+                <div class="company-stats">
+                    <div class="stat-item">
+                        <div class="stat-number">2</div>
+                        <div class="stat-label">Active Internships</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">356</div>
+                        <div class="stat-label">Applications</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Active Internships</span>
+                        <span class="stat-badge">+2 this week</span>
+                    </div>
+                    <div class="stat-card-value">12</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Total Applications</span>
+                        <span class="stat-badge">+42 new</span>
+                    </div>
+                    <div class="stat-card-value">356</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Shortlisted</span>
+                        <span class="stat-badge">13% conversion</span>
+                    </div>
+                    <div class="stat-card-value">48</div>
+                </div>
+
+                <div class="stat-card">
+                    <div class="stat-card-header">
+                        <span class="stat-card-title">Interviews</span>
+                        <span class="stat-badge">3 today</span>
+                    </div>
+                    <div class="stat-card-value">15</div>
+                </div>
+            </div>
+
+            <!-- Recent Applications -->
+            <div style="margin: 0 2rem 2rem;">
+                <div class="section-header">
+                    <h3>Recent Applications</h3>
+                    <a href="#" class="view-all">View All</a>
+                </div>
+
+                <div class="content-section">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Candidate</th>
+                                <th>University</th>
+                                <th>Position</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <div class="candidate-name">
+                                        <div class="candidate-avatar">M</div>
+                                        <span>Maya Sharma</span>
+                                    </div>
+                                </td>
+                                <td>Stanford University</td>
+                                <td>Software Engineer</td>
+                                <td><span class="status-badge status-new">New</span></td>
+                                <td><button class="action-btn">⋮</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="candidate-name">
+                                        <div class="candidate-avatar">D</div>
+                                        <span>David Chen</span>
+                                    </div>
+                                </td>
+                                <td>MIT</td>
+                                <td>Data Analyst</td>
+                                <td><span class="status-badge status-shortlisted">Shortlisted</span></td>
+                                <td><button class="action-btn">⋮</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="candidate-name">
+                                        <div class="candidate-avatar">S</div>
+                                        <span>Sarah Jenkins</span>
+                                    </div>
+                                </td>
+                                <td>UC Berkeley</td>
+                                <td>Product Design</td>
+                                <td><span class="status-badge status-shortlisted">Shortlisted</span></td>
+                                <td><button class="action-btn">⋮</button></td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <div class="candidate-name">
+                                        <div class="candidate-avatar">L</div>
+                                        <span>Leo Martinez</span>
+                                    </div>
+                                </td>
+                                <td>Georgia Tech</td>
+                                <td>Backend Dev</td>
+                                <td><span class="status-badge status-new">New</span></td>
+                                <td><button class="action-btn">⋮</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Internships & Interviews Row -->
+            <div class="dashboard-row">
+                <!-- Recent Internships -->
+                <div>
+                    <div class="section-header">
+                        <h3>Recent Internships</h3>
+                    </div>
+                    <div class="internship-grid">
+                        <div class="internship-card">
+                            <div class="internship-header">
+                                <div>
+                                    <div class="internship-title">Full Stack Developer</div>
+                                </div>
+                                <span class="internship-status">Active</span>
+                            </div>
+                            <p class="internship-desc">Building next-generation enterprise tools using React, Node.js, and...</p>
+                            <div class="internship-meta">
+                                <span>🎯 12 Applicants</span>
+                                <span>⏱️ 3 days left</span>
+                            </div>
+                        </div>
+
+                        <div class="internship-card">
+                            <div class="internship-header">
+                                <div>
+                                    <div class="internship-title">Data Science Intern</div>
+                                </div>
+                                <span class="internship-status">Active</span>
+                            </div>
+                            <p class="internship-desc">Analyzing complex recruitment datasets to optimize talent pipeline...</p>
+                            <div class="internship-meta">
+                                <span>🎯 85 Applicants</span>
+                                <span>⏱️ 1 week left</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Interviews -->
+                <div>
+                    <div class="section-header">
+                        <h3>Upcoming Interviews</h3>
+                        <a href="#" class="view-all">View All Schedule</a>
+                    </div>
+
+                    <div class="interview-section">
+                        <div class="interview-item">
+                            <div class="interview-candidate">
+                                <div class="interview-name">Interview with Maya Sharma</div>
+                                <div class="interview-position">Software Engineer Position</div>
+                            </div>
+                            <div class="interview-time">
+                                <div class="interview-date">24</div>
+                                <div class="interview-timerange">OCT</div>
+                                <div class="interview-type">Video Call</div>
+                            </div>
+                        </div>
+
+                        <div class="interview-item">
+                            <div class="interview-candidate">
+                                <div class="interview-name">Interview with David Chen</div>
+                                <div class="interview-position">Data Analyst Position</div>
+                            </div>
+                            <div class="interview-time">
+                                <div class="interview-date">24</div>
+                                <div class="interview-timerange">OCT</div>
+                                <div class="interview-type">Office (In-person)</div>
+                            </div>
+                        </div>
+
+                        <div class="interview-item">
+                            <div class="interview-candidate">
+                                <div class="interview-name">Panel Interview: 3 Candidates</div>
+                                <div class="interview-position">Final Round Selection</div>
+                            </div>
+                            <div class="interview-time">
+                                <div class="interview-date">25</div>
+                                <div class="interview-timerange">OCT</div>
+                                <div class="interview-type">Conference</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

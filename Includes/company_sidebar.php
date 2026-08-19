@@ -1,144 +1,99 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+require_once __DIR__ . "/../Session/Session.php";
 ?>
 <!DOCTYPE html>
 
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Dashboard | SkillBridge</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Company Dashboard | SkillBridge</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
-<link rel="stylesheet" href="../../../Assets/CSS/dashboard.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="../../../Assets/CSS/dashboard.css">
 </head>
 
 <body>
-<aside class="sidebar">
+    <aside class="sidebar">
+        <div class="logo">
+            <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
+        </div>
 
-    <div class="logo">
-        <img src="../../../Assets/Images/SkillBridge.png" alt="SkillBridge">
-    </div>
+        <nav>
+            <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">dashboard</span>
+                </span>
+                Dashboard
+            </a>
 
+            <a href="company.php" class="<?= $currentPage == 'company.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">business</span>
+                </span>
+                Company Profile
+            </a>
 
-    <nav>
+            <a href="internships.php" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">work</span>
+                </span>
+                Internships
+            </a>
 
+            <a href="applications.php" class="<?= $currentPage == 'applications.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">description</span>
+                </span>
+                Applications
+                <span class="badge">12</span>
+            </a>
 
-        <a href="dashboard.php" 
-        class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
+            <a href="candidates.php" class="<?= $currentPage == 'candidates.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">people</span>
+                </span>
+                Candidates
+            </a>
 
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/dashboard.svg">
-            </span>
+            <a href="interviews.php" class="<?= $currentPage == 'interviews.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">event_note</span>
+                </span>
+                Interviews
+            </a>
 
-            Dashboard
+            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                </span>
+                Reports & Analytics
+            </a>
 
-        </a>
+            <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">notifications</span>
+                </span>
+                Notifications
+            </a>
 
+            <a href="settings.php" class="<?= $currentPage == 'settings.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <span class="material-symbols-outlined">settings</span>
+                </span>
+                Settings
+            </a>
+        </nav>
 
+        <button class="post-internship-btn" onclick="window.location.href='internships.php'">
+            <span class="material-symbols-outlined">add</span>
+            Post Internship
+        </button>
 
-        <a href="company.php"
-        class="<?= $currentPage == 'company.php' ? 'active' : '' ?>">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/company.png">
-            </span>
-
-            Company
-
-        </a>
-
-        <a href="internships.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/internship.png">
-            </span>
-
-            Internships
-
-        </a>
-
-
-
-        <a href="application.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/application.png">
-            </span>
-
-            Applications
-
-            <span class="badge">
-                12
-            </span>
-
-        </a>
-                <a href="candidates.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/candidates.png">
-            </span>
-
-            Candidates
-
-        </a>
-                <a href="interviews.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/interviews.png">
-            </span>
-
-            Interviews
-
-        </a>
-
-
-
-        <a href="reports.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/report.png">
-            </span>
-
-            Reports
-
-        </a>
-
-
-
-        <a href="notifications.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/notification.png">
-            </span>
-
-            Notifications
-
-        </a>
-
-
-
-        <a href="settings.php">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/settings.png">
-            </span>
-
-            Settings
-
-        </a>
-
-
-
-    </nav>
-
-
-
-    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
-        ⇥ Logout
-    </button>
-
-
-</aside>
+        <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
+            <span class="material-symbols-outlined">logout</span>
+            Logout
+        </button>
+    </aside>

@@ -168,6 +168,34 @@ body {
     background: #16304d;
 }
 
+.sidebar .post-internship-btn {
+    margin: 10px 12px 6px;
+    padding: 11px 16px;
+    background: #082544;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: calc(100% - 24px);
+}
+
+.sidebar .post-internship-btn:hover {
+    background: #05192d;
+}
+
+.sidebar .post-internship-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
 .sidebar .logout {
     margin: 10px 12px 20px;
     padding: 11px 16px;
@@ -184,10 +212,15 @@ body {
     align-items: center;
     justify-content: center;
     gap: 8px;
+    width: calc(100% - 24px);
 }
 
 .sidebar .logout:hover {
     background: #ea580c;
+}
+
+.sidebar .logout .material-symbols-outlined {
+    font-size: 18px;
 }
 
 /* ============================================
