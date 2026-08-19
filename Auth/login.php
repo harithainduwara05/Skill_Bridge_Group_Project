@@ -1,132 +1,187 @@
 <?php
-session_start();
-include "../Config/db.php";
+require_once "../Config/db.php";
+require_once "../Session/Session.php";
 
-$error = "";
+$emailError = "";
+$passwordError = "";
 
-if($_SERVER['REQUEST_METHOD'] == 'POST'){
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!empty($_POST["email"]) && !empty($_POST["password"])) {
+        $email = $_POST["email"];
+        $password = $_POST["password"];
 
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
+        $hashPassword = sha1($password);
 
-    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $result = $stmt->get_result();
+        try {
+            $sql = "SELECT Email, role, password FROM User WHERE Email=?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-    if($result->num_rows == 1){
+            if ($result->num_rows === 1) {
+                $user = $result->fetch_assoc();
+                $sql = "SELECT name from  {$user['role']} where Email=?";
+                $stmt = $conn->prepare($sql);
+                $stmt->bind_param("s",$email);
+                $stmt->execute();
+                $forignResult = $stmt->get_result();
+                $forignUser = $forignResult->fetch_assoc();
+                if ($user['password'] === $hashPassword) {
+                    $_SESSION['user'] = [
+                        'username' => $forignUser['Name'],
+                        'email' => $user['Email'],
+                        'role' => $user['role'],
+                    ];
 
-        $user = $result->fetch_assoc();
-
-        if(password_verify($password, $user['password'])){
-
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['role']    = $user['role'];
-            $_SESSION['name']    = $user['name'];
-
-            if($user['role'] == 'student'){
-                header("Location: ../Functions/Dashboards/Student/dashboard.php");
-            }else if($user['role'] == 'organization'){
-                header("Location: ../Functions/Dashboards/Organization/dashboard.php");
-            }else if($user['role'] == 'company'){
-                header("Location: ../Functions/Dashboards/Company/dashboard.php");
-            }else if($user['role'] == 'admin'){
-                header("Location: ../Functions/Dashboards/Admin/dashboard.php");
+                    switch ($user['role']) {
+                        case 'admin':
+                            header('Location:../Functions/Dashboards/Admin/dashboard.php');
+                            exit();
+                        case 'organization':
+                            header('Location:../Functions/Dashboards/Organization/dashboard.php');
+                            exit();
+                        case 'company':
+                            header('Location:../Functions/Dashboards/Company/dashboard.php');
+                            exit();
+                        case 'student':
+                            header('Location:../Functions/Dashboards/Student/dashboard.php');
+                            exit();
+                        default:
+                            $emailError = "Cannot find role";
+                    }
+                } else {
+                    $passwordError = "Invalid password!";
+                }
+            } else {
+                $emailError = "Invalid user!";
             }
-            exit();
-
-        }else{
-            $error = "Invalid Password!";
+        } catch (Exception $e) {
+            $emailError = "Error: " . $e->getMessage();
         }
-
-    }else{
-        $error = "User not found!";
+    } else {
+        if (empty($_POST["email"])) {
+            $emailError = "Email is required!";
+        }
+        if (empty($_POST["password"])) {
+            $passwordError = "Password is required!";
+        }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Skill Bridge - Login</title>
-<link rel="stylesheet" href="../Assets/CSS/login.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillBridge - Login</title>
+    <link rel="stylesheet" href="../Assets/CSS/login.css">
 </head>
+
 <body>
+    <div class="login-wrapper">
+        <div class="login-container">
+            <!-- Left Side: Form -->
+            <div class="login-left">
+                <div class="logo-container">
+                    <img src="../Assets/Images/logoLog.png" alt="SkillBridge Logo" class="logo-icon">
+                    <span class="logo-text">Skill</span>
+                </div>
 
-<div class="login-wrapper">
+                <h1 class="welcome-title">Welcome Back</h1>
+                <p class="welcome-subtitle">Bridge the gap between learning and career success.</p>
 
-  <!-- LEFT HERO SECTION -->
-  <div class="login-left">
-    <div class="brand">
-        <h2>Skill Bridge</h2>
-    </div>
+                <form id="loginForm" action="" method="POST">
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
 
-    <div class="hero-content">
-        <h1>Connect. Build.<br>Elevate Your Career.</h1>
-        <p>
-           Bridge the gap between academic knowledge and real-world experience. 
-           Join thousands of students and companies creating the future.
-        </p>
-    </div>
+                        <?php if (!empty($emailError)): ?>
+                            <span
+                                style="color: #ff3333; font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;"><?php echo $emailError; ?></span>
+                        <?php endif; ?>
 
-    <div class="left-footer">
-        © 2026 Skill Bridge. All rights reserved.
-    </div>
-  </div>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z">
+                                </path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                            <input type="email" id="email" name="email" placeholder="john@university.edu" required>
+                        </div>
+                    </div>
 
-  <!-- RIGHT FORM SECTION -->
-  <div class="login-right">
+                    <div class="form-group">
+                        <label for="password">Password</label>
 
-     <div class="form-container">
+                        <?php if (!empty($passwordError)): ?>
+                            <span
+                                style="color: #ff3333; font-size: 13px; display: block; margin-bottom: 8px; font-weight: 500;"><?php echo $passwordError; ?></span>
+                        <?php endif; ?>
 
-        <h2>Welcome Back</h2>
-        <p class="subtitle">Enter your credentials to access your account</p>
+                        <div class="input-wrapper">
+                            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <input type="password" id="password" name="password" placeholder="••••••••" required>
+                            <button type="button" class="toggle-password" id="togglePassword">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
 
-        <?php if($error): ?>
-           <div class="error-msg"><?php echo $error; ?></div>
-        <?php endif; ?>
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="forgot-password">Forgot Password?</a>
+                    </div>
 
-        <form method="POST">
+                    <button type="submit" class="submit-btn">
+                        Login to Dashboard
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                        </svg>
+                    </button>
 
-            <div class="input-group">
-                <label>Email Address</label>
-                <div class="input-field">
-                   <i class="fa-solid fa-envelope"></i>
-                   <input type="email" name="email" placeholder="name@company.com" required>
+                    <div class="register-link">
+                        Don't have an account? <a href="../register.php">Create Account</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Right Side: Info -->
+            <div class="login-right">
+                <div class="hero-image-container">
+                    <img src="../Assets/Images/login-hero.jpg" alt="Students collaborating" class="hero-image">
+                </div>
+
+                <h2 class="right-title">Master the Skills That<br>Industry Demands</h2>
+
+                <div class="demo-accounts">
+                    <p class="demo-title">Demo Accounts:</p>
+                    <ul class="demo-list">
+                        <li><strong>Admin :</strong> admin@skillbridge.com / admin123</li>
+                        <li><strong>Student :</strong> student1@uni.edu / student123</li>
+                        <li><strong>Organization :</strong> contact@organization.edu / org123</li>
+                        <li><strong>Company :</strong> hr@company.com / comp123</li>
+                    </ul>
                 </div>
             </div>
-
-            <div class="input-group">
-                <label>Password</label>
-                <div class="input-field">
-                   <i class="fa-solid fa-lock"></i>
-                   <input type="password" name="password" id="password" placeholder="••••••••" required>
-                   <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
-                </div>
-            </div>
-
-            <div class="form-options">
-                <label><input type="checkbox"> Remember me</label>
-                <a href="#">Forgot password?</a>
-            </div>
-
-            <button type="submit" class="login-btn">Sign In</button>
-
-        </form>
-
-        <div class="register-link">
-            Don't have an account? <a href="../register.php">Create an account</a>
         </div>
+    </div>
 
-     </div>
-
-  </div>
-
-</div>
-
-<script src="../Assets/JS/login.js"></script>
+    <script src="../Assets/JS/login.js"></script>
 </body>
+
 </html>
