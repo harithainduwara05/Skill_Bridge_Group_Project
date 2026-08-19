@@ -34,7 +34,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 Dashboard
             </a>
 
-            <a href="users.php" class="<?= $currentPage == 'users.php' ? 'active' : '' ?>">
+            <a href="Usermanagemen.php" class="<?= in_array($currentPage, ['Usermanagemen.php', 'users.php']) ? 'active' : '' ?>">
                 <span class="icon">
                     <span class="material-symbols-outlined">group</span>
                 </span>
@@ -84,11 +84,11 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 Notifications
             </a>
 
-            <a href="settings.php" class="<?= $currentPage == 'settings.php' ? 'active' : '' ?>">
+            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>">
                 <span class="icon">
                     <span class="material-symbols-outlined">settings</span>
                 </span>
-                Settings
+                Profile & Settings
             </a>
 
         </nav>

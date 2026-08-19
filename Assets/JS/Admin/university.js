@@ -105,10 +105,28 @@ function openEditModal(uni, faculty, domain, location, status) {
     if (editModal) editModal.classList.add('open');
 }
 
-// ── Delete Confirmation ───────────────────────────────────────────────────────
-function confirmDelete(domain) {
-    if (confirm("Are you sure you want to delete the university with domain '@" + domain + "'?\nThis action cannot be undone.")) {
-        document.getElementById('deleteDomainInput').value = domain;
-        document.getElementById('deleteForm').submit();
-    }
+// ── Delete Modal ─────────────────────────────────────────────────────────────
+const deleteModal = document.getElementById('deleteModal');
+if (deleteModal) {
+    const closeDel = document.getElementById('closeDeleteModal');
+    const cancelDel = document.getElementById('cancelDeleteModal');
+    if (closeDel) closeDel.addEventListener('click', () => deleteModal.classList.remove('open'));
+    if (cancelDel) cancelDel.addEventListener('click', () => deleteModal.classList.remove('open'));
+    deleteModal.addEventListener('click', e => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+}
+
+function openDeleteModal(domain, name) {
+    const input = document.getElementById('deleteDomainInput');
+    const uniDisplay = document.getElementById('deleteUniDisplay');
+    const domainDisplay = document.getElementById('deleteDomainDisplay');
+    
+    if (input) input.value = domain;
+    if (uniDisplay) uniDisplay.innerText = name || 'University';
+    if (domainDisplay) domainDisplay.innerText = '@' + domain;
+    
+    if (deleteModal) deleteModal.classList.add('open');
+}
+
+function confirmDelete(domain, name) {
+    openDeleteModal(domain, name);
 }

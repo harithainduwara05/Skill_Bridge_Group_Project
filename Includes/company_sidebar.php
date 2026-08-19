@@ -142,3 +142,5 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 
 </aside>
+
+<div class="main-wrapper">

@@ -1,18 +1,156 @@
-/* ── Flash Toast Notification ── */
-/* Standalone file so it can be included on any dashboard page
-   without editing the shared dashboard.css */
-
+/* ── Modern Premium Flash Toast Notification ── */
 .flash-toast {
-    position: fixed; top: 20px; right: 24px; z-index: 9999;
-    display: flex; align-items: center; gap: 10px;
-    padding: 14px 18px; border-radius: 12px; min-width: 280px; max-width: 400px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.12);
-    font-size: 13px; font-weight: 500;
-    animation: toastSlideIn .3s ease both;
+    position: fixed;
+    top: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    min-width: 320px;
+    max-width: 440px;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.12), 0 4px 10px rgba(0, 0, 0, 0.04);
+    font-family: 'Inter', sans-serif;
+    animation: toastSlideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    overflow: hidden;
+    background: #ffffff;
+    box-sizing: border-box;
 }
+
 @keyframes toastSlideIn {
-    from { transform: translateX(120%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
+    from {
+        opacity: 0;
+        transform: translateX(110%) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
 }
-.flash-toast.flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
-.flash-toast.flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
+
+@keyframes toastSlideOut {
+    from {
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(110%) scale(0.95);
+    }
+}
+
+/* Success Green */
+.flash-toast.flash-success {
+    background: #ffffff;
+    border: 1px solid #86efac;
+    border-left: 5px solid #10b981;
+}
+
+.flash-toast.flash-success .flash-icon-wrap {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.flash-toast.flash-success .flash-title {
+    color: #065f46;
+}
+
+.flash-toast.flash-success .flash-msg {
+    color: #047857;
+}
+
+.flash-toast.flash-success .flash-progress {
+    background: #10b981;
+}
+
+/* Error Red */
+.flash-toast.flash-error {
+    background: #ffffff;
+    border: 1px solid #fca5a5;
+    border-left: 5px solid #ef4444;
+}
+
+.flash-toast.flash-error .flash-icon-wrap {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.flash-toast.flash-error .flash-title {
+    color: #991b1b;
+}
+
+.flash-toast.flash-error .flash-msg {
+    color: #b91c1c;
+}
+
+.flash-toast.flash-error .flash-progress {
+    background: #ef4444;
+}
+
+/* Elements inside Toast */
+.flash-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.flash-icon-wrap .material-symbols-outlined {
+    font-size: 22px;
+}
+
+.flash-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.flash-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 2px;
+}
+
+.flash-msg {
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.flash-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.flash-close:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}
+
+.flash-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    animation: toastProgress 4s linear forwards;
+}
+
+@keyframes toastProgress {
+    from { width: 100%; }
+    to { width: 0%; }
+}

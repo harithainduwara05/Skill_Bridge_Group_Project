@@ -102,9 +102,9 @@ include "../../../Includes/dash_header.php";
 
 
     <!-- Chart + Activity Section -->
-    <div class="dashboard-grid">
+   <!--<div class="dashboard-grid">
 
-        <!-- User Growth Analytics Chart -->
+
         <div class="card">
             <div class="card-header">
                 <div>
@@ -117,7 +117,6 @@ include "../../../Includes/dash_header.php";
                 </button>
             </div>
 
-            <!-- Simple Bar Chart (CSS only) -->
             <div class="chart-bar-group">
                 <div class="chart-bar-item">
                     <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
@@ -176,7 +175,6 @@ include "../../../Includes/dash_header.php";
         </div>
 
 
-        <!-- Recent Activity -->
         <div class="card">
             <div class="card-header">
                 <h3>Recent Activity</h3>
@@ -198,7 +196,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-    </div>
+    </div>-->
 
 
     <!-- Recent Registrations + Urgent Complaints -->

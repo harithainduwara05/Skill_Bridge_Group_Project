@@ -1,0 +1,386 @@
+/* ============================================
+   ADMIN PROFILE & SETTINGS - SkillBridge
+   ============================================ */
+
+.admin-profile-container {
+    padding: 24px 28px 40px;
+}
+
+.profile-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #9ca3af;
+    margin-bottom: 10px;
+}
+
+.profile-breadcrumb a {
+    color: #6b7280;
+    text-decoration: none;
+    transition: color .2s;
+}
+
+.profile-breadcrumb a:hover {
+    color: #1e3a5f;
+}
+
+.profile-title-row {
+    margin-bottom: 24px;
+}
+
+.profile-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.2;
+    margin-bottom: 6px;
+}
+
+.profile-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.6;
+}
+
+/* ── Main Layout Grid ── */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+/* ── Card Base ── */
+.profile-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    overflow: hidden;
+    transition: box-shadow .2s ease;
+    margin-bottom: 24px;
+}
+
+.profile-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.07);
+}
+
+.profile-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.profile-card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-card-header h3 .material-symbols-outlined {
+    font-size: 20px;
+    color: #2563eb;
+}
+
+.profile-card-body {
+    padding: 24px;
+}
+
+/* ── Left Sidebar Profile Overview Card ── */
+.profile-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 10px 0 20px;
+}
+
+.avatar-uploader-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin-bottom: 16px;
+}
+
+.profile-photo-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    display: block;
+    background: #f8fafc;
+}
+
+.profile-photo-initial {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3a5f, #0f233a);
+    color: #ffffff;
+    font-size: 42px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 4px solid #ffffff;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    text-transform: uppercase;
+}
+
+.avatar-upload-btn {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+    transition: all .2s ease;
+}
+
+.avatar-upload-btn:hover {
+    background: #1d4ed8;
+    transform: scale(1.08);
+}
+
+.avatar-upload-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.avatar-remove-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #dc2626;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    margin-top: 6px;
+}
+
+.avatar-remove-btn:hover {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.profile-card-name {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+
+.profile-card-email {
+    font-size: 12.5px;
+    color: #64748b;
+    margin: 0 0 12px 0;
+}
+
+.profile-role-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 12px;
+    font-weight: 700;
+    border: 1px solid #bfdbfe;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.profile-meta-list {
+    border-top: 1px solid #f1f5f9;
+    margin-top: 20px;
+    padding-top: 16px;
+}
+
+.profile-meta-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 12.5px;
+}
+
+.profile-meta-label {
+    color: #64748b;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.profile-meta-label .material-symbols-outlined {
+    font-size: 16px;
+    color: #94a3b8;
+}
+
+.profile-meta-value {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+/* ── Form Controls ── */
+.profile-form-group {
+    margin-bottom: 18px;
+}
+
+.profile-form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.profile-form-group input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    font-size: 13.5px;
+    color: #1e293b;
+    font-family: inherit;
+    box-sizing: border-box;
+    outline: none;
+    transition: all .2s ease;
+    background: #f8fafc;
+}
+
+.profile-form-group input:focus {
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.profile-form-group input[disabled],
+.profile-form-group input[readonly] {
+    background: #f1f5f9;
+    color: #64748b;
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+}
+
+.profile-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+/* Password Input with eye toggle */
+.password-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-wrap input {
+    padding-right: 40px;
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 10px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color .2s;
+}
+
+.password-toggle-btn:hover {
+    color: #1e293b;
+}
+
+.password-toggle-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* ── Buttons ── */
+.btn-save-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: #1e293b;
+    color: #ffffff;
+    border: none;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s ease;
+    box-shadow: 0 2px 6px rgba(30, 41, 59, 0.2);
+}
+
+.btn-save-profile:hover {
+    background: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(30, 41, 59, 0.3);
+}
+
+.btn-update-password {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    background: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 9px;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all .2s ease;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.25);
+}
+
+.btn-update-password:hover {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+/* ── Responsive ── */
+@media (max-width: 992px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+    .profile-form-row {
+        grid-template-columns: 1fr;
+    }
+}

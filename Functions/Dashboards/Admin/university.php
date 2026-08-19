@@ -1,9 +1,13 @@
 <?php
-include "../../../Includes/admin_sidebar.php";
 require_once "../../../Config/db.php";
+require_once "../../../Session/Session.php";
+require_login();
+require_role('admin');
+
+include "../../../Includes/admin_sidebar.php";
 require_once "AdminBackend.php";
 ?>
-<link rel="stylesheet" href="../../../Assets/CSS/university.css">
+<link rel="stylesheet" href="../../../Assets/CSS/Admin/university.css">
 <?php
 include "../../../Includes/dash_header.php";
 
@@ -142,26 +146,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Institution List Table -->
     <div class="full-width-section">
         <div class="card">
+            <?php
+                $selectedStatus = $_GET['status'] ?? 'all';
+                $searchQuery    = trim($_GET['search'] ?? '');
+                
+                $uniResult = $adminDB->getAllUniversities($selectedStatus, $searchQuery);
+                $allUniversities = [];
+                if ($uniResult) {
+                    while ($r = $uniResult->fetch_assoc()) {
+                        $allUniversities[] = $r;
+                    }
+                }
+                $totFilteredUni = count($allUniversities);
+                
+                // Pagination Setup (5 records per page)
+                $recordsPerPage = 5;
+                $totalPages = ceil($totFilteredUni / $recordsPerPage);
+                $currentPage = isset($_GET['page']) ? max(1, min(max(1, $totalPages), (int)$_GET['page'])) : 1;
+                $offset = ($currentPage - 1) * $recordsPerPage;
+                $pageUniversities = array_slice($allUniversities, $offset, $recordsPerPage);
+            ?>
             <div class="card-header">
                 <div>
                     <h3>Institution List</h3>
                 </div>
                 <div class="univ-table-actions">
-                    <div class="univ-search-box">
-                        <span class="material-symbols-outlined" style="font-size:18px;color:#9ca3af;">search</span>
-                        <input type="text" placeholder="Search university or domain..." id="univSearchInput"
-                            autocomplete="off">
-                    </div>
-                    <button type="button" class="univ-icon-btn" title="Filter">
-                        <span class="material-symbols-outlined" style="font-size:18px;">filter_list</span>
-                    </button>
+                    <form method="GET" action="" style="display:flex; gap:10px; align-items:center;">
+                        <select name="status" class="univ-select-filter" onchange="this.form.submit()">
+                            <option value="all" <?= $selectedStatus === 'all' ? 'selected' : '' ?>>All Statuses</option>
+                            <option value="Active" <?= $selectedStatus === 'Active' ? 'selected' : '' ?>>Active</option>
+                            <option value="Pending" <?= $selectedStatus === 'Pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="Inactive" <?= $selectedStatus === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                        </select>
+
+                        <div class="univ-search-box">
+                            <span class="material-symbols-outlined" style="font-size:18px;color:#9ca3af;">search</span>
+                            <input type="text" name="search" placeholder="Search name, email, org..." id="univSearchInput"
+                                value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
+                        </div>
+                    </form>
                     <button type="button" class="univ-icon-btn" title="Export CSV" id="exportBtn">
                         <span class="material-symbols-outlined" style="font-size:18px;">download</span>
                     </button>
                 </div>
             </div>
 
-            <div class="card-body" style="padding:0;">
+            <div class="card-body" style="padding:0; overflow-x: auto;">
                 <table class="data-table" id="univTable">
                     <thead>
                         <tr>
@@ -175,30 +205,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </tr>
                     </thead>
                     <tbody>
-                    <?php
-                        $uniResult = $adminDB->getAllUniversities();
-                        
-                        // Pagination Setup
-                        $recordsPerPage = 5;
-                        $totalPages = ceil((int)$totUni / $recordsPerPage);
-                        if ($totalPages < 1) $totalPages = 1;
-                        $currentPage = isset($_GET['page']) ? max(1, min($totalPages, (int)$_GET['page'])) : 1;
-                        $offset = ($currentPage - 1) * $recordsPerPage;
-                        
-                        if ((int)$totUni > 0 && isset($uniResult->num_rows) && $uniResult->num_rows > 0) {
-                            $uniResult->data_seek($offset);
-                        }
-                        
-                        $count = 0;
-                        while ($count < $recordsPerPage && $row = $uniResult->fetch_assoc()):
-                            $initials  = strtoupper(substr($row['University'], 0, 3));
-                            $badgeCls  = match(strtolower($row['Status'] ?? '')) {
-                                'active'   => 'active',
-                                'pending'  => 'pending',
-                                default    => 'inactive-badge'
-                            };
-                            $count++;
-                    ?>
+                    <?php if (empty($pageUniversities)): ?>
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                <span class="material-symbols-outlined" style="font-size: 40px; color: #cbd5e1; display:block; margin-bottom:8px;">search_off</span>
+                                No universities found matching your criteria.
+                            </td>
+                        </tr>
+                    <?php else: ?>
+                        <?php
+                            foreach ($pageUniversities as $row):
+                                $initials  = strtoupper(substr($row['University'], 0, 3));
+                                $badgeCls  = match(strtolower($row['Status'] ?? '')) {
+                                    'active'   => 'active',
+                                    'pending'  => 'pending',
+                                    default    => 'inactive-badge'
+                                };
+                        ?>
                         <tr>
                             <td>
                                 <div class="university-logo mit" style="background:#1e293b;"><?= htmlspecialchars($initials) ?></div>
@@ -234,42 +257,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                         <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                     </button>
                                     <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
-                                        onclick="confirmDelete('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>')">
+                                        onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
                                     </button>
                                 </div>
                             </td>
                         </tr>
-                    <?php endwhile; ?>
-
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Pagination -->
+            <!-- Pagination (Shows only if more than 5 universities exist) -->
+            <?php if ($totalPages > 1): ?>
             <div class="univ-pagination">
+                <div class="univ-pagination-info">
+                    Showing <?= $offset + 1 ?>–<?= min($offset + $recordsPerPage, $totFilteredUni) ?> of <?= $totFilteredUni ?> universities
+                </div>
                 <div class="univ-pagination-controls">
                     <?php if ($currentPage <= 1): ?>
                         <span class="univ-page-btn disabled">Previous</span>
                     <?php else: ?>
-                        <a href="?page=<?= $currentPage - 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Previous</a>
+                        <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Previous</a>
                     <?php endif; ?>
 
                     <?php for($p = 1; $p <= $totalPages; $p++): ?>
                         <?php if ($p == $currentPage): ?>
                             <span class="univ-page-btn univ-page-active"><?= $p ?></span>
                         <?php else: ?>
-                            <a href="?page=<?= $p ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;"><?= $p ?></a>
+                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $p ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;"><?= $p ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
 
                     <?php if ($currentPage >= $totalPages): ?>
                         <span class="univ-page-btn disabled">Next</span>
                     <?php else: ?>
-                        <a href="?page=<?= $currentPage + 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Next</a>
+                        <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Next</a>
                     <?php endif; ?>
                 </div>
             </div>
+            <?php endif; ?>
 
         </div>
     </div>
@@ -288,15 +316,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="hidden" name="action" value="add">
             <div class="form-group">
                 <label class="form-label">University Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" class="form-input" name="university" placeholder="e.g. University of Colombo">
+                <input type="text" class="form-input" name="university" placeholder="e.g. University of Colombo" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Faculty Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" class="form-input" name="faculty" placeholder="e.g. School Of Technology">
+                <input type="text" class="form-input" name="faculty" placeholder="e.g. School Of Technology" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Email Domain <span style="color:#ef4444;">*</span></label>
-                <input type="text" name="domain" class="form-input" placeholder="e.g. cmb.ac.lk">
+                <input type="text" name="domain" class="form-input" placeholder="e.g. cmb.ac.lk" required>
                 <small style="color:#9ca3af;font-size:11px;margin-top:4px;display:block;">Enter without the @
                     symbol</small>
             </div>
@@ -349,6 +377,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label class="form-label">Email Domain <span style="color:#ef4444;">*</span></label>
                 <input type="text" name="domain" id="editDomain" class="form-input" required>
+                <small style="color:#9ca3af;font-size:11px;margin-top:4px;display:block;">Enter without the @
+                    symbol</small>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -388,11 +418,58 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </div>
 
-<!-- Hidden Delete Form-->
-<form id="deleteForm" action="" method="post" style="display:none;">
-    <input type="hidden" name="action" value="delete">
-    <input type="hidden" name="delete_domain" id="deleteDomainInput">
-</form>
+<!-- Delete University Modal -->
+<div class="univ-modal-overlay" id="deleteModal">
+    <div class="univ-modal">
+        <div class="univ-modal-header">
+            <h3 style="color:#dc2626; display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size:20px;">delete</span>
+                Delete University
+            </h3>
+            <button class="univ-modal-close" id="closeDeleteModal" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form action="" method="post">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="delete_domain" id="deleteDomainInput">
+            
+            <div class="univ-modal-body" style="padding: 22px 24px;">
+                <div style="display:flex; gap:16px; align-items:flex-start;">
+                    <div style="width:44px; height:44px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <span class="material-symbols-outlined" style="font-size:24px;">warning</span>
+                    </div>
+                    <div style="flex:1;">
+                        <h4 style="font-size: 14.5px; font-weight:700; color:#0f172a; margin:0 0 6px 0;">
+                            Are you sure you want to delete this university?
+                        </h4>
+                        <p style="font-size: 13px; color:#64748b; margin:0 0 14px 0; line-height:1.5;">
+                            This action cannot be undone. All student domain associations will be removed.
+                        </p>
+
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12.5px;">
+                                <span style="color:#64748b; font-weight:600;">University:</span>
+                                <strong id="deleteUniDisplay" style="color:#0f172a; font-weight:600;"></strong>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
+                                <span style="color:#64748b; font-weight:600;">Domain:</span>
+                                <strong id="deleteDomainDisplay" style="color:#2563eb; font-weight:600; font-family:'Courier New', monospace;"></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="univ-modal-footer">
+                <button type="button" class="univ-btn-cancel" id="cancelDeleteModal">Cancel</button>
+                <button type="submit" class="univ-btn-delete">
+                    <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
+                    Delete University
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
@@ -404,4 +481,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </footer>
 
 <?php include "../../../Includes/dash_footer.php"; ?>
-<script src="../../../Assets/JS/university.js"></script>
+<script src="../../../Assets/JS/Admin/university.js"></script>

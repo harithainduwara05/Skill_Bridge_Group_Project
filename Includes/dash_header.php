@@ -1,68 +1,207 @@
 <?php
-// Generate avatar color based on name
-$avatarName = 'User';
-if (!empty($user['username'])) {
-    $avatarName = $user['username'];
-} elseif (isset($student['Name'])) {
-    $avatarName = $student['Name'];
-} else {
-    // Fallback: try to fetch it if session is old
-    global $conn;
-    if (isset($conn) && isset($user['Email']) && isset($user['role'])) {
-        $stmt = $conn->prepare("SELECT Name FROM " . $user['role'] . " WHERE Email=?");
-        if ($stmt) {
-            $stmt->bind_param("s", $user['Email']);
+require_once __DIR__ . '/../Session/Session.php';
+require_once __DIR__ . '/../Config/db.php';
+
+$user = function_exists('current_user') ? current_user() : null;
+$notifications = [];
+$name = "User";
+$role = "Student";
+$image = null;
+
+// ================================
+// GET USER DETAILS
+// ================================
+if($user && isset($conn)){
+    $name = $user['username'] ?? $user['Name'] ?? "User";
+    $email = $user['Email'] ?? $user['email'] ?? null;
+    
+    if(!empty($user['role'])){
+        $role = ucfirst($user['role']);
+    }
+    
+    if($email){
+        $sql = "
+            SELECT
+                u.Email,
+                u.role,
+                COALESCE(s.Name, a.Name, c.contactPersonName, o.contactPersonName, c.Name, o.Name) AS db_name,
+                COALESCE(s.profile_image, a.profile_image) AS profile_image
+            FROM user u
+            LEFT JOIN student s ON u.Email = s.Email
+            LEFT JOIN admin a ON u.Email = a.Email
+            LEFT JOIN company c ON u.Email = c.Email
+            LEFT JOIN organization o ON u.Email = o.Email
+            WHERE u.Email = ?
+            LIMIT 1
+        ";
+        $stmt = $conn->prepare($sql);
+        if($stmt){
+            $stmt->bind_param("s", $email);
             $stmt->execute();
-            $res = $stmt->get_result()->fetch_assoc();
-            if ($res && !empty($res['Name'])) {
-                $avatarName = $res['Name'];
+            $result = $stmt->get_result();
+            if($data = $result->fetch_assoc()){
+                if(!empty($data['db_name'])){
+                    $name = $data['db_name'];
+                }
+                if(!empty($data['role'])){
+                    $role = ucfirst($data['role']);
+                }
+                if(!empty($data['profile_image'])){
+                    $image = $data['profile_image'];
+                }
             }
+            $stmt->close();
         }
     }
 }
 
-$roleLabel  = !empty($user['role']) ? ucfirst($user['role']) : 'User';
-$initial    = strtoupper(substr($avatarName, 0, 1));
+// ================================
+// NOTIFICATIONS
+// ================================
+if(!empty($email) && isset($conn)){
+    $sql = "
+        SELECT
+            notification_id,
+            title,
+            message,
+            created_at
+        FROM notifications
+        WHERE Email = ?
+        ORDER BY notification_id DESC
+        LIMIT 5
+    ";
+    $stmt = $conn->prepare($sql);
+    if($stmt){
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $notifications = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    }
+}
 
-// Pick a consistent color based on first letter
-$colors = [
-    'A' => '#1e3a5f', 'B' => '#6d28d9', 'C' => '#0369a1', 'D' => '#065f46',
-    'E' => '#7c2d12', 'F' => '#1e40af', 'G' => '#4c1d95', 'H' => '#134e4a',
-    'I' => '#1f2937', 'J' => '#7f1d1d', 'K' => '#14532d', 'L' => '#0c4a6e',
-    'M' => '#312e81', 'N' => '#1e3a5f', 'O' => '#7c3aed', 'P' => '#1d4ed8',
-    'Q' => '#064e3b', 'R' => '#831843', 'S' => '#0f172a', 'T' => '#1e3a5f',
-    'U' => '#4338ca', 'V' => '#065f46', 'W' => '#1f2937', 'X' => '#312e81',
-    'Y' => '#0c4a6e', 'Z' => '#1e293b',
-];
-$avatarBg = isset($colors[$initial]) ? $colors[$initial] : '#1e3a5f';
+$initial = !empty(trim($name)) ? strtoupper(mb_substr(trim($name), 0, 1)) : 'U';
+$notif_url = "/Skill_Bridge_Group_Project/Functions/Dashboards/" . ($role ?: "Student") . "/notifications.php";
+$base_url = $GLOBALS['BASE_URL'] ?? '/Skill_Bridge_Group_Project';
+
+$profile_file = __DIR__ . '/../Functions/Dashboards/' . ($role ?: 'Student') . '/profile.php';
+$profile_url = file_exists($profile_file)
+    ? $base_url . "/Functions/Dashboards/" . ($role ?: "Student") . "/profile.php"
+    : "";
+
+// Resolve Profile Image URL with dynamic role directory check
+$image_src = null;
+if (!empty($image)) {
+    if (str_starts_with($image, 'http://') || str_starts_with($image, 'https://') || str_starts_with($image, '/')) {
+        $image_src = $image;
+    } elseif (file_exists(__DIR__ . '/../Assets/Images/Admin/' . $image)) {
+        $image_src = $base_url . '/Assets/Images/Admin/' . htmlspecialchars($image);
+    } elseif (file_exists(__DIR__ . '/../Assets/Images/Student/' . $image)) {
+        $image_src = $base_url . '/Assets/Images/Student/' . htmlspecialchars($image);
+    } elseif (file_exists(__DIR__ . '/../uploads/' . $image)) {
+        $image_src = $base_url . '/uploads/' . htmlspecialchars($image);
+    } else {
+        $targetFolder = ($role === 'Admin') ? 'Admin' : 'Student';
+        $image_src = $base_url . '/Assets/Images/' . $targetFolder . '/' . htmlspecialchars($image);
+    }
+}
 ?>
+<link rel="stylesheet" href="<?php echo $base_url; ?>/Assets/CSS/header.css?v=<?php echo time(); ?>">
 
 <header class="top-header">
-
     <div class="search-box">
         <span class="material-symbols-outlined">search</span>
-        <input type="text" placeholder="Search for projects, users...">
+        <input type="text" placeholder="Search for projects, skills, or internships...">
     </div>
 
     <div class="header-right">
+        <!-- NOTIFICATION -->
+        <div class="notification-wrapper">
+            <button class="notification" onclick="toggleNotifications(event)" title="Notifications" aria-label="Notifications" type="button">
+                <span class="material-symbols-outlined">notifications</span>
+                <?php if(!empty($notifications) && count($notifications) > 0): ?>
+                    <span class="notification-dot"></span>
+                <?php endif; ?>
+            </button>
 
-        <button class="notification" type="button" title="Notifications">
-            <span class="material-symbols-outlined">notifications</span>
-            <span class="notification-dot"></span>
-        </button>
+            <div class="notification-popup" id="notificationPopup" onclick="event.stopPropagation()">
+                <div class="notification-header">
+                    <h3>Notifications</h3>
+                    <a href="<?php echo htmlspecialchars($notif_url); ?>" class="mark-all-read">View All</a>
+                </div>
+                
+                <div class="notification-count">
+                    <span><?php echo count($notifications); ?> new notification<?php echo count($notifications) == 1 ? '' : 's'; ?></span>
+                </div>
 
-        <div class="profile">
-            <div class="profile-info">
-                <h4><?php echo htmlspecialchars($avatarName); ?></h4>
-                <small><?php echo htmlspecialchars($roleLabel); ?></small>
-            </div>
+                <div class="notification-list">
+                    <?php if(empty($notifications)): ?>
+                        <div class="notification-empty">
+                            <span class="material-symbols-outlined">notifications_off</span>
+                            <p>No new notifications</p>
+                        </div>
+                    <?php else: ?>
+                        <?php foreach($notifications as $notification): ?>
+                            <div class="notification-item">
+                                <div class="notification-icon">
+                                    <span class="material-symbols-outlined">notifications</span>
+                                </div>
+                                <div class="notification-content">
+                                    <strong><?php echo htmlspecialchars($notification['title'] ?? 'Notification'); ?></strong>
+                                    <p><?php echo htmlspecialchars($notification['message'] ?? ''); ?></p>
+                                    <small><?php echo htmlspecialchars($notification['created_at'] ?? ''); ?></small>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </div>
 
-            <!-- Avatar with initial instead of broken image -->
-            <div class="profile-avatar" style="background: <?php echo $avatarBg; ?>;">
-                <?php echo $initial; ?>
+                <a class="view-all" href="<?php echo htmlspecialchars($notif_url); ?>">
+                    View All Notifications →
+                </a>
             </div>
         </div>
 
+        <!-- PROFILE -->
+        <div class="profile" <?php if (!empty($profile_url)): ?>onclick="window.location.href='<?php echo htmlspecialchars($profile_url); ?>'" title="Edit Profile & Settings"<?php endif; ?>>
+            <div class="profile-info">
+                <h4><?php echo htmlspecialchars($name); ?></h4>
+                <small><?php echo htmlspecialchars($role); ?></small>
+            </div>
+            <?php if(!empty($image_src)): ?>
+                <img
+                    class="profile-avatar"
+                    src="<?php echo $image_src; ?>?v=<?php echo time(); ?>"
+                    alt="<?php echo htmlspecialchars($name); ?>"
+                    onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
+                >
+                <div class="profile-avatar default-avatar" style="display:none;">
+                    <?php echo htmlspecialchars($initial); ?>
+                </div>
+            <?php else: ?>
+                <div class="profile-avatar default-avatar">
+                    <?php echo htmlspecialchars($initial); ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
-
 </header>
+
+<script>
+    function toggleNotifications(event){
+        if(event){
+            event.stopPropagation();
+        }
+        var popup = document.getElementById("notificationPopup");
+        if(popup){
+            popup.classList.toggle("show");
+        }
+    }
+
+    document.addEventListener("click", function(e){
+        var wrapper = document.querySelector(".notification-wrapper");
+        var popup = document.getElementById("notificationPopup");
+        if(popup && wrapper && !wrapper.contains(e.target)){
+            popup.classList.remove("show");
+        }
+    });
+</script>
