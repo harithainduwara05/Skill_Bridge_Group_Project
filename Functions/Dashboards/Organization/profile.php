@@ -104,8 +104,8 @@ include "../../../Includes/dash_header.php";
     <div class="dashboard-header">
 
         <div>
-            <h1>Organization Profile</h1>
-            <p>Manage your public organization profile and contact information.</p>
+            <h1>Profile & Settings</h1>
+            <p>Manage your public organization profile, contact information, and account security.</p>
         </div>
 
     </div>
