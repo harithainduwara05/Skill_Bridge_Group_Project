@@ -3,19 +3,36 @@
 include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
-
 require_role("student");
+
 require_once __DIR__ . "/check_student_access.php";
+
+
+$user = current_user();
+
+
+if(!$user){
+    die("Session expired");
+}
+
+
+$email = $user['Email'];
+
+
+// Check student year
+
 if(!validateStudentYear($email)){
 
-    header("Location: dashboard.php?error=invalid_batch");
+    header(
+        "Location: dashboard.php?error=invalid_batch"
+    );
 
     exit();
 
 }
-$user=current_user();
 
-$email=$user['Email'];
+
+// Check internship permission
 
 if(!canApplyInternship($email)){
 
@@ -24,8 +41,12 @@ if(!canApplyInternship($email)){
     alert('Internships are available only for 3rd and 4th year students.');
     window.location.href='dashboard.php';
     </script>";
-    exit;
+
+    exit();
+
 }
+
+
 
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -46,21 +67,22 @@ include "../../../Includes/dash_header.php";
 
 <body>
 
-
 <div class="content">
 
-
 <h1>
-    Internships
+Internships
 </h1>
 
 
 </div>
-
 
 </body>
 
 </html>
 
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php
+
+include "../../../Includes/dash_footer.php";
+
+?>

@@ -5,17 +5,15 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
 <!DOCTYPE html>
 
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Dashboard | SkillBridge</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-<link rel="stylesheet" href="../../../Assets/CSS/dashboard.css">
-<?= $extra_css ?? '' ?>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../../../Assets/CSS/sider.css">
 </head>
 
 <body>
@@ -23,7 +21,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
 <aside class="sidebar">
 
     <div class="logo">
-        <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
+        <img src="../../../Assets/Images/SkillBridge.png" alt="SkillBridge">
     </div>
 
 
@@ -34,21 +32,10 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">dashboard</span>
+                <img src="../../../Assets/Images/Icons/dashboard.svg">
             </span>
 
             Dashboard
-
-        </a>
-
-        <a href="../../../Functions/Dashboards/Student/profile.php"
-        class="<?= $currentPage == 'profile.php' ? 'active' : '' ?>">
-
-            <span class="icon">
-                <span class="material-symbols-outlined">person</span>
-            </span>
-
-            Profile
 
         </a>
 
@@ -56,7 +43,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'skills.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">lightbulb</span>
+                <img src="../../../Assets/Images/Icons/skills.png">
             </span>
             Skills
         </a>
@@ -67,7 +54,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'certificates.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">workspace_premium</span>
+                <img src="../../../Assets/Images/Icons/certificates.png">
             </span>
 
             Certificates
@@ -80,7 +67,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">folder_open</span>
+                <img src="../../../Assets/Images/Icons/portfolio.png">
             </span>
 
             Portfolio
@@ -91,7 +78,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">work</span>
+                <img src="../../../Assets/Images/Icons/projects.svg">
             </span>
             Projects
         </a>
@@ -101,31 +88,24 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'teams.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">group</span>
+                <img src="../../../Assets/Images/Icons/teams.png">
             </span>
             Teams
         </a>
-        
-        <?php if(isset($email) && $email && canApplyInternship($email)){ ?>
 
         <a href="../../../Functions/Dashboards/Student/internships.php"
-        class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
-
-            <span class="icon">
-                <span class="material-symbols-outlined">assignment</span>
-            </span>
-
-            Internships
-
+            class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
+                <span class="icon">
+                    <img src="../../../Assets/Images/Icons/internship.png">
+                </span>
+                Internships
         </a>
-
-        <?php } ?>
 
         <a href="../../../Functions/Dashboards/Student/notifications.php"
         class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">notifications</span>
+                <img src="../../../Assets/Images/Icons/notification.png">
             </span>
             Notifications
 
@@ -137,7 +117,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         class="<?= $currentPage == 'settings.php' ? 'active' : '' ?>">
 
             <span class="icon">
-                <span class="material-symbols-outlined">settings</span>
+                <img src="../../../Assets/Images/Icons/settings.png">
             </span>
             Settings
         </a>
@@ -145,10 +125,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
 
 
     <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
-        <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
-        Logout
+        ⇥ Logout
     </button>
 
 </aside>
-
-<div class="main-wrapper">

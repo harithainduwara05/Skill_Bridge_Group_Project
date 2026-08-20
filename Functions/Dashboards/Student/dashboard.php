@@ -64,8 +64,6 @@ $skills = array_slice($studentManager->getSkills($email), 0,6);
 // Projects
 $projects =$studentManager->getProjects($email);
 
-// Internships
-include "../../../Functions/Dashboards/Student/check_student_access.php";
 
 if(canApplyInternship($email)){
     $internships =
@@ -82,26 +80,39 @@ $completion = calculateProfileCompletion($student, $student['skills'],
     $student['certificates'], $student['projects']
 );
 
-// Pass specific CSS to the sidebar
-$extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-';
-
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
 ?>
 
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>
+Student Dashboard | SkillBridge
+</title>
+
+
+<link rel="stylesheet" 
+href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+<body>
+
 <div class="container">
 
-
 <!-- HEADER -->
-<div class="dashboard-header">
+<div class="header">
 
 <div>
 
 <h1>
-Welcome back, <?php echo htmlspecialchars($student['Name']); ?>
+
+Welcome back,
+<?php echo htmlspecialchars($student['Name']); ?>
+
 </h1>
 
 <p>
@@ -110,10 +121,8 @@ Continue building your skills and career journey.
 
 </div>
 
-<a href="projects.php" class="post-btn"> 
-<span class="material-symbols-outlined" style="font-size: 18px;">add_circle</span>
-Post New Project
-</a>
+<a href="projects.php"class="post-btn"> 
++ Post New Project</a>
 </div>
 
 <!-- PROFILE + STATS -->
@@ -152,12 +161,10 @@ onerror="this.src='../../../Assets/Images/Student/profile.webp';"
 </h2>
 
 <p>
+
 <?php echo htmlspecialchars($student['degree']); ?>
- •
-<?php 
-$yearText = htmlspecialchars($student['year']);
-echo (stripos($yearText, 'Year') === false) ? "Year " . $yearText : $yearText; 
-?>
+ • Year
+<?php echo htmlspecialchars($student['year']); ?>
 <br>
 <?php echo htmlspecialchars($student['University']); ?>
 </p>
@@ -195,7 +202,7 @@ style="width:<?php echo $completion; ?>%;">
 <div class="profile-buttons">
 
 
-<a href="profile.php"class="btn">
+<a href="settings.php"class="btn">
 Complete Profile</a>
 
 <a href="../profile/public_cv.php"class="outline">
@@ -207,45 +214,63 @@ View Public CV</a>
 </div>
 
 <!-- STATISTICS -->
+
 <div class="stats">
 
 <div class="card">
+
 <h1>
+
 <span class="ico">
-<span class="material-symbols-outlined">lightbulb</span>
+<img src="../../../Assets/Images/Icons/skills.png">
 </span>
+
 <?php echo $student['skills']; ?>
 </h1>
-<p>Skills Added</p>
+
+<p>
+Skills Added
+</p>
 </div>
 
 <div class="card">
 <h1>
 <span class="ico">
-<span class="material-symbols-outlined">workspace_premium</span>
+<img src="../../../Assets/Images/Icons/certificates.png">
 </span>
+
 <?php echo $student['certificates']; ?>
+
 </h1>
+
 <p>Certificates</p>
 </div>
 
 <div class="card">
+
 <h1>
+
 <span class="ico">
-<span class="material-symbols-outlined">work</span>
-</span>
+<img src="../../../Assets/Images/Icons/projects.svg"></span>
+
 <?php echo $student['projects']; ?>
+
 </h1>
+
 <p>Projects Done</p>
 </div>
 
 <div class="card">
+
 <h1>
+
 <span class="ico">
-<span class="material-symbols-outlined">assignment</span>
+<img src="../../../Assets/Images/Icons/internship.png">
 </span>
+
 <?php echo $student['applications']; ?>
 </h1>
+
 <p>Applications</p>
 </div>
 

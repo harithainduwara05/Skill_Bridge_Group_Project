@@ -32,7 +32,7 @@ include "../../../Includes/dash_header.php";
 
 
 <h1>
-    Prorfolio
+    Portfolio
 </h1>
 
 
