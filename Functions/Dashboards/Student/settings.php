@@ -228,11 +228,13 @@ $stmt = $conn->prepare(
 "
 SELECT 
     student.*,
-    user.status AS user_status
+    user.status AS user_status,
+    user.password
 FROM student
 INNER JOIN user
 ON student.Email = user.Email
-WHERE student.Email=?");
+WHERE student.Email=?
+");
 
 $stmt->bind_param("s",$email);
 $stmt->execute();
@@ -302,15 +304,26 @@ $completion = calculateProfileCompletion(
     $project_count
 );
 
-$pageTitle = "Settings | SkillBridge";
-$extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/settings.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-';
+?>
+<?php
 
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
+
 ?>
+
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>My Profile</title>
+
+<link rel="stylesheet"href="../../../Assets/CSS/Student/settings.css">
+<link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+</head>
+
+<body>
 
 <div class="profile-container">
 
@@ -337,24 +350,18 @@ include "../../../Includes/dash_header.php";
 
 <!-- PROFILE CARD -->
 <div class="profile-card">
-    <?php
-    $student_img_src = null;
-    $student_img_file = !empty($student['profile_image']) ? __DIR__ . '/../../../Assets/Images/Student/' . $student['profile_image'] : null;
-    if ($student_img_file && file_exists($student_img_file)) {
-        $student_img_src = "../../../Assets/Images/Student/" . htmlspecialchars($student['profile_image']) . "?v=" . time();
-    }
-    $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(trim($student['Name']), 0, 1)) : 'S';
-    ?>
     <div class="avatar">
+
         <img id="profilePreview"
-            src="<?php echo $student_img_src ?? ''; ?>"
-            alt="Profile Preview"
-            style="<?php echo empty($student_img_src) ? 'display:none;' : ''; ?>"
-            onerror="this.style.display='none'; document.getElementById('defaultAvatarPreview').style.display='flex';"
-        >
-        <div id="defaultAvatarPreview" class="default-avatar-placeholder" style="<?php echo !empty($student_img_src) ? 'display:none;' : ''; ?>">
-            <span><?php echo htmlspecialchars($student_initial); ?></span>
-        </div>
+        src="<?php
+        if(!empty($student['profile_image'])){
+            echo "../../../Assets/Images/Student/"
+            .$student['profile_image'];
+        }
+        else{
+            echo "../../../Assets/Images/Student/profile.webp";
+        }
+        ?>">
 
         <label class="camera">
             <i class="fa-solid fa-camera"></i>
@@ -438,13 +445,18 @@ include "../../../Includes/dash_header.php";
     </textarea>
 
     <label>GitHub</label>
-    <input type="text" name="github" value="<?= htmlspecialchars($student['github'] ?? ""); ?>">
+    <input 
+        type="text" name="github" value="<?= htmlspecialchars($student['github'] ?? ""); ?>"
+        placeholder="https://github.com/username">
 
     <label>LinkedIn</label>
-    <input type="text" name="linkedin" value="<?= htmlspecialchars($student['linkedin'] ?? ""); ?>">
+    <input type="text" name="linkedin" value="<?= htmlspecialchars($student['linkedin'] ?? ""); ?>"
+        placeholder="https://linkedin.com/in/username">
 
     <label>Website</label>
-    <input type="text" name="website" value="<?= htmlspecialchars($student['website'] ?? ""); ?>">
+    <input type="text" name="website" value="<?= htmlspecialchars($student['website'] ?? ""); ?>"
+        placeholder="https://yourwebsite.com">
+
 </div>
 </div>
 </form>
@@ -459,7 +471,7 @@ include "../../../Includes/dash_header.php";
 <div class="password-field">
 
 
-<input type="password" name="current_password" placeholder="Enter current password">
+<input type="password" name="current_password" placeholder="Enter current password" required>
 <i class="fa-solid fa-eye"></i>
 </div>
 
@@ -470,7 +482,7 @@ include "../../../Includes/dash_header.php";
 <label>New Password *</label>
 <div class="password-field">
 
-<input type="password" name="new_password" placeholder="Minimum 6 characters">
+<input type="password" name="new_password" placeholder="Minimum 6 characters" required>
 <i class="fa-solid fa-eye"></i>
 </div>
 </div>
@@ -479,7 +491,7 @@ include "../../../Includes/dash_header.php";
 <label>Confirm New Password *</label>
 <div class="password-field">
 
-<input type="password" name="confirm_password" placeholder="Re-type new password">
+<input type="password" name="confirm_password" placeholder="Re-type new password" required>
 <i class="fa-solid fa-eye"></i>
 </div>
 </div>
@@ -497,16 +509,15 @@ Update Password
 
 // IMAGE PREVIEW
 function previewImage(event){
-    let image = document.getElementById("profilePreview");
-    let defaultAvatar = document.getElementById("defaultAvatarPreview");
+
+    let image = document.getElementById(
+        "profilePreview"
+    );
+
     let file = event.target.files[0];
 
     if(file){
         image.src = URL.createObjectURL(file);
-        image.style.display = "block";
-        if(defaultAvatar){
-            defaultAvatar.style.display = "none";
-        }
     }
 }
 
@@ -556,6 +567,18 @@ document.querySelectorAll(".password-field i").forEach(icon => {
 });
 
 </script>
+
+</body>
+</html>
+
+<footer class="footer">
+    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
+    <div class="footer-links">
+        <a href="#">Help Center</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+    </div>
+</footer>
 
 <?php
 include "../../../Includes/dash_footer.php";

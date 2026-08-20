@@ -65,12 +65,20 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
             Teams
         </a>
 
-        <a href="internships.php" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
+        <?php
+        $user = current_user();
+        $email = $user['Email'] ?? $user['email'] ?? null;
+        ?>
+        <?php if($email && canApplyInternship($email)){ ?>
+
+        <a href="../../../Functions/Dashboards/Student/internships.php"
+        class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
             <span class="icon">
                 <span class="material-symbols-outlined">work</span>
             </span>
             Internships
         </a>
+        <?php } ?>
 
         <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
             <span class="icon">
