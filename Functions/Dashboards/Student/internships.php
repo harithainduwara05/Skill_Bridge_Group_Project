@@ -48,41 +48,17 @@ if(!canApplyInternship($email)){
 
 
 
+$pageTitle = "Internships | SkillBridge";
+$extra_css = '<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">';
+
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
-
 ?>
 
-<!DOCTYPE html>
-<html>
-
-<head>
-
-<title>Internships | SkillBridge</title>
-
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-
-</head>
-
-
-<body>
-
-<div class="content">
-
-<h1>
-Internships
-</h1>
-
-
-</div>
-
-</body>
-
-</html>
-
+<main class="content" style="padding: 25px 35px; max-width: 1300px; margin: 0 auto; width: 100%; box-sizing: border-box;">
+    <h1>Internships</h1>
+</main>
 
 <?php
-
 include "../../../Includes/dash_footer.php";
-
 ?>

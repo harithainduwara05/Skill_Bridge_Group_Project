@@ -80,26 +80,15 @@ $completion = calculateProfileCompletion($student, $student['skills'],
     $student['certificates'], $student['projects']
 );
 
+$pageTitle = "Student Dashboard | SkillBridge";
+$extra_css = '
+<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+';
+
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
 ?>
-
-<!DOCTYPE html>
-<html>
-<head>
-
-<title>
-Student Dashboard | SkillBridge
-</title>
-
-
-<link rel="stylesheet" 
-href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-</head>
-<body>
 
 <div class="container">
 
@@ -129,30 +118,30 @@ Continue building your skills and career journey.
 <div class="top-section">
 <div class="profile-card">
 
+<?php
+$student_img_src = null;
+$student_img_file = !empty($student['profile_image']) ? __DIR__ . '/../../../Assets/Images/Student/' . $student['profile_image'] : null;
+if ($student_img_file && file_exists($student_img_file)) {
+    $student_img_src = "../../../Assets/Images/Student/" . htmlspecialchars($student['profile_image']) . "?v=" . time();
+}
+$student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(trim($student['Name']), 0, 1)) : 'S';
+?>
+
 <div class="dashboard-avatar">
-
-<img 
-src="<?php
-
-if(!empty($student['profile_image'])){
-
-echo "../../../Assets/Images/Student/"
-.$student['profile_image']
-."?v=".time();
-
-}
-else{
-
-echo "../../../Assets/Images/Student/profile.webp";
-
-}
-
-?>"
-
-onerror="this.src='../../../Assets/Images/Student/profile.webp';"
-
->
-
+<?php if(!empty($student_img_src)): ?>
+    <img 
+        src="<?php echo $student_img_src; ?>" 
+        alt="<?php echo htmlspecialchars($student['Name']); ?>"
+        onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
+    >
+    <div class="default-avatar-placeholder" style="display:none;">
+        <span><?php echo htmlspecialchars($student_initial); ?></span>
+    </div>
+<?php else: ?>
+    <div class="default-avatar-placeholder">
+        <span><?php echo htmlspecialchars($student_initial); ?></span>
+    </div>
+<?php endif; ?>
 </div>
 
 <div>
@@ -669,13 +658,5 @@ Apply Now
 
 
 </div>
-
-
-
-</div>
-
-</body>
-
-</html>
 
 <?php include "../../../Includes/dash_footer.php"; ?>

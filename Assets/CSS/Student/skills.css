@@ -7,15 +7,14 @@ body{
     font-family:'Inter',Arial,sans-serif;
     background:#f5f7fb;
     color:#082544;
-    margin-bottom:80px;
-
 }
 
 .skills-container{
-    margin-left:220px;
-    padding:25px;
-    width:calc(100% - 250px);
-
+    padding:25px 35px;
+    width:100%;
+    max-width:1300px;
+    margin:0 auto;
+    box-sizing:border-box;
 }
 
 /* Header */

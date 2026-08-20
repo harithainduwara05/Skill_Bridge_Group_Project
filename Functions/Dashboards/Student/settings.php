@@ -302,28 +302,15 @@ $completion = calculateProfileCompletion(
     $project_count
 );
 
-?>
-<?php
+$pageTitle = "Settings | SkillBridge";
+$extra_css = '
+<link rel="stylesheet" href="../../../Assets/CSS/Student/settings.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+';
 
 include "../../../Includes/student_sidebar.php";
 include "../../../Includes/dash_header.php";
-
 ?>
-
-<!DOCTYPE html>
-<html>
-
-<head>
-<title>My Profile</title>
-
-<link rel="stylesheet"href="../../../Assets/CSS/Student/settings.css">
-<link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
-</head>
-
-<body>
-
-// PROFILE SETTINGS
 
 <div class="profile-container">
 
@@ -350,18 +337,24 @@ include "../../../Includes/dash_header.php";
 
 <!-- PROFILE CARD -->
 <div class="profile-card">
+    <?php
+    $student_img_src = null;
+    $student_img_file = !empty($student['profile_image']) ? __DIR__ . '/../../../Assets/Images/Student/' . $student['profile_image'] : null;
+    if ($student_img_file && file_exists($student_img_file)) {
+        $student_img_src = "../../../Assets/Images/Student/" . htmlspecialchars($student['profile_image']) . "?v=" . time();
+    }
+    $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(trim($student['Name']), 0, 1)) : 'S';
+    ?>
     <div class="avatar">
-
         <img id="profilePreview"
-        src="<?php
-        if(!empty($student['profile_image'])){
-            echo "../../../Assets/Images/Student/"
-            .$student['profile_image'];
-        }
-        else{
-            echo "../../../Assets/Images/Student/profile.webp";
-        }
-        ?>">
+            src="<?php echo $student_img_src ?? ''; ?>"
+            alt="Profile Preview"
+            style="<?php echo empty($student_img_src) ? 'display:none;' : ''; ?>"
+            onerror="this.style.display='none'; document.getElementById('defaultAvatarPreview').style.display='flex';"
+        >
+        <div id="defaultAvatarPreview" class="default-avatar-placeholder" style="<?php echo !empty($student_img_src) ? 'display:none;' : ''; ?>">
+            <span><?php echo htmlspecialchars($student_initial); ?></span>
+        </div>
 
         <label class="camera">
             <i class="fa-solid fa-camera"></i>
@@ -504,15 +497,16 @@ Update Password
 
 // IMAGE PREVIEW
 function previewImage(event){
-
-    let image = document.getElementById(
-        "profilePreview"
-    );
-
+    let image = document.getElementById("profilePreview");
+    let defaultAvatar = document.getElementById("defaultAvatarPreview");
     let file = event.target.files[0];
 
     if(file){
         image.src = URL.createObjectURL(file);
+        image.style.display = "block";
+        if(defaultAvatar){
+            defaultAvatar.style.display = "none";
+        }
     }
 }
 
@@ -562,9 +556,6 @@ document.querySelectorAll(".password-field i").forEach(icon => {
 });
 
 </script>
-
-</body>
-</html>
 
 <?php
 include "../../../Includes/dash_footer.php";
