@@ -117,6 +117,23 @@ if(isset($_POST['save_changes'])){
     $oldImage = $old->get_result() ->fetch_assoc()['profile_image'];
     $image = $oldImage;
 
+    // REMOVE PROFILE IMAGE
+
+if(isset($_POST['remove_profile_image']) 
+    && $_POST['remove_profile_image'] == "1"){
+
+    $folder = __DIR__ ."/../../../Assets/Images/Student/";
+
+    if(
+        !empty($oldImage) 
+        &&
+        file_exists($folder.$oldImage)
+    ){
+        unlink($folder.$oldImage);
+    }
+    $image = NULL;
+}
+
     // UPLOAD PROFILE IMAGE
 
     if(
@@ -355,18 +372,41 @@ include "../../../Includes/dash_header.php";
         <img id="profilePreview"
         src="<?php
         if(!empty($student['profile_image'])){
-            echo "../../../Assets/Images/Student/"
-            .$student['profile_image'];
+            echo "../../../Assets/Images/Student/" . $student['profile_image'];
         }
         else{
             echo "../../../Assets/Images/Student/profile.webp";
         }
         ?>">
 
+
+        <!-- Upload Image -->
         <label class="camera">
             <i class="fa-solid fa-camera"></i>
-            <input type="file" name="profile_image" accept="image/*" onchange="previewImage(event)">
+            <input 
+            type="file" 
+            name="profile_image" 
+            accept="image/*" 
+            onchange="previewImage(event)">
         </label>
+
+
+        <?php if(!empty($student['profile_image'])){ ?>
+
+        <!-- Remove Image -->
+        <button 
+        type="button"
+        class="remove-image"
+        onclick="removeProfileImage()">
+
+        <i class="fa-solid fa-trash"></i>
+        Remove Photo
+
+        </button>
+
+        <?php } ?>
+
+
     </div>
 
     <div class="profile-details">
@@ -565,6 +605,20 @@ document.querySelectorAll(".password-field i").forEach(icon => {
         }
     });
 });
+function removeProfileImage(){
+    if(confirm("Remove current profile image?")){
+        document.getElementById("profilePreview").src =
+        "../../../Assets/Images/Student/profile.webp";
+
+        // create hidden input
+        let input=document.createElement("input");
+
+        input.type="hidden";
+        input.name="remove_profile_image";
+        input.value="1";
+        document.querySelector("form").appendChild(input);
+    }
+}
 
 </script>
 
