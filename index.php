@@ -1,4 +1,5 @@
-<?php include 'includes/header.php'; ?>
+<?php include 'Includes/header.php'; ?>
+
 
 <section class="hero-section">
 
@@ -6,6 +7,7 @@
 
 
         <!-- Hero Text -->
+
         <div class="hero-content">
 
             <div class="hero-badge">
@@ -17,7 +19,10 @@
                 Build Skills.<br>
                 Collaborate on<br>
                 Projects.<br>
-                <span>Get Internship<br>Ready.</span>
+                <span>
+                    Get Internship<br>
+                    Ready.
+                </span>
             </h1>
 
 
@@ -52,7 +57,9 @@
 
                 </div>
 
-                <strong>2,500+</strong>
+                <strong>
+                    2,500+
+                </strong>
 
                 <span>
                     students already joined
@@ -65,16 +72,19 @@
 
 
         <!-- Hero Image -->
+
         <div class="hero-visual">
 
             <div class="hero-image-card">
 
-                <img src="Assets/Images/landing.jpeg" alt="Students working on projects">
+                <img
+                    src="Assets/Images/landing.jpeg"
+                    alt="Students working on projects"
+                >
 
             </div>
 
 
-            <!-- Floating Notification -->
             <div class="floating-notification">
 
                 <div class="notification-icon">
@@ -98,15 +108,16 @@
 
         </div>
 
+
     </div>
 
 </section>
 
 
 
-<!-- =====================================================
+<!-- ================================================
      STATS SECTION
-===================================================== -->
+================================================ -->
 
 <section class="stats-section">
 
@@ -115,7 +126,9 @@
 
         <div class="stat-item">
 
-            <strong>50+</strong>
+            <strong>
+                50+
+            </strong>
 
             <span>
                 PARTNER UNIVERSITIES
@@ -126,7 +139,9 @@
 
         <div class="stat-item">
 
-            <strong>1.2k</strong>
+            <strong>
+                1.2k
+            </strong>
 
             <span>
                 LIVE PROJECTS
@@ -137,7 +152,9 @@
 
         <div class="stat-item">
 
-            <strong>850</strong>
+            <strong>
+                850
+            </strong>
 
             <span>
                 HIRING PARTNERS
@@ -148,7 +165,9 @@
 
         <div class="stat-item">
 
-            <strong>92%</strong>
+            <strong>
+                92%
+            </strong>
 
             <span>
                 SUCCESS RATE
@@ -156,17 +175,21 @@
 
         </div>
 
+
     </div>
 
 </section>
 
 
 
-<!-- =====================================================
-     FEATURES SECTION
-===================================================== -->
+<!-- ================================================
+     FEATURES
+================================================ -->
 
-<section class="features-section" id="projects">
+<section
+    class="features-section"
+    id="projects"
+>
 
     <div class="section-heading">
 
@@ -182,10 +205,12 @@
     </div>
 
 
+
     <div class="feature-grid">
 
 
-        <!-- Card 1 -->
+        <!-- CARD 1 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -205,7 +230,8 @@
 
 
 
-        <!-- Card 2 -->
+        <!-- CARD 2 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -225,7 +251,8 @@
 
 
 
-        <!-- Card 3 -->
+        <!-- CARD 3 -->
+
         <div class="feature-card feature-image-card">
 
             <div class="feature-text">
@@ -245,22 +272,33 @@
 
             </div>
 
+
             <div class="small-feature-image">
-                <img src="Assets/Images/landing.jpeg" alt="Project collaboration">
+
+                <img
+                    src="Assets/Images/landing.jpeg"
+                    alt="Project collaboration"
+                >
+
             </div>
 
         </div>
 
 
 
-        <!-- Card 4 -->
+        <!-- CARD 4 -->
+
         <div class="feature-card feature-image-card">
 
             <div class="small-feature-image">
 
-                <img src="Assets/Images/landing.jpeg" alt="Team workspace">
+                <img
+                    src="Assets/Images/landing.jpeg"
+                    alt="Team workspace"
+                >
 
             </div>
+
 
             <div class="feature-text">
 
@@ -283,7 +321,8 @@
 
 
 
-        <!-- Card 5 -->
+        <!-- CARD 5 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -303,7 +342,8 @@
 
 
 
-        <!-- Card 6 -->
+        <!-- CARD 6 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -323,7 +363,8 @@
 
 
 
-        <!-- Card 7 -->
+        <!-- CARD 7 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -343,7 +384,8 @@
 
 
 
-        <!-- Card 8 -->
+        <!-- CARD 8 -->
+
         <div class="feature-card">
 
             <div class="feature-icon">
@@ -361,28 +403,36 @@
 
         </div>
 
+
     </div>
 
 </section>
 
 
 
-<!-- =====================================================
-     HOW IT WORKS SECTION
-===================================================== -->
+<!-- ================================================
+     HOW IT WORKS
+================================================ -->
 
-<section class="career-section" id="how-it-works">
+<section
+    class="career-section"
+    id="how-it-works"
+>
 
     <div class="career-container">
 
 
         <div class="career-content">
 
+
             <h2>
                 Your path to a<br>
                 tech career.
             </h2>
 
+
+
+            <!-- STEP 1 -->
 
             <div class="career-step">
 
@@ -393,7 +443,7 @@
                 <div>
 
                     <h3>
-                        Verify & Build Profile
+                        Verify &amp; Build Profile
                     </h3>
 
                     <p>
@@ -406,6 +456,8 @@
             </div>
 
 
+
+            <!-- STEP 2 -->
 
             <div class="career-step">
 
@@ -430,6 +482,8 @@
 
 
 
+            <!-- STEP 3 -->
+
             <div class="career-step">
 
                 <div class="step-number">
@@ -451,15 +505,20 @@
 
             </div>
 
+
         </div>
 
 
 
         <div class="career-image">
 
-            <img src="Assets/Images/landing.jpeg" alt="Technology career">
+            <img
+                src="Assets/Images/landing.jpeg"
+                alt="Technology career"
+            >
 
         </div>
+
 
     </div>
 
@@ -467,11 +526,14 @@
 
 
 
-<!-- =====================================================
-     ECOSYSTEM SECTION
-===================================================== -->
+<!-- ================================================
+     ECOSYSTEM
+================================================ -->
 
-<section class="ecosystem-section" id="about">
+<section
+    class="ecosystem-section"
+    id="about"
+>
 
     <div class="section-heading">
 
@@ -482,8 +544,11 @@
     </div>
 
 
+
     <div class="ecosystem-grid">
 
+
+        <!-- STUDENTS -->
 
         <div class="ecosystem-card">
 
@@ -502,17 +567,25 @@
 
             <ul>
 
-                <li>Real project ownership</li>
+                <li>
+                    Real project ownership
+                </li>
 
-                <li>Skill verification</li>
+                <li>
+                    Skill verification
+                </li>
 
-                <li>Mentorship access</li>
+                <li>
+                    Mentorship access
+                </li>
 
             </ul>
 
         </div>
 
 
+
+        <!-- FACULTY -->
 
         <div class="ecosystem-card">
 
@@ -531,17 +604,25 @@
 
             <ul>
 
-                <li>Automated progress tracking</li>
+                <li>
+                    Automated progress tracking
+                </li>
 
-                <li>Collaboration hubs</li>
+                <li>
+                    Collaboration hubs
+                </li>
 
-                <li>Industry guest lectures</li>
+                <li>
+                    Industry guest lectures
+                </li>
 
             </ul>
 
         </div>
 
 
+
+        <!-- RECRUITERS -->
 
         <div class="ecosystem-card recruiter-card">
 
@@ -560,15 +641,22 @@
 
             <ul>
 
-                <li>Access top students early</li>
+                <li>
+                    Access top students early
+                </li>
 
-                <li>Review actual code history</li>
+                <li>
+                    Review actual code history
+                </li>
 
-                <li>Direct hiring pipeline</li>
+                <li>
+                    Direct hiring pipeline
+                </li>
 
             </ul>
 
         </div>
+
 
     </div>
 
@@ -576,11 +664,14 @@
 
 
 
-<!-- =====================================================
-     CTA SECTION
-===================================================== -->
+<!-- ================================================
+     CTA
+================================================ -->
 
-<section class="cta-section" id="internships">
+<section
+    class="cta-section"
+    id="internships"
+>
 
     <div class="cta-container">
 
@@ -593,7 +684,11 @@
             top-tier tech companies. Your career starts here.
         </p>
 
-        <a href="Auth/login.php" class="cta-button">
+
+        <a
+            href="Auth/login.php"
+            class="cta-button"
+        >
             Get Started for Free
         </a>
 
@@ -602,5 +697,4 @@
 </section>
 
 
-
-<?php include 'includes/footer.php'; ?>
+<?php include 'Includes/footer.php'; ?>
