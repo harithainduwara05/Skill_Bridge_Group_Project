@@ -80,8 +80,19 @@ if(!empty($email) && isset($conn)){
 }
 
 $initial = !empty(trim($name)) ? strtoupper(mb_substr(trim($name), 0, 1)) : 'U';
-$notif_url = "/Skill_Bridge_Group_Project/Functions/Dashboards/" . ($role ?: "Student") . "/notifications.php";
 $base_url = $GLOBALS['BASE_URL'] ?? '/Skill_Bridge_Group_Project';
+
+$currentRoleFolder = ucfirst($role ?: "Student");
+$notif_file_singular = __DIR__ . '/../Functions/Dashboards/' . $currentRoleFolder . '/notification.php';
+$notif_file_plural = __DIR__ . '/../Functions/Dashboards/' . $currentRoleFolder . '/notifications.php';
+
+if (file_exists($notif_file_singular)) {
+    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notification.php";
+} elseif (file_exists($notif_file_plural)) {
+    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notifications.php";
+} else {
+    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notification.php";
+}
 
 $profile_file = __DIR__ . '/../Functions/Dashboards/' . ($role ?: 'Student') . '/profile.php';
 $profile_url = file_exists($profile_file)

@@ -34,35 +34,41 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="nav-text">Dashboard</span>
             </a>
 
-            <a href="Usermanagemen.php" class="<?= in_array($currentPage, ['Usermanagemen.php', 'users.php']) ? 'active' : '' ?>" title="Users">
+            <a href="User_Management.php" class="<?= in_array($currentPage, ['User_Management.php']) ? 'active' : '' ?>"
+                title="Users">
                 <span class="icon">
                     <span class="material-symbols-outlined">group</span>
                 </span>
                 <span class="nav-text">Users</span>
             </a>
 
-            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>" title="Universities">
+            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>"
+                title="Universities">
                 <span class="icon">
                     <span class="material-symbols-outlined">school</span>
                 </span>
                 <span class="nav-text">Universities</span>
             </a>
 
-            <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Projects">
+            <a href="Project_Management.php"
+                class="<?= in_array($currentPage, ['Project_Management.php']) ? 'active' : '' ?>" title="Projects">
                 <span class="icon">
                     <span class="material-symbols-outlined">folder_open</span>
                 </span>
                 <span class="nav-text">Projects</span>
             </a>
 
-            <a href="internships.php" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Internships">
+            <a href="Internship_Management.php"
+                class="<?= in_array($currentPage, ['Internship_Management.php']) ? 'active' : '' ?>"
+                title="Internships">
                 <span class="icon">
                     <span class="material-symbols-outlined">work</span>
                 </span>
                 <span class="nav-text">Internships</span>
             </a>
 
-            <a href="complaints.php" class="<?= $currentPage == 'complaints.php' ? 'active' : '' ?>" title="Complaints">
+            <a href="compain.php" class="<?= in_array($currentPage, ['complain.php']) ? 'active' : '' ?>"
+                title="Complaints">
                 <span class="icon">
                     <span class="material-symbols-outlined">report_problem</span>
                 </span>
@@ -70,21 +76,25 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="badge">12</span>
             </a>
 
-            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>" title="Reports & Analytics">
+            <a href="reportandAnalysist.php"
+                class="<?= in_array($currentPage, ['reportandAnalysist.php']) ? 'active' : '' ?>"
+                title="Reports & Analytics">
                 <span class="icon">
                     <span class="material-symbols-outlined">bar_chart</span>
                 </span>
                 <span class="nav-text">Reports & Analytics</span>
             </a>
 
-            <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
+            <a href="notification.php" class="<?= in_array($currentPage, ['notification.php']) ? 'active' : '' ?>"
+                title="Notifications">
                 <span class="icon">
                     <span class="material-symbols-outlined">notifications</span>
                 </span>
                 <span class="nav-text">Notifications</span>
             </a>
 
-            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Profile & Settings">
+            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>"
+                title="Profile & Settings">
                 <span class="icon">
                     <span class="material-symbols-outlined">settings</span>
                 </span>

@@ -102,7 +102,7 @@ include "../../../Includes/dash_header.php";
 
 
     <!-- Chart + Activity Section -->
-   <!--<div class="dashboard-grid">
+    <!--<div class="dashboard-grid">
 
 
         <div class="card">
@@ -206,7 +206,7 @@ include "../../../Includes/dash_header.php";
         <div class="card">
             <div class="card-header">
                 <h3>Recent Registrations</h3>
-                <a href="users.php" class="btn-outline">View All Users</a>
+                <a href="User_Management.php" class="btn-outline">View All Users</a>
             </div>
             <div class="card-body" style="padding:0;">
                 <table class="data-table">
@@ -294,7 +294,7 @@ include "../../../Includes/dash_header.php";
                 <?php } ?>
 
             </div>
-            <a href="complaints.php" class="see-all-link">See all
+            <a href="compain.php" class="see-all-link">See all
                 (<?php echo $adminDB->getUndismissedComplaintCount(); ?>) complaints</a>
         </div>
 
@@ -306,7 +306,7 @@ include "../../../Includes/dash_header.php";
         <div class="card">
             <div class="card-header">
                 <h3>Top Performing Universities</h3>
-                <a href="universities.php" class="btn-outline">View All Universities</a>
+                <a href="university.php" class="btn-outline">View All Universities</a>
             </div>
             <div class="card-body" style="padding:0;">
                 <table class="data-table">
@@ -330,7 +330,8 @@ include "../../../Includes/dash_header.php";
                                 <td>
                                     <div class="university-info">
                                         <div class="university-logo mit">
-                                            <?php echo $popularUni[$x]['UNIVERSITY NAME'][0]; ?></div>
+                                            <?php echo $popularUni[$x]['UNIVERSITY NAME'][0]; ?>
+                                        </div>
                                         <span
                                             class="university-name"><?php echo $popularUni[$x]['UNIVERSITY NAME']; ?></span>
                                     </div>
@@ -356,7 +357,6 @@ include "../../../Includes/dash_header.php";
         </div>
     </div>
 </main>
-
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
     <div class="footer-links">
@@ -365,5 +365,4 @@ include "../../../Includes/dash_header.php";
         <a href="#">Terms of Service</a>
     </div>
 </footer>
-
 <?php include "../../../Includes/dash_footer.php"; ?>
