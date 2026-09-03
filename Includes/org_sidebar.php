@@ -80,8 +80,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="nav-text">Notifications</span>
         </a>
 
-        <a href="profile.php"
-        class="<?= $currentPage == 'profile.php' ? 'active' : '' ?>" title="Profile & Settings">
+        <a href="settings.php"
+        class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Profile & Settings">
             <span class="icon">
                 <span class="material-symbols-outlined">settings</span>
             </span>
