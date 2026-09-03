@@ -56,7 +56,7 @@ body{
     background:white;
     border:1px solid #d8dde7;
     border-radius:15px;
-    padding:35px;
+    padding:35px 35px 65px 35px;
     display:flex;
     align-items:center;
     gap:35px;
@@ -66,15 +66,18 @@ body{
 /* IMAGE */
 .avatar{
     position:relative;
+    width:180px;
+    height:180px;
+    flex-shrink:0;
 }
 
+/* Always same size */
 .avatar img{
-    width:130px;
-    height:130px;
+    width:180px;
+    height:180px;
     border-radius:50%;
     object-fit:cover;
-    border:5px solid #d9e7ff;
-    box-shadow:0 8px 20px rgba(0,0,0,.12);
+    border:8px solid #dce8ff;
     display:block;
 }
 
@@ -96,19 +99,22 @@ body{
 
 .camera{
     position:absolute;
-    right:0;
-    bottom:5px;
-    width:38px;
-    height:38px;
-    background:#ff8a00;
+    right:-8px;
+    bottom:15px;
+
+    width:55px;
+    height:55px;
+    background:#ff9500;
     color:white;
     border-radius:50%;
     display:flex;
     justify-content:center;
     align-items:center;
     cursor:pointer;
-    font-size:18px;
+    font-size:22px;
+    z-index:1;
 }
+
 .camera input{
     position:absolute;
     opacity:0;
@@ -117,6 +123,34 @@ body{
     cursor:pointer;
     left:0;
     top:0;
+}
+
+.remove-image{
+    margin-top:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:0 15px;
+    width:185px;
+    height:35px;
+    background:white;
+    border:2px solid #ffb8b8;
+    border-radius:10px;
+    color:#dc2626;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.remove-image i{
+    font-size:14px;
+}
+
+.remove-image:hover{
+    background:#fff0f0;
+    border-color:#ff3b30;
 }
 
 /* PROFILE DETAILS */
