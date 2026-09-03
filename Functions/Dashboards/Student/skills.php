@@ -164,6 +164,62 @@ if(isset($_POST['save_skill'])){
 
 
 }
+// ===============================
+// UPDATE SKILL
+// ===============================
+
+if(isset($_POST['update_skill'])){
+
+
+    $skill_id = $_POST['skill_id'];
+
+    $skill_name = trim($_POST['skill_name']);
+
+    $level = $_POST['level'];
+
+    $experience = $_POST['experience'];
+
+
+
+    $sql = "
+
+    UPDATE skills
+
+    SET 
+        skill_name=?,
+        level=?,
+        experience=?
+
+    WHERE skill_id=?
+    AND Email=?
+
+    ";
+
+
+    $stmt=$conn->prepare($sql);
+
+
+    $stmt->bind_param(
+
+        "sssis",
+
+        $skill_name,
+        $level,
+        $experience,
+        $skill_id,
+        $email
+
+    );
+
+
+    $stmt->execute();
+
+
+    header("Location: skills.php");
+
+    exit();
+
+}
 
 // ===============================
 // DELETE SKILL
@@ -381,29 +437,45 @@ echo (stripos($exp, 'year') === false && stripos($exp, 'yr') === false) ? $exp .
 
 
 
-<form method="POST">
+<div class="skill-actions">
 
-
-<input 
-type="hidden"
-name="skill_id"
-value="<?php echo $skill['skill_id']; ?>">
-
-
-
+    <!-- Edit Button -->
 <button 
-type="submit"
-name="delete_skill"
-class="delete-btn"
-onclick="return confirm('Delete this skill?')">
+    type="button"
+    class="edit-btn"
+    onclick="editSkill(
+    '<?= $skill['skill_id'] ?>',
+    '<?= htmlspecialchars($skill['skill_name']) ?>',
+    '<?= htmlspecialchars($skill['level']) ?>',
+    '<?= htmlspecialchars($skill['experience']) ?>'
+    )">
 
-<i class="fa-solid fa-trash"></i>
+    <i class="fa-solid fa-pen"></i>
 
 </button>
 
+    <!-- Delete Button -->
+    <form method="POST">
 
-</form>
+        <input 
+        type="hidden"
+        name="skill_id"
+        value="<?php echo $skill['skill_id']; ?>">
 
+
+        <button 
+        type="submit"
+        name="delete_skill"
+        class="delete-btn"
+        onclick="return confirm('Delete this skill?')">
+
+            <i class="fa-solid fa-trash"></i>
+
+        </button>
+
+    </form>
+
+</div>
 
 
 
@@ -499,6 +571,8 @@ Add New Skill
 
 <form method="POST" class="skill-form">
 
+
+<input type="hidden" name="skill_id" id="skill_id">
 
 
 <label>
@@ -598,12 +672,12 @@ Cancel
 <button 
 type="submit"
 name="save_skill"
+id="saveButton"
 class="save-btn">
 
 Save Skill
 
 </button>
-
 
 
 </div>
@@ -630,23 +704,20 @@ Save Skill
 
 
 function openSkillModal(){
+    document.getElementById("skill_id").value="";
+    document.querySelector('[name="skill_name"]').value="";
+    document.querySelector('[name="level"]').value="";
+    document.querySelector('[name="experience"]').value="";
+    document.getElementById("saveButton").name="save_skill";
+    document.getElementById("saveButton").innerHTML="Save Skill";
+    document.querySelector(".modal-header h2").innerHTML="Add New Skill";
 
     let modal=document.getElementById("skillModal");
-
     modal.style.display="flex";
-
-
     setTimeout(()=>{
-
         modal.classList.add("show");
-
     },10);
-
 }
-
-
-
-
 
 function closeSkillModal(){
 
@@ -663,14 +734,32 @@ function closeSkillModal(){
     },300);
 
 }
+function editSkill(id,name,level,experience){
+    let modal=document.getElementById("skillModal");
+    modal.style.display="flex";
 
+    setTimeout(()=>{
+        modal.classList.add("show");
+    },10);
+
+    document.getElementById("skill_id").value=id;
+    document.querySelector('[name="skill_name"]').value=name;
+    document.querySelector('[name="level"]').value=level;
+    document.querySelector('[name="experience"]').value=experience;
+    document.getElementById("saveButton").name="update_skill";
+    document.getElementById("saveButton").innerHTML="Update Skill";
+    document.querySelector(".modal-header h2").innerHTML="Edit Skill";
+}
 
 </script>
 
-
-
-
-
-
+<footer class="footer">
+    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
+    <div class="footer-links">
+        <a href="#">Help Center</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+    </div>
+</footer>
 
 <?php include "../../../Includes/dash_footer.php"; ?>

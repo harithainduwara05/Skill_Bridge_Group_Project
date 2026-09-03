@@ -1,12 +1,20 @@
 *{
     box-sizing:border-box;
+    font-family:'Inter',Arial,sans-serif;
 }
 
-.skills-container {
-    padding: 24px 32px;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0;
+body{
+    font-family:'Inter',Arial,sans-serif;
+    background:#f5f7fb;
+    color:#082544;
+}
+
+.skills-container{
+    padding:25px 35px;
+    width:100%;
+    max-width:1300px;
+    margin:0 auto;
+    box-sizing:border-box;
 }
 
 /* Header */
@@ -31,188 +39,37 @@
 }
 
 
-.add-btn {
-    padding: 11px 20px;
-    background: #f97316;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    font-family: 'Inter', sans-serif;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-decoration: none;
-}
-
-.add-btn:hover {
-    background: #ea580c;
-}
-
-
-
-/* Summary Section */
-
-
-.summary-section{
-
-    display:grid;
-
-    grid-template-columns:2fr 1fr;
-
-    gap:20px;
-
-    margin-bottom:30px;
-
-}
-
-
-
-.summary-card{
-
-    background:#063b6d;
-
+.add-btn{
+    background:#b56500;
     color:white;
-
-    padding:25px;
-
-    border-radius:15px;
-
-    display:flex;
-
-    justify-content:space-around;
-
-}
-
-
-
-.summary-card div{
-
-    flex:1;
-
-    border-right:1px solid rgba(255,255,255,.2);
-
-    padding-left:20px;
-
-}
-
-
-.summary-card div:last-child{
-
     border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    margin-top:20px;
+    cursor:pointer;
+    font-size:14px;
+    text-align:center;
+    text-decoration:none;
 
 }
-
-
-
-.summary-card span{
-
-    text-transform:uppercase;
-
-    font-size:12px;
-
-    color:#8baed0;
-
-}
-
-
-
-.summary-card h2{
-
-    font-size:34px;
-
-    margin:15px 0 0;
-
-}
-
-
-
-
-/* Milestone */
-
-
-.milestone{
-
-    background:white;
-
-    border:1px solid #ddd;
-
-    border-radius:15px;
-
-    display:flex;
-
-    align-items:center;
-
-    padding:25px;
-
-    gap:20px;
-
-}
-.milestone-icon{
-    width:80px;
-    height:50px;
-    background:#fff0df;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
-
-.milestone-icon i{
-
-    font-size:28px;
-    color:#b56500;
-    display:block;
-
-}
-
-.milestone h3{
-
-    margin:0;
-
-}
-
-
-.milestone p{
-
-    margin-top:5px;
-
-    color:#555;
-
-}
-
-
 
 /* Skill Cards */
 
-.skill-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 24px;
+.skill-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:20px;
+    margin-bottom:10px;
 }
 
 .skill-card,
-.add-card {
-    background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    padding: 24px;
-    min-height: 220px;
+.add-card{
+    background:white;
+    border:1px solid #d7dce5;
+    border-radius:15px;
+    padding:25px;
+    min-height:240px;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.skill-card:hover, .add-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-    transform: translateY(-2px);
 }
 
 .skill-icon-text{
@@ -226,6 +83,7 @@
     color:#073b6d;
     font-size:18px;
     font-weight:700;
+    margin-bottom: 10px;
 }
 
 .skill-card h3{
@@ -233,439 +91,218 @@
     margin:10px 0;
 }
 
-
-.tags{
-
-    display:flex;
-
-    gap:8px;
-
-}
-
-
-
-.tags span{
-
-    background:#eef2f7;
-
-    padding:5px 10px;
-
-    border-radius:4px;
-
-    font-size:11px;
-
-    font-weight:bold;
-
-}
-
-
-
-.tags .verified-tag{
-
-    background:#dff6e5;
-
-    color:#17823b;
-
-}
-
-
-
-
-
 .skill-info{
-
     display:flex;
-
     justify-content:space-between;
-
     margin-top:20px;
-
     font-size:15px;
-
 }
-
-
-
-.bar{
-
-    height:8px;
-
-    background:#ddd;
-
-    border-radius:10px;
-
-    margin-top:10px;
-
-    overflow:hidden;
-
-}
-
-
-
-.bar div{
-
-    height:100%;
-
-    background:#ff9500;
-
-    border-radius:10px;
-
-}
-
-
-
-.skill-card p{
-
-    color:#555;
-
-    margin-top:20px;
-
-}
-
-
-
-
 
 /* Add Skill Card */
-
-
 .add-card{
-
     border:2px dashed #c8ced8;
-
     display:flex;
-
     flex-direction:column;
-
     justify-content:center;
-
     align-items:center;
-
     text-align:center;
-
 }
-
-
 
 .plus{
-
     width:50px;
-
     height:50px;
-
     background:#eee;
-
     border-radius:50%;
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     font-size:30px;
-
 }
-
-
 
 .add-card p{
-
     color:#777;
-
 }
 
-/* =====================
-   SKILL MODAL
-===================== */
+/* SKILL MODAL */
+
 /* Skill Modal */
 
 .skill-modal{
-
     display:none;
-
     position:fixed;
-
     top:0;
     left:0;
-
     width:100%;
     height:100%;
-
     background:rgba(0,0,0,0.45);
-
     z-index:2000;
-
     justify-content:center;
-
     align-items:center;
-
 }
 .modal-content{
-
     background:white;
-
     width:650px;
-
     border-radius:18px;
-
     padding:30px;
-
     box-shadow:0 20px 40px rgba(0,0,0,.2);
-
-
     transform:translateY(-40px) scale(.95);
-
     opacity:0;
-
     transition:all .35s ease;
-
 }
 
-
-
 .skill-modal.show .modal-content{
-
     transform:translateY(0) scale(1);
-
     opacity:1;
-
 }
 
 
 .modal-header{
-
-display:flex;
-
-justify-content:space-between;
-
-align-items:center;
-
-margin-bottom:25px;
-
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
 }
-
-
 
 .modal-header h2{
-
-margin:0;
-
-color:#082544;
-
+    margin:0;
+    color:#082544;
 }
-
-
 
 .modal-header span{
-
-font-size:30px;
-
-cursor:pointer;
-
-color:#555;
-
+    font-size:30px;
+    cursor:pointer;
+    color:#555;
 }
-
-
 
 .skill-form{
-
-display:flex;
-
-flex-direction:column;
-
-gap:12px;
-
+    display:flex;
+    flex-direction:column;
+    gap:12px;
 }
-
-
 
 .skill-form label{
-
-font-weight:600;
-
-color:#082544;
-
+    font-weight:600;
+    color:#082544;
 }
-
-
 
 .skill-form input,
 .skill-form select{
-
-height:45px;
-
-border:1px solid #ddd;
-
-border-radius:10px;
-
-padding:0 15px;
-
-font-size:15px;
-
+    height:45px;
+    border:1px solid #ddd;
+    border-radius:10px;
+    padding:0 15px;
+    font-size:15px;
 }
-
-
 
 .modal-buttons{
-
-display:flex;
-
-justify-content:flex-end;
-
-gap:15px;
-
-margin-top:20px;
-
+    display:flex;
+    justify-content:flex-end;
+    gap:15px;
+    margin-top:20px;
 }
-
-
 
 .cancel-btn{
-
-background:#eee;
-
-border:none;
-
-padding:12px 25px;
-
-border-radius:8px;
-
-cursor:pointer;
-
+    background:#eee;
+    border:none;
+    padding:12px 25px;
+    border-radius:8px;
+    cursor:pointer;
 }
-
-
 
 .save-btn{
-
-background:#ff9500;
-
-color:white;
-
-border:none;
-
-padding:12px 30px;
-
-border-radius:8px;
-
-cursor:pointer;
-
+    background:#ff9500;
+    color:white;
+    border:none;
+    padding:12px 30px;
+    border-radius:8px;
+    cursor:pointer;
 }
 
-
-
 .add-card{
-
-cursor:pointer;
-
+    cursor:pointer;
 }
 .select-wrapper {
     position: relative;
     width: 100%;
 }
 
-
 .select-wrapper select {
-
     width: 100%;
     height: 40px;
-
     padding: 0 45px 0 15px;
-
     border: 1px solid #d6dce5;
     border-radius: 12px;
-
     background: #fff;
-
     font-size: 16px;
     color: #333;
-
     outline: none;
-
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-
     cursor: pointer;
 }
 
-
-
 .select-wrapper::after {
-
     content: "";
-
     position: absolute;
-
     right: 18px;
     top: 50%;
-
     width: 9px;
     height: 9px;
-
     border-right: 2px solid #111;
     border-bottom: 2px solid #111;
-
     transform: translateY(-70%) rotate(45deg);
-
     pointer-events: none;
+}
 
+.skill-actions{
+    position:absolute;
+    top:15px;
+    right:15px;
+    display:flex;
+    gap:8px;
+}
+
+/* Edit Button */
+.edit-btn{
+    width:35px;
+    height:35px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:#e8f0ff;
+    color:#073b6d;
+    border:none;
+    border-radius:50%;
+    cursor:pointer;
+}
+
+.edit-btn i{
+    font-size:14px;
+}
+
+.edit-btn:hover{
+    transform:scale(1.1);
 }
 
 /* Delete Button */
-
 .delete-btn{
-
-    position:absolute;
-
-    top:15px;
-
-    right:15px;
-
-
     width:35px;
-
     height:35px;
-
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
+    background:#ffecec;
     color:#ff3b30;
-
-
     border:none;
-
     border-radius:50%;
-
-
     cursor:pointer;
-
-
-    transition:0.3s;
-
 }
-
-
 
 .delete-btn i{
-
-    font-size:15px;
-
+    font-size:14px;
 }
 
-
-
-/* Hover Effect */
-
 .delete-btn:hover{
-
-
     transform:scale(1.1);
-
 }

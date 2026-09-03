@@ -1,53 +1,42 @@
-
-
-
-/* MAIN */
-
-.profile-container {
-    padding: 30px;
-    width: 100%;
-    max-width: 1400px;
-    margin: 0;
+body{
+    margin:0;
+    background:#f5f7fb;
+    font-family:'Inter',Arial,sans-serif;
+    color:#082544;
 }
 
-
+/* MAIN */
+.profile-container{
+    padding:25px 35px;
+    width:100%;
+    max-width:1300px;
+    margin:0 auto;
+    box-sizing:border-box;
+}
 
 /* TITLE */
-
 .profile-title{
-
     display:flex;
     justify-content:space-between;
     align-items:center;
     margin-bottom:25px;
-
 }
 
-
 .profile-title h1{
-
     margin:0;
     font-size:38px;
     font-weight:800;
     color:#082544;
-
 }
 
-
 .profile-title p{
-
     margin-top:5px;
     font-size:16px;
     color:#596273;
-
 }
 
-
-
 /* SAVE BUTTON */
-
 .save-btn{
-
     background:#ff8a00;
     color:white;
     border:none;
@@ -56,83 +45,76 @@
     font-size:15px;
     font-weight:600;
     cursor:pointer;
-
 }
-
 
 .save-btn:hover{
-
     background:#db7200;
-
 }
 
-
-
-
 /* PROFILE CARD */
-
 .profile-card{
-
     background:white;
     border:1px solid #d8dde7;
     border-radius:15px;
-    padding:35px;
+    padding:35px 35px 65px 35px;
     display:flex;
     align-items:center;
     gap:35px;
     margin-bottom:25px;
-
 }
-
-
-
-
 
 /* IMAGE */
-
 .avatar{
-
     position:relative;
-
+    width:180px;
+    height:180px;
+    flex-shrink:0;
 }
 
-
+/* Always same size */
 .avatar img{
+    width:180px;
+    height:180px;
+    border-radius:50%;
+    object-fit:cover;
+    border:8px solid #dce8ff;
+    display:block;
+}
 
+.avatar .default-avatar-placeholder{
     width:130px;
     height:130px;
     border-radius:50%;
-    object-fit:cover;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:linear-gradient(135deg, #1e3a5f 0%, #0d9488 100%);
+    color:#ffffff;
+    font-size:44px;
+    font-weight:700;
     border:5px solid #d9e7ff;
     box-shadow:0 8px 20px rgba(0,0,0,.12);
-
+    user-select:none;
 }
 
-
-
 .camera{
-
     position:absolute;
-    right:0;
-    bottom:5px;
+    right:-8px;
+    bottom:15px;
 
-    width:38px;
-    height:38px;
-
-    background:#ff8a00;
+    width:55px;
+    height:55px;
+    background:#ff9500;
     color:white;
-
     border-radius:50%;
-
     display:flex;
     justify-content:center;
     align-items:center;
-
     cursor:pointer;
-
-    font-size:18px;
-
+    font-size:22px;
+    z-index:1;
 }
+
 .camera input{
     position:absolute;
     opacity:0;
@@ -143,279 +125,237 @@
     top:0;
 }
 
+.remove-image{
+    margin-top:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    padding:0 15px;
+    width:185px;
+    height:35px;
+    background:white;
+    border:2px solid #ffb8b8;
+    border-radius:10px;
+    color:#dc2626;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
 
+.remove-image i{
+    font-size:14px;
+}
 
+.remove-image:hover{
+    background:#fff0f0;
+    border-color:#ff3b30;
+}
 
 /* PROFILE DETAILS */
-
-
 .profile-details h2{
-
     font-size:28px;
     margin:0 0 10px;
     display:flex;
     gap:12px;
     align-items:center;
-
 }
 
-
 .profile-details h2 span{
-
     background:#d8ffe5;
     color:#00833a;
     font-size:13px;
     padding:5px 12px;
     border-radius:20px;
-
 }
-
-
 
 .profile-details p{
-
     margin:8px 0;
     font-size:16px;
-
 }
 
-
-
 /* STATS */
-
-
 .profile-stats{
-
     display:flex;
     gap:45px;
     margin-top:25px;
-
 }
 
-
 .profile-stats div{
-
     display:flex;
     flex-direction:column;
     gap:8px;
-
 }
 
-
 .profile-stats strong{
-
     font-size:20px;
     color:#082544;
 
 }
 
-
 /* MAIN GRID */
-
 .profile-layout{
-
     display:grid;
     grid-template-columns:2fr 1fr;
     gap:20px;
-    padding-bottom: 60px;
-
+    padding-bottom: 10px;
 }
 
-
-
-
-
 /* BOX */
-
 .box{
-
     background:white;
     border:1px solid #d8dde7;
     border-radius:15px;
     padding:25px;
-    margin-bottom:20px;
-
 }
-
-
 
 .box h2{
-
     margin:0 0 25px;
-
     font-size:26px;
-
     border-bottom:1px solid #e5e7eb;
-
     padding-bottom:15px;
-
 }
-
-
-
-
-
-
 
 /* FORM */
-
-
 .box label{
-
     display:block;
-
     margin-top:18px;
-
     margin-bottom:8px;
-
     font-size:14px;
-
     color:#596273;
-
 }
-
-
 
 .box input,
 .box textarea{
-
-
     width:100%;
-
     box-sizing:border-box;
-
     border:1px solid #d1d5db;
-
     border-radius:10px;
-
     padding:14px;
-
     font-size:15px;
-
     color:#082544;
-
     outline:none;
-
-
 }
-
-
 
 .box input:focus,
 .box textarea:focus{
-
     border-color:#0b5cab;
-
 }
 
-
-
 .box textarea{
-
     height:150px;
-
     resize:none;
-
 }
 
 .profile-actions{
-
     display:flex;
     gap:12px;
     align-items:center;
-
 }
 
 .year-error{
-
     background:#fee2e2;
     color:#b91c1c;
-
     border:1px solid #ef4444;
-
     padding:12px 18px;
-
     border-radius:8px;
-
     margin-bottom:20px;
-
     font-size:14px;
-
     font-weight:600;
-
 }
 
 .share-btn{
-
     background:#073b6d;
-
     color:white;
-
     border:none;
-
     padding:14px 25px;
-
     border-radius:8px;
-
     cursor:pointer;
-
     font-weight:600;
-
 }
-
 
 .share-btn:hover{
-
     background:#052b50;
-
 }
-
-
 
 .save-btn i,
 .share-btn i{
-
     margin-right:8px;
-
 }
-/* RESPONSIVE */
 
+/* Password Section */
+
+.security-box{
+    margin-top:20px;
+    margin-bottom:80px;
+    width:100%;
+    padding:25px 30px 90px;
+}
+
+.security-box h2{
+    display:flex;
+    gap:10px;
+    align-items:center;
+}
+
+.password-field{
+    position:relative;
+}
+
+.password-field input{
+    width:100%;
+    box-sizing:border-box;
+}
+
+.password-field i{
+    position:absolute;
+    right:20px;
+    top:50%;
+    transform:translateY(-50%);
+    cursor:pointer;
+    color:#9ca3af;
+}
+
+.password-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:25px;
+    margin-top:20px;
+}
+
+.password-btn{
+    margin-top:25px;
+    float:right;
+    background:#2563eb;
+    color:white;
+    border:none;
+    padding:14px 25px;
+    border-radius:10px;
+    font-weight:600;
+    cursor:pointer;
+}
+
+/* RESPONSIVE */
 @media(max-width:900px){
 
-
 .profile-container{
-
     margin-left:0;
-
     width:auto;
-
 }
-
 
 .profile-layout{
-
     grid-template-columns:1fr;
-
 }
-
 
 .profile-card{
-
     flex-direction:column;
-
     text-align:center;
-
 }
-
 
 .profile-title{
-
     flex-direction:column;
-
     align-items:flex-start;
-
     gap:15px;
-
 }
-
 }

@@ -25,79 +25,79 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     <nav>
 
         <a href="dashboard.php"
-        class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" title="Dashboard">
             <span class="icon">
                 <span class="material-symbols-outlined">dashboard</span>
             </span>
-            Dashboard
-        </a>
-
-        <a href="profile.php"
-        class="<?= $currentPage == 'profile.php' ? 'active' : '' ?>">
-            <span class="icon">
-                <span class="material-symbols-outlined">person</span>
-            </span>
-            Profile
+            <span class="nav-text">Dashboard</span>
         </a>
 
         <a href="post.php"
-        class="<?= $currentPage == 'post.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'post.php' ? 'active' : '' ?>" title="Post Project">
             <span class="icon">
                 <span class="material-symbols-outlined">post_add</span>
             </span>
-            Post Project
+            <span class="nav-text">Post Project</span>
         </a>
 
         <a href="manage_projects.php"
-        class="<?= $currentPage == 'manage_projects.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'manage_projects.php' ? 'active' : '' ?>" title="Manage Projects">
             <span class="icon">
                 <span class="material-symbols-outlined">folder_open</span>
             </span>
-            Manage Projects
+            <span class="nav-text">Manage Projects</span>
         </a>
 
         <a href="proposal.php"
-        class="<?= $currentPage == 'proposal.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'proposal.php' ? 'active' : '' ?>" title="Proposals">
             <span class="icon">
                 <span class="material-symbols-outlined">description</span>
             </span>
-            Proposals
+            <span class="nav-text">Proposals</span>
         </a>
 
         <a href="teams.php"
-        class="<?= $currentPage == 'teams.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'teams.php' ? 'active' : '' ?>" title="Teams">
             <span class="icon">
                 <span class="material-symbols-outlined">group</span>
             </span>
-            Teams
+            <span class="nav-text">Teams</span>
         </a>
 
         <a href="feedback.php"
-        class="<?= $currentPage == 'feedback.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'feedback.php' ? 'active' : '' ?>" title="Feedback">
             <span class="icon">
                 <span class="material-symbols-outlined">feedback</span>
             </span>
-            Feedback
+            <span class="nav-text">Feedback</span>
         </a>
 
         <a href="notifications.php"
-        class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
             <span class="icon">
                 <span class="material-symbols-outlined">notifications</span>
             </span>
-            Notifications
+            <span class="nav-text">Notifications</span>
+        </a>
+
+        <a href="profile.php"
+        class="<?= $currentPage == 'profile.php' ? 'active' : '' ?>" title="Profile & Settings">
+            <span class="icon">
+                <span class="material-symbols-outlined">settings</span>
+            </span>
+            <span class="nav-text">Profile & Settings</span>
         </a>
 
     </nav>
 
-    <a href="post.php" class="post-new-btn">
+    <a href="post.php" class="post-new-btn" title="Post New Project">
         <span class="material-symbols-outlined" style="font-size:18px;">add</span>
-        Post New Project
+        <span class="btn-text">Post New Project</span>
     </a>
 
-    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
+    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
         <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
-        Logout
+        <span class="btn-text">Logout</span>
     </button>
 
 </aside>

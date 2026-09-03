@@ -1,195 +1,98 @@
-<?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
+<?php
+$currentPage = basename($_SERVER['PHP_SELF']);
+?>
+
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Company Dashboard | SkillBridge</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+        rel="stylesheet">
     <link rel="stylesheet" href="../../../Assets/CSS/dashboard.css">
-
-    <?php echo isset($extra_css) ? $extra_css : ''; ?>
-
+    <?= $extra_css ?? '' ?> 
 </head>
 
 <body>
 
-<aside class="sidebar company-sidebar">
+    <aside class="sidebar">
 
-    <div class="logo">
-        <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
-    </div>
+        <div class="logo">
+            <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
+        </div>
 
+        <nav>
 
-    <nav>
-
-        <a href="dashboard.php"
-           class="<?= $currentPage === 'dashboard.php' ? 'active' : '' ?>">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/dashboard.svg" alt="">
-            </span>
-
-            Dashboard
-
-        </a>
-
-
-        <a href="company.php"
-           class="<?= $currentPage === 'company.php' ? 'active' : '' ?>">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/profile.png" alt="">
-            </span>
-
-            Company Profile
-
-        </a>
-
-
-        <!-- ONLY CHANGED THIS INTERNSHIP LINK -->
-
-        <a href="internships.php"
-           class="<?= in_array(
-               $currentPage,
-               [
-                   'internships.php',
-                   'add_internship.php',
-                   'edit_internship.php',
-                   'view_internship.php'
-               ]
-           ) ? 'active' : '' ?>">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/internship.png" alt="">
-            </span>
-
-            Internships
-
-        </a>
-
-
-        <a href="#"
-           aria-disabled="true"
-           title="Applications page is not implemented yet">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/application.png" alt="">
-            </span>
-
-            Applications
-
-            <?php if (!empty($companyApplicationCount)): ?>
-
-                <span class="badge">
-                    <?= (int) $companyApplicationCount ?>
+            <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" title="Dashboard">
+                <span class="icon">
+                    <span class="material-symbols-outlined">dashboard</span>
                 </span>
+                <span class="nav-text">Dashboard</span>
+            </a>
 
-            <?php endif; ?>
-
-        </a>
-
-
-        <a href="#"
-           aria-disabled="true"
-           title="Candidates page is not implemented yet">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/shortlist.png" alt="">
-            </span>
-
-            Candidates
-
-        </a>
-
-
-        <a href="#"
-           aria-disabled="true"
-           title="Interviews page is not implemented yet">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/interviews.png" alt="">
-            </span>
-
-            Interviews
-
-        </a>
-
-
-        <a href="#"
-           aria-disabled="true"
-           title="Reports page is not implemented yet">
-
-            <span class="icon">
-                <span class="material-symbols-outlined">
-                    analytics
+            <a href="internships.php" class="<?= in_array($currentPage, ['internships.php', 'internships_Management.php']) ? 'active' : '' ?>" title="Internships">
+                <span class="icon">
+                    <span class="material-symbols-outlined">group</span>
                 </span>
-            </span>
+                <span class="nav-text">Internships</span>
+            </a>
 
-            Reports &amp; Analytics
+            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>" title="Applications">
+                <span class="icon">
+                    <span class="material-symbols-outlined">school</span>
+                </span>
+                <span class="nav-text">Applications</span>
+            </a>
 
-        </a>
+            <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Candidates">
+                <span class="icon">
+                    <span class="material-symbols-outlined">folder_open</span>
+                </span>
+                <span class="nav-text">Candidates</span>
+            </a>
 
+            <a href="" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Interviews">
+                <span class="icon">
+                    <span class="material-symbols-outlined">work</span>
+                </span>
+                <span class="nav-text">Interviews</span>
+            </a>
 
-        <a href="#"
-           aria-disabled="true"
-           title="Notifications page is not implemented yet">
+            <a href="complaints.php" class="<?= $currentPage == 'complaints.php' ? 'active' : '' ?>" title="Reports & Analytics">
+                <span class="icon">
+                    <span class="material-symbols-outlined">report_problem</span>
+                </span>
+                <span class="nav-text">Reports & Analytics</span>
+            </a>
 
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/notification.png" alt="">
-            </span>
+            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>" title="Notifications">
+                <span class="icon">
+                    <span class="material-symbols-outlined">bar_chart</span>
+                </span>
+                <span class="nav-text">Notifications</span>
+            </a>
+            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Profile & Settings">
+                <span class="icon">
+                    <span class="material-symbols-outlined">settings</span>
+                </span>
+                <span class="nav-text">Profile & Settings</span>
+            </a>
 
-            Notifications
+        </nav>
+        <button class="logout" style="background: #010f41ff;" onclick="window.location.href='../../../Session/Logout.php'" title="Post Internships">
+            <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
+            <span class="btn-text">Post Internships</span>
+        </button>
+        <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
+            <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
+            <span class="btn-text">Logout</span>
+        </button>
 
-        </a>
-
-
-        <a href="#"
-           aria-disabled="true"
-           title="Settings page is not implemented yet">
-
-            <span class="icon">
-                <img src="../../../Assets/Images/Icons/settings.png" alt="">
-            </span>
-
-            Settings
-
-        </a>
-
-    </nav>
-
-
-    <!-- ONLY CHANGED THIS POST INTERNSHIP BUTTON -->
-
-    <a class="post-new-btn" href="add_internship.php">
-
-        <span class="material-symbols-outlined">
-            add
-        </span>
-
-        Post Internship
-
-    </a>
-
-
-    <button class="logout"
-            type="button"
-            onclick="window.location.href='../../../Session/Logout.php'">
-
-        <span class="material-symbols-outlined">
-            logout
-        </span>
-
-        Logout
-
-    </button>
-
-</aside>
-
+    </aside>
 
 <div class="main-wrapper">
