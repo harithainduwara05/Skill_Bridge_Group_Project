@@ -25,7 +25,7 @@ if($user && isset($conn)){
                 u.Email,
                 u.role,
                 COALESCE(s.Name, a.Name, c.contactPersonName, o.contactPersonName, c.Name, o.Name) AS db_name,
-                COALESCE(s.profile_image, a.profile_image) AS profile_image
+                COALESCE(s.profile_image, a.profile_image, c.profile_img) AS profile_image
             FROM user u
             LEFT JOIN student s ON u.Email = s.Email
             LEFT JOIN admin a ON u.Email = a.Email
@@ -97,10 +97,12 @@ if (!empty($image)) {
         $image_src = $base_url . '/Assets/Images/Admin/' . htmlspecialchars($image);
     } elseif (file_exists(__DIR__ . '/../Assets/Images/Student/' . $image)) {
         $image_src = $base_url . '/Assets/Images/Student/' . htmlspecialchars($image);
+    } elseif (file_exists(__DIR__ . '/../Assets/Images/Company/' . $image)) {
+        $image_src = $base_url . '/Assets/Images/Company/' . htmlspecialchars($image);
     } elseif (file_exists(__DIR__ . '/../uploads/' . $image)) {
         $image_src = $base_url . '/uploads/' . htmlspecialchars($image);
     } else {
-        $targetFolder = ($role === 'Admin') ? 'Admin' : 'Student';
+        $targetFolder = ($role === 'Admin') ? 'Admin' : (($role === 'Company') ? 'Company' : 'Student');
         $image_src = $base_url . '/Assets/Images/' . $targetFolder . '/' . htmlspecialchars($image);
     }
 }
@@ -108,9 +110,14 @@ if (!empty($image)) {
 <link rel="stylesheet" href="<?php echo $base_url; ?>/Assets/CSS/header.css?v=<?php echo time(); ?>">
 
 <header class="top-header">
-    <div class="search-box">
-        <span class="material-symbols-outlined">search</span>
-        <input type="text" placeholder="Search for projects, skills, or internships...">
+    <div class="header-left">
+        <button class="sidebar-toggle-btn" id="sidebarToggleBtn" type="button" aria-label="Toggle Navigation" title="Toggle Navigation">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <div class="search-box">
+            <span class="material-symbols-outlined">search</span>
+            <input type="text" id="globalDashboardSearch" placeholder="Search for projects, skills, or internships...">
+        </div>
     </div>
 
     <div class="header-right">
@@ -186,6 +193,8 @@ if (!empty($image)) {
     </div>
 </header>
 
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
 <script>
     function toggleNotifications(event){
         if(event){
@@ -204,4 +213,56 @@ if (!empty($image)) {
             popup.classList.remove("show");
         }
     });
+
+    // Responsive Sidebar & Search Logic
+    (function(){
+        function setupResponsiveDashboard() {
+            var toggleBtn = document.getElementById("sidebarToggleBtn");
+            var sidebar = document.querySelector(".sidebar");
+            var backdrop = document.getElementById("sidebarBackdrop");
+            var searchInput = document.getElementById("globalDashboardSearch");
+
+            function toggleSidebar(e) {
+                if (e) e.stopPropagation();
+                document.body.classList.toggle("sidebar-open");
+                if (sidebar) sidebar.classList.toggle("open");
+            }
+
+            function closeSidebar() {
+                document.body.classList.remove("sidebar-open");
+                if (sidebar) sidebar.classList.remove("open");
+            }
+
+            if (toggleBtn && !toggleBtn._hasListener) {
+                toggleBtn._hasListener = true;
+                toggleBtn.addEventListener("click", toggleSidebar);
+            }
+
+            if (backdrop && !backdrop._hasListener) {
+                backdrop._hasListener = true;
+                backdrop.addEventListener("click", closeSidebar);
+            }
+
+            function adjustSearch() {
+                if (searchInput) {
+                    if (window.innerWidth <= 600) {
+                        searchInput.placeholder = "Search...";
+                    } else if (window.innerWidth <= 850) {
+                        searchInput.placeholder = "Search projects, skills...";
+                    } else {
+                        searchInput.placeholder = "Search for projects, skills, or internships...";
+                    }
+                }
+            }
+
+            window.addEventListener("resize", adjustSearch);
+            adjustSearch();
+        }
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", setupResponsiveDashboard);
+        } else {
+            setupResponsiveDashboard();
+        }
+    })();
 </script>

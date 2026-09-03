@@ -1,0 +1,931 @@
+/* ============================================
+   COMPANY DASHBOARD STYLES - SkillBridge
+   ============================================ */
+
+:root {
+    --primary-navy: #0f2440;
+    --primary-blue: #1e3a5f;
+    --accent-orange: #ea580c;
+    --accent-orange-hover: #c2410c;
+    --accent-blue: #2563eb;
+    --card-bg: #ffffff;
+    --border-color: #e5e7eb;
+    --text-dark: #0f172a;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --bg-page: #f8fafc;
+    --radius-lg: 16px;
+    --radius-md: 12px;
+    --radius-sm: 8px;
+    --shadow-subtle: 0 1px 3px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.03);
+    --shadow-hover: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+.company-dashboard-container {
+    padding: 24px 32px 40px;
+    max-width: 1360px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   HERO / HEADER SECTION
+   ============================================ */
+
+.company-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.company-welcome-text h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
+    line-height: 1.25;
+}
+
+.company-welcome-text p {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+/* Company Badge Card (Top Right) */
+.company-badge-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 12px 18px;
+    box-shadow: var(--shadow-subtle);
+    transition: all 0.25s ease;
+}
+
+.company-badge-card:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: #cbd5e1;
+}
+
+.company-logo-badge {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1px solid #bfdbfe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent-blue);
+    flex-shrink: 0;
+}
+
+.company-logo-badge .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.company-badge-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.company-badge-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.company-badge-name h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.2px;
+}
+
+.verified-icon {
+    font-size: 17px !important;
+    color: #ea580c;
+    font-variation-settings: 'FILL' 1;
+}
+
+.company-badge-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.meta-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11.5px;
+    color: var(--text-muted);
+    background: #f1f5f9;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+}
+
+.meta-tag .material-symbols-outlined {
+    font-size: 13px;
+    color: var(--text-light);
+}
+
+/* ============================================
+   STATS GRID (4 Cards with Colored Accents)
+   ============================================ */
+
+.company-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 28px;
+}
+
+.company-stat-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.company-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Colored Left Border Accents */
+.company-stat-card.accent-navy   { border-left: 4px solid #1e3a5f; }
+.company-stat-card.accent-amber  { border-left: 4px solid #d97706; }
+.company-stat-card.accent-blue   { border-left: 4px solid #2563eb; }
+.company-stat-card.accent-brown  { border-left: 4px solid #92400e; }
+
+.stat-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.stat-icon-box {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-icon-box.navy   { background: #eff6ff; color: #1e3a5f; }
+.stat-icon-box.amber  { background: #fff7ed; color: #ea580c; }
+.stat-icon-box.blue   { background: #eff6ff; color: #2563eb; }
+.stat-icon-box.brown  { background: #fef3c7; color: #b45309; }
+
+.stat-icon-box .material-symbols-outlined {
+    font-size: 20px;
+}
+
+.stat-badge {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.stat-badge.green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.stat-badge.amber {
+    background: #fff7ed;
+    color: #d97706;
+}
+
+.stat-meta-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: var(--text-muted);
+    margin: 0 0 6px 0;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-dark);
+    margin: 0;
+    line-height: 1;
+}
+
+/* ============================================
+   MAIN CONTENT TWO-COLUMN GRID
+   ============================================ */
+
+.company-dashboard-body {
+    display: grid;
+    grid-template-columns: 1fr 370px;
+    gap: 24px;
+    align-items: start;
+}
+
+.company-main-col {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+}
+
+.company-side-col {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    min-width: 0;
+}
+
+/* ============================================
+   CARD CONTAINER COMPONENT
+   ============================================ */
+
+.company-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-subtle);
+    overflow: hidden;
+}
+
+.company-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.company-card-header h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    letter-spacing: -0.2px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.view-all-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-blue);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+
+.view-all-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* ============================================
+   RECENT APPLICATIONS TABLE
+   ============================================ */
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.company-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.company-table th {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #94a3b8;
+    padding: 12px 24px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    white-space: nowrap;
+}
+
+.company-table td {
+    padding: 14px 24px;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f8fafc;
+    vertical-align: middle;
+}
+
+.company-table tr:last-child td {
+    border-bottom: none;
+}
+
+.company-table tr:hover td {
+    background: #fbfcfe;
+}
+
+/* Candidate Cell */
+.candidate-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.candidate-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 1.5px solid #e2e8f0;
+}
+
+.candidate-avatar-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.candidate-name {
+    font-weight: 600;
+    color: var(--text-dark);
+    font-size: 13.5px;
+    white-space: nowrap;
+}
+
+.company-table .univ-cell {
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.company-table .position-cell {
+    color: #1e293b;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Status Pills */
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 10px;
+    border-radius: 50px;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.status-pill.status-new {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-pill.status-shortlisted {
+    background: #fed7aa;
+    color: #c2410c;
+}
+
+.status-pill.status-selected {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.status-pill.status-rejected {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.status-pill.status-active {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+/* Action button */
+.action-menu-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.action-menu-btn:hover {
+    color: var(--text-dark);
+    background: #f1f5f9;
+}
+
+.action-menu-btn .material-symbols-outlined {
+    font-size: 20px;
+}
+
+/* ============================================
+   RECENT INTERNSHIPS SECTION
+   ============================================ */
+
+.section-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.section-header-row h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    letter-spacing: -0.2px;
+}
+
+.slider-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.slider-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.slider-btn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    color: var(--text-dark);
+}
+
+.slider-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.internships-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.internship-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-subtle);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.25s ease;
+    gap: 16px;
+}
+
+.internship-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+    border-color: #cbd5e1;
+}
+
+.internship-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.internship-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    flex-shrink: 0;
+}
+
+.internship-icon-box.navy {
+    background: #0f2440;
+}
+
+.internship-icon-box.orange {
+    background: #ea580c;
+}
+
+.internship-icon-box .material-symbols-outlined {
+    font-size: 22px;
+}
+
+.internship-card-info h3 {
+    margin: 0 0 8px 0;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--text-dark);
+    letter-spacing: -0.2px;
+}
+
+.internship-card-info p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.internship-card-footer {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.internship-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 500;
+}
+
+.internship-meta-item .material-symbols-outlined {
+    font-size: 16px;
+    color: var(--text-light);
+}
+
+/* ============================================
+   UPCOMING INTERVIEWS (RIGHT COLUMN)
+   ============================================ */
+
+.upcoming-interviews-card .company-card-header h2 .material-symbols-outlined {
+    color: var(--text-muted);
+    font-size: 20px;
+}
+
+.interviews-list {
+    display: flex;
+    flex-direction: column;
+    padding: 16px 20px;
+    gap: 14px;
+}
+
+.interview-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px;
+    border-radius: var(--radius-md);
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    transition: all 0.2s ease;
+}
+
+.interview-item:hover {
+    background: #f1f5f9;
+}
+
+.interview-date-box {
+    width: 52px;
+    height: 54px;
+    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.interview-date-box .date-day {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1;
+}
+
+.interview-date-box .date-month {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--text-light);
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.interview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.interview-info h4 {
+    margin: 0 0 3px 0;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.interview-time {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+}
+
+.interview-person {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: #475569;
+    font-weight: 500;
+}
+
+.interviewer-avatar {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Stacked candidate avatar circles */
+.avatar-stack {
+    display: flex;
+    align-items: center;
+}
+
+.stack-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
+    margin-left: -6px;
+    object-fit: cover;
+    background: #cbd5e1;
+}
+
+.stack-avatar:first-child {
+    margin-left: 0;
+}
+
+.view-all-schedule-btn {
+    display: block;
+    width: calc(100% - 40px);
+    margin: 0 20px 20px;
+    padding: 11px;
+    text-align: center;
+    background: #f1f5f9;
+    color: var(--primary-blue);
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: 10px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.view-all-schedule-btn:hover {
+    background: #e2e8f0;
+    color: #0f172a;
+}
+
+/* ============================================
+   HIRING GOAL CARD (RIGHT COLUMN)
+   ============================================ */
+
+.hiring-goal-card {
+    background: #081a30;
+    color: #ffffff;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: 0 8px 30px rgba(8, 26, 48, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.hiring-goal-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.hiring-goal-card p {
+    margin: 0 0 20px 0;
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.45;
+}
+
+/* Progress bar */
+.goal-progress-wrap {
+    margin-bottom: 22px;
+}
+
+.goal-progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #1e3a5f;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.goal-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f97316 0%, #ea580c 100%);
+    border-radius: 10px;
+    width: 65%;
+    transition: width 0.8s ease-in-out;
+}
+
+.goal-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.btn-boost-listings {
+    width: 100%;
+    padding: 12px;
+    background: #ea580c;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+}
+
+.btn-boost-listings:hover {
+    background: #c2410c;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.45);
+}
+
+/* ============================================
+   COMPANY DASHBOARD FOOTER
+   ============================================ */
+
+.company-dashboard-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 32px 32px 20px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+    border-top: 1px solid #e2e8f0;
+    margin-top: 40px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.company-dashboard-footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s;
+}
+
+.company-dashboard-footer a:hover {
+    color: var(--text-dark);
+}
+
+.company-footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+/* ============================================
+   RESPONSIVE QUERIES
+   ============================================ */
+
+@media (max-width: 1200px) {
+    .company-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .company-dashboard-body {
+        grid-template-columns: 1fr;
+    }
+
+    .company-side-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 850px) {
+    .company-dashboard-container {
+        padding: 20px 16px 32px;
+    }
+
+    .company-dashboard-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .company-badge-card {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .internships-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .company-side-col {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 580px) {
+    .company-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .company-card-header {
+        padding: 16px;
+    }
+
+    .company-table th, 
+    .company-table td {
+        padding: 10px 14px;
+    }
+
+    .company-dashboard-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 24px 16px;
+    }
+}

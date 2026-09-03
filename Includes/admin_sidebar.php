@@ -27,75 +27,75 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
         <nav>
 
-            <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
+            <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" title="Dashboard">
                 <span class="icon">
                     <span class="material-symbols-outlined">dashboard</span>
                 </span>
-                Dashboard
+                <span class="nav-text">Dashboard</span>
             </a>
 
-            <a href="Usermanagemen.php" class="<?= in_array($currentPage, ['Usermanagemen.php', 'users.php']) ? 'active' : '' ?>">
+            <a href="Usermanagemen.php" class="<?= in_array($currentPage, ['Usermanagemen.php', 'users.php']) ? 'active' : '' ?>" title="Users">
                 <span class="icon">
                     <span class="material-symbols-outlined">group</span>
                 </span>
-                Users
+                <span class="nav-text">Users</span>
             </a>
 
-            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>">
+            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>" title="Universities">
                 <span class="icon">
                     <span class="material-symbols-outlined">school</span>
                 </span>
-                Universities
+                <span class="nav-text">Universities</span>
             </a>
 
-            <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>">
+            <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Projects">
                 <span class="icon">
                     <span class="material-symbols-outlined">folder_open</span>
                 </span>
-                Projects
+                <span class="nav-text">Projects</span>
             </a>
 
-            <a href="internships.php" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
+            <a href="internships.php" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Internships">
                 <span class="icon">
                     <span class="material-symbols-outlined">work</span>
                 </span>
-                Internships
+                <span class="nav-text">Internships</span>
             </a>
 
-            <a href="complaints.php" class="<?= $currentPage == 'complaints.php' ? 'active' : '' ?>">
+            <a href="complaints.php" class="<?= $currentPage == 'complaints.php' ? 'active' : '' ?>" title="Complaints">
                 <span class="icon">
                     <span class="material-symbols-outlined">report_problem</span>
                 </span>
-                Complaints
+                <span class="nav-text">Complaints</span>
                 <span class="badge">12</span>
             </a>
 
-            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>">
+            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>" title="Reports & Analytics">
                 <span class="icon">
                     <span class="material-symbols-outlined">bar_chart</span>
                 </span>
-                Reports & Analytics
+                <span class="nav-text">Reports & Analytics</span>
             </a>
 
-            <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
+            <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
                 <span class="icon">
                     <span class="material-symbols-outlined">notifications</span>
                 </span>
-                Notifications
+                <span class="nav-text">Notifications</span>
             </a>
 
-            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>">
+            <a href="profile.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Profile & Settings">
                 <span class="icon">
                     <span class="material-symbols-outlined">settings</span>
                 </span>
-                Profile & Settings
+                <span class="nav-text">Profile & Settings</span>
             </a>
 
         </nav>
 
-        <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
+        <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
             <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
-            Logout
+            <span class="btn-text">Logout</span>
         </button>
 
     </aside>

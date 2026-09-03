@@ -607,3 +607,14 @@ gap:15px;
 .apply-btn:hover{
     background:#052d52;
 }
+
+@media (max-width: 768px) {
+    .container {
+        padding: 14px 16px;
+    }
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+}

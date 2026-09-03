@@ -6,17 +6,55 @@
     width: 100%;
     box-sizing: border-box;
     background: #ffffff;
-    padding: 10px 28px;
+    padding: 10px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: 0;
-    z-index: 900;
+    z-index: 950;
     flex-shrink: 0;
     min-height: 60px;
     margin: 0;
+    gap: 12px;
+}
+
+/* Header Left (Toggle + Search) */
+.top-header .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    max-width: 480px;
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle-btn {
+    display: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 9px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.sidebar-toggle-btn:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #bfdbfe;
+}
+
+.sidebar-toggle-btn .material-symbols-outlined {
+    font-size: 22px;
 }
 
 /* Search Box */
@@ -27,8 +65,9 @@
     background: #f8fafc;
     border-radius: 50px;
     padding: 8px 18px;
-    width: 380px;
-    max-width: 45%;
+    flex: 1;
+    min-width: 0;
+    max-width: 380px;
     border: 1px solid #e2e8f0;
     transition: all 0.25s ease;
     box-sizing: border-box;
@@ -43,6 +82,7 @@
 .top-header .search-box .material-symbols-outlined {
     color: #94a3b8;
     font-size: 20px;
+    flex-shrink: 0;
 }
 
 .top-header .search-box input {
@@ -52,21 +92,25 @@
     font-size: 13.5px;
     color: #1e293b;
     width: 100%;
+    min-width: 0;
     font-family: inherit;
     padding: 0;
     margin: 0;
+    text-overflow: ellipsis;
 }
 
 .top-header .search-box input::placeholder {
     color: #94a3b8;
+    text-overflow: ellipsis;
 }
 
 /* Right Section */
 .top-header .header-right {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     position: relative;
+    flex-shrink: 0;
 }
 
 /* Notification Wrapper */
@@ -326,6 +370,7 @@
 
 .top-header .profile-info {
     text-align: right;
+    max-width: 140px;
 }
 
 .top-header .profile-info h4 {
@@ -334,12 +379,19 @@
     font-weight: 600;
     color: #1e293b;
     line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .top-header .profile-info small {
     font-size: 11px;
     color: #64748b;
     font-weight: 500;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Profile Avatar */
@@ -362,4 +414,89 @@
 
 .top-header .default-avatar {
     background: linear-gradient(135deg, #1e3a5f, #073b6d);
+}
+
+/* ============================================
+   RESPONSIVE HEADER
+   ============================================ */
+
+@media (max-width: 992px) {
+    .sidebar-toggle-btn {
+        display: flex;
+    }
+
+    .top-header {
+        padding: 8px 16px;
+    }
+
+    .top-header .search-box {
+        max-width: 320px;
+    }
+}
+
+@media (max-width: 768px) {
+    .top-header {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+
+    .top-header .header-left {
+        gap: 8px;
+    }
+
+    .top-header .header-right {
+        gap: 8px;
+    }
+
+    .top-header .profile-info {
+        display: none;
+    }
+
+    .top-header .profile {
+        padding: 2px;
+        border: none;
+        background: transparent;
+    }
+
+    .top-header .profile:hover {
+        background: transparent;
+    }
+
+    .top-header .profile-avatar {
+        width: 34px;
+        height: 34px;
+        font-size: 13px;
+    }
+
+    .top-header .notification {
+        width: 36px;
+        height: 36px;
+    }
+
+    .top-header .notification .material-symbols-outlined {
+        font-size: 20px;
+    }
+
+    .top-header .search-box {
+        padding: 6px 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .top-header {
+        padding: 6px 10px;
+    }
+
+    .top-header .search-box {
+        padding: 6px 10px;
+        gap: 6px;
+    }
+
+    .top-header .search-box .material-symbols-outlined {
+        font-size: 18px;
+    }
+
+    .top-header .search-box input {
+        font-size: 12.5px;
+    }
 }

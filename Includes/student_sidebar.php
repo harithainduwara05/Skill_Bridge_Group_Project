@@ -23,46 +23,46 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
     </div>
 
     <nav>
-        <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>">
+        <a href="dashboard.php" class="<?= $currentPage == 'dashboard.php' ? 'active' : '' ?>" title="Dashboard">
             <span class="icon">
                 <span class="material-symbols-outlined">dashboard</span>
             </span>
-            Dashboard
+            <span class="nav-text">Dashboard</span>
         </a>
 
-        <a href="skills.php" class="<?= $currentPage == 'skills.php' ? 'active' : '' ?>">
+        <a href="skills.php" class="<?= $currentPage == 'skills.php' ? 'active' : '' ?>" title="Skills">
             <span class="icon">
                 <span class="material-symbols-outlined">psychology</span>
             </span>
-            Skills
+            <span class="nav-text">Skills</span>
         </a>
 
-        <a href="certificates.php" class="<?= $currentPage == 'certificates.php' ? 'active' : '' ?>">
+        <a href="certificates.php" class="<?= $currentPage == 'certificates.php' ? 'active' : '' ?>" title="Certificates">
             <span class="icon">
                 <span class="material-symbols-outlined">verified</span>
             </span>
-            Certificates
+            <span class="nav-text">Certificates</span>
         </a>
 
-        <a href="portfolio.php" class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>">
+        <a href="portfolio.php" class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>" title="Portfolio">
             <span class="icon">
                 <span class="material-symbols-outlined">badge</span>
             </span>
-            Portfolio
+            <span class="nav-text">Portfolio</span>
         </a>
 
-        <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>">
+        <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Projects">
             <span class="icon">
                 <span class="material-symbols-outlined">folder_open</span>
             </span>
-            Projects
+            <span class="nav-text">Projects</span>
         </a>
 
-        <a href="teams.php" class="<?= $currentPage == 'teams.php' ? 'active' : '' ?>">
+        <a href="teams.php" class="<?= $currentPage == 'teams.php' ? 'active' : '' ?>" title="Teams">
             <span class="icon">
                 <span class="material-symbols-outlined">group</span>
             </span>
-            Teams
+            <span class="nav-text">Teams</span>
         </a>
 
         <?php
@@ -72,32 +72,32 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         <?php if($email && canApplyInternship($email)){ ?>
 
         <a href="../../../Functions/Dashboards/Student/internships.php"
-        class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>">
+        class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Internships">
             <span class="icon">
                 <span class="material-symbols-outlined">work</span>
             </span>
-            Internships
+            <span class="nav-text">Internships</span>
         </a>
         <?php } ?>
 
-        <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>">
+        <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
             <span class="icon">
                 <span class="material-symbols-outlined">notifications</span>
             </span>
-            Notifications
+            <span class="nav-text">Notifications</span>
         </a>
 
-        <a href="settings.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>">
+        <a href="settings.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Settings">
             <span class="icon">
                 <span class="material-symbols-outlined">settings</span>
             </span>
-            Settings
+            <span class="nav-text">Settings</span>
         </a>
     </nav>
 
-    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'">
+    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
         <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
-        Logout
+        <span class="btn-text">Logout</span>
     </button>
 </aside>
 
