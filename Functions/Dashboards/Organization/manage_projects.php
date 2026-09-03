@@ -78,11 +78,6 @@ $avgResponseTime = null;
             <h1>Project Management</h1>
             <p>Curate and monitor your posted projects and student collaborations.</p>
         </div>
-
-        <a href="post.php" class="btn-solid">
-            <span class="material-symbols-outlined" style="font-size:18px;">add</span>
-            Create New Project
-        </a>
     </div>
 
     <!-- ===================== TOOLBAR: FILTERS + VIEW ===================== -->

@@ -257,10 +257,6 @@ include "../../../Includes/dash_header.php";
             <div class="cta-text">
                 <h3>Scale Your Projects with Top Talent</h3>
                 <p>SkillBridge connects you with the brightest students in the industry. Ready to start your next big initiative?</p>
-                <a href="post.php" class="btn-sm primary">
-                    <span class="material-symbols-outlined" style="font-size:16px;">rocket_launch</span>
-                    Post New Project
-                </a>
             </div>
         </div>
     </div>
