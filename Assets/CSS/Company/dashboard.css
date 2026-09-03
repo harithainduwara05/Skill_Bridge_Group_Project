@@ -1,0 +1,98 @@
+.company-dashboard { padding: 20px 24px 28px; background: #f5f7fc; }
+.company-dashboard h1, .company-dashboard h2, .company-dashboard h3 { color: #062643; }
+.company-welcome { display: flex; justify-content: space-between; gap: 24px; align-items: flex-start; margin-bottom: 24px; }
+.company-welcome > div:first-child { padding-top: 4px; }
+.company-welcome h1 { max-width: 520px; font-size: 30px; line-height: 1.2; margin-bottom: 10px; }
+.company-welcome > div > p { color: #596273; font-size: 15px; }
+.company-summary-card { width: 440px; padding: 22px; background: #fff; border: 1px solid #ccd3dd; border-radius: 14px; display: flex; align-items: center; gap: 18px; }
+.company-logo-mark { width: 62px; height: 62px; padding: 8px; border-radius: 9px; background: #dbe9ff; display: grid; place-items: center; flex-shrink: 0; }
+.company-logo-mark img { width: 100%; height: 100%; object-fit: contain; }
+.company-summary-card h2 { font-size: 19px; margin-bottom: 8px; }
+.verified-mark { color: #a96000; font-size: 15px; }
+.company-meta { display: flex; gap: 8px; }
+.company-meta > span { display: flex; align-items: center; gap: 4px; background: #e9f0ff; padding: 5px 9px; border-radius: 4px; font-size: 11px; color: #404859; }
+.company-meta .material-symbols-outlined { font-size: 14px; }
+.company-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; margin-bottom: 28px; }
+.company-stat-card { position: relative; min-height: 156px; background: #fff; border-radius: 14px; padding: 24px; overflow: hidden; box-shadow: 0 7px 22px rgba(26, 49, 82, .04); }
+.company-stat-card::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 4px; background: #064273; }
+.company-stat-card.orange::before { background: #a85100; }
+.stat-card-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.company-stat-icon { width: 38px; height: 38px; border-radius: 8px; background: #e7f0ff; display: grid; place-items: center; }
+.orange .company-stat-icon { background: #ffe4d1; }
+.company-stat-icon img { width: 21px; height: 21px; object-fit: contain; }
+.stat-card-head small { color: #9a4b00; font-size: 11px; }
+.stat-card-head small.positive { color: #009447; }
+.company-stat-card > p { color: #4f5967; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+.company-stat-card > strong { color: #062643; font-size: 29px; }
+.company-dashboard-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(285px, .95fr); gap: 26px; }
+.company-main-column, .company-side-column { min-width: 0; }
+.company-panel { background: #fff; border: 1px solid #ccd3dd; border-radius: 12px; overflow: hidden; }
+.company-panel-header { min-height: 60px; padding: 0 22px; border-bottom: 1px solid #ccd3dd; display: flex; align-items: center; justify-content: space-between; }
+.company-panel-header h2, .section-title-row h2 { font-size: 19px; }
+.company-panel-header a { color: #062643; text-decoration: none; font-size: 13px; }
+.company-panel-header a[aria-disabled='true'] { pointer-events: none; opacity: .6; }
+.applications-table { width: 100%; border-collapse: collapse; }
+.applications-table th { background: #eef3fd; color: #475163; text-align: left; padding: 14px 22px; font-size: 10px; text-transform: uppercase; letter-spacing: .6px; }
+.applications-table td { padding: 15px 22px; border-top: 1px solid #dde2e9; color: #424b59; font-size: 12px; }
+.applications-table td:first-child { display: flex; align-items: center; gap: 10px; color: #062643; }
+.candidate-avatar { width: 29px; height: 29px; background: #dbe9ff; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; flex-shrink: 0; }
+.applications-table button { border: 0; background: transparent; font-size: 21px; cursor: pointer; }
+.table-action { color: #475163; font-size: 21px; text-decoration: none; }
+.company-empty-state { padding: 28px 18px !important; color: #7a8493 !important; text-align: center !important; font-size: 12px !important; }
+.company-empty-state a { color: #064273; font-weight: 700; }
+.internship-empty { grid-column: 1 / -1; background: #fff; border: 1px solid #ccd3dd; border-radius: 12px; }
+.status-pill { padding: 5px 12px; border-radius: 16px; font-size: 9px; font-weight: 700; text-transform: uppercase; }
+.status-pill.new { background: #ddebff; color: #064273; }
+.status-pill.shortlisted { background: #ffe2cc; color: #8a4100; }
+.status-pill.selected { background: #d7f7e4; color: #08753c; }
+.status-pill.rejected { background: #ffd9d9; color: #a62424; }
+.recent-internships { margin-top: 26px; }
+.section-title-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.section-title-row button { width: 32px; height: 32px; border: 1px solid #ccd3dd; border-radius: 50%; background: #fff; color: #062643; font-size: 22px; margin-left: 7px; cursor: pointer; }
+.internship-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+.internship-card { background: #fff; border: 1px solid #ccd3dd; border-radius: 12px; padding: 24px; }
+.internship-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+.internship-card-head img { width: 46px; height: 46px; object-fit: contain; border-radius: 8px; }
+.internship-card-head > span { background: #d9f8e5; color: #15804a; padding: 5px 10px; border-radius: 4px; font-size: 11px; }
+.internship-card-head > span.closed { background: #edf0f4; color: #687282; }
+.internship-card h3 { font-size: 18px; margin-bottom: 7px; }
+.internship-card > p { color: #596273; font-size: 13px; line-height: 1.55; min-height: 42px; }
+.internship-meta { display: flex; gap: 18px; margin-top: 16px; color: #48515e; font-size: 11px; }
+.internship-meta span { display: flex; align-items: center; gap: 3px; }
+.internship-meta .material-symbols-outlined { font-size: 14px; }
+.interview-list { padding: 16px; display: grid; gap: 14px; }
+.interview-item { background: #edf3ff; padding: 15px; border-radius: 12px; display: grid; grid-template-columns: 58px 1fr; gap: 14px; }
+.interview-date { background: #fff; border: 1px solid #ccd3dd; border-radius: 8px; display: grid; place-content: center; text-align: center; }
+.interview-date strong { color: #9a4b00; font-size: 20px; }
+.interview-date span { text-transform: uppercase; font-size: 10px; color: #596273; }
+.interview-item h3 { font-size: 12px; line-height: 1.3; margin-bottom: 4px; }
+.interview-item p, .interview-item small { color: #4d5665; font-size: 10px; line-height: 1.4; }
+.interview-item.muted { opacity: .58; }
+.panel-footer-link { display: block; background: #edf3ff; padding: 16px; color: #062643; text-align: center; text-decoration: none; font-size: 12px; font-weight: 700; }
+.hiring-goal-card { margin-top: 24px; background: #064273; color: #fff; border-radius: 12px; padding: 24px; }
+.hiring-goal-card h2 { color: #fff; font-size: 20px; margin-bottom: 8px; }
+.hiring-goal-card p { color: #9cb8d2; font-size: 13px; line-height: 1.45; }
+.goal-progress { height: 10px; background: #29618b; border-radius: 8px; overflow: hidden; margin-top: 22px; }
+.goal-progress span { display: block; width: 65%; height: 100%; background: #ff8900; }
+.goal-labels { display: flex; justify-content: space-between; font-size: 10px; margin: 7px 0 20px; }
+.hiring-goal-card > a, .goal-action-disabled { display: block; padding: 11px; border-radius: 8px; background: #b85e00; color: #fff; text-align: center; text-decoration: none; font-weight: 700; font-size: 13px; }
+.company-footer { padding: 20px 24px; background: #fff; border-top: 1px solid #ccd3dd; color: #596273; display: flex; justify-content: space-between; font-size: 12px; }
+.company-footer nav { display: flex; gap: 24px; }
+.company-footer a { color: #596273; text-decoration: none; }
+.company-sidebar nav a .icon img { width: 19px; height: 19px; object-fit: contain; }
+.company-sidebar a[aria-disabled='true'] { cursor: not-allowed; pointer-events: none; }
+
+@media (max-width: 1100px) {
+    .company-stat-grid { grid-template-columns: repeat(2, 1fr); }
+    .company-dashboard-grid { grid-template-columns: 1fr; }
+    .company-summary-card { width: 390px; }
+}
+@media (max-width: 768px) {
+    .company-dashboard { padding: 16px; }
+    .company-welcome { flex-direction: column; }
+    .company-summary-card { width: 100%; }
+    .company-stat-grid, .internship-card-grid { grid-template-columns: 1fr; }
+    .applications-table-wrap { overflow-x: auto; }
+    .applications-table { min-width: 680px; }
+    .company-footer { flex-direction: column; gap: 12px; }
+}

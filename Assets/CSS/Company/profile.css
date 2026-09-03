@@ -1,0 +1,451 @@
+.company-profile-page {
+    padding: 26px 24px 40px;
+    background: #fff;
+    min-height: 100vh;
+}
+
+
+/* =========================
+   PAGE HEADING
+========================= */
+
+.company-profile-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.company-profile-heading h1 {
+    color: #064273;
+    font-size: 34px;
+    line-height: 1.15;
+    margin-bottom: 7px;
+}
+
+.company-profile-heading p {
+    color: #596273;
+    font-size: 15px;
+}
+
+
+/* =========================
+   ACTION BUTTONS
+========================= */
+
+.company-profile-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.profile-edit-button,
+.profile-save-button {
+    min-width: 130px;
+    padding: 11px 20px;
+    border-radius: 8px;
+    font: 700 13px 'Inter', sans-serif;
+    cursor: pointer;
+}
+
+.profile-edit-button {
+    color: #064273;
+    background: #fff;
+    border: 1px solid #064273;
+}
+
+.profile-edit-button:hover {
+    background: #f2f7fb;
+}
+
+.profile-save-button {
+    color: #fff;
+    background: #064273;
+    border: 1px solid #064273;
+}
+
+.profile-save-button:hover:not(:disabled) {
+    background: #05375f;
+}
+
+.profile-save-button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+
+/* =========================
+   ALERTS
+========================= */
+
+.company-profile-alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: -8px 0 20px;
+    font-size: 13px;
+}
+
+.company-profile-alert.success {
+    color: #166534;
+    background: #dcfce7;
+    border: 1px solid #bbf7d0;
+}
+
+.company-profile-alert.error {
+    color: #991b1b;
+    background: #fee2e2;
+    border: 1px solid #fecaca;
+}
+
+
+/* =========================
+   MAIN PROFILE LAYOUT
+========================= */
+
+.company-profile-layout {
+    display: grid;
+    grid-template-columns: 308px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.company-profile-aside {
+    display: grid;
+    gap: 24px;
+}
+
+
+/* =========================
+   CARDS
+========================= */
+
+.company-logo-card,
+.company-social-card,
+.company-details-card {
+    background: #fff;
+    border: 1px solid #c9d1dc;
+    border-radius: 9px;
+}
+
+
+/* =========================
+   COMPANY LOGO CARD
+========================= */
+
+.company-logo-card {
+    min-height: 255px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.company-logo-preview {
+    width: 130px;
+    height: 130px;
+    padding: 22px;
+    border: 1px solid #c9d1dc;
+    border-radius: 50%;
+    background: #f4f6f8;
+    display: grid;
+    place-items: center;
+}
+
+.company-logo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.company-logo-upload {
+    margin-top: 16px;
+    color: #064273;
+    font-size: 13px;
+    cursor: default;
+}
+
+.company-profile-page.is-editing .company-logo-upload {
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.company-verified-badge {
+    margin-top: 14px;
+    padding: 5px 14px;
+    border-radius: 20px;
+    background: #d9f4da;
+    color: #156a27;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.company-verified-badge .material-symbols-outlined {
+    font-size: 14px;
+}
+
+
+/* =========================
+   SOCIAL LINKS
+========================= */
+
+.company-social-card {
+    padding: 26px 24px;
+}
+
+.company-social-card h2,
+.company-details-card > h2 {
+    color: #064273;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 22px;
+}
+
+.company-social-card label,
+.company-profile-field label {
+    display: block;
+    color: #48515e;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-bottom: 7px;
+}
+
+.company-social-card input {
+    width: 100%;
+    min-height: 48px;
+    margin-bottom: 14px;
+}
+
+.company-social-card input:last-child {
+    margin-bottom: 0;
+}
+
+
+/* =========================
+   COMPANY DETAILS
+========================= */
+
+.company-details-card {
+    padding: 28px 24px 30px;
+}
+
+.company-profile-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 24px;
+}
+
+.company-profile-field.full-width {
+    grid-column: 1 / -1;
+}
+
+.company-profile-field input,
+.company-profile-field textarea,
+.company-social-card input {
+    width: 100%;
+    border: 1px solid #c9d1dc;
+    border-radius: 8px;
+    background: #f2f4f6;
+    color: #252c36;
+    padding: 11px 15px;
+    font: 13px 'Inter', sans-serif;
+    outline: none;
+}
+
+.company-profile-field input {
+    min-height: 42px;
+}
+
+.company-profile-field textarea {
+    resize: vertical;
+    line-height: 1.45;
+}
+
+.company-profile-page.is-editing [data-company-editable] {
+    background: #fff;
+    border-color: #8caac2;
+}
+
+.company-profile-page input:focus,
+.company-profile-page textarea:focus {
+    border-color: #064273;
+    box-shadow: 0 0 0 3px rgba(6, 66, 115, .1);
+}
+
+
+/* =====================================================
+   COMPANY SIDEBAR FIX
+   Keeps shared dashboard.css unchanged
+===================================================== */
+
+.company-sidebar {
+    overflow: hidden;
+}
+
+.company-sidebar .logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.company-sidebar .logo img {
+    width: auto;
+    max-width: 155px;
+    max-height: 55px;
+    object-fit: contain;
+    display: block;
+}
+
+
+/* Sidebar menu icons */
+
+.company-sidebar nav a .icon {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+}
+
+.company-sidebar nav a .icon img {
+    width: 18px !important;
+    height: 18px !important;
+    max-width: 18px !important;
+    max-height: 18px !important;
+
+    object-fit: contain;
+    display: block;
+}
+
+.company-sidebar nav a .icon .material-symbols-outlined {
+    font-size: 20px;
+    line-height: 1;
+}
+
+
+/* Prevent any sidebar image becoming huge */
+
+.company-sidebar img {
+    max-width: 100%;
+}
+
+
+/* Sidebar menu alignment */
+
+.company-sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+
+/* Post internship button */
+
+.company-sidebar .post-new-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+
+/* Logout button */
+
+.company-sidebar .logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+
+/* =========================
+   FOOTER
+========================= */
+
+.company-footer {
+    padding: 20px 24px;
+    background: #f5f7f9;
+    border-top: 1px solid #cdd4de;
+    color: #596273;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+}
+
+.company-footer nav {
+    display: flex;
+    gap: 24px;
+}
+
+.company-footer a {
+    color: #596273;
+    text-decoration: none;
+}
+
+.company-footer a:hover {
+    color: #064273;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 980px) {
+
+    .company-profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .company-profile-aside {
+        grid-template-columns: 1fr 1fr;
+    }
+
+}
+
+
+@media (max-width: 700px) {
+
+    .company-profile-page {
+        padding: 20px 16px;
+    }
+
+    .company-profile-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .company-profile-actions {
+        width: 100%;
+    }
+
+    .profile-edit-button,
+    .profile-save-button {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .company-profile-aside,
+    .company-profile-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .company-profile-field.full-width {
+        grid-column: auto;
+    }
+
+    .company-footer {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+}
