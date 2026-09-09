@@ -5,17 +5,47 @@ $success_msg = "";
 $error_msg = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_contact'])) {
-    $full_name = $conn->real_escape_string($_POST['full_name']);
-    $email = $conn->real_escape_string($_POST['email']);
-    $subject = $conn->real_escape_string($_POST['subject']);
-    $message = $conn->real_escape_string($_POST['message']);
+    $full_name = trim($_POST['full_name'] ?? '');
+    $email     = trim($_POST['email'] ?? '');
+    $subject   = trim($_POST['subject'] ?? '');
+    $message   = trim($_POST['message'] ?? '');
 
     if (!empty($full_name) && !empty($email) && !empty($message)) {
-        $sql = "INSERT INTO contact_messages (full_name, email, subject, message) VALUES ('$full_name', '$email', '$subject', '$message')";
-        if ($conn->query($sql) === TRUE) {
-            $success_msg = "Thank you! Your message has been sent successfully.";
+        // 1. Insert into contact_messages
+        $stmt = $conn->prepare("INSERT INTO contact_messages (full_name, email, subject, message, created_at) VALUES (?, ?, ?, ?, NOW())");
+        if ($stmt) {
+            $stmt->bind_param("ssss", $full_name, $email, $subject, $message);
+            if ($stmt->execute()) {
+                $success_msg = "Thank you! Your message has been sent successfully.";
+
+                // 2. Notify all Administrators in the notifications table
+                $adminRes = $conn->query("SELECT Email FROM user WHERE role = 'admin' AND status = 'Active'");
+                if (!$adminRes || $adminRes->num_rows === 0) {
+                    $adminRes = $conn->query("SELECT Email FROM user WHERE role = 'admin'");
+                }
+
+                if ($adminRes && $adminRes->num_rows > 0) {
+                    $notifTitle = "New Contact Inquiry: " . (!empty($subject) ? $subject : 'Website Inquiry');
+                    $notifMsg   = "From: " . $full_name . " (" . $email . ")\n\n" . $message;
+                    $notifType  = "contact_inquiry";
+                    $notifStatus = "Unread";
+
+                    $notifStmt = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
+                    if ($notifStmt) {
+                        while ($adminRow = $adminRes->fetch_assoc()) {
+                            $adminEmail = $adminRow['Email'];
+                            $notifStmt->bind_param("sssss", $adminEmail, $notifTitle, $notifMsg, $notifType, $notifStatus);
+                            $notifStmt->execute();
+                        }
+                        $notifStmt->close();
+                    }
+                }
+            } else {
+                $error_msg = "Error: " . $stmt->error;
+            }
+            $stmt->close();
         } else {
-            $error_msg = "Error: " . $conn->error;
+            $error_msg = "Database error: " . $conn->error;
         }
     } else {
         $error_msg = "Please fill in all required fields.";

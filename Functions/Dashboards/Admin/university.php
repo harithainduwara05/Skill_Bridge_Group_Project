@@ -63,15 +63,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     <!-- Flash Notification -->
     <?php if (!empty($flash)): ?>
-    <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="flashToast">
-        <span class="material-symbols-outlined flash-icon">
-            <?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?>
-        </span>
-        <span class="flash-msg"><?= htmlspecialchars($flash['message']) ?></span>
-        <button class="flash-close" onclick="this.parentElement.remove()">
-            <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-        </button>
-    </div>
+        <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="flashToast">
+            <span class="material-symbols-outlined flash-icon">
+                <?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?>
+            </span>
+            <span class="flash-msg"><?= htmlspecialchars($flash['message']) ?></span>
+            <button class="flash-close" onclick="this.parentElement.remove()">
+                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
+            </button>
+        </div>
     <?php endif; ?>
 
     <!-- Page Header -->
@@ -147,24 +147,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <div class="full-width-section">
         <div class="card">
             <?php
-                $selectedStatus = $_GET['status'] ?? 'all';
-                $searchQuery    = trim($_GET['search'] ?? '');
-                
-                $uniResult = $adminDB->getAllUniversities($selectedStatus, $searchQuery);
-                $allUniversities = [];
-                if ($uniResult) {
-                    while ($r = $uniResult->fetch_assoc()) {
-                        $allUniversities[] = $r;
-                    }
+            $selectedStatus = $_GET['status'] ?? 'all';
+            $searchQuery = trim($_GET['search'] ?? '');
+
+            $uniResult = $adminDB->getAllUniversities($selectedStatus, $searchQuery);
+            $allUniversities = [];
+            if ($uniResult) {
+                while ($r = $uniResult->fetch_assoc()) {
+                    $allUniversities[] = $r;
                 }
-                $totFilteredUni = count($allUniversities);
-                
-                // Pagination Setup (5 records per page)
-                $recordsPerPage = 5;
-                $totalPages = ceil($totFilteredUni / $recordsPerPage);
-                $currentPage = isset($_GET['page']) ? max(1, min(max(1, $totalPages), (int)$_GET['page'])) : 1;
-                $offset = ($currentPage - 1) * $recordsPerPage;
-                $pageUniversities = array_slice($allUniversities, $offset, $recordsPerPage);
+            }
+            $totFilteredUni = count($allUniversities);
+
+            // Pagination Setup (5 records per page)
+            $recordsPerPage = 5;
+            $totalPages = ceil($totFilteredUni / $recordsPerPage);
+            $currentPage = isset($_GET['page']) ? max(1, min(max(1, $totalPages), (int) $_GET['page'])) : 1;
+            $offset = ($currentPage - 1) * $recordsPerPage;
+            $pageUniversities = array_slice($allUniversities, $offset, $recordsPerPage);
             ?>
             <div class="card-header">
                 <div>
@@ -176,13 +176,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <option value="all" <?= $selectedStatus === 'all' ? 'selected' : '' ?>>All Statuses</option>
                             <option value="Active" <?= $selectedStatus === 'Active' ? 'selected' : '' ?>>Active</option>
                             <option value="Pending" <?= $selectedStatus === 'Pending' ? 'selected' : '' ?>>Pending</option>
-                            <option value="Inactive" <?= $selectedStatus === 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                            <option value="Inactive" <?= $selectedStatus === 'Inactive' ? 'selected' : '' ?>>Inactive
+                            </option>
                         </select>
 
                         <div class="univ-search-box">
                             <span class="material-symbols-outlined" style="font-size:18px;color:#9ca3af;">search</span>
-                            <input type="text" name="search" placeholder="Search name, email, org..." id="univSearchInput"
-                                value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
+                            <input type="text" name="search" placeholder="Search name, email, org..."
+                                id="univSearchInput" value="<?= htmlspecialchars($searchQuery) ?>" autocomplete="off">
                         </div>
                     </form>
                     <button type="button" class="univ-icon-btn" title="Export CSV" id="exportBtn">
@@ -205,98 +206,105 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </tr>
                     </thead>
                     <tbody>
-                    <?php if (empty($pageUniversities)): ?>
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">
-                                <span class="material-symbols-outlined" style="font-size: 40px; color: #cbd5e1; display:block; margin-bottom:8px;">search_off</span>
-                                No universities found matching your criteria.
-                            </td>
-                        </tr>
-                    <?php else: ?>
-                        <?php
+                        <?php if (empty($pageUniversities)): ?>
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size: 40px; color: #cbd5e1; display:block; margin-bottom:8px;">search_off</span>
+                                    No universities found matching your criteria.
+                                </td>
+                            </tr>
+                        <?php else: ?>
+                            <?php
                             foreach ($pageUniversities as $row):
-                                $initials  = strtoupper(substr($row['University'], 0, 3));
-                                $badgeCls  = match(strtolower($row['Status'] ?? '')) {
-                                    'active'   => 'active',
-                                    'pending'  => 'pending',
-                                    default    => 'inactive-badge'
+                                $initials = strtoupper(substr($row['University'], 0, 3));
+                                $badgeCls = match (strtolower($row['Status'] ?? '')) {
+                                    'active' => 'active',
+                                    'pending' => 'pending',
+                                    default => 'inactive-badge'
                                 };
-                        ?>
-                        <tr>
-                            <td>
-                                <div class="university-logo mit" style="background:#1e293b;"><?= htmlspecialchars($initials) ?></div>
-                            </td>
-                            <td>
-                                <div class="university-name"><?= htmlspecialchars($row['University']) ?></div>
-                                <div class="univ-sub-location"><?= htmlspecialchars($row['Location'] ?? '') ?></div>
-                            </td>
-                            <td><span class="univ-domain-badge">@<?= htmlspecialchars($row['emailEx']) ?></span></td>
-                            <td><?= htmlspecialchars($row['Location'] ?? '—') ?></td>
-                            <?php $stuCount = $adminDB->getStudentCountByDomain($row['emailEx']); ?>
-                            <td><?= $stuCount ?></td>
-                            <td><span class="badge-status <?= $badgeCls ?>"><?= htmlspecialchars($row['Status'] ?? '') ?></span></td>
-                            <td>
-                                <div class="univ-actions-cell">
-                                    <button class="action-btn" type="button" title="View Details"
-                                        onclick="openViewModal(
+                                ?>
+                                <tr>
+                                    <td>
+                                        <div class="university-logo mit" style="background:#1e293b;">
+                                            <?= htmlspecialchars($initials) ?></div>
+                                    </td>
+                                    <td>
+                                        <div class="university-name"><?= htmlspecialchars($row['University']) ?></div>
+                                        <div class="university-faculty"><?= htmlspecialchars($row['faculty'] ?? '') ?></div>
+                                    </td>
+                                    <td><span class="univ-domain-badge">@<?= htmlspecialchars($row['emailEx']) ?></span></td>
+                                    <td><?= htmlspecialchars($row['Location'] ?? '—') ?></td>
+                                    <?php $stuCount = $adminDB->getStudentCountByDomain($row['emailEx']); ?>
+                                    <td><?= $stuCount ?></td>
+                                    <td><span
+                                            class="badge-status <?= $badgeCls ?>"><?= htmlspecialchars($row['Status'] ?? '') ?></span>
+                                    </td>
+                                    <td>
+                                        <div class="univ-actions-cell">
+                                            <button class="action-btn" type="button" title="View Details" onclick="openViewModal(
                                             '<?= htmlspecialchars(addslashes($row['University'])) ?>',
+                                            '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>',
                                             '<?= htmlspecialchars(addslashes($row['emailEx'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>',
                                             '<?= $stuCount ?>',
-                                            '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>',
-                                            '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>')">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
-                                    </button>
-                                    <button class="action-btn" type="button" title="Edit"
-                                        onclick="openEditModal(
+                                            '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
+                                                <span class="material-symbols-outlined"
+                                                    style="font-size:18px;">visibility</span>
+                                            </button>
+                                            <button class="action-btn" type="button" title="Edit" onclick="openEditModal(
                                             '<?= htmlspecialchars(addslashes($row['University'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>',
                                             '<?= htmlspecialchars(addslashes($row['emailEx'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>',
                                             '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
-                                    </button>
-                                    <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
-                                        onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>')">
-                                        <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                                                <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+                                            </button>
+                                            <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
+                                                onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>')">
+                                                <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
             <!-- Pagination (Shows only if more than 5 universities exist) -->
             <?php if ($totalPages > 1): ?>
-            <div class="univ-pagination">
-                <div class="univ-pagination-info">
-                    Showing <?= $offset + 1 ?>–<?= min($offset + $recordsPerPage, $totFilteredUni) ?> of <?= $totFilteredUni ?> universities
-                </div>
-                <div class="univ-pagination-controls">
-                    <?php if ($currentPage <= 1): ?>
-                        <span class="univ-page-btn disabled">Previous</span>
-                    <?php else: ?>
-                        <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Previous</a>
-                    <?php endif; ?>
-
-                    <?php for($p = 1; $p <= $totalPages; $p++): ?>
-                        <?php if ($p == $currentPage): ?>
-                            <span class="univ-page-btn univ-page-active"><?= $p ?></span>
+                <div class="univ-pagination">
+                    <div class="univ-pagination-info">
+                        Showing <?= $offset + 1 ?>–<?= min($offset + $recordsPerPage, $totFilteredUni) ?> of
+                        <?= $totFilteredUni ?> universities
+                    </div>
+                    <div class="univ-pagination-controls">
+                        <?php if ($currentPage <= 1): ?>
+                            <span class="univ-page-btn disabled">Previous</span>
                         <?php else: ?>
-                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $p ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;"><?= $p ?></a>
+                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>"
+                                class="univ-page-btn" style="text-decoration:none; color:inherit;">Previous</a>
                         <?php endif; ?>
-                    <?php endfor; ?>
 
-                    <?php if ($currentPage >= $totalPages): ?>
-                        <span class="univ-page-btn disabled">Next</span>
-                    <?php else: ?>
-                        <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>" class="univ-page-btn" style="text-decoration:none; color:inherit;">Next</a>
-                    <?php endif; ?>
+                        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+                            <?php if ($p == $currentPage): ?>
+                                <span class="univ-page-btn univ-page-active"><?= $p ?></span>
+                            <?php else: ?>
+                                <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $p ?>"
+                                    class="univ-page-btn" style="text-decoration:none; color:inherit;"><?= $p ?></a>
+                            <?php endif; ?>
+                        <?php endfor; ?>
+
+                        <?php if ($currentPage >= $totalPages): ?>
+                            <span class="univ-page-btn disabled">Next</span>
+                        <?php else: ?>
+                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>"
+                                class="univ-page-btn" style="text-decoration:none; color:inherit;">Next</a>
+                        <?php endif; ?>
+                    </div>
                 </div>
-            </div>
             <?php endif; ?>
 
         </div>
@@ -316,22 +324,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <input type="hidden" name="action" value="add">
             <div class="form-group">
                 <label class="form-label">University Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" class="form-input" name="university" placeholder="e.g. University of Colombo" required>
+                <div class="univ-combobox" id="addUnivCombobox">
+                    <div class="univ-combobox-input-wrap">
+                        <input type="text" class="form-input univ-combobox-input" name="university" id="addUnivInput" placeholder="Select or type university name" autocomplete="off" required>
+                        <button type="button" class="univ-combobox-toggle" id="addUnivToggle" title="Toggle university list" tabindex="-1">
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                    </div>
+                    <div class="univ-combobox-dropdown" id="addUnivDropdown">
+                        <div class="univ-combobox-list" id="addUnivList"></div>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Faculty Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" class="form-input" name="faculty" placeholder="e.g. School Of Technology" required>
+                <input type="text" class="form-input" name="faculty" id="addFacInput" placeholder="e.g. School Of Technology" required>
             </div>
             <div class="form-group">
                 <label class="form-label">Email Domain <span style="color:#ef4444;">*</span></label>
-                <input type="text" name="domain" class="form-input" placeholder="e.g. cmb.ac.lk" required>
+                <input type="text" name="domain" id="addDomainInput" class="form-input" placeholder="e.g. cmb.ac.lk" required>
                 <small style="color:#9ca3af;font-size:11px;margin-top:4px;display:block;">Enter without the @
                     symbol</small>
             </div>
             <div class="form-row">
                 <div class="form-group">
                     <label class="form-label">Location</label>
-                    <input type="text" name="location" class="form-input" placeholder="e.g. Colombo, Sri Lanka">
+                    <input type="text" name="location" id="addLocationInput" class="form-input" placeholder="e.g. Colombo, Sri Lanka">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Status</label>
@@ -365,10 +383,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form class="univ-modal-body" action="" method="post">
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="original_domain" id="editOrigDomain">
-            
+
             <div class="form-group">
                 <label class="form-label">University Name <span style="color:#ef4444;">*</span></label>
-                <input type="text" class="form-input" name="university" id="editUni" required>
+                <div class="univ-combobox" id="editUnivCombobox">
+                    <div class="univ-combobox-input-wrap">
+                        <input type="text" class="form-input univ-combobox-input" name="university" id="editUni" placeholder="Select or type university name" autocomplete="off" required>
+                        <button type="button" class="univ-combobox-toggle" id="editUnivToggle" title="Toggle university list" tabindex="-1">
+                            <span class="material-symbols-outlined">expand_more</span>
+                        </button>
+                    </div>
+                    <div class="univ-combobox-dropdown" id="editUnivDropdown">
+                        <div class="univ-combobox-list" id="editUnivList"></div>
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label class="form-label">Faculty Name <span style="color:#ef4444;">*</span></label>
@@ -433,10 +461,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <form action="" method="post">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="delete_domain" id="deleteDomainInput">
-            
+
             <div class="univ-modal-body" style="padding: 22px 24px;">
                 <div style="display:flex; gap:16px; align-items:flex-start;">
-                    <div style="width:44px; height:44px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <div
+                        style="width:44px; height:44px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <span class="material-symbols-outlined" style="font-size:24px;">warning</span>
                     </div>
                     <div style="flex:1;">
@@ -447,14 +476,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             This action cannot be undone. All student domain associations will be removed.
                         </p>
 
-                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12.5px;">
+                        <div
+                            style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12.5px;">
                                 <span style="color:#64748b; font-weight:600;">University:</span>
                                 <strong id="deleteUniDisplay" style="color:#0f172a; font-weight:600;"></strong>
                             </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
                                 <span style="color:#64748b; font-weight:600;">Domain:</span>
-                                <strong id="deleteDomainDisplay" style="color:#2563eb; font-weight:600; font-family:'Courier New', monospace;"></strong>
+                                <strong id="deleteDomainDisplay"
+                                    style="color:#2563eb; font-weight:600; font-family:'Courier New', monospace;"></strong>
                             </div>
                         </div>
                     </div>
@@ -481,4 +514,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </footer>
 
 <?php include "../../../Includes/dash_footer.php"; ?>
+<script src="../../../Assets/JS/Admin/universityData.js"></script>
 <script src="../../../Assets/JS/Admin/university.js"></script>

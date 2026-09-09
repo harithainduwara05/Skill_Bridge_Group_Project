@@ -106,8 +106,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($currPass) || empty($newPass) || empty($confPass)) {
             $flash = ['type' => 'error', 'title' => 'Missing Fields', 'message' => 'Please fill in all password fields.'];
-        } elseif (strlen($newPass) < 6) {
-            $flash = ['type' => 'error', 'title' => 'Weak Password', 'message' => 'New password must be at least 6 characters long.'];
+        } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $newPass)) {
+            $flash = ['type' => 'error', 'title' => 'Weak Password', 'message' => 'New password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.'];
         } elseif ($newPass !== $confPass) {
             $flash = ['type' => 'error', 'title' => 'Password Mismatch', 'message' => 'New password and confirmation password do not match.'];
         } else {
@@ -412,7 +412,26 @@ include "../../../Includes/dash_header.php";
                                     <label for="new_password">New Password *</label>
                                     <div class="input-with-icon">
                                         <span class="material-symbols-outlined">lock</span>
-                                        <input type="password" id="new_password" name="new_password" required minlength="6" placeholder="Minimum 6 characters">
+                                        <input type="password" id="new_password" name="new_password" required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers" placeholder="Min 8 chars with uppercase, lowercase & numbers">
+                                    </div>
+                                    <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+                                    <div class="password-requirements" id="companyPassRequirements">
+                                        <div class="req-item" id="compReqLength">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 8 characters</span>
+                                        </div>
+                                        <div class="req-item" id="compReqUpper">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 uppercase (A-Z)</span>
+                                        </div>
+                                        <div class="req-item" id="compReqLower">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 lowercase (a-z)</span>
+                                        </div>
+                                        <div class="req-item" id="compReqNum">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 number (0-9)</span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -420,10 +439,12 @@ include "../../../Includes/dash_header.php";
                                     <label for="confirm_password">Confirm New Password *</label>
                                     <div class="input-with-icon">
                                         <span class="material-symbols-outlined">check_circle</span>
-                                        <input type="password" id="confirm_password" name="confirm_password" required minlength="6" placeholder="Repeat new password">
+                                        <input type="password" id="confirm_password" name="confirm_password" required minlength="8" placeholder="Repeat new password">
                                     </div>
                                 </div>
                             </div>
+
+                            <div id="companyPassMatchMsg" style="font-size:12.5px; margin-bottom:14px; display:none;"></div>
 
                             <div class="form-actions-row">
                                 <button type="submit" class="btn-save-profile btn-save-password">
@@ -483,6 +504,68 @@ include "../../../Includes/dash_header.php";
     setTimeout(function() {
         closeToast();
     }, 5000);
+
+    // Password Match & Live Requirements Validation
+    const compNewPass = document.getElementById('new_password');
+    const compConfPass = document.getElementById('confirm_password');
+    const compPassMsg = document.getElementById('companyPassMatchMsg');
+    const compReqBox = document.getElementById('companyPassRequirements');
+
+    if (compNewPass && compConfPass) {
+        function updateCompReqItem(elemId, isValid) {
+            const item = document.getElementById(elemId);
+            if (!item) return;
+            const icon = item.querySelector('.req-icon');
+            if (isValid) {
+                item.classList.add('valid');
+                if (icon) icon.innerText = '✓';
+            } else {
+                item.classList.remove('valid');
+                if (icon) icon.innerText = '✕';
+            }
+        }
+
+        function checkCompPasswordRequirements() {
+            const val = compNewPass.value;
+            updateCompReqItem('compReqLength', val.length >= 8);
+            updateCompReqItem('compReqUpper', /[A-Z]/.test(val));
+            updateCompReqItem('compReqLower', /[a-z]/.test(val));
+            updateCompReqItem('compReqNum', /\d/.test(val));
+        }
+
+        function checkCompPassMatch() {
+            if (!compConfPass.value) {
+                compPassMsg.style.display = 'none';
+                return;
+            }
+            compPassMsg.style.display = 'block';
+            if (compNewPass.value === compConfPass.value) {
+                compPassMsg.style.color = '#10b981';
+                compPassMsg.innerText = '✓ Passwords match';
+            } else {
+                compPassMsg.style.color = '#ef4444';
+                compPassMsg.innerText = '✗ Passwords do not match';
+            }
+        }
+
+        // Smooth accordion slide down when New Password field is focused
+        compNewPass.addEventListener('focus', function() {
+            compReqBox.classList.add('show');
+            checkCompPasswordRequirements();
+        });
+
+        // Smooth accordion slide up when clicking away or blur
+        compNewPass.addEventListener('blur', function() {
+            compReqBox.classList.remove('show');
+        });
+
+        // Live update while typing
+        compNewPass.addEventListener('input', function() {
+            checkCompPasswordRequirements();
+            checkCompPassMatch();
+        });
+        compConfPass.addEventListener('input', checkCompPassMatch);
+    }
 </script>
 
 <?php include "../../../Includes/dash_footer.php"; ?>

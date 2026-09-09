@@ -16,9 +16,8 @@ include "../../../Includes/dash_header.php";
 
 $flash = null;
 
-// ============================================
 // HANDLE POST ACTIONS
-// ============================================
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
@@ -42,7 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             try {
                 $ok = $adminDB->addUser($email, $password, $role, $name, $status, $orgName, $contact, $degree, $year);
                 if ($ok) {
-                    $flash = ['type' => 'success', 'message' => 'User created successfully!'];
+                    $emailMsg = '';
+                    try {
+                        require_once __DIR__ . '/sendUserEmail.php';
+                        send_user_credentials_email($email, $name, $password);
+                        $emailMsg = ' Login credentials have been sent to ' . htmlspecialchars($email) . '.';
+                    } catch (Exception $mailEx) {
+                        $emailMsg = ' (Note: User saved, but email sending failed: ' . htmlspecialchars($mailEx->getMessage()) . ')';
+                    }
+                    $flash = ['type' => 'success', 'message' => 'User created successfully!' . $emailMsg];
                 } else {
                     $flash = ['type' => 'error', 'message' => 'Failed to create user. Please try again.'];
                 }
@@ -110,9 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// ============================================
 // FILTERS & STATS
-// ============================================
+
 $stats = $adminDB->getUserManagementStats();
 
 $selectedRole   = $_GET['role'] ?? 'all';
@@ -278,7 +284,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                             <th style="padding: 12px 18px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Affiliation / Organization</th>
                             <th style="padding: 12px 18px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Status</th>
                             <th style="padding: 12px 18px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Joined Date</th>
-                            <th style="padding: 12px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; text-align: right;">Actions</th>
+                            <th style="padding: 12px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -336,8 +342,8 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                                     <?= htmlspecialchars($joinedDate) ?>
                                 </td>
 
-                                <td style="padding: 14px 20px; text-align: right;">
-                                    <div class="user-actions-cell" style="justify-content: flex-end;">
+                                <td style="padding: 14px 20px;">
+                                    <div class="user-actions-cell">
                                         <!-- View Details -->
                                         <button class="btn-table-action view" title="View Details" onclick="viewUser(<?= htmlspecialchars(json_encode($u), ENT_QUOTES, 'UTF-8') ?>)">
                                             <span class="material-symbols-outlined" style="font-size: 17px;">visibility</span>
@@ -421,9 +427,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
 
 </main>
 
-<!-- ============================================
-     MODAL: ADD NEW USER
-     ============================================ -->
+<!-- MODAL: ADD NEW USER -->
 <div class="user-modal-overlay" id="addUserModal">
     <div class="user-modal">
         <div class="user-modal-header">
@@ -500,9 +504,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
     </div>
 </div>
 
-<!-- ============================================
-     MODAL: EDIT USER
-     ============================================ -->
+<!-- MODAL: EDIT USER-->
 <div class="user-modal-overlay" id="editUserModal">
     <div class="user-modal">
         <div class="user-modal-header">
@@ -564,9 +566,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
     </div>
 </div>
 
-<!-- ============================================
-     MODAL: VIEW USER DETAILS
-     ============================================ -->
+<!-- MODAL: VIEW USER DETAILS -->
 <div class="user-modal-overlay" id="viewUserModal">
     <div class="user-modal">
         <div class="user-modal-header">
@@ -611,9 +611,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
     </div>
 </div>
 
-<!-- ============================================
-     MODAL: CHANGE STATUS CONFIRMATION
-     ============================================ -->
+<!--MODAL: CHANGE STATUS CONFIRMATION-->
 <div class="user-modal-overlay" id="statusModal">
     <div class="user-modal">
         <div class="user-modal-header">
@@ -652,9 +650,7 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
     </div>
 </div>
 
-<!-- ============================================
-     MODAL: DELETE USER CONFIRMATION
-     ============================================ -->
+<!-- MODAL: DELETE USER CONFIRMATION-->
 <div class="user-modal-overlay" id="deleteUserModal">
     <div class="user-modal">
         <div class="user-modal-header">
@@ -830,5 +826,12 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
         setTimeout(closeToast, 4000);
     }
 </script>
-
+<footer class="footer">
+    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
+    <div class="footer-links">
+        <a href="#">Help Center</a>
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+    </div>
+</footer>
 <?php include "../../../Includes/dash_footer.php"; ?>

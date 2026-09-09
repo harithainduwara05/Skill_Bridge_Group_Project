@@ -1,14 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // ===========================================================================
-  // NEW: Tab switching (Student / Organization / Company)
-  // Each role has its OWN <form class="role-form" data-role-form="student|organization|company">
-  // in register.php. Only one is visible at a time — controlled by the
-  // ".role-form.active" CSS rule in register-style.css (display:none / block).
-  // Clicking a tab just: (1) marks that tab as active, (2) shows its matching
-  // form section and hides the rest, (3) updates the heading text/subtitle.
-  // If you need to change wording per role, edit the "titles" object below —
-  // nothing else needs to change.
-  // ===========================================================================
   const tabs = document.querySelectorAll('.tabs button');
   const forms = document.querySelectorAll('.role-form');
   const titleEl = document.querySelector('#form-title');
@@ -52,6 +42,9 @@ document.addEventListener('DOMContentLoaded', function () {
   // Password show/hide for all password fields
   const toggles = document.querySelectorAll('.toggle-eye');
   toggles.forEach(toggle => {
+    toggle.addEventListener('mousedown', function (e) {
+      e.preventDefault(); // Prevents input from losing focus when eye is clicked
+    });
     toggle.addEventListener('click', function () {
       const pwd = this.previousElementSibling;
       if (pwd && pwd.tagName === 'INPUT') {
@@ -60,7 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Password Match Validation for all role forms
+  // Password Complexity & Match Validation for all role forms
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
   const allRoleForms = document.querySelectorAll('.role-form');
   allRoleForms.forEach(form => {
     const pwdInput = form.querySelector('input[name="password"]');
@@ -68,8 +62,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (pwdInput && rePwdInput) {
       form.addEventListener('submit', function (e) {
+        let hasError = false;
+
+        // 1. Password Complexity Validation
+        if (!passwordRegex.test(pwdInput.value)) {
+          e.preventDefault();
+          hasError = true;
+          pwdInput.style.borderColor = 'red';
+
+          let complexityMsg = form.querySelector('.pwd-complexity-msg');
+          if (!complexityMsg) {
+            complexityMsg = document.createElement('span');
+            complexityMsg.className = 'pwd-complexity-msg';
+            complexityMsg.style.color = 'red';
+            complexityMsg.style.fontSize = '12px';
+            complexityMsg.style.marginTop = '5px';
+            complexityMsg.style.display = 'block';
+            complexityMsg.textContent = 'Password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.';
+            pwdInput.closest('.password-wrap').insertAdjacentElement('afterend', complexityMsg);
+          }
+        } else {
+          pwdInput.style.borderColor = '';
+          const complexityMsg = form.querySelector('.pwd-complexity-msg');
+          if (complexityMsg) complexityMsg.remove();
+        }
+
+        // 2. Password Match Validation
         if (pwdInput.value !== rePwdInput.value) {
-          e.preventDefault(); // Stop form submission
+          e.preventDefault();
+          hasError = true;
 
           // Turn the re-password box red
           rePwdInput.style.borderColor = 'red';
@@ -95,7 +116,57 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-      // Remove red styling when user starts typing to correct the mistake
+      // Real-time Requirements Checklist (Smooth Accordion)
+      const reqBox = form.querySelector('.reg-pass-req');
+      if (reqBox) {
+        function updateRegReq(selector, isValid) {
+          const item = reqBox.querySelector(selector);
+          if (!item) return;
+          const icon = item.querySelector('.req-icon');
+          if (isValid) {
+            item.classList.add('valid');
+            if (icon) icon.innerText = '✓';
+          } else {
+            item.classList.remove('valid');
+            if (icon) icon.innerText = '✕';
+          }
+        }
+
+        function checkRequirements() {
+          const val = pwdInput.value;
+          updateRegReq('.req-length', val.length >= 8);
+          updateRegReq('.req-upper', /[A-Z]/.test(val));
+          updateRegReq('.req-lower', /[a-z]/.test(val));
+          updateRegReq('.req-num', /\d/.test(val));
+        }
+
+        // Smooth accordion slide down when password field is focused
+        pwdInput.addEventListener('focus', function() {
+          reqBox.classList.add('show');
+          checkRequirements();
+        });
+
+        // Smooth accordion slide up when clicking outside or away to another field
+        pwdInput.addEventListener('blur', function() {
+          reqBox.classList.remove('show');
+        });
+
+        // Live check while typing
+        pwdInput.addEventListener('input', function() {
+          checkRequirements();
+        });
+      }
+
+      // Remove red styling when user starts typing in password
+      pwdInput.addEventListener('input', function() {
+        if (passwordRegex.test(pwdInput.value)) {
+          pwdInput.style.borderColor = '';
+          const complexityMsg = form.querySelector('.pwd-complexity-msg');
+          if (complexityMsg) complexityMsg.remove();
+        }
+      });
+
+      // Remove red styling when user starts typing in re-password
       rePwdInput.addEventListener('input', function() {
         rePwdInput.style.borderColor = '';
         const errorMsg = form.querySelector('.pwd-error-msg');
