@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($created) {
 
-            header("Location: internships.php");
+            header("Location: internships.php?success=added");
             exit;
 
         } else {

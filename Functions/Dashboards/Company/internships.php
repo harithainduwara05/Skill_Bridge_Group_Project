@@ -43,14 +43,14 @@ if (
 
     if ($internshipId > 0) {
 
-        $companyManager->deleteInternship(
+        $deleted = $companyManager->deleteInternship(
             $internshipId,
             $companyName
         );
 
     }
 
-    header("Location: internships.php");
+    header("Location: internships.php" . (!empty($deleted) ? "?success=deleted" : ""));
     exit;
 }
 
@@ -131,7 +131,7 @@ $companyApplicationCount =
 
 $extra_css = '
 <link rel="stylesheet"
-href="../../../Assets/CSS/Company/internships.css">
+href="../../../Assets/CSS/Company/internships.css?v=' . filemtime(__DIR__ . '/../../../Assets/CSS/Company/internships.css') . '">
 ';
 
 
@@ -143,10 +143,35 @@ include "../../../Includes/company_sidebar.php";
 
 include "../../../Includes/dash_header.php";
 
+$successMessages = [
+    'added' => 'Internship added successfully',
+    'updated' => 'Internship updated successfully',
+    'deleted' => 'Internship deleted successfully',
+];
+$successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
+
 ?>
 
 
 <main class="content company-internship-page">
+
+    <?php if ($successMessage !== ''): ?>
+        <div class="company-toast<?= ($_GET['success'] ?? '') === 'deleted' ? ' company-toast--deleted' : '' ?>" id="companyToast" role="status" aria-live="polite" aria-atomic="true">
+            <span class="toast-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" focusable="false">
+                    <path d="m5 12 4 4L19 6" />
+                </svg>
+            </span>
+            <div class="toast-copy">
+                <strong>Success</strong>
+                <span><?= htmlspecialchars($successMessage) ?></span>
+            </div>
+            <button type="button" class="toast-close" aria-label="Close notification">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <span class="toast-progress" aria-hidden="true"></span>
+        </div>
+    <?php endif; ?>
 
 
     <!-- =========================
@@ -668,21 +693,6 @@ include "../../../Includes/dash_header.php";
                                 <div class="action-buttons">
 
 
-                                    <!-- READ -->
-
-                                    <a
-                                        href="view_internship.php?id=<?= (int) $internship['id'] ?>"
-                                        title="View Internship"
-                                    >
-
-                                        <span class="material-symbols-outlined">
-                                            visibility
-                                        </span>
-
-                                    </a>
-
-
-
                                     <!-- UPDATE -->
 
                                     <a
@@ -758,6 +768,7 @@ include "../../../Includes/dash_header.php";
     </section>
 
 
+
 </main>
 
 
@@ -766,7 +777,8 @@ include "../../../Includes/dash_header.php";
      INTERNSHIP JAVASCRIPT
 ========================== -->
 
-<script src="../../../Assets/JS/Company/internships.js"></script>
+<script src="../../../Assets/JS/Company/internships.js?v=<?= filemtime(__DIR__ . '/../../../Assets/JS/Company/internships.js') ?>"></script>
+
 
 
 

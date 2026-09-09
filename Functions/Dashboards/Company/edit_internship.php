@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($updated) {
 
-            header("Location: internships.php");
+            header("Location: internships.php?success=updated");
             exit;
 
         } else {
