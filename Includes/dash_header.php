@@ -118,7 +118,7 @@ if (!empty($image)) {
     }
 }
 ?>
-<link rel="stylesheet" href="<?php echo $base_url; ?>/Assets/CSS/header.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../../Assets/CSS/header.css?v=<?php echo time(); ?>">
 
 <header class="top-header">
     <div class="header-left">
