@@ -3,7 +3,6 @@ class AdminDB
 {
     private $conn;
     private $allowedTables = ['user', 'student', 'company', 'organization', 'admin', 'universityemails', 'projects', 'internships', 'student_projects', 'complain'];
-
     public function __construct($conn)
     {
         $this->conn = $conn;
@@ -15,7 +14,6 @@ class AdminDB
         $stmt->execute();
         return $stmt->get_result()->fetch_row()[0];
     }
-
     private function runQuery($sql, $types = "", ...$params)
     {
         $stmt = $this->conn->prepare($sql);
@@ -23,14 +21,12 @@ class AdminDB
         $stmt->execute();
         return $stmt->get_result();
     }
-
     private function runAction($sql, $types, ...$params)
     {
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
         return $stmt->execute();
     }
-
     public function getCount($table)
     {
         if (!in_array($table, $this->allowedTables)) return 0;
