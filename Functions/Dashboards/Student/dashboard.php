@@ -44,18 +44,13 @@ $studentManager = new StudentManager();
 // Student details
 $student = $studentManager->getStudent($email);
 if(!$student){
-
     die("Student profile not found");
-
 }
 
 // Dashboard counts
 $student['skills'] = $studentManager->getSkillCount($email);
-
 $student['certificates'] = $studentManager->getCertificateCount($email);
-
-$student['projects'] = $studentManager->getProjectCount($email);
-
+$student['projects'] = 0;
 $student['applications'] = $studentManager->getApplicationCount($email);
 
 // Skills
@@ -75,10 +70,8 @@ else{
 
 // Notifications
 $notifications = $studentManager->getNotifications($email);
-
-$completion = calculateProfileCompletion($student, $student['skills'],
-    $student['certificates'], $student['projects']
-);
+$completion = calculateProfileCompletion(
+    $student,$student['skills'],$student['certificates'],$student['projects']);
 
 $pageTitle = "Student Dashboard | SkillBridge";
 $extra_css = '
@@ -156,15 +149,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 <?php echo htmlspecialchars($student['year']); ?>
 <br>
 <?php echo htmlspecialchars($student['University']); ?>
-</p>
-
-<?php if(($student['user_status'] ?? '') == "Active"){ ?>
-
-<span class="verified">
-✔ Verified Student
-</span>
-
-<?php } ?>
+</p></br>
 
 <div class="profile-completion">
 <div class="completion-header">
@@ -194,7 +179,7 @@ style="width:<?php echo $completion; ?>%;">
 <a href="settings.php"class="btn">
 Complete Profile</a>
 
-<a href="../profile/public_cv.php"class="outline">
+<a href="#"class="outline">
 View Public CV</a>
 
 </div>

@@ -83,23 +83,71 @@ if(isset($_POST['change_password'])){
 if(isset($_POST['save_changes'])){
 
     $name = $_POST['name'] ?? '';
-
     $university = $_POST['university'] ?? '';
-
     $degree = $_POST['degree'] ?? '';
-
     $year = $_POST['year'] ?? '';
     if($year < 1 || $year > 4){
         $error = "Invalid year. Only Year 1 - Year 4 students are allowed.";
     }
 
     $bio = $_POST['bio'] ?? '';
+    $github = trim($_POST['github'] ?? '');
+    $linkedin = trim($_POST['linkedin'] ?? '');
+    $website = trim($_POST['website'] ?? '');
 
-    $github = $_POST['github'] ?? '';
+    // LINK VALIDATION
+    // GitHub validation
+    if(!empty($github)){
 
-    $linkedin = $_POST['linkedin'] ?? '';
+        $host = parse_url($github, PHP_URL_HOST);
 
-    $website = $_POST['website'] ?? '';
+        if(
+            $host !== "github.com" &&
+            $host !== "www.github.com"
+        ){
+            $error = "Please enter a valid GitHub URL.";
+        }
+
+    }
+
+    // LinkedIn validation
+    if(!empty($linkedin)){
+
+        $host = parse_url($linkedin, PHP_URL_HOST);
+
+        if(
+            $host !== "linkedin.com" &&
+            $host !== "www.linkedin.com"
+        ){
+            $error = "Please enter a valid LinkedIn URL.";
+        }
+    }
+
+    // Website validation
+    if(!empty($website)){
+
+        if(!filter_var($website, FILTER_VALIDATE_URL)){
+
+            $error = "Please enter a valid website URL.";
+
+        }
+
+    }
+
+
+    // Stop saving if error exists
+    if(isset($error)){
+
+        echo "
+        <script>
+        alert('$error');
+        window.history.back();
+        </script>
+        ";
+
+        exit();
+
+    }
 
     // Get old image
     $old = $conn->prepare(
@@ -262,18 +310,24 @@ if(!$student){
     die("Student profile not found");
 }
 
+// ===============================
 // COUNTS
+// ===============================
+
 
 // Skills
 $q=$conn->prepare(
 "
 SELECT COUNT(*) total
 FROM skills
-WHERE Email=?");
+WHERE Email=?
+"
+);
 
 $q->bind_param(
 "s",
-$email);
+$email
+);
 
 $q->execute();
 
@@ -282,16 +336,18 @@ $q->get_result()
 ->fetch_assoc()['total'];
 
 // Certificates
-
 $q=$conn->prepare(
 "
 SELECT COUNT(*) total
 FROM certificates
-WHERE Email=?");
+WHERE Email=?
+"
+);
 
 $q->bind_param(
 "s",
-$email);
+$email
+);
 
 $q->execute();
 
@@ -300,20 +356,11 @@ $q->get_result()
 ->fetch_assoc()['total'];
 
 // Projects
-// no Email column
+// Project module is not available yet
 
-$q=$conn->prepare(
-"
-SELECT COUNT(*) total
-FROM projects");
+$project_count = 0;
 
-$q->execute();
-
-$project_count =
-
-$q->get_result()
-->fetch_assoc()['total'];
-
+// Profile completion
 $completion = calculateProfileCompletion(
     $student,
     $skill_count,
@@ -412,9 +459,6 @@ include "../../../Includes/dash_header.php";
     <div class="profile-details">
         <h2>
             <?= htmlspecialchars($student['Name']); ?>
-            <?php if($student['user_status']=="Active"){ ?>
-            <span class="verified"> ✔ Verified Student</span>
-            <?php } ?>
         </h2>
 
         <p>
