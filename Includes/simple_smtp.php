@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../Config/env_loader.php';
 
 function send_verification_email($to, $code) {
     $host = $_ENV['SMTP_HOST'] ?? 'smtp.gmail.com';
@@ -11,7 +12,7 @@ function send_verification_email($to, $code) {
     }
 
     $subject = "Your SkillBridge Verification Code";
-    $message = "Your verification code is: " . $code . "\r\n\r\nPlease enter this code to activate your account.";
+    $message = "Your verification code is: " . $code . "\r\n\r\nPlease enter this code to verify  your account.";
 
     // Headers
     $headers = "From: SkillBridge <$user>\r\n";
@@ -20,11 +21,6 @@ function send_verification_email($to, $code) {
     $headers .= "MIME-Version: 1.0\r\n";
     $headers .= "Content-Type: text/plain; charset=utf-8\r\n";
     $headers .= "\r\n"; // End of headers
-
-    // Connect to SMTP Server (Using SSL wrapper on port 465 if Gmail, or 587 for TLS)
-    // To keep it extremely simple without complex STARTTLS negotiation, we recommend using port 465 with SSL.
-    // However, if port 587 is provided, we can try fsockopen without SSL prefix first, but raw STARTTLS is hard.
-    // For simplicity, we'll prefix 'ssl://' if port is 465.
     
     $protocol = ($port == 465) ? 'ssl://' : '';
     

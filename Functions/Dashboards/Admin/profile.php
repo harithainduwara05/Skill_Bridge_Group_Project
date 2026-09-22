@@ -12,13 +12,11 @@ require_once "AdminBackend.php";
 
 $flash = null;
 
-// ============================================
 // HANDLE POST ACTIONS
-// ============================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // ── 1. Update Profile Details & Photo ──
+    //1. Update Profile Details & Photo 
     if ($action === 'update_profile') {
         $name = trim($_POST['name'] ?? '');
         $contactNumber = trim($_POST['contact_number'] ?? '');
@@ -80,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ── 2. Remove Profile Photo ──
+    //  2. Remove Profile Photo 
     elseif ($action === 'remove_photo') {
         $removed = $adminDB->removeAdminProfileImage($email);
         if ($removed) {
@@ -90,7 +88,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    // ── 3. Change Password ──
+    //  3. Change Password 
     elseif ($action === 'change_password') {
         $currPass = $_POST['current_password'] ?? '';
         $newPass  = $_POST['new_password'] ?? '';
@@ -98,8 +96,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (empty($currPass) || empty($newPass) || empty($confPass)) {
             $flash = ['type' => 'error', 'title' => 'Missing Fields', 'message' => 'Please fill in all password fields.'];
-        } elseif (strlen($newPass) < 6) {
-            $flash = ['type' => 'error', 'title' => 'Weak Password', 'message' => 'New password must be at least 6 characters long.'];
+        } elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $newPass)) {
+            $flash = ['type' => 'error', 'title' => 'Weak Password', 'message' => 'New password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.'];
         } elseif ($newPass !== $confPass) {
             $flash = ['type' => 'error', 'title' => 'Password Mismatch', 'message' => 'New password and confirmation do not match.'];
         } else {
@@ -160,7 +158,7 @@ include "../../../Includes/dash_header.php";
 
         <!-- Breadcrumb & Header -->
         <div class="profile-breadcrumb">
-            <a href="dashboard.php">Dashboard</a>
+            <a href="dashboard.php">Admin</a>
             <span class="material-symbols-outlined" style="font-size:14px;">chevron_right</span>
             <span>Profile & Settings</span>
         </div>
@@ -172,7 +170,7 @@ include "../../../Includes/dash_header.php";
 
         <div class="profile-grid">
 
-            <!-- ── Left Column: Profile Card ── -->
+            <!-- Left Column: Profile Card -->
             <div class="profile-card">
                 <div class="profile-card-header">
                     <h3>
@@ -252,7 +250,7 @@ include "../../../Includes/dash_header.php";
                 </div>
             </div>
 
-            <!-- ── Right Column: Edit Details & Password ── -->
+            <!--Right Column: Edit Details & Password -->
             <div>
 
                 <!-- Card 1: Personal Details -->
@@ -319,17 +317,36 @@ include "../../../Includes/dash_header.php";
                                 <div class="profile-form-group">
                                     <label>New Password *</label>
                                     <div class="password-input-wrap">
-                                        <input type="password" name="new_password" id="newPass" required placeholder="Minimum 6 characters" minlength="6">
-                                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('newPass', this)">
+                                        <input type="password" name="new_password" id="newPass" required placeholder="Min 8 chars with uppercase, lowercase & numbers" minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers">
+                                         <button type="button" class="password-toggle-btn" onmousedown="event.preventDefault();" onclick="togglePassVisibility('newPass', this)">
                                             <span class="material-symbols-outlined">visibility</span>
                                         </button>
+                                    </div>
+                                    <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+                                    <div class="password-requirements" id="adminPassRequirements">
+                                        <div class="req-item" id="adminReqLength">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 8 characters</span>
+                                        </div>
+                                        <div class="req-item" id="adminReqUpper">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 uppercase (A-Z)</span>
+                                        </div>
+                                        <div class="req-item" id="adminReqLower">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 lowercase (a-z)</span>
+                                        </div>
+                                        <div class="req-item" id="adminReqNum">
+                                            <span class="req-icon">✕</span>
+                                            <span>At least 1 number (0-9)</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="profile-form-group">
                                     <label>Confirm New Password *</label>
                                     <div class="password-input-wrap">
-                                        <input type="password" name="confirm_password" id="confPass" required placeholder="Re-type new password">
-                                        <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('confPass', this)">
+                                        <input type="password" name="confirm_password" id="confPass" required placeholder="Re-type new password" minlength="8">
+                                        <button type="button" class="password-toggle-btn" onmousedown="event.preventDefault();" onclick="togglePassVisibility('confPass', this)">
                                             <span class="material-symbols-outlined">visibility</span>
                                         </button>
                                     </div>
@@ -400,10 +417,32 @@ include "../../../Includes/dash_header.php";
         }
     }
 
-    // Password Match Validation
+    // Password Match & Live Requirements Validation
     const newPass = document.getElementById('newPass');
     const confPass = document.getElementById('confPass');
     const passMsg = document.getElementById('passMatchMsg');
+    const reqBox = document.getElementById('adminPassRequirements');
+
+    function updateReqItem(elemId, isValid) {
+        const item = document.getElementById(elemId);
+        if (!item) return;
+        const icon = item.querySelector('.req-icon');
+        if (isValid) {
+            item.classList.add('valid');
+            if (icon) icon.innerText = '✓';
+        } else {
+            item.classList.remove('valid');
+            if (icon) icon.innerText = '✕';
+        }
+    }
+
+    function checkPasswordRequirements() {
+        const val = newPass.value;
+        updateReqItem('adminReqLength', val.length >= 8);
+        updateReqItem('adminReqUpper', /[A-Z]/.test(val));
+        updateReqItem('adminReqLower', /[a-z]/.test(val));
+        updateReqItem('adminReqNum', /\d/.test(val));
+    }
 
     function checkPassMatch() {
         if (!confPass.value) {
@@ -420,7 +459,22 @@ include "../../../Includes/dash_header.php";
         }
     }
 
-    newPass.addEventListener('input', checkPassMatch);
+    // Smooth accordion slide down when New Password field is focused
+    newPass.addEventListener('focus', function() {
+        reqBox.classList.add('show');
+        checkPasswordRequirements();
+    });
+
+    // Smooth accordion slide up when clicking away or blur
+    newPass.addEventListener('blur', function() {
+        reqBox.classList.remove('show');
+    });
+
+    // Live update while typing
+    newPass.addEventListener('input', function() {
+        checkPasswordRequirements();
+        checkPassMatch();
+    });
     confPass.addEventListener('input', checkPassMatch);
 
     // Flash Toast Dismissal

@@ -1,10 +1,8 @@
 <?php
-
 class AdminDB
 {
     private $conn;
     private $allowedTables = ['user', 'student', 'company', 'organization', 'admin', 'universityemails', 'projects', 'internships', 'student_projects', 'complain'];
-
     public function __construct($conn)
     {
         $this->conn = $conn;
@@ -16,7 +14,6 @@ class AdminDB
         $stmt->execute();
         return $stmt->get_result()->fetch_row()[0];
     }
-
     private function runQuery($sql, $types = "", ...$params)
     {
         $stmt = $this->conn->prepare($sql);
@@ -24,14 +21,12 @@ class AdminDB
         $stmt->execute();
         return $stmt->get_result();
     }
-
     private function runAction($sql, $types, ...$params)
     {
         $stmt = $this->conn->prepare($sql);
         $stmt->bind_param($types, ...$params);
         return $stmt->execute();
     }
-
     public function getCount($table)
     {
         if (!in_array($table, $this->allowedTables)) return 0;
@@ -103,6 +98,24 @@ class AdminDB
     public function getComplaints()
     {
         return $this->runQuery("SELECT * FROM complain")->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function getUrgentComplaints($limit = 3)
+    {
+        $sql = "SELECT * FROM complain 
+                WHERE status != 'DISMISSED' 
+                ORDER BY 
+                    CASE priority 
+                        WHEN 'URGENT' THEN 1 
+                        WHEN 'HIGH' THEN 2 
+                        WHEN 'MEDIUM' THEN 3 
+                        WHEN 'LOW' THEN 4 
+                        ELSE 5 
+                    END ASC, 
+                    create_at DESC, 
+                    id DESC 
+                LIMIT ?";
+        return $this->runQuery($sql, "i", $limit)->fetch_all(MYSQLI_ASSOC);
     }
 
     public function getAllUniversities($status = 'all', $search = '')
@@ -390,7 +403,7 @@ class AdminDB
         ];
     }
 
-    // ── Admin Profile Management ──────────────────────────────────────────────
+    //Admin Profile Management
     public function getAdminProfile($email)
     {
         $sql = "
@@ -481,7 +494,6 @@ class AdminDB
 }
 
 $adminDB = new AdminDB($conn);
-
 //get total users
 $totalUsers = $adminDB->getCount("user");
 //get total university
@@ -492,8 +504,8 @@ $tot_Ongoin_projects = $adminDB->getOngoingProjectCount();
 $tot_internship = $adminDB->getAvailableInternshipCount();
 //all users
 $allusers = $adminDB->getUsers();
-//get all complaints
-$complains = $adminDB->getComplaints();
+//get urgent complaints (high risk, limit 3)
+$complains = $adminDB->getUrgentComplaints(3);
 //popular universities
 $popularUni = $adminDB->getPopularUni();
 //active student projects

@@ -6,10 +6,7 @@ require_login();
 require_role('admin');
 $user = current_user();
 
-
 require_once "AdminBackend.php";
-
-
 
 include "../../../Includes/admin_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -34,4 +31,5 @@ include "../../../Includes/dash_header.php";
         <a href="#">Terms of Service</a>
     </div>
 </footer>
+
 <?php include "../../../Includes/dash_footer.php"; ?>

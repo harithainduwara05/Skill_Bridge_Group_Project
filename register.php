@@ -107,8 +107,27 @@ require_once __DIR__ . '/Includes/register-header.php';
           <div class="form-group">
             <label for="password">Password</label>
             <div class="password-wrap">
-              <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8">
+              <input type="password" id="password" name="password" placeholder="••••••••" required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers">
               <button type="button" class="toggle-eye">👁</button>
+            </div>
+            <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+            <div class="reg-pass-req">
+              <div class="req-item req-length">
+                <span class="req-icon">✕</span>
+                <span>At least 8 characters</span>
+              </div>
+              <div class="req-item req-upper">
+                <span class="req-icon">✕</span>
+                <span>At least 1 uppercase (A-Z)</span>
+              </div>
+              <div class="req-item req-lower">
+                <span class="req-icon">✕</span>
+                <span>At least 1 lowercase (a-z)</span>
+              </div>
+              <div class="req-item req-num">
+                <span class="req-icon">✕</span>
+                <span>At least 1 number (0-9)</span>
+              </div>
             </div>
           </div>
           <div class="form-group">
@@ -183,8 +202,27 @@ require_once __DIR__ . '/Includes/register-header.php';
           <div class="form-group">
             <label for="org_password">Password</label>
             <div class="password-wrap">
-              <input type="password" id="org_password" name="password" placeholder="••••••••" required minlength="8">
+              <input type="password" id="org_password" name="password" placeholder="••••••••" required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers">
               <button type="button" class="toggle-eye">👁</button>
+            </div>
+            <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+            <div class="reg-pass-req">
+              <div class="req-item req-length">
+                <span class="req-icon">✕</span>
+                <span>At least 8 characters</span>
+              </div>
+              <div class="req-item req-upper">
+                <span class="req-icon">✕</span>
+                <span>At least 1 uppercase (A-Z)</span>
+              </div>
+              <div class="req-item req-lower">
+                <span class="req-icon">✕</span>
+                <span>At least 1 lowercase (a-z)</span>
+              </div>
+              <div class="req-item req-num">
+                <span class="req-icon">✕</span>
+                <span>At least 1 number (0-9)</span>
+              </div>
             </div>
           </div>
           <div class="form-group">
@@ -260,8 +298,27 @@ require_once __DIR__ . '/Includes/register-header.php';
           <div class="form-group">
             <label for="company_password">Password</label>
             <div class="password-wrap">
-              <input type="password" id="company_password" name="password" placeholder="••••••••" required minlength="8">
+              <input type="password" id="company_password" name="password" placeholder="••••••••" required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers">
               <button type="button" class="toggle-eye">👁</button>
+            </div>
+            <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+            <div class="reg-pass-req">
+              <div class="req-item req-length">
+                <span class="req-icon">✕</span>
+                <span>At least 8 characters</span>
+              </div>
+              <div class="req-item req-upper">
+                <span class="req-icon">✕</span>
+                <span>At least 1 uppercase (A-Z)</span>
+              </div>
+              <div class="req-item req-lower">
+                <span class="req-icon">✕</span>
+                <span>At least 1 lowercase (a-z)</span>
+              </div>
+              <div class="req-item req-num">
+                <span class="req-icon">✕</span>
+                <span>At least 1 number (0-9)</span>
+              </div>
             </div>
           </div>
           <div class="form-group">

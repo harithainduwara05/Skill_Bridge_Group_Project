@@ -24,7 +24,7 @@ if($user && isset($conn)){
             SELECT
                 u.Email,
                 u.role,
-                COALESCE(s.Name, a.Name, c.contactPersonName, o.contactPersonName, c.Name, o.Name) AS db_name,
+                COALESCE(s.Name, a.Name,c.Name, o.Name) AS db_name,
                 COALESCE(s.profile_image, a.profile_image, c.profile_img) AS profile_image
             FROM user u
             LEFT JOIN student s ON u.Email = s.Email

@@ -34,8 +34,8 @@ if(isset($_POST['change_password'])){
     if($new_password !== $confirm_password){
         $password_error = "New passwords do not match.";
     }
-    elseif(strlen($new_password) < 6){
-        $password_error = "Password must contain at least 6 characters.";
+    elseif(!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $new_password)){
+        $password_error = "Password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.";
     }
     else{
         // Get current password
@@ -522,8 +522,27 @@ include "../../../Includes/dash_header.php";
 <label>New Password *</label>
 <div class="password-field">
 
-<input type="password" name="new_password" placeholder="Minimum 6 characters" required>
+<input type="password" name="new_password" id="studentNewPass" placeholder="Min 8 chars with uppercase, lowercase & numbers" minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers" required>
 <i class="fa-solid fa-eye"></i>
+</div>
+<!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
+<div class="password-requirements" id="studentPassRequirements">
+    <div class="req-item" id="studReqLength">
+        <span class="req-icon">✕</span>
+        <span>At least 8 characters</span>
+    </div>
+    <div class="req-item" id="studReqUpper">
+        <span class="req-icon">✕</span>
+        <span>At least 1 uppercase (A-Z)</span>
+    </div>
+    <div class="req-item" id="studReqLower">
+        <span class="req-icon">✕</span>
+        <span>At least 1 lowercase (a-z)</span>
+    </div>
+    <div class="req-item" id="studReqNum">
+        <span class="req-icon">✕</span>
+        <span>At least 1 number (0-9)</span>
+    </div>
 </div>
 </div>
 <div>
@@ -531,11 +550,13 @@ include "../../../Includes/dash_header.php";
 <label>Confirm New Password *</label>
 <div class="password-field">
 
-<input type="password" name="confirm_password" placeholder="Re-type new password" required>
+<input type="password" name="confirm_password" id="studentConfPass" placeholder="Re-type new password" minlength="8" required>
 <i class="fa-solid fa-eye"></i>
 </div>
 </div>
 </div>
+
+<div id="studentPassMatchMsg" style="font-size:12.5px; margin-bottom:14px; display:none;"></div>
 
 <button type="submit" name="change_password" class="password-btn">
 <i class="fa-solid fa-key"></i>
@@ -591,6 +612,7 @@ function togglePassword(icon){
     }
 }
 document.querySelectorAll(".password-field i").forEach(icon => {
+    icon.addEventListener("mousedown", function(e){ e.preventDefault(); });
     icon.addEventListener("click", function(){
         let input = this.parentElement.querySelector("input");
         if(input.type === "password"){
@@ -620,6 +642,67 @@ function removeProfileImage(){
     }
 }
 
+    // Password Match & Live Requirements Validation
+    const studNewPass = document.getElementById('studentNewPass');
+    const studConfPass = document.getElementById('studentConfPass');
+    const studPassMsg = document.getElementById('studentPassMatchMsg');
+    const studReqBox = document.getElementById('studentPassRequirements');
+
+    if (studNewPass && studConfPass) {
+        function updateStudReqItem(elemId, isValid) {
+            const item = document.getElementById(elemId);
+            if (!item) return;
+            const icon = item.querySelector('.req-icon');
+            if (isValid) {
+                item.classList.add('valid');
+                if (icon) icon.innerText = '✓';
+            } else {
+                item.classList.remove('valid');
+                if (icon) icon.innerText = '✕';
+            }
+        }
+
+        function checkStudPasswordRequirements() {
+            const val = studNewPass.value;
+            updateStudReqItem('studReqLength', val.length >= 8);
+            updateStudReqItem('studReqUpper', /[A-Z]/.test(val));
+            updateStudReqItem('studReqLower', /[a-z]/.test(val));
+            updateStudReqItem('studReqNum', /\d/.test(val));
+        }
+
+        function checkStudPassMatch() {
+            if (!studConfPass.value) {
+                studPassMsg.style.display = 'none';
+                return;
+            }
+            studPassMsg.style.display = 'block';
+            if (studNewPass.value === studConfPass.value) {
+                studPassMsg.style.color = '#10b981';
+                studPassMsg.innerText = '✓ Passwords match';
+            } else {
+                studPassMsg.style.color = '#ef4444';
+                studPassMsg.innerText = '✗ Passwords do not match';
+            }
+        }
+
+        // Smooth accordion slide down when New Password field is focused
+        studNewPass.addEventListener('focus', function() {
+            studReqBox.classList.add('show');
+            checkStudPasswordRequirements();
+        });
+
+        // Smooth accordion slide up when clicking away or blur
+        studNewPass.addEventListener('blur', function() {
+            studReqBox.classList.remove('show');
+        });
+
+        // Live update while typing
+        studNewPass.addEventListener('input', function() {
+            checkStudPasswordRequirements();
+            checkStudPassMatch();
+        });
+        studConfPass.addEventListener('input', checkStudPassMatch);
+    }
 </script>
 
 </body>

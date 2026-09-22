@@ -1,5 +1,6 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+$internshipPages = ['internships.php', 'add_internship.php', 'edit_internship.php'];
 ?>
 
 <!DOCTYPE html>
@@ -35,42 +36,42 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="nav-text">Dashboard</span>
             </a>
 
-            <a href="internships.php" class="<?= in_array($currentPage, ['internships.php', 'internships_Management.php']) ? 'active' : '' ?>" title="Internships">
+            <a href="internships.php" class="<?= in_array($currentPage, $internshipPages, true) ? 'active' : '' ?>" title="Internships">
                 <span class="icon">
                     <span class="material-symbols-outlined">group</span>
                 </span>
                 <span class="nav-text">Internships</span>
             </a>
 
-            <a href="university.php" class="<?= $currentPage == 'university.php' ? 'active' : '' ?>" title="Applications">
+            <a href="applications.php" class="<?= $currentPage === 'applications.php' ? 'active' : '' ?>" title="Applications">
                 <span class="icon">
                     <span class="material-symbols-outlined">school</span>
                 </span>
                 <span class="nav-text">Applications</span>
             </a>
 
-            <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Candidates">
+            <a href="candidates.php" class="<?= $currentPage === 'candidates.php' ? 'active' : '' ?>" title="Candidates">
                 <span class="icon">
                     <span class="material-symbols-outlined">folder_open</span>
                 </span>
                 <span class="nav-text">Candidates</span>
             </a>
 
-            <a href="" class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Interviews">
+            <a href="interviews.php" class="<?= $currentPage === 'interviews.php' ? 'active' : '' ?>" title="Interviews">
                 <span class="icon">
                     <span class="material-symbols-outlined">work</span>
                 </span>
                 <span class="nav-text">Interviews</span>
             </a>
 
-            <a href="complaints.php" class="<?= $currentPage == 'complaints.php' ? 'active' : '' ?>" title="Reports & Analytics">
+            <a href="reports.php" class="<?= $currentPage === 'reports.php' ? 'active' : '' ?>" title="Reports & Analytics">
                 <span class="icon">
                     <span class="material-symbols-outlined">report_problem</span>
                 </span>
                 <span class="nav-text">Reports & Analytics</span>
             </a>
 
-            <a href="reports.php" class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>" title="Notifications">
+            <a href="notifications.php" class="<?= $currentPage === 'notifications.php' ? 'active' : '' ?>" title="Notifications">
                 <span class="icon">
                     <span class="material-symbols-outlined">bar_chart</span>
                 </span>
@@ -84,7 +85,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             </a>
 
         </nav>
-        <button class="logout" style="background: #010f41ff;" onclick="window.location.href='../../../Session/Logout.php'" title="Post Internships">
+        <button class="post-new-btn" onclick="window.location.href='add_internship.php'" title="Post Internship" type="button">
             <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
             <span class="btn-text">Post Internships</span>
         </button>
@@ -96,3 +97,10 @@ $currentPage = basename($_SERVER['PHP_SELF']);
     </aside>
 
 <div class="main-wrapper">
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelectorAll('.notification-popup a').forEach(function (link) {
+            link.setAttribute('href', 'notifications.php');
+        });
+    });
+</script>

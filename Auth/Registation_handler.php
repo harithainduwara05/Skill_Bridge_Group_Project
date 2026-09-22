@@ -11,7 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $hashPassword = sha1($password);
+    if (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/', $password)) {
+        $flash = ['type' => 'error', 'message' => 'Password must be at least 8 characters long and contain uppercase, lowercase letters, and numbers.', 'role' => $role];
+    } else {
+        $hashPassword = sha1($password);
     if (strtolower($role) === 'student') {
         $university = $_POST['university'];
         $degree = $_POST['degree'];
@@ -220,5 +223,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
 
+    }
     }
 }

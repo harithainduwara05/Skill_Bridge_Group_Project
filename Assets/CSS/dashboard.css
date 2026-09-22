@@ -800,8 +800,60 @@ body {
     letter-spacing: 0.3px;
 }
 
-.badge-role.student { background: #dbeafe; color: #1d4ed8; }
-.badge-role.company { background: #fef3c7; color: #b45309; }
+.badge-role.student      { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-role.company      { background: #faf5ff; color: #7e22ce; border: 1px solid #e9d5ff; }
+.badge-role.organization { background: #f0fdfa; color: #0f766e; border: 1px solid #ccfbf1; }
+.badge-role.admin        { background: #fffbeb; color: #b45309; border: 1px solid #fef3c7; }
+
+/* Status Badges Matching User Management */
+.badge-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.badge-status-pill.active {
+    background: #ecfdf5;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.badge-status-pill.active::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+}
+
+.badge-status-pill.deactive, .badge-status-pill.inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+.badge-status-pill.deactive::before, .badge-status-pill.inactive::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ef4444;
+}
+
+.badge-status-pill.pending {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+.badge-status-pill.pending::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #f59e0b;
+}
 
 .badge-status {
     display: inline-flex;
@@ -816,11 +868,14 @@ body {
 .badge-status.verified { background: #dcfce7; color: #15803d; }
 .badge-status.verified::before { content: '✓'; font-size: 10px; }
 
-.badge-status.pending { background: #fef9c3; color: #b45309; }
+.badge-status.pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
 .badge-status.pending::before { content: '●'; font-size: 8px; }
 
-.badge-status.active { background: #dcfce7; color: #15803d; }
+.badge-status.active { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 .badge-status.active::before { content: '●'; font-size: 8px; }
+
+.badge-status.deactive, .badge-status.inactive { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.badge-status.deactive::before, .badge-status.inactive::before { content: '●'; font-size: 8px; }
 
 .action-btn {
     background: none;
@@ -885,8 +940,10 @@ body {
     border-radius: 4px;
 }
 
-.complaint-priority.high   { background: #fee2e2; color: #dc2626; }
+.complaint-priority.high,
+.complaint-priority.urgent { background: #fee2e2; color: #dc2626; }
 .complaint-priority.medium { background: #fef9c3; color: #b45309; }
+.complaint-priority.low    { background: #e2e8f0; color: #334155; font-weight: 700; border: 1px solid #cbd5e1; }
 
 .complaint-title {
     font-size: 14px;

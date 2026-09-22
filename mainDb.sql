@@ -127,9 +127,9 @@ CREATE TABLE `complain` (
 
 INSERT INTO `complain` (`id`, `email`, `title`, `discription`, `priority`, `status`, `create_at`, `update_at`) VALUES
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 'Issue with certificate upload', 'Uploaded certificate PDF file size exceeds 5MB and produces an error without clear instructions.', 'MEDIUM', 'RESOLVED', '2026-08-22 04:45:00', '2026-08-23 08:30:00'),
-(2, 'hr@company.com', 'Internship deadline display timezone bug', 'The internship post deadline date displays in UTC instead of Sri Lanka Standard Time (+05:30).', 'LOW', 'IN_REVIEW', '2026-08-25 04:00:00', '2026-08-25 05:50:00'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Profile image avatar caching', 'Updated profile picture did not immediately reflect on dashboard until browser cache was cleared.', 'LOW', 'PENDING', '2026-08-28 11:15:00', '2026-08-28 11:15:00'),
-(4, 'careers@virtusa.com', 'Applicant notification delay', 'Instant notification email for incoming student applications was delayed by 30 minutes during peak hours.', 'HIGH', 'RESOLVED', '2026-08-29 05:40:00', '2026-08-30 03:00:00'),
+(2, 'hr@company.com', 'Internship deadline display timezone bug', 'The internship post deadline date displays in UTC instead of Sri Lanka Standard Time (+05:30).', 'HIGH', 'PENDING', '2026-08-25 04:00:00', '2026-08-25 05:50:00'),
+(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Profile image avatar caching', 'Updated profile picture did not immediately reflect on dashboard until browser cache was cleared.', 'HIGH', 'PENDING', '2026-08-28 11:15:00', '2026-08-28 11:15:00'),
+(4, 'careers@virtusa.com', 'Applicant notification delay', 'Instant notification email for incoming student applications was delayed by 30 minutes during peak hours.', 'HIGH', 'PENDING', '2026-08-29 05:40:00', '2026-08-30 03:00:00'),
 (5, '2024is015@stu.ucsc.cmb.ac.lk', 'Team chat attachment limits', 'Students are unable to send design preview attachments larger than 2MB in student project chat.', 'MEDIUM', 'PENDING', '2026-09-01 08:50:00', '2026-09-01 08:50:00');
 
 -- --------------------------------------------------------

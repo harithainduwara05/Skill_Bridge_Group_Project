@@ -1,5 +1,15 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; }
-body { background: #fff; color: #1a1a1a; }
+html, body, * {
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+  display: none !important; /* Chrome, Safari, Opera */
+  width: 0 !important;
+  height: 0 !important;
+}
 
 .page-wrap { display: flex; min-height: 100vh; }
 
@@ -61,6 +71,42 @@ body { background: #fff; color: #1a1a1a; }
 .password-wrap .toggle-eye {
   position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
   cursor: pointer; color: #667085; background: none; border: none;
+}
+
+/* Password Requirements Accordion */
+.reg-pass-req {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+  font-size: 11.5px;
+  line-height: 1.6;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease, margin-top 0.25s ease;
+  pointer-events: none;
+}
+.reg-pass-req.show {
+  max-height: 140px;
+  opacity: 1;
+  margin-top: 8px;
+  pointer-events: auto;
+}
+.req-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ef4444;
+  font-weight: 500;
+  transition: color 0.25s ease;
+}
+.req-item.valid {
+  color: #10b981;
+}
+.req-item .req-icon {
+  font-size: 11px;
+  font-weight: bold;
+  display: inline-block;
+  width: 14px;
+  text-align: center;
 }
 
 .terms { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; margin: 10px 0 16px; color: #444; }
