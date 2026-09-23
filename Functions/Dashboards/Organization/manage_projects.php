@@ -23,6 +23,7 @@ include "../../../Includes/dash_header.php";
 // ---- Filters ----
 $statusFilter   = $_GET['status'] ?? 'all';
 $categoryFilter = $_GET['category'] ?? 'all';
+$searchQuery    = trim($_GET['search'] ?? '');   // from the header search box
 
 // ---- Pagination ----
 $perPage = 5;
@@ -83,9 +84,15 @@ $totalProjectsAll   = count($allProjects);
 $fakeApplicantsSum  = array_sum(array_column($fakeProjects, 'applicants'));
 $fakeAssignedCount  = count(array_filter($fakeProjects, function ($p) { return (int)$p['assigned'] > 0; }));
 
-$filtered = array_values(array_filter($allProjects, function ($p) use ($statusFilter, $categoryFilter) {
+$filtered = array_values(array_filter($allProjects, function ($p) use ($statusFilter, $categoryFilter, $searchQuery) {
     if ($statusFilter !== 'all' && $p['status'] !== $statusFilter) return false;
     if ($categoryFilter !== 'all' && $p['category'] !== $categoryFilter) return false;
+    if ($searchQuery !== '') {
+        // search in title, category and keywords/skills — matches the START of any word
+        // (so "AI" finds "AI Chatbot" but not "Tailwind", and "flut" finds "Flutter")
+        $haystack = ($p['title'] ?? '') . ' ' . ($p['category'] ?? '') . ' ' . ($p['keywords'] ?? '');
+        if (!preg_match('/(?<![\p{L}\p{N}])' . preg_quote($searchQuery, '/') . '/iu', $haystack)) return false;
+    }
     return true;
 }));
 
@@ -99,11 +106,14 @@ $shownCount = count($projects);
 
 // Helper to build a pagination link that keeps the current filters
 function buildPageUrl($pageNum, $statusFilter, $categoryFilter) {
-    return '?' . http_build_query([
+    global $searchQuery;
+    $query = [
         'status'   => $statusFilter,
         'category' => $categoryFilter,
         'page'     => $pageNum,
-    ]);
+    ];
+    if ($searchQuery !== '') $query['search'] = $searchQuery;
+    return '?' . http_build_query($query);
 }
 
 // ---- Bottom summary stat cards (real data) ----
@@ -125,6 +135,121 @@ $assignedTeams = (int)$stmt->get_result()->fetch_row()[0] + $fakeAssignedCount;
 // No timestamp data exists yet to measure real response time
 $avgResponseTime = null;
 ?>
+
+<style>
+    /* ---- Delete confirmation modal (replaces the browser's native confirm()) ---- */
+    .confirm-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        /* .content > * caps width at 1240px and centers it — override that
+           here so the overlay actually covers the full screen, not just
+           the centered content column. */
+        max-width: none !important;
+        width: 100vw;
+        height: 100vh;
+        margin: 0 !important;
+        background: rgba(15, 23, 42, 0.35);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+    .confirm-modal-overlay.open {
+        display: flex;
+    }
+    .confirm-modal {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 380px;
+        padding: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+    .confirm-modal-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: #fee2e2;
+        color: #dc2626;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 14px;
+    }
+    .confirm-modal h3 {
+        margin: 0 0 6px 0;
+        font-size: 16px;
+        color: #111827;
+    }
+    .confirm-modal p {
+        margin: 0 0 20px 0;
+        font-size: 13.5px;
+        color: #64748b;
+        line-height: 1.5;
+    }
+    .confirm-modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+    .confirm-modal-actions button {
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+    }
+    .confirm-modal-cancel {
+        background: #f1f5f9;
+        color: #334155;
+    }
+    .confirm-modal-cancel:hover {
+        background: #e2e8f0;
+    }
+    .confirm-modal-delete {
+        background: #dc2626;
+        color: #fff;
+    }
+    .confirm-modal-delete:hover {
+        background: #b91c1c;
+    }
+
+    /* ---- Project details modal (View button) ---- */
+    .pv-modal {
+        background: #fff;
+        border-radius: 16px;
+        width: 100%;
+        max-width: 580px;
+        max-height: 86vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        margin: 16px;
+    }
+    .pv-head { padding: 22px 24px 14px; border-bottom: 1px solid #eef0f3; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .pv-head h3 { margin: 8px 0 0; font-size: 18px; color: #111827; line-height: 1.35; }
+    .pv-tags { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .pv-close { background: none; border: none; cursor: pointer; color: #6b7280; padding: 4px; border-radius: 8px; display: flex; }
+    .pv-close:hover { background: #f3f4f6; color: #111827; }
+    .pv-body { padding: 18px 24px; overflow-y: auto; }
+    .pv-info { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; margin-bottom: 4px; }
+    .pv-info-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6b7280; margin-bottom: 3px; }
+    .pv-info-value { font-size: 14px; font-weight: 600; color: #111827; }
+    .pv-section { margin-top: 18px; }
+    .pv-section h4 { margin: 0 0 6px; font-size: 13px; color: #374151; }
+    .pv-section p { margin: 0; font-size: 13.5px; line-height: 1.6; color: #4b5563; white-space: pre-wrap; }
+    .pv-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pv-chip { background: #e8effa; color: #1e3a5f; font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 6px; }
+    .pv-foot { padding: 14px 24px 20px; border-top: 1px solid #eef0f3; display: flex; justify-content: flex-end; gap: 10px; }
+    .pv-foot a, .pv-foot button { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 8px; font-size: 13.5px; font-weight: 600; border: none; cursor: pointer; text-decoration: none; font-family: inherit; }
+    .pv-btn-edit { background: #1e3a5f; color: #fff; }
+    .pv-btn-edit:hover { background: #16304d; }
+    .pv-btn-close { background: #f1f5f9; color: #334155; }
+    .pv-btn-close:hover { background: #e2e8f0; }
+    @media (max-width: 520px) { .pv-info { grid-template-columns: 1fr; } }
+</style>
 
 <main class="content">
 
@@ -192,6 +317,9 @@ $avgResponseTime = null;
     <div class="page-toolbar">
 
         <form class="toolbar-filters" method="get">
+            <?php if ($searchQuery !== ''): ?>
+                <input type="hidden" name="search" value="<?= htmlspecialchars($searchQuery) ?>">
+            <?php endif; ?>
             <span class="filter-label">Filters:</span>
 
             <select name="status" class="select-filter" onchange="this.form.submit()">
@@ -217,6 +345,12 @@ $avgResponseTime = null;
 
         <div class="toolbar-meta">
             <span class="results-count">Showing <?= $shownCount ?> of <?= $filteredTotal ?> projects<?= $totalPages > 1 ? " (Page $page of $totalPages)" : '' ?></span>
+            <?php if ($searchQuery !== ''): ?>
+                <span class="results-count" style="display:inline-flex; align-items:center; gap:6px;">
+                    Search: <strong>“<?= htmlspecialchars($searchQuery) ?>”</strong>
+                    <a href="manage_projects.php" title="Clear search" style="color:#2563eb; text-decoration:none; font-weight:600;">Clear</a>
+                </span>
+            <?php endif; ?>
 
             <div class="view-toggle-group" role="group" aria-label="Project view">
                 <button type="button" class="active" data-view="list" title="List view" aria-label="List view" aria-pressed="true">
@@ -247,6 +381,13 @@ $avgResponseTime = null;
                         </tr>
                     </thead>
                     <tbody>
+                        <?php if (empty($projects)): ?>
+                        <tr>
+                            <td colspan="7" style="text-align:center; padding:36px 16px; color:#6b7280;">
+                                No projects found<?= $searchQuery !== '' ? ' for “' . htmlspecialchars($searchQuery) . '”' : '' ?>.
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                         <?php foreach ($projects as $p): ?>
                         <tr>
                             <td class="project-title-cell">
@@ -297,15 +438,16 @@ $avgResponseTime = null;
                             </td>
                             <td>
                                 <div class="row-actions">
-                                    <button class="action-btn" title="View">
+                                    <button type="button" class="action-btn" title="View" onclick="openProjectView('<?= htmlspecialchars((string)$p['id']) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
                                     </button>
                                     <a class="action-btn" title="Edit" href="edit_project.php?id=<?= (int)$p['id'] ?>">
                                         <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                     </a>
-                                    <a class="action-btn danger" title="Delete" href="manage_projects.php?delete=<?= (int)$p['id'] ?>" onclick="return confirm('Delete this project?')">
+                                    <button type="button" class="action-btn danger" title="Delete"
+                                        onclick="openDeleteModal(<?= (int)$p['id'] ?>, '<?= addslashes(htmlspecialchars($p['title'])) ?>')">
                                         <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-                                    </a>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -342,6 +484,11 @@ $avgResponseTime = null;
     <!-- ===================== PROJECTS GRID VIEW ===================== -->
     <div class="projects-grid-view" id="projectGridView" hidden>
         <div class="projects-management-grid">
+            <?php if (empty($projects)): ?>
+                <div style="grid-column:1 / -1; text-align:center; padding:36px 16px; color:#6b7280;">
+                    No projects found<?= $searchQuery !== '' ? ' for “' . htmlspecialchars($searchQuery) . '”' : '' ?>.
+                </div>
+            <?php endif; ?>
             <?php foreach ($projects as $p): ?>
                 <?php
                     if (!empty($p['is_fake'])) {
@@ -384,19 +531,16 @@ $avgResponseTime = null;
                     </div>
 
                     <div class="project-management-actions">
-                        <?php if (empty($p['is_fake'])): ?>
-                            <a class="action-btn" title="View" href="proposal.php?project_id=<?= (int)$p['id'] ?>">
-                                <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
-                            </a>
-                            <a class="action-btn" title="Edit" href="edit_project.php?id=<?= (int)$p['id'] ?>">
-                                <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
-                            </a>
-                            <a class="action-btn danger" title="Delete" href="manage_projects.php?delete=<?= (int)$p['id'] ?>" onclick="return confirm('Delete this project?')">
-                                <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
-                            </a>
-                        <?php else: ?>
-                            <span class="demo-project-label">Demo project</span>
-                        <?php endif; ?>
+                        <button type="button" class="action-btn" title="View" onclick="openProjectView('<?= htmlspecialchars((string)$p['id']) ?>')">
+                            <span class="material-symbols-outlined" style="font-size:18px;">visibility</span>
+                        </button>
+                        <a class="action-btn" title="Edit" href="edit_project.php?id=<?= (int)$p['id'] ?>">
+                            <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
+                        </a>
+                        <button type="button" class="action-btn danger" title="Delete"
+                            onclick="openDeleteModal(<?= (int)$p['id'] ?>, '<?= addslashes(htmlspecialchars($p['title'])) ?>')">
+                            <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
+                        </button>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -426,7 +570,183 @@ $avgResponseTime = null;
         <?php endif; ?>
     </div>
 
+    <!-- ===================== DELETE CONFIRMATION MODAL ===================== -->
+    <div class="confirm-modal-overlay" id="deleteConfirmModal">
+        <div class="confirm-modal">
+            <div class="confirm-modal-icon">
+                <span class="material-symbols-outlined">warning</span>
+            </div>
+            <h3>Delete this project?</h3>
+            <p>You're about to delete "<strong id="deleteProjectTitle"></strong>". This action cannot be undone.</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="confirm-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="confirm-modal-delete" onclick="confirmDelete()">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== PROJECT DETAILS MODAL (View) ===================== -->
+    <?php
+        $projectViewData = [];
+        foreach ($projects as $p) {
+            if (!empty($p['is_fake'])) {
+                $vApplicants = (int)$p['applicants'];
+                $vAssigned   = (int)$p['assigned'];
+            } else {
+                $vStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+                $vStmt->bind_param("i", $p['id']);
+                $vStmt->execute();
+                $vApplicants = $vAssigned = (int)$vStmt->get_result()->fetch_row()[0];
+            }
+            $projectViewData[(string)$p['id']] = [
+                'id'         => $p['id'],
+                'fake'       => !empty($p['is_fake']),
+                'title'      => $p['title'] ?? '',
+                'category'   => $p['category'] ?? '',
+                'status'     => $p['status'] ?? '',
+                'posted'     => date('M d, Y', strtotime($p['posted_at'])),
+                'deadline'   => $p['deadline'] ?? '',
+                'applicants' => $vApplicants,
+                'assigned'   => $vAssigned,
+                'visibility' => $p['visibility'] ?? '',
+                'duration'   => $p['duration'] ?? '',
+                'members'    => $p['members'] ?? '',
+                'year'       => $p['preferred_year'] ?? '',
+                'difficulty' => $p['difficulty'] ?? '',
+                'keywords'   => $p['keywords'] ?? '',
+                'description'=> $p['description'] ?? '',
+                'objectives' => $p['learning_objectives'] ?? '',
+                'outcomes'   => $p['expected_outcomes'] ?? '',
+            ];
+        }
+    ?>
+    <div class="confirm-modal-overlay" id="projectViewModal">
+        <div class="pv-modal" role="dialog" aria-modal="true" aria-labelledby="pvTitle">
+            <div class="pv-head">
+                <div>
+                    <div class="pv-tags"><span class="category-tag" id="pvCategory"></span><span class="badge-status" id="pvStatus"></span></div>
+                    <h3 id="pvTitle"></h3>
+                </div>
+                <button type="button" class="pv-close" onclick="closeProjectView()" aria-label="Close">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+            <div class="pv-body">
+                <div class="pv-info" id="pvInfo"></div>
+                <div id="pvSections"></div>
+            </div>
+            <div class="pv-foot">
+                <button type="button" class="pv-btn-close" onclick="closeProjectView()">Close</button>
+                <a class="pv-btn-edit" id="pvEdit" href="#"><span class="material-symbols-outlined" style="font-size:18px;">edit</span>Edit Project</a>
+            </div>
+        </div>
+    </div>
+
 </main>
+
+<script>
+    const PROJECT_VIEW_DATA = <?= json_encode($projectViewData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
+
+    function pvEl(tag, cls, text) {
+        const el = document.createElement(tag);
+        if (cls) el.className = cls;
+        if (text !== undefined) el.textContent = text;
+        return el;
+    }
+
+    function openProjectView(id) {
+        const d = PROJECT_VIEW_DATA[id];
+        if (!d) return;
+
+        document.getElementById('pvTitle').textContent = d.title;
+        document.getElementById('pvCategory').textContent = d.category;
+        const st = document.getElementById('pvStatus');
+        st.className = 'badge-status ' + d.status;
+        st.textContent = d.status ? d.status.charAt(0).toUpperCase() + d.status.slice(1) : '';
+
+        // key facts (empty ones are skipped)
+        const info = document.getElementById('pvInfo');
+        info.innerHTML = '';
+        [
+            ['Posted', d.posted],
+            ['Deadline', d.deadline],
+            ['Applicants', d.applicants],
+            ['Assigned Team', d.assigned > 0 ? 'Assigned (' + d.assigned + ')' : 'Pending'],
+            ['Visibility', d.visibility],
+            ['Duration', d.duration],
+            ['Students Required', d.members],
+            ['Preferred Year', d.year],
+            ['Difficulty', d.difficulty]
+        ].forEach(function (row) {
+            if (row[1] === '' || row[1] === null || row[1] === undefined) return;
+            const box = pvEl('div');
+            box.appendChild(pvEl('div', 'pv-info-label', row[0]));
+            box.appendChild(pvEl('div', 'pv-info-value', String(row[1])));
+            info.appendChild(box);
+        });
+
+        // text sections (empty ones are skipped)
+        const sections = document.getElementById('pvSections');
+        sections.innerHTML = '';
+        [['Description', d.description], ['Learning Objectives', d.objectives], ['Expected Outcomes', d.outcomes]].forEach(function (sec) {
+            if (!sec[1]) return;
+            const box = pvEl('div', 'pv-section');
+            box.appendChild(pvEl('h4', '', sec[0]));
+            box.appendChild(pvEl('p', '', sec[1]));
+            sections.appendChild(box);
+        });
+        if (d.keywords) {
+            const box = pvEl('div', 'pv-section');
+            box.appendChild(pvEl('h4', '', 'Skills / Keywords'));
+            const chips = pvEl('div', 'pv-chips');
+            d.keywords.split(',').forEach(function (k) {
+                k = k.trim();
+                if (k) chips.appendChild(pvEl('span', 'pv-chip', k));
+            });
+            box.appendChild(chips);
+            sections.appendChild(box);
+        }
+
+        document.getElementById('pvEdit').href = 'edit_project.php?id=' + encodeURIComponent(d.id);
+        document.getElementById('projectViewModal').classList.add('open');
+    }
+
+    function closeProjectView() {
+        document.getElementById('projectViewModal').classList.remove('open');
+    }
+
+    document.getElementById('projectViewModal').addEventListener('click', function (e) {
+        if (e.target === this) closeProjectView();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeProjectView();
+    });
+</script>
+
+<script>
+    let pendingDeleteId = null;
+
+    function openDeleteModal(id, title) {
+        pendingDeleteId = id;
+        document.getElementById('deleteProjectTitle').textContent = title;
+        document.getElementById('deleteConfirmModal').classList.add('open');
+    }
+
+    function closeDeleteModal() {
+        pendingDeleteId = null;
+        document.getElementById('deleteConfirmModal').classList.remove('open');
+    }
+
+    function confirmDelete() {
+        if (pendingDeleteId !== null) {
+            window.location.href = 'manage_projects.php?delete=' + pendingDeleteId;
+        }
+    }
+
+    document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
+        if (e.target === this) closeDeleteModal();
+    });
+</script>
 
 <script>
 (function () {

@@ -103,3 +103,32 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 </aside>
 
 <div class="main-wrapper">
+
+<script>
+    // Header search box (Organization pages): press Enter or click the search icon
+    // to search your projects by title, category or skills/keywords.
+    document.addEventListener('DOMContentLoaded', function () {
+        var input = document.getElementById('globalDashboardSearch');
+        if (!input) return;
+
+        var params = new URLSearchParams(window.location.search);
+        var onManage = /manage_projects\.php$/.test(window.location.pathname);
+        if (onManage && params.get('search')) input.value = params.get('search');
+
+        function runSearch() {
+            var q = input.value.trim();
+            if (!q && !(onManage && params.get('search'))) return;   // nothing to search / clear
+            window.location.href = 'manage_projects.php' + (q ? '?search=' + encodeURIComponent(q) : '');
+        }
+
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') { e.preventDefault(); runSearch(); }
+        });
+
+        var icon = input.parentElement && input.parentElement.querySelector('.material-symbols-outlined');
+        if (icon) {
+            icon.style.cursor = 'pointer';
+            icon.addEventListener('click', runSearch);
+        }
+    });
+</script>
