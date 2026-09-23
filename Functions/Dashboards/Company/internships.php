@@ -27,6 +27,82 @@ if (!$company) {
 
 $companyName = $company['Name'];
 
+$createError = '';
+$updateError = '';
+$updateFormData = [];
+
+/* =========================
+   CREATE INTERNSHIP
+========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_internship'])) {
+    $title = trim($_POST['title'] ?? '');
+    $industry = trim($_POST['industry'] ?? '');
+    $techTags = trim($_POST['tech_tags'] ?? '');
+    $duration = trim($_POST['duration'] ?? '');
+    $deadline = trim($_POST['deadline'] ?? '');
+
+    if ($title === '' || $industry === '' || $duration === '' || $deadline === '') {
+        $createError = 'Please complete all required fields.';
+    } else {
+        $created = $companyManager->createInternship(
+            $title, $companyName, $industry, $techTags, $duration, $deadline
+        );
+
+        if ($created) {
+            header('Location: internships.php?success=added');
+            exit;
+        }
+
+        $createError = 'Unable to create internship. Please try again.';
+    }
+}
+
+
+/* =========================
+   UPDATE INTERNSHIP
+========================= */
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship'])) {
+    $internshipId = isset($_POST['internship_id']) ? (int) $_POST['internship_id'] : 0;
+    $title = trim($_POST['title'] ?? '');
+    $industry = trim($_POST['industry'] ?? '');
+    $techTags = trim($_POST['tech_tags'] ?? '');
+    $duration = trim($_POST['duration'] ?? '');
+    $deadline = trim($_POST['deadline'] ?? '');
+    $updateFormData = [
+        'id' => $internshipId,
+        'title' => $title,
+        'industry' => $industry,
+        'tech_tags' => $techTags,
+        'duration' => $duration,
+        'deadline' => $deadline,
+    ];
+
+    $internshipToUpdate = $companyManager->getInternshipById($internshipId, $companyName);
+
+    if (!$internshipToUpdate) {
+        $updateError = 'Internship not found.';
+    } elseif ($title === '' || $industry === '' || $duration === '' || $deadline === '') {
+        $updateError = 'Please complete all required fields.';
+    } else {
+        $updated = $companyManager->updateInternship(
+            $internshipId,
+            $companyName,
+            $title,
+            $industry,
+            $techTags,
+            $duration,
+            $deadline
+        );
+
+        if ($updated) {
+            header('Location: internships.php?success=updated');
+            exit;
+        }
+
+        $updateError = 'Unable to update internship.';
+    }
+}
+
 
 /* =========================
    DELETE INTERNSHIP
@@ -204,9 +280,12 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-        <a
-            href="add_internship.php"
+        <button
+            type="button"
             class="add-internship-btn"
+            id="openInternshipModal"
+            aria-haspopup="dialog"
+            aria-controls="internshipModal"
         >
 
             <span class="material-symbols-outlined">
@@ -215,7 +294,7 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
             Post Internship
 
-        </a>
+        </button>
 
 
     </section>
@@ -695,16 +774,25 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
                                     <!-- UPDATE -->
 
-                                    <a
-                                        href="edit_internship.php?id=<?= (int) $internship['id'] ?>"
+                                    <button
+                                        type="button"
+                                        class="edit-action"
                                         title="Edit Internship"
+                                        data-edit-internship='<?= htmlspecialchars(json_encode([
+                                            'id' => (int) $internship['id'],
+                                            'title' => $internship['title'] ?? '',
+                                            'industry' => $internship['industry'] ?? '',
+                                            'duration' => $internship['duration'] ?? '',
+                                            'tech_tags' => $internship['tech_tags'] ?? '',
+                                            'deadline' => $internship['deadline'] ?? '',
+                                        ]), ENT_QUOTES, 'UTF-8') ?>'
                                     >
 
                                         <span class="material-symbols-outlined">
                                             edit
                                         </span>
 
-                                    </a>
+                                    </button>
 
 
 
@@ -723,10 +811,15 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
                                             value="<?= (int) $internship['id'] ?>"
                                         >
 
+                                        <input
+                                            type="hidden"
+                                            name="delete_internship"
+                                            value="1"
+                                        >
+
 
                                         <button
                                             type="submit"
-                                            name="delete_internship"
                                             class="delete-action"
                                             title="Delete Internship"
                                         >
@@ -770,6 +863,178 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 </main>
+
+<!-- =========================
+     ADD INTERNSHIP MODAL
+========================== -->
+<div
+    class="internship-modal"
+    id="internshipModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="internshipModalTitle"
+    aria-hidden="<?= $createError !== '' ? 'false' : 'true' ?>"
+    <?= $createError !== '' ? '' : 'hidden' ?>
+>
+    <div class="internship-modal__backdrop" data-modal-close></div>
+
+    <section class="internship-modal__panel" role="document">
+        <div class="internship-modal__header">
+            <div>
+                <p class="page-label">RECRUITMENT</p>
+                <h2 id="internshipModalTitle">Add Internship Opportunity</h2>
+                <p>Create a new internship opportunity and publish it for students.</p>
+            </div>
+            <button type="button" class="internship-modal__close" data-modal-close aria-label="Close add internship form">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        <div class="internship-modal__body">
+            <?php if ($createError !== ''): ?>
+                <div class="form-error" role="alert">
+                    <?= htmlspecialchars($createError) ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" id="internshipForm" autocomplete="off">
+                <input type="hidden" name="create_internship" value="1">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="title">Internship Title</label>
+                        <input id="title" type="text" name="title" maxlength="255" value="<?= htmlspecialchars($_POST['title'] ?? '') ?>" placeholder="e.g. Software Engineering Intern" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="industry">Industry</label>
+                        <input id="industry" type="text" name="industry" maxlength="255" value="<?= htmlspecialchars($_POST['industry'] ?? '') ?>" placeholder="e.g. Software Development" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="duration">Duration</label>
+                        <input id="duration" type="text" name="duration" maxlength="50" value="<?= htmlspecialchars($_POST['duration'] ?? '') ?>" placeholder="e.g. 6 Months" required>
+                    </div>
+                    <div class="form-group full">
+                        <label for="tech_tags">Skills / Technologies</label>
+                        <input id="tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($_POST['tech_tags'] ?? '') ?>" placeholder="e.g. PHP, MySQL, JavaScript">
+                    </div>
+                    <div class="form-group full">
+                        <label for="deadline">Application Deadline</label>
+                        <input id="deadline" type="text" name="deadline" maxlength="100" value="<?= htmlspecialchars($_POST['deadline'] ?? '') ?>" placeholder="e.g. Nov 15, 2026" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="secondary-btn" data-modal-close>Cancel</button>
+                    <button type="submit" class="primary-btn">
+                        <span class="material-symbols-outlined" aria-hidden="true">publish</span>
+                        Publish Internship
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<!-- =========================
+     EDIT INTERNSHIP MODAL
+========================== -->
+<div
+    class="internship-modal"
+    id="editInternshipModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editInternshipModalTitle"
+    aria-hidden="<?= $updateError !== '' ? 'false' : 'true' ?>"
+    <?= $updateError !== '' ? '' : 'hidden' ?>
+>
+    <div class="internship-modal__backdrop" data-edit-modal-close></div>
+
+    <section class="internship-modal__panel" role="document">
+        <div class="internship-modal__header">
+            <div>
+                <p class="page-label">RECRUITMENT</p>
+                <h2 id="editInternshipModalTitle">Edit Internship</h2>
+                <p>Update the internship opportunity details.</p>
+            </div>
+            <button type="button" class="internship-modal__close" data-edit-modal-close aria-label="Close edit internship form">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+        </div>
+
+        <div class="internship-modal__body">
+            <?php if ($updateError !== ''): ?>
+                <div class="form-error" role="alert">
+                    <?= htmlspecialchars($updateError) ?>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" id="editInternshipForm" autocomplete="off">
+                <input type="hidden" name="update_internship" value="1">
+                <input type="hidden" name="internship_id" id="edit_internship_id" value="<?= (int) ($updateFormData['id'] ?? 0) ?>">
+                <div class="form-grid">
+                    <div class="form-group full">
+                        <label for="edit_title">Internship Title</label>
+                        <input id="edit_title" type="text" name="title" maxlength="255" value="<?= htmlspecialchars($updateFormData['title'] ?? '') ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_industry">Industry</label>
+                        <input id="edit_industry" type="text" name="industry" maxlength="255" value="<?= htmlspecialchars($updateFormData['industry'] ?? '') ?>" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_duration">Duration</label>
+                        <input id="edit_duration" type="text" name="duration" maxlength="50" value="<?= htmlspecialchars($updateFormData['duration'] ?? '') ?>" required>
+                    </div>
+                    <div class="form-group full">
+                        <label for="edit_tech_tags">Skills / Technologies</label>
+                        <input id="edit_tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($updateFormData['tech_tags'] ?? '') ?>">
+                    </div>
+                    <div class="form-group full">
+                        <label for="edit_deadline">Application Deadline</label>
+                        <input id="edit_deadline" type="text" name="deadline" maxlength="100" value="<?= htmlspecialchars($updateFormData['deadline'] ?? '') ?>" required>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="secondary-btn" data-edit-modal-close>Cancel</button>
+                    <button type="submit" class="primary-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </section>
+</div>
+
+<!-- =========================
+     DELETE INTERNSHIP MODAL
+========================== -->
+<div
+    class="delete-internship-modal"
+    id="deleteInternshipModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteInternshipModalTitle"
+    aria-hidden="true"
+    hidden
+>
+    <div class="delete-internship-modal__backdrop" data-delete-modal-close></div>
+
+    <section class="delete-internship-modal__panel" role="document">
+        <button type="button" class="delete-internship-modal__close" data-delete-modal-close aria-label="Close delete confirmation">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+
+        <div class="delete-internship-modal__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">delete</span>
+        </div>
+
+        <h2 id="deleteInternshipModalTitle">Delete Internship?</h2>
+        <p>Are you sure you want to delete this internship? This action cannot be undone.</p>
+
+        <div class="delete-internship-modal__actions">
+            <button type="button" class="secondary-btn" data-delete-modal-close>Cancel</button>
+            <button type="button" class="delete-internship-modal__confirm" id="confirmDeleteInternship">
+                <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+                Delete Internship
+            </button>
+        </div>
+    </section>
+</div>
 
 
 
