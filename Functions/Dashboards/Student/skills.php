@@ -418,6 +418,7 @@ Experience
         <option value="Mobile Development">Mobile Development</option>
         <option value="AI & Machine Learning">AI & Machine Learning</option>
         <option value="Cloud & DevOps">Cloud & DevOps</option>
+        <option value="Web Design">Web Design</option>
         <option value="Other">Other</option>
     </select>
 

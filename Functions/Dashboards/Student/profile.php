@@ -10,22 +10,18 @@ require_once __DIR__ . "/profile_completion.php";
 require_once __DIR__ . "/check_student_access.php";
 
 require_login('student');
-
 $user = current_user();
-
 
 if(!$user){
     die("Session expired");
 }
 
 $email = $user['Email'] ?? $user['email'] ?? null;
-
 if(!$email){
     die("Email not found");
 }
 
 // CHANGE PASSWORD
-
 if(isset($_POST['change_password'])){
     $current_password = $_POST['current_password'];
     $new_password = $_POST['new_password'];
@@ -40,11 +36,9 @@ if(isset($_POST['change_password'])){
     else{
         // Get current password
         $stmt = $conn->prepare(
-            "
-            SELECT password
+            "SELECT password
             FROM user
-            WHERE Email=?
-            ");
+            WHERE Email=?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -86,7 +80,15 @@ if(isset($_POST['save_changes'])){
     $university = $_POST['university'] ?? '';
     $degree = $_POST['degree'] ?? '';
     $year = $_POST['year'] ?? '';
-    if($year < 1 || $year > 4){
+
+
+    // Convert "Year 1", "Year 2", etc. into number
+    $yearNumber = (int) filter_var(
+        $year,
+        FILTER_SANITIZE_NUMBER_INT
+    );
+
+    if(!empty($yearNumber) && ($yearNumber < 1 || $yearNumber > 4)){
         $error = "Invalid year. Only Year 1 - Year 4 students are allowed.";
     }
 
@@ -98,21 +100,17 @@ if(isset($_POST['save_changes'])){
     // LINK VALIDATION
     // GitHub validation
     if(!empty($github)){
-
         $host = parse_url($github, PHP_URL_HOST);
-
         if(
             $host !== "github.com" &&
             $host !== "www.github.com"
         ){
             $error = "Please enter a valid GitHub URL.";
         }
-
     }
 
     // LinkedIn validation
     if(!empty($linkedin)){
-
         $host = parse_url($linkedin, PHP_URL_HOST);
 
         if(
@@ -125,78 +123,57 @@ if(isset($_POST['save_changes'])){
 
     // Website validation
     if(!empty($website)){
-
         if(!filter_var($website, FILTER_VALIDATE_URL)){
 
             $error = "Please enter a valid website URL.";
-
         }
-
     }
 
 
     // Stop saving if error exists
     if(isset($error)){
-
-        echo "
-        <script>
-        alert('$error');
-        window.history.back();
-        </script>
-        ";
-
+        echo "<script>alert('$error');window.history.back();</script>";
         exit();
-
     }
 
     // Get old image
     $old = $conn->prepare(
-    "
-    SELECT profile_image
+    "SELECT profile_image
     FROM student
-    WHERE Email=?
-    ");
-    $old->bind_param(
-        "s",
-        $email
-    );
+    WHERE Email=?");
+    $old->bind_param("s",$email);
     $old->execute();
 
     $oldImage = $old->get_result() ->fetch_assoc()['profile_image'];
     $image = $oldImage;
 
     // REMOVE PROFILE IMAGE
+    if(isset($_POST['remove_profile_image']) 
+        && $_POST['remove_profile_image'] == "1"){
 
-if(isset($_POST['remove_profile_image']) 
-    && $_POST['remove_profile_image'] == "1"){
-
-    $folder = __DIR__ ."/../../../Assets/Images/Student/";
-
-    if(
-        !empty($oldImage) 
-        &&
-        file_exists($folder.$oldImage)
-    ){
-        unlink($folder.$oldImage);
+        $folder = __DIR__ ."/../../../Assets/Images/Student/";
+        if(
+            !empty($oldImage) 
+            &&
+            file_exists($folder.$oldImage)
+        ){
+            unlink($folder.$oldImage);
+        }
+        $image = NULL;
     }
-    $image = NULL;
-}
 
     // UPLOAD PROFILE IMAGE
-
     if(
         isset($_FILES['profile_image'])
         &&
         $_FILES['profile_image']['error']==0
     ){
-
         $folder = __DIR__ ."/../../../Assets/Images/Student/";
 
         if(!is_dir($folder)){
             mkdir(
                 $folder,0777,true);
         }
-
         $extension = strtolower(
             pathinfo(
                 $_FILES['profile_image']['name'],
@@ -210,24 +187,15 @@ if(isset($_POST['remove_profile_image'])
             die("Invalid image type");
         }
 
-        $newImage = 
-        "profile_"
-        .time()
-        ."_"
-        .uniqid()
-        .".".$extension;
-        
+        $newImage = "profile_".time()."_".uniqid().".".$extension;
         $destination = $folder.$newImage;
-
         if(
             move_uploaded_file(
                 $_FILES['profile_image']['tmp_name'],
                 $destination
             )
         ){
-
             // remove old image
-
             if(
                 !empty($oldImage)
                 &&
@@ -246,60 +214,33 @@ if(isset($_POST['remove_profile_image'])
         }
     }
 
-    // UPDATE DATABASE
+ // UPDATE DATABASE
 
     $update = $conn->prepare(
-    "
-    UPDATE student SET
-    Name=?,
-    University=?,
-    degree=?,
-    bio=?,
-    github=?,
-    linkedin=?,
-    website=?,
-    profile_image=?
-    WHERE Email=?
-    "
-    );
+    "UPDATE student 
+    SET Name=?, University=?,degree=?,bio=?,github=?,linkedin=?,website=?,profile_image=?
+    WHERE Email=?");
 
-    $update->bind_param(
-        "sssssssss",
-        $name,
-        $university,
-        $degree,
-        $bio,
-        $github,
-        $linkedin,
-        $website,
-        $image,
-        $email
-    );
-
-
+    $update->bind_param("sssssssss",$name,$university,$degree,$bio,$github,$linkedin,$website,$image,$email);
     if(!$update->execute()){
         die("Update error: ".$update->error);
     }
-
     header(
         "Location: settings.php?success=1");
     exit();
-
 }
 
 // GET STUDENT DATA
 
 $stmt = $conn->prepare(
-"
-SELECT 
+"SELECT 
     student.*,
     user.status AS user_status,
     user.password
 FROM student
 INNER JOIN user
 ON student.Email = user.Email
-WHERE student.Email=?
-");
+WHERE student.Email=?");
 
 $stmt->bind_param("s",$email);
 $stmt->execute();
@@ -314,41 +255,26 @@ if(!$student){
 // COUNTS
 // ===============================
 
-
 // Skills
 $q=$conn->prepare(
-"
-SELECT COUNT(*) total
+"SELECT COUNT(*) total
 FROM skills
-WHERE Email=?
-"
-);
+WHERE Email=?");
 
-$q->bind_param(
-"s",
-$email
-);
-
+$q->bind_param("s",$email);
 $q->execute();
 
-$skill_count =
-$q->get_result()
+$skill_count = $q->get_result()
 ->fetch_assoc()['total'];
 
 // Certificates
 $q=$conn->prepare(
-"
-SELECT COUNT(*) total
+"SELECT COUNT(*) total
 FROM certificates
 WHERE Email=?
-"
-);
+");
 
-$q->bind_param(
-"s",
-$email
-);
-
+$q->bind_param("s",$email);
 $q->execute();
 
 $certificate_count =
@@ -361,37 +287,27 @@ $q->get_result()
 $project_count = 0;
 
 // Profile completion
-$completion = calculateProfileCompletion(
-    $student,
-    $skill_count,
-    $certificate_count,
-    $project_count
-);
-
+$completion = calculateProfileCompletion($student,$skill_count,$certificate_count,$project_count);
 ?>
+
 <?php
-
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
-
+    include "../../../Includes/student_sidebar.php";
+    include "../../../Includes/dash_header.php";
 ?>
 
 <!DOCTYPE html>
 <html>
 
 <head>
-<title>My Profile</title>
-
-<link rel="stylesheet"href="../../../Assets/CSS/Student/settings.css">
-<link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-
+    <title>My Profile</title>
+    <link rel="stylesheet"href="../../../Assets/CSS/Student/settings.css">
+    <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body>
 
 <div class="profile-container">
-
-<form method="POST" enctype="multipart/form-data">
+<form class="profile-form" method="POST" enctype="multipart/form-data">
 <div class="profile-title">
     <div>
         <h2>Settings > My Profile</h2>
@@ -430,37 +346,24 @@ include "../../../Includes/dash_header.php";
         <!-- Upload Image -->
         <label class="camera">
             <i class="fa-solid fa-camera"></i>
-            <input 
-            type="file" 
-            name="profile_image" 
-            accept="image/*" 
-            onchange="previewImage(event)">
+            <input type="file" name="profile_image" accept="image/*" onchange="previewImage(event)">
         </label>
 
 
         <?php if(!empty($student['profile_image'])){ ?>
 
         <!-- Remove Image -->
-        <button 
-        type="button"
-        class="remove-image"
-        onclick="removeProfileImage()">
-
-        <i class="fa-solid fa-trash"></i>
-        Remove Photo
-
+        <button type="button" class="remove-image" onclick="removeProfileImage()">
+            <i class="fa-solid fa-trash"></i>
+            Remove Photo
         </button>
-
         <?php } ?>
 
 
     </div>
 
     <div class="profile-details">
-        <h2>
-            <?= htmlspecialchars($student['Name']); ?>
-        </h2>
-
+        <h2><?= htmlspecialchars($student['Name']); ?></h2>
         <p>
             🎓
             <?= htmlspecialchars($student['degree']); ?>
@@ -476,23 +379,17 @@ include "../../../Includes/dash_header.php";
         <div class="profile-stats">
             <div>
                 Profile Strength
-                <strong>
-                    <?= $completion ?>%
-                </strong>
+                <strong><?= $completion ?>%</strong>
             </div>
 
             <div>
                 Projects
-                <strong>
-                    <?= $project_count ?>
-                </strong>
+                <strong><?= $project_count ?></strong>
             </div>
 
             <div>
                 Skills
-                <strong>
-                    <?= $skill_count ?>
-                </strong>
+                <strong><?= $skill_count ?></strong>
             </div>
         </div>
     </div>
@@ -516,7 +413,7 @@ include "../../../Includes/dash_header.php";
     <label>Degree</label>
     <input type="text" name="degree" value="<?= htmlspecialchars($student['degree']); ?>">
     <label>Year</label>
-    <input type="text" value="<?= htmlspecialchars($student['year']); ?>"readonly>
+    <input type="text" name="year"value="<?= htmlspecialchars($student['year']); ?>"readonly>
 </div>
 
 <!-- PROFESSIONAL INFORMATION -->
@@ -614,34 +511,60 @@ Update Password
 
 // IMAGE PREVIEW
 function previewImage(event){
-
     let image = document.getElementById(
         "profilePreview"
     );
-
     let file = event.target.files[0];
-
     if(file){
         image.src = URL.createObjectURL(file);
     }
 }
 
 // SHARE PROFILE
-
 function shareProfile(){
 
-    if(navigator.share){
-        navigator.share({
-            title:"Student Profile",
-            text:"Check my SkillBridge profile",
-            url:window.location.href
-        });
-    }
-    else{
-        navigator.clipboard.writeText(window.location.href);
-        alert("Profile link copied");
-    }
+    navigator.clipboard.writeText(window.location.href)
+    .then(()=>{
+
+        showToast(
+            "Profile link copied successfully!",
+            "success"
+        );
+
+    })
+    .catch(()=>{
+
+        showToast(
+            "Failed to copy profile link.",
+            "error"
+        );
+
+    });
+
 }
+
+function showToast(message,type){
+    const toast=document.createElement("div");
+    toast.className="toast "+type;
+    let icon = type==="error"
+        ? "fa-circle-xmark"
+        : "fa-circle-check";
+    toast.innerHTML=`
+        <i class="fa-solid ${icon}"></i>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(()=>{
+        toast.classList.add("show");
+    },100);
+    setTimeout(()=>{
+        toast.classList.remove("show");
+        setTimeout(()=>{
+            toast.remove();
+        },300);
+    },3000);
+}
+
 function togglePassword(icon){
     let input = icon.previousElementSibling;
     if(input.type === "password"){
@@ -671,21 +594,28 @@ document.querySelectorAll(".password-field i").forEach(icon => {
         }
     });
 });
+
 function removeProfileImage(){
     if(confirm("Remove current profile image?")){
-        document.getElementById("profilePreview").src =
-        "../../../Assets/Images/Student/profile.webp";
+        let form = document.querySelector(
+            "form.profile-form"
+        );
 
-        // create hidden input
-        let input=document.createElement("input");
+        let removeInput = document.createElement("input");
+        removeInput.type = "hidden";
+        removeInput.name = "remove_profile_image";
+        removeInput.value = "1";
 
-        input.type="hidden";
-        input.name="remove_profile_image";
-        input.value="1";
-        document.querySelector("form").appendChild(input);
+        form.appendChild(removeInput);
+        let saveInput = document.createElement("input");
+        saveInput.type = "hidden";
+        saveInput.name = "save_changes";
+        saveInput.value = "1";
+
+        form.appendChild(saveInput);
+        form.submit();
     }
 }
-
     // Password Match & Live Requirements Validation
     const studNewPass = document.getElementById('studentNewPass');
     const studConfPass = document.getElementById('studentConfPass');
