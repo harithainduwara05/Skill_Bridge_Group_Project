@@ -1841,4 +1841,226 @@ body {
     font-size: 12px;
     padding: 0 2px;
 }
-
+
+/* ============================================
+   NEW: TEAM PROGRESS MINI CARDS (Organization dashboard)
+   ============================================ */
+
+.progress-bar.wide {
+    flex: 1;
+    height: 7px;
+}
+
+.mini-team-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mini-team-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mini-team-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mini-team-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-team-lead {
+    font-size: 11.5px;
+    color: #6b7280;
+}
+
+.mini-team-badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.mini-team-badge.on-track {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.mini-team-badge.completed {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.mini-team-badge.behind {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.progress-bar-fill.on-track {
+    background: #3b82f6;
+}
+
+.progress-bar-fill.completed {
+    background: #16a34a;
+}
+
+.progress-bar-fill.behind {
+    background: #dc2626;
+}
+
+.mini-team-deadline {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.mini-team-deadline.overdue {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* ============================================
+   ORGANIZATION PROJECT MANAGEMENT GRID VIEW
+   ============================================ */
+.projects-grid-view[hidden],
+.project-list-view[hidden] {
+    display: none !important;
+}
+
+.projects-management-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.project-management-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.project-management-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(15, 23, 42, .08);
+    border-color: #dbe3ee;
+}
+
+.project-management-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.project-management-card-top .category-tag {
+    background: #f1f5f9;
+    color: #475569;
+    max-width: 62%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-management-card h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.project-management-date {
+    margin-top: 4px;
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.project-management-details {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0;
+    padding: 14px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.project-management-details > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.project-management-details .material-symbols-outlined {
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+.project-management-details strong {
+    color: #334155;
+}
+
+.project-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+
+.project-management-actions .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    color: #94a3b8;
+    text-decoration: none;
+}
+
+.project-management-actions .action-btn:hover {
+    background: #f3f4f6;
+    color: #334155;
+}
+
+.project-management-actions .action-btn.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.demo-project-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-style: italic;
+}
+
+.grid-pagination {
+    margin-top: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+@media (max-width: 800px) {
+    .projects-management-grid {
+        grid-template-columns: 1fr;
+    }
+}

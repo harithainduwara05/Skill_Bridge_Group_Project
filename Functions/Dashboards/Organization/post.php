@@ -199,7 +199,7 @@ include "../../../Includes/dash_header.php";
                             </label>
                             <label class="radio-option">
                                 <input type="radio" name="visibility" value="Private">
-                                Private <span style="color:#9ca3af; font-weight:400;">(Invite only)</span>
+                                Private <span style="color:#9ca3af; font-weight:400;">(Only me)</span>
                             </label>
                         </div>
                     </div>
