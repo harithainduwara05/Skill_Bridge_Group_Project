@@ -21,13 +21,6 @@ $base_url = ($request_directory && $request_directory === $landing_directory) ? 
     >
 
     <title>SkillBridge</title>
-
-    <!-- Main CSS -->
-    <link
-        rel="stylesheet"
-        href="<?php echo $base_url; ?>Assets/CSS/style.css"
-    >
-
     <!-- Landing Page CSS -->
     <link
         rel="stylesheet"
@@ -91,7 +84,7 @@ $base_url = ($request_directory && $request_directory === $landing_directory) ? 
 
             <li>
 
-                <a href="<?php echo $base_url; ?>index.php#about">
+                <a href="<?php echo $base_url; ?>landingPage%20content/about.php">
                     About
                 </a>
 
@@ -101,7 +94,7 @@ $base_url = ($request_directory && $request_directory === $landing_directory) ? 
 
             <li>
 
-                <a href="<?php echo $base_url; ?>index.php#projects">
+                <a href="<?php echo $base_url; ?>landingPage%20content/projects.php">
                     Projects
                 </a>
 
@@ -111,7 +104,7 @@ $base_url = ($request_directory && $request_directory === $landing_directory) ? 
 
             <li>
 
-                <a href="<?php echo $base_url; ?>index.php#internships">
+                <a href="<?php echo $base_url; ?>landingPage%20content/internships.php">
                     Internships
                 </a>
 

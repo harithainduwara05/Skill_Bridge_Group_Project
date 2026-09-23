@@ -129,14 +129,14 @@
 
 .internship-company {
     color: #0056b3;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     margin-bottom: 5px;
 }
 
 .internship-industry {
     color: #64748b;
-    font-size: 12px;
+    font-size: 14px;
     display: flex;
     align-items: center;
     gap: 5px;
@@ -154,13 +154,13 @@
     color: #475569;
     padding: 4px 10px;
     border-radius: 20px;
-    font-size: 11px;
+    font-size: 14px;
 }
 
 .internship-meta {
     display: flex;
     justify-content: space-between;
-    font-size: 12px;
+    font-size: 14px;
     color: #64748b;
     border-top: 1px solid #e2e8f0;
     padding-top: 12px;
@@ -278,7 +278,7 @@
 }
 
 .stat-label {
-    font-size: 11px;
+    font-size: 14px;
     color: #64748b;
     text-transform: uppercase;
     font-weight: 600;
@@ -345,7 +345,7 @@
     border: 1px solid #cbd5e1;
     padding: 8px 15px;
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 14px;
     color: #475569;
 }
 
