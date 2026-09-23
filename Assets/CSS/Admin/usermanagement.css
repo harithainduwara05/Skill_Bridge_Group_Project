@@ -439,6 +439,14 @@
     flex-direction: column;
 }
 
+.user-modal form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+}
+
 @keyframes userModalSlide {
     from { transform: translateY(16px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -450,6 +458,7 @@
     justify-content: space-between;
     padding: 18px 24px;
     border-bottom: 1px solid #f1f5f9;
+    flex-shrink: 0;
 }
 
 .user-modal-header h3 {
@@ -477,12 +486,14 @@
 }
 
 .user-modal-body {
-    padding: 20px 24px;
+    padding: 18px 24px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .user-form-group {
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 .user-form-group label {
@@ -528,10 +539,12 @@
 .user-modal-footer {
     display: flex;
     justify-content: flex-end;
+    align-items: center;
     gap: 10px;
     padding: 16px 24px;
     border-top: 1px solid #f1f5f9;
     background: #f8fafc;
+    flex-shrink: 0;
 }
 
 .btn-secondary {
@@ -857,3 +870,191 @@
     from { width: 100%; }
     to { width: 0%; }
 }
+
+/* Manual Entry Toggle Button in Modals */
+.btn-text-toggle {
+    background: none;
+    border: none;
+    color: #2563eb;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    text-transform: none;
+    letter-spacing: normal;
+    transition: color 0.15s;
+}
+
+.btn-text-toggle:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+/* ── Searchable Combobox Dropdown ── */
+.univ-combobox {
+    position: relative;
+    width: 100%;
+}
+
+.univ-combobox-input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.univ-combobox-input {
+    width: 100%;
+    padding: 9px 36px 9px 13px !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13.5px;
+    color: #1e293b;
+    font-family: inherit;
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color .2s;
+    background: #f8fafc;
+}
+
+.univ-combobox-input:focus {
+    border-color: #3b82f6;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.1);
+}
+
+.univ-combobox-toggle {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    color: #64748b;
+    padding: 0;
+    transition: all .2s ease;
+}
+
+.univ-combobox-toggle:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.univ-combobox-toggle.open {
+    transform: translateY(-50%) rotate(180deg);
+    color: #2563eb;
+}
+
+.univ-combobox-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(15, 23, 42, 0.06);
+    z-index: 1050;
+    display: none;
+    overflow: hidden;
+    animation: dropFadeIn .18s ease-out;
+}
+
+.univ-combobox-dropdown.open {
+    display: block;
+}
+
+@keyframes dropFadeIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.univ-combobox-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 6px;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+}
+
+.univ-combobox-list::-webkit-scrollbar {
+    width: 6px;
+}
+.univ-combobox-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+.univ-combobox-list::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+
+.univ-combobox-item {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1e293b;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: all .15s ease;
+}
+
+.univ-combobox-item:hover,
+.univ-combobox-item.highlighted {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.univ-combobox-item.selected {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    font-weight: 600;
+}
+
+.univ-combobox-item.custom-entry {
+    background: #f8fafc;
+    border: 1px dashed #93c5fd;
+    color: #2563eb;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.univ-combobox-item.custom-entry:hover,
+.univ-combobox-item.custom-entry.highlighted {
+    background: #eff6ff;
+    border-color: #3b82f6;
+    color: #1d4ed8;
+}
+
+.univ-combobox-badge-custom {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    background: #dbeafe;
+    color: #1e40af;
+    padding: 2px 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
+}
+
+.univ-combobox-empty {
+    padding: 12px;
+    text-align: center;
+    color: #94a3b8;
+    font-size: 12px;
+}
+
+

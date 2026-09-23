@@ -16,6 +16,25 @@ include "../../../Includes/dash_header.php";
 
 $flash = null;
 
+// Fetch Universities and Faculties from database (universityemails)
+$dbUniversities = [];
+$uniSql = "SELECT DISTINCT University, faculty FROM universityemails WHERE Status != 'De-Active' ORDER BY University ASC, faculty ASC";
+$uniRes = $conn->query($uniSql);
+if ($uniRes) {
+    while ($row = $uniRes->fetch_assoc()) {
+        $uName = trim($row['University']);
+        $fName = trim($row['faculty']);
+        if (!empty($uName)) {
+            if (!isset($dbUniversities[$uName])) {
+                $dbUniversities[$uName] = [];
+            }
+            if (!empty($fName) && !in_array($fName, $dbUniversities[$uName])) {
+                $dbUniversities[$uName][] = $fName;
+            }
+        }
+    }
+}
+
 // HANDLE POST ACTIONS
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -33,8 +52,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $degree   = trim($_POST['degree'] ?? '');
         $year     = trim($_POST['academic_year'] ?? '');
 
+        // For Student, determine University and Faculty from combobox inputs
+        if ($role === 'student') {
+            $uniVal = trim($_POST['university_name'] ?? '');
+            $facVal = trim($_POST['faculty_name'] ?? '');
+
+            if (!empty($facVal)) {
+                $orgName = !empty($uniVal) ? ($uniVal . ' - ' . $facVal) : $facVal;
+            } else {
+                $orgName = $uniVal;
+            }
+        }
+
         if (empty($name) || empty($email) || empty($password) || empty($role)) {
             $flash = ['type' => 'error', 'message' => 'Name, Email, Password, and Role are required fields.'];
+        } elseif ($role === 'student' && empty($orgName)) {
+            $flash = ['type' => 'error', 'message' => 'Please select or enter a University for the student.'];
         } elseif ($adminDB->userExists($email)) {
             $flash = ['type' => 'error', 'message' => 'A user with this email address already exists!'];
         } else {
@@ -475,9 +508,43 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                     </div>
                 </div>
 
-                <div class="user-form-group" id="addOrgNameGroup">
-                    <label id="addOrgLabel">University / Institution Name</label>
-                    <input type="text" name="organization_name" placeholder="e.g. University of Colombo">
+                <!-- Student University & Faculty Searchable Comboboxes (from Database + Manual Entry) -->
+                <div id="addStudentUniFacultyGroup">
+                    <div class="user-form-group">
+                        <label>University / Institution <span style="color:#ef4444;">*</span></label>
+                        <div class="univ-combobox" id="addUserUnivCombobox">
+                            <div class="univ-combobox-input-wrap">
+                                <input type="text" class="univ-combobox-input" name="university_name" id="addUserUnivInput" placeholder="Select or type university name" autocomplete="off">
+                                <button type="button" class="univ-combobox-toggle" id="addUserUnivToggle" title="Toggle university list" tabindex="-1">
+                                    <span class="material-symbols-outlined">expand_more</span>
+                                </button>
+                            </div>
+                            <div class="univ-combobox-dropdown" id="addUserUnivDropdown">
+                                <div class="univ-combobox-list" id="addUserUnivList"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="user-form-group">
+                        <label>Faculty / Department</label>
+                        <div class="univ-combobox" id="addUserFacCombobox">
+                            <div class="univ-combobox-input-wrap">
+                                <input type="text" class="univ-combobox-input" name="faculty_name" id="addUserFacInput" placeholder="Select or type faculty name" autocomplete="off">
+                                <button type="button" class="univ-combobox-toggle" id="addUserFacToggle" title="Toggle faculty list" tabindex="-1">
+                                    <span class="material-symbols-outlined">expand_more</span>
+                                </button>
+                            </div>
+                            <div class="univ-combobox-dropdown" id="addUserFacDropdown">
+                                <div class="univ-combobox-list" id="addUserFacList"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Non-Student Affiliation Group (Company / Org / Admin) -->
+                <div class="user-form-group" id="addOrgNameGroup" style="display:none;">
+                    <label id="addOrgLabel">Company / Organization Name</label>
+                    <input type="text" name="organization_name" placeholder="e.g. Virtusa Lanka">
                 </div>
 
                 <div class="user-form-row" id="addStudentExtraFields">
@@ -713,29 +780,282 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
         });
     });
 
+    // Universities and Faculties fetched from database
+    const dbUniversities = <?= json_encode($dbUniversities, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+    function setupSearchableCombobox(config) {
+        const combobox = document.getElementById(config.comboboxId);
+        const input    = document.getElementById(config.inputId);
+        const toggle   = document.getElementById(config.toggleId);
+        const dropdown = document.getElementById(config.dropdownId);
+        const list     = document.getElementById(config.listId);
+
+        if (!combobox || !input || !toggle || !dropdown || !list) return null;
+
+        let highlightedIndex = -1;
+
+        function escHtml(str) {
+            const d = document.createElement('div');
+            d.appendChild(document.createTextNode(str || ''));
+            return d.innerHTML;
+        }
+
+        function renderList(query = '') {
+            list.innerHTML = '';
+            highlightedIndex = -1;
+            const q = (query || '').trim().toLowerCase();
+            const dataset = typeof config.getItems === 'function' ? config.getItems() : [];
+
+            const filtered = dataset.filter(itemText => {
+                return itemText && itemText.toLowerCase().includes(q);
+            });
+
+            let exactMatch = false;
+
+            filtered.forEach(itemText => {
+                if (itemText.toLowerCase() === q) exactMatch = true;
+
+                const item = document.createElement('div');
+                item.className = 'univ-combobox-item';
+                if (input.value.trim().toLowerCase() === itemText.toLowerCase()) {
+                    item.classList.add('selected');
+                }
+
+                const nameEl = document.createElement('span');
+                nameEl.textContent = itemText;
+                item.appendChild(nameEl);
+
+                item.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectItem(itemText);
+                });
+
+                list.appendChild(item);
+            });
+
+            // If query is not empty and doesn't exactly match an existing item,
+            // show manual entry option so the user can easily confirm their custom name
+            if (q !== '' && !exactMatch) {
+                const customItem = document.createElement('div');
+                customItem.className = 'univ-combobox-item custom-entry';
+                customItem.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                        <span class="material-symbols-outlined" style="font-size:16px;">edit_note</span>
+                        <span style="white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">Use: "<strong>${escHtml(query.trim())}</strong>"</span>
+                    </div>
+                    <span class="univ-combobox-badge-custom">Manual</span>
+                `;
+                customItem.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    selectItem(query.trim());
+                });
+                list.appendChild(customItem);
+            }
+
+            if (filtered.length === 0 && q === '') {
+                const empty = document.createElement('div');
+                empty.className = 'univ-combobox-empty';
+                empty.textContent = config.emptyText || 'No options found.';
+                list.appendChild(empty);
+            }
+        }
+
+        function selectItem(text) {
+            input.value = text;
+            closeDropdown();
+            if (typeof config.onSelect === 'function') {
+                config.onSelect(text);
+            }
+        }
+
+        function openDropdown() {
+            renderList(input.value);
+            dropdown.classList.add('open');
+            toggle.classList.add('open');
+        }
+
+        function closeDropdown() {
+            dropdown.classList.remove('open');
+            toggle.classList.remove('open');
+            highlightedIndex = -1;
+        }
+
+        toggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (dropdown.classList.contains('open')) {
+                closeDropdown();
+            } else {
+                openDropdown();
+                input.focus();
+            }
+        });
+
+        input.addEventListener('focus', () => {
+            openDropdown();
+        });
+
+        input.addEventListener('input', () => {
+            openDropdown();
+            if (typeof config.onInput === 'function') {
+                config.onInput(input.value);
+            }
+        });
+
+        // Keyboard navigation
+        input.addEventListener('keydown', (e) => {
+            const items = list.querySelectorAll('.univ-combobox-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (!dropdown.classList.contains('open')) {
+                    openDropdown();
+                    return;
+                }
+                highlightedIndex = (highlightedIndex + 1) % items.length;
+                updateHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (!dropdown.classList.contains('open')) {
+                    openDropdown();
+                    return;
+                }
+                highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+                updateHighlight(items);
+            } else if (e.key === 'Enter') {
+                if (dropdown.classList.contains('open') && highlightedIndex >= 0 && items[highlightedIndex]) {
+                    e.preventDefault();
+                    items[highlightedIndex].dispatchEvent(new MouseEvent('mousedown'));
+                }
+            } else if (e.key === 'Escape') {
+                closeDropdown();
+            }
+        });
+
+        function updateHighlight(items) {
+            items.forEach((it, idx) => {
+                if (idx === highlightedIndex) {
+                    it.classList.add('highlighted');
+                    it.scrollIntoView({ block: 'nearest' });
+                } else {
+                    it.classList.remove('highlighted');
+                }
+            });
+        }
+
+        document.addEventListener('mousedown', (e) => {
+            if (!combobox.contains(e.target)) {
+                closeDropdown();
+            }
+        });
+
+        return {
+            open: openDropdown,
+            close: closeDropdown,
+            refresh: () => {
+                if (dropdown.classList.contains('open')) {
+                    renderList(input.value);
+                }
+            }
+        };
+    }
+
+    // Initialize University and Faculty Comboboxes
+    const facCombobox = setupSearchableCombobox({
+        comboboxId: 'addUserFacCombobox',
+        inputId: 'addUserFacInput',
+        toggleId: 'addUserFacToggle',
+        dropdownId: 'addUserFacDropdown',
+        listId: 'addUserFacList',
+        emptyText: 'No faculties found.',
+        getItems: () => {
+            const currentUni = (document.getElementById('addUserUnivInput').value || '').trim().toLowerCase();
+            if (currentUni) {
+                for (const [uName, fList] of Object.entries(dbUniversities)) {
+                    if (uName.toLowerCase() === currentUni) {
+                        return fList;
+                    }
+                }
+            }
+            // If no exact university match or not typed, return all known faculties across all universities
+            const allFacs = new Set();
+            Object.values(dbUniversities).forEach(facList => {
+                facList.forEach(f => allFacs.add(f));
+            });
+            return Array.from(allFacs);
+        }
+    });
+
+    const univCombobox = setupSearchableCombobox({
+        comboboxId: 'addUserUnivCombobox',
+        inputId: 'addUserUnivInput',
+        toggleId: 'addUserUnivToggle',
+        dropdownId: 'addUserUnivDropdown',
+        listId: 'addUserUnivList',
+        emptyText: 'No universities found.',
+        getItems: () => Object.keys(dbUniversities),
+        onSelect: (selectedUni) => {
+            if (facCombobox) facCombobox.refresh();
+        },
+        onInput: (val) => {
+            if (facCombobox) facCombobox.refresh();
+        }
+    });
+
     // Toggle Role-specific fields in Add Modal
     function toggleAddFields(role) {
+        const studentUniFac = document.getElementById('addStudentUniFacultyGroup');
+        const orgGroup = document.getElementById('addOrgNameGroup');
         const orgLabel = document.getElementById('addOrgLabel');
         const studentExtra = document.getElementById('addStudentExtraFields');
         const contactGroup = document.getElementById('addContactGroup');
+        const univInput = document.getElementById('addUserUnivInput');
 
         if (role === 'student') {
-            orgLabel.innerText = 'University / Institution Name';
+            studentUniFac.style.display = 'block';
+            orgGroup.style.display = 'none';
             studentExtra.style.display = 'grid';
             contactGroup.style.display = 'none';
+            if (univInput) univInput.required = true;
         } else if (role === 'company') {
+            studentUniFac.style.display = 'none';
+            orgGroup.style.display = 'block';
             orgLabel.innerText = 'Company Name';
             studentExtra.style.display = 'none';
             contactGroup.style.display = 'block';
+            if (univInput) univInput.required = false;
         } else if (role === 'organization') {
+            studentUniFac.style.display = 'none';
+            orgGroup.style.display = 'block';
             orgLabel.innerText = 'Organization Name';
             studentExtra.style.display = 'none';
             contactGroup.style.display = 'block';
+            if (univInput) univInput.required = false;
         } else if (role === 'admin') {
+            studentUniFac.style.display = 'none';
+            orgGroup.style.display = 'block';
             orgLabel.innerText = 'Department / System';
             studentExtra.style.display = 'none';
             contactGroup.style.display = 'none';
+            if (univInput) univInput.required = false;
         }
+    }
+
+    // Add User Form Validation for Student University
+    const addUserForm = document.querySelector('#addUserModal form');
+    if (addUserForm) {
+        addUserForm.addEventListener('submit', function(e) {
+            const role = document.getElementById('addRoleSelect').value;
+            if (role === 'student') {
+                const uniVal = document.getElementById('addUserUnivInput').value.trim();
+                if (!uniVal) {
+                    e.preventDefault();
+                    alert('Please select or type a University name for the student.');
+                    document.getElementById('addUserUnivInput').focus();
+                }
+            }
+        });
     }
 
     // View User Modal
