@@ -11,28 +11,18 @@ public function getStudent($email)
     global $conn;
 
     $sql="
-    SELECT 
-        student.*,
-        user.status AS user_status
-
+    SELECT student.*,user.status AS user_status
     FROM student
 
     INNER JOIN user
-
     ON student.Email = user.Email
-
-    WHERE student.Email=?
-    ";
+    WHERE student.Email=?";
 
     $stmt=$conn->prepare($sql);
-
-    $stmt->bind_param(
-        "s",
-        $email
+    $stmt->bind_param("s",$email
     );
 
     $stmt->execute();
-
     return $stmt
     ->get_result()
     ->fetch_assoc();
@@ -45,22 +35,75 @@ public function getStudent($email)
         $sql="
         SELECT COUNT(*)
         FROM skills
-        WHERE Email=?
-        ";
+        WHERE Email=?";
 
         $stmt=$conn->prepare($sql);
-        $stmt->bind_param(
-            "s",
-            $email
-        );
+        $stmt->bind_param("s",$email);
         $stmt->execute();
         return $stmt
         ->get_result()
         ->fetch_row()[0];
 
     }
+    // Get average skill percentage
+    public function getAverageSkillPercentage($email)
+    {
+        global $conn;
 
-    // Count certificates
+        $sql="
+        SELECT AVG(percentage)
+        FROM skills
+        WHERE Email=?";
+
+        $stmt=$conn->prepare($sql);
+        $stmt->bind_param("s",$email);
+
+        $stmt->execute();
+        $result = $stmt
+        ->get_result()
+        ->fetch_row()[0];
+
+        return round($result ?? 0);
+    }
+
+    // Get total skill experience
+    public function getTotalSkillExperience($email)
+    {
+        global $conn;
+        $sql="
+        SELECT initial_experience,created_at
+        FROM skills
+        WHERE Email=?";
+
+        $stmt=$conn->prepare($sql);
+        $stmt->bind_param("s",$email);
+        $stmt->execute();
+
+        $skills=$stmt
+        ->get_result()
+        ->fetch_all(MYSQLI_ASSOC);
+
+        $totalExperience=0;
+        foreach($skills as $skill)
+        {
+            $created = new DateTime(
+                $skill['created_at']
+            );
+            $today = new DateTime();
+
+            $yearsPassed = $created->diff($today)->y;
+            $totalExperience +=
+            $skill['initial_experience']
+            +
+            $yearsPassed;
+
+        }
+
+
+        return $totalExperience;
+
+    }
+        // Count certificates
     public function getCertificateCount($email)
     {
         global $conn;
@@ -71,10 +114,7 @@ public function getStudent($email)
         ";
 
         $stmt=$conn->prepare($sql);
-        $stmt->bind_param(
-            "s",
-            $email
-        );
+        $stmt->bind_param("s",$email);
         $stmt->execute();
         return $stmt
         ->get_result()
@@ -92,12 +132,8 @@ public function getStudent($email)
         WHERE Email=?
         ";
         $stmt=$conn->prepare($sql);
-        $stmt->bind_param(
-            "s",
-            $email
-        );
+        $stmt->bind_param("s",$email);
         $stmt->execute();
-
 
         return $stmt
         ->get_result()
@@ -118,10 +154,7 @@ public function getStudent($email)
         ";
 
         $stmt=$conn->prepare($sql);
-        $stmt->bind_param(
-            "s",
-            $email
-        );
+        $stmt->bind_param("s",$email);
 
         $stmt->execute();
         return $stmt
@@ -136,22 +169,10 @@ public function getRecommendedInternships()
     global $conn;
     $sql = "
 
-    SELECT
-        id,
-        title,
-        company,
-        industry,
-        tech_tags,
-        duration,
-        deadline
-
+    SELECT id,title,company,industry,tech_tags,duration,deadline
     FROM internships
-
     ORDER BY id DESC
-
-    LIMIT 2
-
-    ";
+    LIMIT 2";
 
     $stmt = $conn->prepare($sql);
     $stmt->execute();
@@ -167,25 +188,13 @@ public function getSkills($email)
 {
     global $conn;
     $sql="
-    SELECT
-    skill_id,
-    skill_name,
-    level,
-    experience
-
+    SELECT skill_id,skill_name,category,level,initial_experience,percentage,created_at
     FROM skills
-
     WHERE Email=?
-
-    ORDER BY skill_id DESC
-    LIMIT 6
-    ";
+    ORDER BY skill_id DESC";
 
     $stmt=$conn->prepare($sql);
-    $stmt->bind_param(
-        "s",
-        $email
-    );
+    $stmt->bind_param("s",$email);
 
     $stmt->execute();
     return $stmt
@@ -199,48 +208,20 @@ public function getProjects($email)
 {
 
     global $conn;
-
-
     $sql = "
 
-    SELECT
-
-    p.id,
-    p.title,
-    p.company AS organization,
-    sp.role AS team,
-    sp.progress,
-    sp.status
-
-
+    SELECT p.id,p.title,p.company AS organization,sp.role AS team,sp.progress,sp.status
     FROM student_projects sp
-
-
     INNER JOIN projects p
-
     ON sp.project_id = p.id
-
-
     WHERE sp.Email = ?
-
-
     ORDER BY sp.student_project_id DESC
 
-
-    LIMIT 2
-
-    ";
-
+    LIMIT 2";
 
     $stmt=$conn->prepare($sql);
-
-
     $stmt->bind_param("s",$email);
-
-
     $stmt->execute();
-
-
     return $stmt
         ->get_result()
         ->fetch_all(MYSQLI_ASSOC);
@@ -250,34 +231,18 @@ public function getProjects($email)
 // Get student notifications
 public function getNotifications($email)
 {
-
     global $conn;
 
     $sql = "
-    SELECT 
-        title,
-        message,
-        type,
-        created_at
-
+    SELECT title,message,type,created_at
     FROM notifications
-
     WHERE Email=?
-
     ORDER BY created_at DESC
-
-    LIMIT 3
-    ";
-
+    LIMIT 3";
 
     $stmt = $conn->prepare($sql);
-
-
     $stmt->bind_param("s",$email);
-
-
     $stmt->execute();
-
 
     return $stmt
     ->get_result()

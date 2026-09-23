@@ -356,39 +356,44 @@ INSERT INTO `projects` (`id`, `title`, `company`, `organization_email`, `icon`, 
 
 DROP TABLE IF EXISTS `skills`;
 CREATE TABLE `skills` (
-  `skill_id` int(11) NOT NULL,
+  `skill_id` int(11) NOT NULL AUTO_INCREMENT,
   `Email` varchar(100) NOT NULL,
   `skill_name` varchar(100) NOT NULL,
   `category` varchar(50) DEFAULT NULL,
   `level` varchar(50) DEFAULT NULL,
-  `experience` varchar(50) DEFAULT NULL,
+  `initial_experience` int(11) DEFAULT 0,
   `percentage` int(11) DEFAULT 0,
-  `status` varchar(20) DEFAULT 'Pending'
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+
+  PRIMARY KEY (`skill_id`),
+  KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `skills`
 --
 
-INSERT INTO `skills` (`skill_id`, `Email`, `skill_name`, `category`, `level`, `experience`, `percentage`, `status`) VALUES
-(1, '2024is058@stu.ucsc.cmb.ac.lk', 'React', 'Frontend', 'Advanced', '2 years', 85, 'Verified'),
-(2, '2024is058@stu.ucsc.cmb.ac.lk', 'PHP', 'Backend', 'Expert', '3 years', 90, 'Verified'),
-(3, '2024is058@stu.ucsc.cmb.ac.lk', 'MySQL', 'Database', 'Advanced', '2 years', 88, 'Verified'),
-(4, '2024is058@stu.ucsc.cmb.ac.lk', 'Docker', 'DevOps', 'Intermediate', '1 year', 70, 'Pending'),
-(5, '2024is001@stu.ucsc.cmb.ac.lk', 'Python', 'Programming', 'Expert', '3 years', 92, 'Verified'),
-(6, '2024is001@stu.ucsc.cmb.ac.lk', 'Flutter', 'Mobile', 'Advanced', '2 years', 80, 'Verified'),
-(7, '2024is001@stu.ucsc.cmb.ac.lk', 'PyTorch', 'Machine Learning', 'Intermediate', '1.5 years', 75, 'Pending'),
-(8, '2024is015@stu.ucsc.cmb.ac.lk', 'Figma', 'Design', 'Expert', '3 years', 95, 'Verified'),
-(9, '2024is015@stu.ucsc.cmb.ac.lk', 'UI/UX Research', 'Design', 'Advanced', '2 years', 85, 'Verified'),
-(10, '2024is015@stu.ucsc.cmb.ac.lk', 'CSS / Sass', 'Frontend', 'Expert', '3 years', 90, 'Verified'),
-(11, '2024is032@stu.ucsc.cmb.ac.lk', 'Network Security', 'Security', 'Intermediate', '1 year', 72, 'Pending'),
-(12, '2024is032@stu.ucsc.cmb.ac.lk', 'Linux System Administration', 'DevOps', 'Advanced', '2 years', 82, 'Verified'),
-(13, '2024is044@stu.ucsc.cmb.ac.lk', 'Kubernetes', 'Cloud & DevOps', 'Intermediate', '1 year', 68, 'Pending'),
-(14, '2024is044@stu.ucsc.cmb.ac.lk', 'Java', 'Backend', 'Advanced', '2 years', 84, 'Verified');
+INSERT INTO `skills`(`skill_id`,`Email`,`skill_name`,`category`,`level`,`initial_experience`,`percentage`,`created_at`)VALUES
+(1,'2024is058@stu.ucsc.cmb.ac.lk','React','Frontend','Advanced',2,80,'2026-09-22 08:00:00'),
+(2,'2024is058@stu.ucsc.cmb.ac.lk','PHP','Backend','Expert',3,95,'2026-09-22 08:00:00'),
+(3,'2024is058@stu.ucsc.cmb.ac.lk','MySQL','Database','Advanced',2,80,'2026-09-22 08:00:00'),
+(4,'2024is058@stu.ucsc.cmb.ac.lk','Docker','Cloud & DevOps','Intermediate',1,60,'2026-09-22 08:00:00'),
+(5,'2024is078@stu.ucsc.cmb.ac.lk','Python','Programming','Expert',3,95,'2026-09-22 08:00:00'),
+(6,'2024is078@stu.ucsc.cmb.ac.lk','Flutter','Mobile Development','Advanced',2,80,'2026-09-22 08:00:00'),
+(7,'2024is078@stu.ucsc.cmb.ac.lk','PyTorch','AI & Machine Learning','Intermediate',1,60,'2026-09-22 08:00:00'),
+(8,'2024is015@stu.ucsc.cmb.ac.lk','Figma','Web Design','Expert',3,95,'2026-09-22 08:00:00'),
+(9,'2024is015@stu.ucsc.cmb.ac.lk','UI/UX Research','Web Design','Advanced',2,80,'2026-09-22 08:00:00'),
+(10,'2024is015@stu.ucsc.cmb.ac.lk','CSS / Sass','Frontend','Expert',3,95,'2026-09-22 08:00:00'),
+(11,'2024is032@stu.ucsc.cmb.ac.lk','Network Security','Cloud & DevOps','Intermediate',1,60,'2026-09-22 08:00:00'),
+(12,'2024is032@stu.ucsc.cmb.ac.lk','Linux System Administration','Cloud & DevOps','Advanced',2,80,'2026-09-22 08:00:00'),
+(13,'2024is001@stu.ucsc.cmb.ac.lk','Kubernetes','Cloud & DevOps','Intermediate',1,60,'2026-09-22 08:00:00'),
+(14,'2024is044@stu.ucsc.cmb.ac.lk','Java','Backend','Beginner',2,40,'2026-09-22 08:00:00');
+
+ALTER TABLE `skills`
+AUTO_INCREMENT = 15;
 
 -- --------------------------------------------------------
 
---
 -- Table structure for table `student`
 --
 
@@ -404,7 +409,7 @@ CREATE TABLE `student` (
   `github` varchar(255) DEFAULT NULL,
   `linkedin` varchar(255) DEFAULT NULL,
   `website` varchar(255) DEFAULT NULL,
-  `profile_completion` int(11) DEFAULT 0
+  `profile_completion` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -412,12 +417,12 @@ CREATE TABLE `student` (
 --
 
 INSERT INTO `student` (`Email`, `University`, `year`, `degree`, `Name`, `profile_image`, `bio`, `github`, `linkedin`, `website`, `profile_completion`) VALUES
-('2024is058@stu.ucsc.cmb.ac.lk', 'University OF Colombo', 'Year 2', 'B.Sc. in Information Systems', 'Haritha Induwara', 'profile_1786995576_6a836378cc4ba.png', 'Aspiring Full-Stack Developer & Cloud Enthusiast passionate about building scalable web solutions.', 'https://github.com/harithainduwara', 'https://linkedin.com/in/harithainduwara', 'https://harithainduwara.dev', 95),
-('2024is001@stu.ucsc.cmb.ac.lk', 'University OF Colombo', 'Year 2', 'B.Sc. in Computer Science', 'Kavindu Perera', NULL, 'Mobile App Developer and Machine Learning enthusiast with experience in Flutter and PyTorch.', 'https://github.com/kavinduperera', 'https://linkedin.com/in/kavindu-perera', 'https://kavindu.me', 85),
-('2024is015@stu.ucsc.cmb.ac.lk', 'University OF Colombo', 'Year 3', 'B.Sc. in Software Engineering', 'Nimasha Fernando', NULL, 'UI/UX Designer and Frontend Specialist focused on intuitive user experiences and design systems.', 'https://github.com/nimasha-fernando', 'https://linkedin.com/in/nimashafernando', 'https://nimasha.design', 90),
-('2024is032@stu.ucsc.cmb.ac.lk', 'University OF Colombo', 'Year 1', 'B.Sc. in Information Systems', 'Sahan Wickramasinghe', NULL, 'Cybersecurity student and backend explorer, working with Python, Linux, and network security.', 'https://github.com/sahanw', 'https://linkedin.com/in/sahan-wickrama', 'https://sahan.tech', 75),
-('2024is044@stu.ucsc.cmb.ac.lk', 'University OF Colombo', 'Year 3', 'B.Sc. in Computer Science', 'Dinithi Jayawardena', NULL, 'Data Science & DevOps enthusiast. Passionate about Docker, Kubernetes, and predictive analytics.', 'https://github.com/dinithij', 'https://linkedin.com/in/dinithi-jayawardena', 'https://dinithi.io', 80);
-
+('2024is058@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '2', 'B.Sc. in Information Systems', 'Haritha Induwara', NULL, 'Aspiring Full-Stack Developer & Cloud Enthusiast passionate about building scalable web solutions.', 'https://github.com/harithainduwara', 'https://linkedin.com/in/harithainduwara', 'https://harithainduwara.dev', NULL),
+('2024is001@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '2', 'B.Sc. in Computer Science', 'Kavindu Perera', NULL, 'Mobile App Developer and Machine Learning enthusiast with experience in Flutter and PyTorch.', 'https://github.com/kavinduperera', 'https://linkedin.com/in/kavindu-perera', 'https://kavindu.me', NULL),
+('2024is015@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '3', 'B.Sc. in Software Engineering', 'Nimasha Fernando', NULL, 'UI/UX Designer and Frontend Specialist focused on intuitive user experiences and design systems.', 'https://github.com/nimasha-fernando', 'https://linkedin.com/in/nimashafernando', 'https://nimasha.design', NULL),
+('2024is032@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '1', 'B.Sc. in Information Systems', 'Sahan Wickramasinghe', NULL, 'Cybersecurity student and backend explorer, working with Python, Linux, and network security.', 'https://github.com/sahanw', 'https://linkedin.com/in/sahan-wickrama', 'https://sahan.tech', NULL),
+('2024is044@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '3', 'B.Sc. in Computer Science', 'Dinithi Jayawardena', NULL, 'Data Science & DevOps enthusiast. Passionate about Docker, Kubernetes, and predictive analytics.', 'https://github.com/dinithij', 'https://linkedin.com/in/dinithi-jayawardena', 'https://dinithi.io', NULL),
+('2024is078@stu.ucsc.cmb.ac.lk', 'University OF Colombo', '3', 'B.Sc. in Information Systems', 'Lasith Perera', NULL, 'Machine Learning enthusiast. Passionate about Docker, Kubernetes, and predictive analytics.', 'https://github.com/lasith-perera', 'https://linkedin.com/in/lasith-perera', 'https://lasith.dev', NULL);
 -- --------------------------------------------------------
 
 --
@@ -503,6 +508,7 @@ INSERT INTO `user` (`Email`, `password`, `role`, `status`, `verification_code`, 
 ('2024is044@stu.ucsc.cmb.ac.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'student', 'Active', '', '2026-08-21 04:10:00'),
 ('2024is052@stu.ucsc.cmb.ac.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'organization', 'Active', '', '2026-08-19 02:56:27'),
 ('2024is058@stu.ucsc.cmb.ac.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'student', 'Active', '', '2026-08-20 02:24:58'),
+('2024is078@stu.ucsc.cmb.ac.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'student', 'Active', '', '2026-09-22 02:24:58'),
 ('admin.sarath@skillbridge.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'admin', 'Active', '', '2026-08-19 04:00:00'),
 ('careers@virtusa.com', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'company', 'Active', '', '2026-08-15 03:30:00'),
 ('foss@sliit.lk', '7110eda4d09e062aa5e4a390b0a572ac0d2c0220', 'organization', 'Active', '', '2026-08-25 07:45:00'),
@@ -591,13 +597,6 @@ ALTER TABLE `portfolio`
 ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_projects_org` (`organization_email`);
-
---
--- Indexes for table `skills`
---
-ALTER TABLE `skills`
-  ADD PRIMARY KEY (`skill_id`),
-  ADD KEY `Email` (`Email`);
 
 --
 -- Indexes for table `student`
