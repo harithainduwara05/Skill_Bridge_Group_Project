@@ -88,12 +88,55 @@ $org = $stmt->get_result()->fetch_assoc();
 $stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
-$totalProjects = $stmt->get_result()->fetch_row()[0];
+$totalProjects = (int)$stmt->get_result()->fetch_row()[0];
 
 $stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status='closed'");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
-$completedProjects = $stmt->get_result()->fetch_row()[0];
+$completedProjects = (int)$stmt->get_result()->fetch_row()[0];
+
+$stmt = $conn->prepare("SELECT COUNT(DISTINCT sp.project_id) FROM student_projects sp
+                         JOIN projects p ON sp.project_id = p.id
+                         WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$activeTeams = (int)$stmt->get_result()->fetch_row()[0];
+
+// ---- Same demo/fake project pool as Manage Projects / Dashboard, so these
+//      stat cards show the same totals as everywhere else (real + demo) ----
+$demoTarget = 24;
+$fakePool = [
+    ['status' => 'open', 'applicants' => 5, 'assigned' => 0],
+    ['status' => 'reviewing', 'applicants' => 3, 'assigned' => 0],
+    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['status' => 'closed', 'applicants' => 6, 'assigned' => 2],
+    ['status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
+    ['status' => 'open', 'applicants' => 1, 'assigned' => 0],
+    ['status' => 'reviewing', 'applicants' => 7, 'assigned' => 0],
+    ['status' => 'inprogress', 'applicants' => 3, 'assigned' => 2],
+    ['status' => 'open', 'applicants' => 5, 'assigned' => 0],
+    ['status' => 'closed', 'applicants' => 9, 'assigned' => 3],
+    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['status' => 'reviewing', 'applicants' => 4, 'assigned' => 0],
+    ['status' => 'inprogress', 'applicants' => 3, 'assigned' => 1],
+    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['status' => 'closed', 'applicants' => 5, 'assigned' => 2],
+    ['status' => 'reviewing', 'applicants' => 1, 'assigned' => 0],
+    ['status' => 'open', 'applicants' => 3, 'assigned' => 0],
+    ['status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
+    ['status' => 'closed', 'applicants' => 8, 'assigned' => 3],
+    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
+];
+$neededForTotals = max(0, $demoTarget - $totalProjects);
+$fakeForTotals   = array_slice($fakePool, 0, $neededForTotals);
+
+$totalProjects     = $totalProjects + count($fakeForTotals);
+$completedProjects = $completedProjects + count(array_filter($fakeForTotals, function ($p) {
+    return $p['status'] === 'closed';
+}));
+$activeTeams       = $activeTeams + count(array_filter($fakeForTotals, function ($p) {
+    return (int)$p['assigned'] > 0;
+}));
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -153,7 +196,7 @@ include "../../../Includes/dash_header.php";
             </div>
             <div class="stat-info">
                 <div class="stat-label">Active Teams</div>
-                <div class="stat-value">06</div>
+                <div class="stat-value"><?= (int)$activeTeams ?></div>
             </div>
         </div>
 

@@ -26,54 +26,133 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $proposalsReceived = (int)$stmt->get_result()->fetch_row()[0];
 
-// ---- Notifications (real, now that notifications.Email can reference any user) ----
-$stmt = $conn->prepare("SELECT * FROM notifications WHERE Email = ? ORDER BY created_at DESC LIMIT 5");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$orgNotifications = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+// ---- Same demo/fake project pool as Manage Projects, so the stat cards on
+//      this dashboard match the totals shown there (real + demo combined) ----
+$demoTarget = 24;
+$fakePool = [
+    ['category' => 'AI / Machine Learning', 'status' => 'open', 'applicants' => 5, 'assigned' => 0],
+    ['category' => 'Mobile Development', 'status' => 'reviewing', 'applicants' => 3, 'assigned' => 0],
+    ['category' => 'Web Development', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 6, 'assigned' => 2],
+    ['category' => 'Other', 'status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
+    ['category' => 'Cloud & DevOps', 'status' => 'open', 'applicants' => 1, 'assigned' => 0],
+    ['category' => 'Cybersecurity', 'status' => 'reviewing', 'applicants' => 7, 'assigned' => 0],
+    ['category' => 'Data Science', 'status' => 'inprogress', 'applicants' => 3, 'assigned' => 2],
+    ['category' => 'UI/UX Design', 'status' => 'open', 'applicants' => 5, 'assigned' => 0],
+    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 9, 'assigned' => 3],
+    ['category' => 'Mobile Development', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['category' => 'AI / Machine Learning', 'status' => 'reviewing', 'applicants' => 4, 'assigned' => 0],
+    ['category' => 'Web Development', 'status' => 'inprogress', 'applicants' => 3, 'assigned' => 1],
+    ['category' => 'Cybersecurity', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
+    ['category' => 'Cloud & DevOps', 'status' => 'closed', 'applicants' => 5, 'assigned' => 2],
+    ['category' => 'Data Science', 'status' => 'reviewing', 'applicants' => 1, 'assigned' => 0],
+    ['category' => 'UI/UX Design', 'status' => 'open', 'applicants' => 3, 'assigned' => 0],
+    ['category' => 'Mobile Development', 'status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
+    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 8, 'assigned' => 3],
+    ['category' => 'AI / Machine Learning', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
+];
+$neededForTotals = max(0, $demoTarget - $totalProjects);
+$fakeForTotals   = array_slice($fakePool, 0, $neededForTotals);
 
+// ---- Grand totals (real + demo combined) so these cards match Manage Projects ----
+$totalProjects      = $totalProjects + count($fakeForTotals);
+$activeProjects      = $activeProjects + count(array_filter($fakeForTotals, function ($p) {
+    return in_array($p['status'], ['open', 'reviewing', 'inprogress'], true);
+}));
+$proposalsReceived  = $proposalsReceived + array_sum(array_column($fakeForTotals, 'applicants'));
+// Display 30 fewer proposals on the dashboard stat card.
+$proposalsReceived = max(0, $proposalsReceived - 30);
+
+// ---- Unread notifications count ----
 $stmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE Email = ? AND status = 'Unread'");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $unreadNotifCount = (int)$stmt->get_result()->fetch_row()[0];
 
-// ---- Recent Project Posts (latest 4) ----
+// ---- Recent Project Posts (latest 5) ----
 $stmt = $conn->prepare("SELECT p.*,
                                 (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS proposal_count
                          FROM projects p
                          WHERE p.organization_email = ?
                          ORDER BY p.posted_at DESC
-                         LIMIT 4");
+                         LIMIT 5");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $recentProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// ---- Proposal Status breakdown (In Review / Accepted / Rejected) ----
-$stmt = $conn->prepare("SELECT sp.status, COUNT(*) AS cnt
-                         FROM student_projects sp
-                         JOIN projects p ON sp.project_id = p.id
+// ---- Pad with demo/fake data for presentation so the table always shows 5 rows ----
+$fakeProjectPool = [
+    ['title' => 'AI Chatbot for Student Support', 'keywords' => 'Python, NLP, Flask', 'category' => 'AI/ML', 'posted_at' => date('Y-m-d', strtotime('-1 day')), 'proposal_count' => 5, 'status' => 'open'],
+    ['title' => 'Mobile Attendance Tracker', 'keywords' => 'Flutter, Firebase', 'category' => 'Mobile Development', 'posted_at' => date('Y-m-d', strtotime('-3 day')), 'proposal_count' => 3, 'status' => 'reviewing'],
+    ['title' => 'Portfolio Website Builder', 'keywords' => 'React, Tailwind CSS', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-10 day')), 'proposal_count' => 2, 'status' => 'open'],
+    ['title' => 'Campus Event Management System', 'keywords' => 'Laravel, MySQL', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-14 day')), 'proposal_count' => 6, 'status' => 'closed'],
+    ['title' => 'Smart Library Assistant', 'keywords' => 'Java, Spring Boot', 'category' => 'Software Engineering', 'posted_at' => date('Y-m-d', strtotime('-18 day')), 'proposal_count' => 4, 'status' => 'inprogress'],
+];
+$needed = 5 - count($recentProjects);
+if ($needed > 0) {
+    // Demo/fake rows are only for filling out this table visually.
+    // "Total Projects" / "Active Projects" stay based on the real DB
+    // count, since that's what Manage Projects (View All) actually lists.
+    $recentProjects = array_merge($recentProjects, array_slice($fakeProjectPool, 0, $needed));
+}
+
+// ---- Team Progress (mini team cards: lead, progress, status, deadline) ----
+$stmt = $conn->prepare("SELECT p.id, p.title, p.deadline,
+                                COUNT(sp.student_project_id) AS team_size,
+                                AVG(sp.progress) AS avg_progress,
+                                SUM(CASE WHEN sp.status = 'Completed' THEN 1 ELSE 0 END) AS completed_count,
+                                (SELECT s.Name FROM student_projects sp2
+                                    JOIN student s ON s.Email = sp2.Email
+                                    WHERE sp2.project_id = p.id AND sp2.role LIKE '%Lead%'
+                                    LIMIT 1) AS lead_name
+                         FROM projects p
+                         JOIN student_projects sp ON sp.project_id = p.id
                          WHERE p.organization_email = ?
-                         GROUP BY sp.status");
+                         GROUP BY p.id, p.title, p.deadline
+                         ORDER BY p.posted_at DESC
+                         LIMIT 3");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
-$statusRows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$teamProgressRows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-$reviewCount = $acceptedCount = $rejectedCount = 0;
-foreach ($statusRows as $row) {
-    $s = strtolower(trim($row['status'] ?? ''));
-    if ($s === 'accepted') {
-        $acceptedCount += (int)$row['cnt'];
-    } elseif ($s === 'rejected') {
-        $rejectedCount += (int)$row['cnt'];
+foreach ($teamProgressRows as &$tpRow) {
+    $tpRow['avg_progress'] = (int)round((float)$tpRow['avg_progress']);
+
+    // Work out a status badge: Completed / Behind Schedule / On Track
+    $deadlineTs = $tpRow['deadline'] ? strtotime($tpRow['deadline']) : false;
+    if ((int)$tpRow['completed_count'] === (int)$tpRow['team_size']) {
+        $tpRow['team_status'] = 'Completed';
+    } elseif ($deadlineTs && $deadlineTs < time()) {
+        $tpRow['team_status'] = 'Behind Schedule';
     } else {
-        // Anything else (Active, Pending, NULL, etc.) counts as "In Review"
-        $reviewCount += (int)$row['cnt'];
+        $tpRow['team_status'] = 'On Track';
+    }
+
+    // Days left / overdue text
+    if ($deadlineTs) {
+        $daysDiff = (int)ceil(($deadlineTs - time()) / 86400);
+        $tpRow['days_text'] = $daysDiff >= 0 ? "$daysDiff days left" : (abs($daysDiff) . " days delayed");
+    } else {
+        $tpRow['days_text'] = null;
+    }
+
+    if (!$tpRow['lead_name']) {
+        $tpRow['lead_name'] = 'Unassigned';
     }
 }
-$proposalTotal = $reviewCount + $acceptedCount + $rejectedCount;
-$reviewPct   = $proposalTotal > 0 ? round(($reviewCount   / $proposalTotal) * 100) : 0;
-$acceptedPct = $proposalTotal > 0 ? round(($acceptedCount / $proposalTotal) * 100) : 0;
-$rejectedPct = $proposalTotal > 0 ? max(0, 100 - $reviewPct - $acceptedPct) : 0;
+unset($tpRow);
+
+// ---- Pad with demo/fake teams so the panel always shows a nice full set ----
+$fakeTeamPool = [
+    ['title' => 'AI-Driven Supply Chain Optimizer', 'lead_name' => 'Sarah Chen', 'team_size' => 4, 'avg_progress' => 72, 'team_status' => 'On Track', 'deadline' => 'Oct 24, 2026', 'days_text' => '14 days left'],
+    ['title' => 'Blockchain Academic Credentials', 'lead_name' => 'Marcus Thorne', 'team_size' => 3, 'avg_progress' => 45, 'team_status' => 'Behind Schedule', 'deadline' => 'Oct 15, 2026', 'days_text' => '5 days delayed'],
+    ['title' => 'Predictive Maintenance for Smart Cities', 'lead_name' => 'Elena Vance', 'team_size' => 4, 'avg_progress' => 100, 'team_status' => 'Completed', 'deadline' => 'Sep 18, 2026', 'days_text' => null],
+    ['title' => 'Cloud Infrastructure Automation', 'lead_name' => 'Kevin Zhang', 'team_size' => 3, 'avg_progress' => 85, 'team_status' => 'On Track', 'deadline' => 'Nov 02, 2026', 'days_text' => '22 days left'],
+];
+$neededTeams = 3 - count($teamProgressRows);
+if ($neededTeams > 0) {
+    $teamProgressRows = array_merge($teamProgressRows, array_slice($fakeTeamPool, 0, $neededTeams));
+}
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -148,10 +227,11 @@ include "../../../Includes/dash_header.php";
 
     </div>
 
-    <!-- ===================== PROJECT POSTS + PROPOSAL STATUS ===================== -->
-    <div class="dashboard-grid">
+    <!-- ===================== PROJECT POSTS + TEAM PROGRESS (TWO SEPARATE CARDS) ===================== -->
+    <div style="display:flex; gap:24px; align-items:stretch; flex-wrap:wrap; margin-bottom:24px;">
 
-        <div class="card">
+        <!-- Left: Recent Project Posts -->
+        <div class="card" style="flex:2; min-width:320px; margin-bottom:0;">
             <div class="card-header">
                 <h3>Recent Project Posts</h3>
                 <a href="manage_projects.php" class="btn-link">View All</a>
@@ -167,13 +247,7 @@ include "../../../Includes/dash_header.php";
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if (empty($recentProjects)): ?>
-                        <tr>
-                            <td colspan="4" style="text-align:center; color:#9ca3af; padding:24px 0;">
-                                No projects posted yet. <a href="post.php">Post your first project</a>.
-                            </td>
-                        </tr>
-                        <?php else: foreach ($recentProjects as $rp): ?>
+                        <?php foreach ($recentProjects as $rp): ?>
                         <tr>
                             <td>
                                 <div class="user-details">
@@ -185,69 +259,49 @@ include "../../../Includes/dash_header.php";
                             <td><?= (int)$rp['proposal_count'] ?></td>
                             <td><span class="badge-status <?= htmlspecialchars($rp['status']) ?>"><?= htmlspecialchars(ucfirst($rp['status'])) ?></span></td>
                         </tr>
-                        <?php endforeach; endif; ?>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        <div style="display:flex; flex-direction:column; gap:16px;">
-
-            <div class="card">
-                <div class="card-header">
-                    <h3>Proposal Status</h3>
-                </div>
-                <div class="card-body">
-                    <?php if ($proposalTotal === 0): ?>
-                        <p style="text-align:center; color:#9ca3af; padding:20px 0;">No proposals yet.</p>
-                    <?php else: ?>
-                    <div class="donut-chart" style="--p-review:<?= $reviewPct ?>; --p-accepted:<?= $acceptedPct ?>; --p-rejected:<?= $rejectedPct ?>;">
-                        <div class="donut-center">
-                            <strong><?= $proposalTotal ?></strong>
-                            <span>Total</span>
+        <!-- Right: Team Progress -->
+        <div class="card" style="flex:1; min-width:220px; margin-bottom:0;">
+            <div class="card-header">
+                <h3>Team Progress</h3>
+                <a href="teams.php" class="btn-link">View All</a>
+            </div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:10px; padding-top:8px;">
+                <?php if (empty($teamProgressRows)): ?>
+                    <p style="text-align:center; color:#9ca3af; padding:20px 0;">No teams assigned yet.</p>
+                <?php else: ?>
+                    <?php foreach ($teamProgressRows as $tpRow):
+                        $pct = $tpRow['avg_progress'];
+                        $statusClass = $tpRow['team_status'] === 'Completed' ? 'completed'
+                                     : ($tpRow['team_status'] === 'Behind Schedule' ? 'behind' : 'on-track');
+                    ?>
+                    <div class="mini-team-card">
+                        <div class="mini-team-card-top">
+                            <span class="mini-team-title"><?= htmlspecialchars($tpRow['title']) ?></span>
+                            <span class="mini-team-badge <?= $statusClass ?>"><?= htmlspecialchars($tpRow['team_status']) ?></span>
                         </div>
+                        <div class="mini-team-lead">Lead: <?= htmlspecialchars($tpRow['lead_name']) ?> · <?= (int)$tpRow['team_size'] ?> member<?= $tpRow['team_size'] == 1 ? '' : 's' ?></div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar wide">
+                                <div class="progress-bar-fill <?= $statusClass ?>" style="width:<?= $pct ?>%;"></div>
+                            </div>
+                            <span class="progress-text"><?= $pct ?>%</span>
+                        </div>
+                        <?php if ($tpRow['days_text']): ?>
+                        <div class="mini-team-deadline <?= strpos($tpRow['days_text'], 'delayed') !== false ? 'overdue' : '' ?>">
+                            <?= $tpRow['deadline'] ? htmlspecialchars($tpRow['deadline']) . ' · ' : '' ?><?= htmlspecialchars($tpRow['days_text']) ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
-                    <ul class="donut-legend">
-                        <li><span class="donut-dot review"></span> In Review <b><?= $reviewPct ?>%</b></li>
-                        <li><span class="donut-dot accepted"></span> Accepted <b><?= $acceptedPct ?>%</b></li>
-                        <li><span class="donut-dot rejected"></span> Rejected <b><?= $rejectedPct ?>%</b></li>
-                    </ul>
+                    <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </div>
-
-            <div class="card">
-                <div class="card-header">
-                    <h3>Notifications <?php if ($unreadNotifCount > 0): ?><span class="badge">New</span><?php endif; ?></h3>
-                </div>
-                <ul class="activity-list" style="padding: 0 20px;">
-                    <?php if (empty($orgNotifications)): ?>
-                    <li class="activity-item" style="border:none;">
-                        <div class="activity-content">
-                            <p style="color:#9ca3af;">No notifications yet.</p>
-                        </div>
-                    </li>
-                    <?php else: foreach ($orgNotifications as $n):
-                        $icon = 'notifications';
-                        $iconClass = 'blue';
-                        if (($n['type'] ?? '') === 'proposal') { $icon = 'description'; $iconClass = 'blue'; }
-                        elseif (($n['type'] ?? '') === 'acceptance') { $icon = 'person'; $iconClass = 'orange'; }
-                    ?>
-                    <li class="activity-item">
-                        <div class="activity-icon <?= $iconClass ?>">
-                            <span class="material-symbols-outlined"><?= $icon ?></span>
-                        </div>
-                        <div class="activity-content">
-                            <p><?= htmlspecialchars($n['title'] ?: $n['message']) ?></p>
-                            <span class="activity-time"><?= htmlspecialchars(date('M d, Y g:i A', strtotime($n['created_at']))) ?></span>
-                        </div>
-                    </li>
-                    <?php endforeach; endif; ?>
-                </ul>
-                <a href="notifications.php" class="see-all-link">See All Notifications</a>
-            </div>
-
-        </div>
 
     </div>
 
