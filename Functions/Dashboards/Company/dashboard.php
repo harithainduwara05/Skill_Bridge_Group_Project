@@ -30,9 +30,29 @@ include "../../../Includes/company_sidebar.php";
 include "../../../Includes/dash_header.php";
 
 $company_display_name = (!empty($name) && $name !== 'User') ? $name : ($user['username'] ?? $user['Name'] ?? 'ABC Technologies');
+$companyImageExists = !empty($image) && file_exists(
+    __DIR__ . '/../../../Assets/Images/Company/' . basename($image)
+);
 ?>
 
 <link rel="stylesheet" href="../../../Assets/CSS/Company/dashboard.css?v=<?php echo time(); ?>">
+
+<style>
+    body.company-boost-modal-open { overflow: hidden; }
+    .company-boost-modal[hidden] { display: none; }
+    .company-boost-modal { position: fixed; z-index: 1300; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    .company-boost-modal__backdrop { position: absolute; inset: 0; background: rgba(15, 30, 55, 0.52); backdrop-filter: blur(4px); }
+    .company-boost-modal__panel { position: relative; z-index: 1; width: min(430px, 100%); padding: 32px; text-align: center; background: #ffffff; border: 1px solid #dfe6f0; border-radius: 16px; box-shadow: 0 24px 60px rgba(10, 31, 60, 0.25); }
+    .company-boost-modal__close { position: absolute; top: 16px; right: 16px; width: 34px; height: 34px; padding: 0; border: 1px solid #dfe5ed; border-radius: 8px; background: #ffffff; color: #526176; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+    .company-boost-modal__close:hover { background: #f4f7fb; color: #18345f; }
+    .company-boost-modal__icon { width: 56px; height: 56px; margin: 0 auto 18px; border-radius: 50%; background: #fff3df; color: #c77c23; display: flex; align-items: center; justify-content: center; }
+    .company-boost-modal__icon .material-symbols-outlined { font-size: 28px; }
+    .company-boost-modal h2 { margin: 0; color: #102d58; font-size: 22px; font-weight: 800; }
+    .company-boost-modal p { margin: 10px 0 24px; color: #6b7280; font-size: 14px; line-height: 1.55; }
+    .company-boost-modal__button { width: 100%; min-height: 46px; border: 1px solid #244274; border-radius: 8px; background: #244274; color: #ffffff; font-family: "Inter", sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .company-boost-modal__button:hover { background: #18345f; }
+    @media (max-width: 560px) { .company-boost-modal { padding: 18px; } .company-boost-modal__panel { padding: 30px 20px 22px; } }
+</style>
 
 <main class="content">
     <div class="company-dashboard-container">
@@ -44,7 +64,7 @@ $company_display_name = (!empty($name) && $name !== 'User') ? $name : ($user['us
 
             <div class="company-badge-card">
                 <div class="company-logo-badge">
-                    <?php if (!empty($image_src)): ?>
+                    <?php if (!empty($image_src) && $companyImageExists): ?>
                         <img src="<?php echo $image_src; ?>?v=<?php echo time(); ?>" alt="Company Logo" style="width:100%;height:100%;border-radius:12px;object-fit:cover;">
                     <?php else: ?>
                         <span class="material-symbols-outlined">corporate_fare</span>
@@ -353,7 +373,7 @@ $company_display_name = (!empty($name) && $name !== 'User') ? $name : ($user['us
                         </div>
                     </div>
 
-                    <button class="btn-boost-listings" type="button" onclick="window.location.href='Usermanagemen.php'">Boost Listings</button>
+                    <button class="btn-boost-listings" type="button" id="openBoostListingModal">Boost Listings</button>
                 </div>
 
             </div>
@@ -370,6 +390,50 @@ $company_display_name = (!empty($name) && $name !== 'User') ? $name : ($user['us
 
     </div>
 </main>
+
+<div class="company-boost-modal" id="boostListingModal" role="dialog" aria-modal="true" aria-labelledby="boostListingModalTitle" aria-hidden="true" hidden>
+    <div class="company-boost-modal__backdrop" data-boost-modal-close></div>
+    <section class="company-boost-modal__panel" role="document">
+        <button type="button" class="company-boost-modal__close" data-boost-modal-close aria-label="Close boost listing information">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+        <div class="company-boost-modal__icon" aria-hidden="true">
+            <span class="material-symbols-outlined">campaign</span>
+        </div>
+        <h2 id="boostListingModalTitle">Boost Listings</h2>
+        <p>Boosting listings is not available yet. This feature is being prepared to help your internships reach more candidates.</p>
+        <button type="button" class="company-boost-modal__button" data-boost-modal-close>Close</button>
+    </section>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById('boostListingModal');
+        const openButton = document.getElementById('openBoostListingModal');
+        if (!modal || !openButton) return;
+
+        let lastFocusedElement = null;
+        function closeModal() {
+            modal.hidden = true;
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('company-boost-modal-open');
+            if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') lastFocusedElement.focus();
+        }
+        openButton.addEventListener('click', function () {
+            lastFocusedElement = document.activeElement;
+            modal.hidden = false;
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('company-boost-modal-open');
+            modal.querySelector('.company-boost-modal__button').focus();
+        });
+        modal.querySelectorAll('[data-boost-modal-close]').forEach(function (closeButton) {
+            closeButton.addEventListener('click', closeModal);
+        });
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && !modal.hidden) closeModal();
+        });
+    })();
+</script>
 
 <script src="../../../Assets/JS/Company/dashboard.js?v=<?php echo time(); ?>"></script>
 
