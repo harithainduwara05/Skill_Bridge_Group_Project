@@ -4,6 +4,28 @@ require_once __DIR__ . '/../Config/db.php';
 require_once __DIR__ . '/../Config/env_loader.php';
 require_once __DIR__ . '/../Includes/simple_smtp.php';
 
+// Faculties for the student sign-up dropdown — read from the database (universityemails).
+// Returns [ 'University name' => ['Faculty A', 'Faculty B'], ... ]
+if (!function_exists('fetchFacultyMap')) {
+    function fetchFacultyMap($conn)
+    {
+        $map = [];
+        try {
+            $res = $conn->query("SELECT DISTINCT University, faculty FROM universityemails WHERE Status != 'De-Active' ORDER BY University ASC, faculty ASC");
+            while ($res && ($row = $res->fetch_assoc())) {
+                $uni = trim($row['University']);
+                $fac = trim($row['faculty']);
+                if ($uni === '' || $fac === '') continue;
+                if (!isset($map[$uni])) $map[$uni] = [];
+                if (!in_array($fac, $map[$uni], true)) $map[$uni][] = $fac;
+            }
+        } catch (Exception $e) {
+            return [];
+        }
+        return $map;
+    }
+}
+
 $flash = "";
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role = $_POST['role'];
@@ -20,8 +42,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $degree = $_POST['degree'];
         $academicYear = $_POST['academicYear'];
 
+        // Faculty must be one of the faculties stored in the database (the sign-up form only lets students pick from that list)
+        $faculty = trim($_POST['faculty'] ?? '');
+        $allFaculties = [];
+        foreach (fetchFacultyMap($conn) as $facList) {
+            $allFaculties = array_merge($allFaculties, $facList);
+        }
+        $facultyInvalid = !empty($allFaculties) && !in_array($faculty, $allFaculties, true);
+        if (!$facultyInvalid && $faculty !== '') {
+            // same format the admin "Add New User" form uses: "University - Faculty"
+            $university = trim($university) . ' - ' . $faculty;
+        }
+
         try {
-            if (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($university)) && !empty(trim($degree)) && !empty(trim($academicYear)) && !empty(trim($password))) {
+            if ($facultyInvalid) {
+                $flash = ['type' => 'error', 'message' => 'Please select your faculty from the list.'];
+            } elseif (!empty(trim($name)) && !empty(trim($email)) && !empty(trim($university)) && !empty(trim($degree)) && !empty(trim($academicYear)) && !empty(trim($password))) {
 
                 // Check if email already exists
                 $checkSql = "SELECT Email FROM User WHERE Email = ?";
