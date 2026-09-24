@@ -1,0 +1,915 @@
+.company-notifications-page,
+.company-notifications-page * {
+    box-sizing: border-box;
+}
+
+
+/* =========================================
+   MAIN PAGE
+========================================= */
+
+.company-notifications-page {
+    position: relative;
+
+    min-height: 100vh;
+
+    margin: 0;
+
+    padding: 28px 36px 50px;
+
+    background: #f5f7fb;
+    font-family: "Inter", sans-serif;
+}
+
+
+/* =========================================
+   PAGE TOP
+========================================= */
+
+.notifications-top {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    padding-top: 20px;
+
+    margin-bottom: 30px;
+}
+
+
+.notifications-top h1 {
+    margin: 0 0 5px;
+
+    color: #0c2545;
+
+    font-size: 28px;
+    font-weight: 750;
+}
+
+
+.notifications-top p {
+    margin: 0;
+
+    color: #5f6d80;
+
+    font-size: 14px;
+}
+
+
+.notifications-top-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+}
+
+
+/* =========================================
+   TOP BUTTONS
+========================================= */
+
+.mark-read-btn,
+.filter-btn {
+    min-height: 42px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 16px;
+
+    border-radius: 9px;
+
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.mark-read-btn {
+    border: 1px solid #d9e5f6;
+
+    background: #e6efff;
+    color: #0c2d55;
+}
+
+
+.mark-read-btn:hover {
+    background: #dae8ff;
+}
+
+
+.filter-btn {
+    border: 1px solid #aeb8c7;
+
+    background: #ffffff;
+    color: #172b45;
+}
+
+
+.filter-btn:hover {
+    background: #f8fafc;
+}
+
+
+.mark-read-btn .material-symbols-outlined,
+.filter-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+
+/* =========================================
+   FILTER MENU - CORRECTED
+========================================= */
+
+.notification-filter-menu {
+    position: absolute;
+
+    top: 105px;
+    right: 36px;
+
+    width: 200px;
+    max-width: 200px;
+
+    padding: 7px;
+
+    background: #ffffff;
+
+    border: 1px solid #dce3ec;
+    border-radius: 10px;
+
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.14);
+
+    z-index: 100;
+
+    display: none;
+}
+
+
+.notification-filter-menu.show {
+    display: block;
+}
+
+
+.filter-option {
+    display: block;
+
+    width: 100%;
+
+    padding: 10px 11px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: transparent;
+    color: #475569;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: left;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+
+.filter-option:hover {
+    background: #f1f5f9;
+}
+
+
+.filter-option.active {
+    background: #edf4ff;
+    color: #1d4ed8;
+}
+
+
+/* =========================================
+   MAIN GRID
+========================================= */
+
+.notifications-grid {
+    width: 100%;
+
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 2fr)
+        minmax(270px, 0.95fr);
+
+    gap: 24px;
+
+    align-items: start;
+}
+
+
+/* =========================================
+   LEFT CARDS
+========================================= */
+
+.notification-cards {
+    display: flex;
+    flex-direction: column;
+
+    gap: 16px;
+}
+
+
+.notification-card {
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+
+    gap: 16px;
+
+    padding: 22px;
+
+    background: #ffffff;
+
+    border: 1px solid #e9edf3;
+    border-radius: 13px;
+
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.025);
+}
+
+
+.notification-card-icon {
+    flex: 0 0 48px;
+
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+}
+
+
+.notification-card-icon .material-symbols-outlined {
+    font-size: 23px;
+}
+
+
+.application-icon {
+    background: #e5efff;
+    color: #2563eb;
+}
+
+
+.interview-icon {
+    background: #fff0dd;
+    color: #e87500;
+}
+
+
+.internship-icon {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+
+/* =========================================
+   CARD CONTENT
+========================================= */
+
+.notification-card-content {
+    flex: 1;
+    min-width: 0;
+}
+
+
+.notification-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 15px;
+}
+
+
+.notification-card-header h2 {
+    margin: 2px 0 7px;
+
+    color: #092746;
+
+    font-size: 15px;
+    font-weight: 750;
+}
+
+
+.notification-card-content p {
+    max-width: 700px;
+
+    margin: 0;
+
+    color: #253b55;
+
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+
+.notification-card-content strong {
+    font-weight: 750;
+}
+
+
+/* =========================================
+   TIME / DOT
+========================================= */
+
+.notification-meta {
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 12px;
+
+    color: #4b5563;
+
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+
+.notification-status-dot {
+    width: 7px;
+    height: 7px;
+
+    border-radius: 50%;
+
+    background: #ad6100;
+}
+
+
+/* =========================================
+   CARD BUTTONS
+========================================= */
+
+.notification-card-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+    margin-top: 16px;
+}
+
+
+.primary-action-btn,
+.meeting-action-btn,
+.secondary-action-btn {
+    min-height: 34px;
+
+    padding: 0 16px;
+
+    border: none;
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+
+.primary-action-btn {
+    background: #062b50;
+    color: #ffffff;
+}
+
+
+.primary-action-btn:hover {
+    background: #0b3a68;
+}
+
+
+.meeting-action-btn {
+    background: #a85500;
+    color: #ffffff;
+}
+
+
+.meeting-action-btn:hover {
+    background: #914900;
+}
+
+
+.secondary-action-btn {
+    background: #eaf1ff;
+    color: #274565;
+}
+
+
+.secondary-action-btn:hover {
+    background: #dfeaff;
+}
+
+
+/* =========================================
+   READ STATE
+========================================= */
+
+.notification-card.read {
+    opacity: 0.72;
+}
+
+
+.notification-card.read .notification-status-dot {
+    display: none;
+}
+
+
+/* =========================================
+   WEEKLY SUMMARY
+========================================= */
+
+.notification-side-column {
+    display: flex;
+    flex-direction: column;
+
+    gap: 22px;
+}
+
+
+.weekly-summary {
+    position: relative;
+
+    min-height: 250px;
+
+    padding: 25px 24px;
+
+    overflow: hidden;
+
+    background: #073f70;
+    color: #ffffff;
+
+    border-radius: 14px;
+}
+
+
+.weekly-summary h2 {
+    position: relative;
+    z-index: 2;
+
+    margin: 0 0 10px;
+
+    font-size: 19px;
+    font-weight: 750;
+}
+
+
+.weekly-summary > p {
+    position: relative;
+    z-index: 2;
+
+    max-width: 260px;
+
+    margin: 0 0 24px;
+
+    color: #b8d0e8;
+
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+.summary-stat {
+    position: relative;
+    z-index: 2;
+
+    min-height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 12px;
+    padding: 0 14px;
+
+    background: rgba(255, 255, 255, 0.11);
+
+    border-radius: 8px;
+
+    font-size: 12px;
+}
+
+
+.summary-stat strong {
+    font-size: 15px;
+}
+
+
+.summary-decoration {
+    position: absolute;
+
+    right: -8px;
+    bottom: -2px;
+
+    height: 100px;
+
+    display: flex;
+    align-items: flex-end;
+
+    gap: 8px;
+
+    opacity: 0.18;
+}
+
+
+.summary-decoration span {
+    display: block;
+
+    width: 18px;
+
+    background: #ffffff;
+}
+
+
+.summary-decoration span:nth-child(1) {
+    height: 75px;
+}
+
+
+.summary-decoration span:nth-child(2) {
+    height: 45px;
+}
+
+
+.summary-decoration span:nth-child(3) {
+    height: 20px;
+}
+
+
+/* =========================================
+   SETTINGS CARD
+========================================= */
+
+.notification-settings {
+    padding: 23px 24px;
+
+    background: #ffffff;
+
+    border: 1px solid #cfd7e2;
+    border-radius: 14px;
+}
+
+
+.notification-settings h2 {
+    margin: 0 0 20px;
+
+    color: #102b49;
+
+    font-size: 15px;
+    font-weight: 750;
+}
+
+
+.setting-row {
+    min-height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 15px;
+
+    color: #273a51;
+
+    font-size: 12px;
+}
+
+
+/* =========================================
+   SWITCH
+========================================= */
+
+.switch {
+    position: relative;
+
+    display: inline-block;
+
+    width: 38px;
+    height: 21px;
+}
+
+
+.switch input {
+    width: 0;
+    height: 0;
+
+    opacity: 0;
+}
+
+
+.slider {
+    position: absolute;
+
+    inset: 0;
+
+    border-radius: 30px;
+
+    background: #c7ced9;
+
+    cursor: pointer;
+
+    transition: 0.2s;
+}
+
+
+.slider::before {
+    content: "";
+
+    position: absolute;
+
+    width: 15px;
+    height: 15px;
+
+    left: 3px;
+    top: 3px;
+
+    border-radius: 50%;
+
+    background: #ffffff;
+
+    transition: 0.2s;
+}
+
+
+.switch input:checked + .slider {
+    background: #f5820b;
+}
+
+
+.switch input:checked + .slider::before {
+    transform: translateX(17px);
+}
+
+
+/* =========================================
+   EMPTY STATE
+========================================= */
+
+.notification-empty {
+    display: none;
+
+    min-height: 250px;
+
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 35px;
+
+    background: #ffffff;
+
+    border: 1px solid #e9edf3;
+    border-radius: 13px;
+
+    text-align: center;
+}
+
+
+.notification-empty .material-symbols-outlined {
+    margin-bottom: 10px;
+
+    color: #94a3b8;
+
+    font-size: 38px;
+}
+
+
+.notification-empty h3 {
+    margin: 0 0 5px;
+
+    color: #334155;
+
+    font-size: 15px;
+}
+
+
+.notification-empty p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+
+@media (max-width: 1050px) {
+
+    .notifications-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .notification-side-column {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+
+@media (max-width: 850px) {
+
+    .company-notifications-page {
+        padding: 22px 18px 40px;
+    }
+
+    .notification-filter-menu {
+        right: 18px;
+
+        width: 200px;
+        max-width: calc(100vw - 36px);
+    }
+}
+
+
+@media (max-width: 650px) {
+
+    .notifications-top {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .notifications-top-actions {
+        width: 100%;
+    }
+
+    .mark-read-btn,
+    .filter-btn {
+        flex: 1;
+    }
+
+    .notification-card-header {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .notification-side-column {
+        display: flex;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .company-notifications-page {
+        padding: 22px 12px 35px;
+    }
+
+    .notification-filter-menu {
+        right: 12px;
+
+        width: 190px;
+        max-width: calc(100vw - 24px);
+    }
+
+    .notification-card {
+        padding: 17px 14px;
+
+        gap: 11px;
+    }
+
+    .notification-card-icon {
+        flex: 0 0 40px;
+
+        width: 40px;
+        height: 40px;
+    }
+
+    .notifications-top-actions {
+        flex-direction: column;
+    }
+
+    .mark-read-btn,
+    .filter-btn {
+        width: 100%;
+    }
+}
+/* =========================================
+   FINAL FILTER DROPDOWN FIX
+   Paste at VERY END of notifications.css
+========================================= */
+
+.company-notifications-page .notification-filter-menu {
+    position: absolute !important;
+
+    top: 125px !important;
+    right: 36px !important;
+    left: auto !important;
+
+    width: 200px !important;
+    min-width: 200px !important;
+    max-width: 200px !important;
+
+    height: auto !important;
+
+    margin: 0 !important;
+    padding: 7px !important;
+
+    display: none;
+
+    background: #ffffff !important;
+
+    border: 1px solid #dce3ec !important;
+    border-radius: 10px !important;
+
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.14) !important;
+
+    z-index: 9999 !important;
+
+    overflow: hidden !important;
+}
+
+
+/* When Filters is clicked */
+.company-notifications-page .notification-filter-menu.show {
+    display: block !important;
+}
+
+
+/* Individual filter options */
+.company-notifications-page .notification-filter-menu .filter-option {
+    display: block !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+
+    margin: 0 !important;
+    padding: 10px 11px !important;
+
+    background: transparent;
+
+    border: none !important;
+    border-radius: 7px !important;
+
+    color: #475569;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    text-align: left !important;
+    white-space: nowrap;
+
+    cursor: pointer;
+}
+
+
+/* Hover */
+.company-notifications-page .notification-filter-menu .filter-option:hover {
+    background: #f1f5f9 !important;
+}
+
+
+/* Active option */
+.company-notifications-page .notification-filter-menu .filter-option.active {
+    background: #edf4ff !important;
+    color: #1d4ed8 !important;
+}
+
+
+/* Tablet */
+@media (max-width: 850px) {
+    .company-notifications-page .notification-filter-menu {
+        right: 18px !important;
+    }
+}
+
+
+/* Mobile */
+@media (max-width: 480px) {
+    .company-notifications-page .notification-filter-menu {
+        right: 12px !important;
+
+        width: 190px !important;
+        min-width: 190px !important;
+        max-width: 190px !important;
+    }
+}

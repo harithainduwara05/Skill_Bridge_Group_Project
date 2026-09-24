@@ -1240,3 +1240,28 @@ body.internship-modal-open {
     }
 
 }
+/* =========================================
+   INTERNSHIP SUMMARY CARDS - HOVER EFFECT
+   Add at the END of internships.css
+========================================= */
+
+/* Summary cards */
+.internship-stat-card,
+.internship-summary-card,
+.summary-card,
+.stat-card {
+    cursor: pointer;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.internship-stat-card:hover,
+.internship-summary-card:hover,
+.summary-card:hover,
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(9, 39, 70, 0.13);
+    border-color: #d8e1ec;
+}

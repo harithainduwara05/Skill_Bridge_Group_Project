@@ -860,8 +860,7 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
     </section>
 
-
-
+    <?php include "../../../Includes/company_dashboard_footer.php"; ?>
 </main>
 
 <!-- =========================
