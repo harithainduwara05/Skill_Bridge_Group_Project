@@ -146,7 +146,7 @@ $companyImageExists = !empty($image) && file_exists(
                 <div class="company-card applications-card">
                     <div class="company-card-header">
                         <h2>Recent Applications</h2>
-                        <a href="university.php" class="view-all-link">View All</a>
+                        <a href="applications.php" class="view-all-link">View All</a>
                     </div>
                     <div class="table-responsive">
                         <table class="company-table">
@@ -379,14 +379,7 @@ $companyImageExists = !empty($image) && file_exists(
             </div>
 
         </div>
-        <div class="company-dashboard-footer">
-            <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-            <div class="company-footer-links">
-                <a href="#">Help Center</a>
-                <a href="#">Privacy Policy</a>
-                <a href="#">Terms of Service</a>
-            </div>
-        </div>
+        <?php include "../../../Includes/company_dashboard_footer.php"; ?>
 
     </div>
 </main>

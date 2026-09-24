@@ -462,6 +462,7 @@ include "../../../Includes/dash_header.php";
 
     </div>
 
+    <?php include "../../../Includes/company_dashboard_footer.php"; ?>
 </main>
 
 <script>

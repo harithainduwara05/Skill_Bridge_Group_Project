@@ -1,0 +1,1074 @@
+/* =========================================================
+   COMPANY - CANDIDATE PROFILE
+   This CSS is scoped to the Candidates page.
+========================================================= */
+
+.company-candidates-page,
+.company-candidates-page * {
+    box-sizing: border-box;
+}
+
+.company-candidates-page {
+    width: 100%;
+    padding: 28px 38px 46px;
+    background: transparent;
+    font-family: inherit;
+    color: #092746;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.candidate-layout {
+    width: 100%;
+    max-width: 1500px;
+    margin: 0 auto;
+
+    display: grid;
+    grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.95fr);
+    gap: 26px;
+    align-items: start;
+}
+
+.candidate-main-column,
+.candidate-side-column {
+    min-width: 0;
+}
+
+.candidate-side-column {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+
+/* =========================================================
+   PROFILE CARD
+========================================================= */
+
+.candidate-profile-card {
+    position: relative;
+
+    min-height: 230px;
+    padding: 30px 28px 30px 48px;
+
+    background: #ffffff;
+    border: 1px solid #e1e6ed;
+    border-radius: 14px;
+
+    display: flex;
+    align-items: center;
+    gap: 22px;
+
+    overflow: hidden;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.candidate-profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(9, 39, 70, 0.09);
+}
+
+.profile-accent {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    width: 8px;
+
+    background: #f28a00;
+}
+
+.candidate-avatar {
+    position: relative;
+    flex: 0 0 auto;
+
+    width: 78px;
+    height: 78px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #dce8fa;
+    color: #123e73;
+
+    font-size: 23px;
+    font-weight: 800;
+}
+
+.online-dot {
+    position: absolute;
+    right: 2px;
+    bottom: 4px;
+
+    width: 14px;
+    height: 14px;
+
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+
+    background: #24bd63;
+}
+
+.candidate-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.candidate-info h1 {
+    margin: 0 0 4px;
+
+    color: #092746;
+
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+.candidate-info h3 {
+    margin: 0 0 8px;
+
+    color: #404754;
+
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.candidate-degree {
+    margin: 0 0 20px;
+
+    color: #26364b;
+
+    font-size: 15px;
+}
+
+.candidate-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+
+    color: #586170;
+
+    font-size: 14px;
+}
+
+.candidate-contact > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.candidate-contact .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.candidate-profile-actions {
+    align-self: flex-start;
+
+    display: flex;
+    gap: 10px;
+
+    margin-left: auto;
+}
+
+.candidate-btn {
+    min-height: 48px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+
+    padding: 0 18px;
+
+    border-radius: 8px;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+.candidate-btn:hover {
+    transform: translateY(-2px);
+}
+
+.candidate-btn .material-symbols-outlined {
+    font-size: 19px;
+}
+
+.candidate-btn-outline {
+    border: 1px solid #092746;
+    background: #ffffff;
+    color: #092746;
+}
+
+.candidate-btn-outline:hover {
+    background: #f4f7fb;
+}
+
+.candidate-btn-shortlist {
+    border: 1px solid #f28a00;
+    background: #f28a00;
+    color: #092746;
+}
+
+.candidate-btn-shortlist:hover {
+    box-shadow: 0 7px 18px rgba(242, 138, 0, 0.25);
+}
+
+.candidate-btn-shortlist.is-shortlisted {
+    border-color: #178d49;
+    background: #e6f7ec;
+    color: #178d49;
+}
+
+
+/* =========================================================
+   GENERAL CARD
+========================================================= */
+
+.candidate-card {
+    background: #ffffff;
+
+    border: 1px solid #e1e6ed;
+    border-radius: 14px;
+
+    padding: 24px;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.candidate-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 26px rgba(9, 39, 70, 0.08);
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    margin-bottom: 18px;
+}
+
+.section-title h2 {
+    margin: 0;
+
+    color: #092746;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.section-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.section-icon.orange {
+    color: #f28a00;
+}
+
+.section-icon .material-symbols-outlined {
+    font-size: 22px;
+}
+
+
+/* =========================================================
+   SKILLS + ACADEMIC
+========================================================= */
+
+.candidate-overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+
+    gap: 22px;
+
+    margin-top: 24px;
+}
+
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 9px;
+}
+
+.skills-list span {
+    display: inline-flex;
+    align-items: center;
+
+    min-height: 34px;
+
+    padding: 6px 13px;
+
+    background: #eaf2ff;
+
+    border: 1px solid #dbe7f8;
+    border-radius: 20px;
+
+    color: #173c67;
+
+    font-size: 14px;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease;
+}
+
+.skills-list span:hover {
+    transform: translateY(-2px);
+    background: #dceaff;
+}
+
+
+/* Academic */
+
+.academic-card {
+    padding: 24px;
+
+    border-radius: 14px;
+
+    background: #062d50;
+    color: #ffffff;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.academic-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(6, 45, 80, 0.18);
+}
+
+.academic-card h2 {
+    margin: 0 0 20px;
+
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.academic-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.academic-item {
+    min-height: 78px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    padding: 14px;
+
+    background: rgba(255, 255, 255, 0.09);
+
+    border-radius: 9px;
+}
+
+.academic-item span {
+    margin-bottom: 4px;
+
+    color: #aebfd0;
+
+    font-size: 13px;
+}
+
+.academic-item strong {
+    color: #ffffff;
+
+    font-size: 15px;
+    font-weight: 500;
+}
+
+
+/* =========================================================
+   PORTFOLIO
+========================================================= */
+
+.portfolio-section {
+    margin-top: 24px;
+}
+
+.portfolio-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 15px;
+}
+
+.portfolio-heading h2 {
+    margin: 0;
+
+    color: #092746;
+
+    font-size: 21px;
+    font-weight: 700;
+}
+
+.view-all-btn {
+    border: 0;
+    background: transparent;
+
+    color: #a95b00;
+
+    font: inherit;
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.view-all-btn:hover {
+    text-decoration: underline;
+}
+
+.portfolio-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 22px;
+}
+
+.portfolio-card {
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #e1e6ed;
+    border-radius: 14px;
+
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.portfolio-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 28px rgba(9, 39, 70, 0.11);
+}
+
+.portfolio-image {
+    position: relative;
+
+    width: 100%;
+    height: 200px;
+
+    overflow: hidden;
+
+    background: #edf1f6;
+}
+
+.portfolio-image img {
+    width: 100%;
+    height: 100%;
+
+    display: block;
+
+    object-fit: cover;
+
+    transition: transform 0.35s ease;
+}
+
+.portfolio-card:hover .portfolio-image img {
+    transform: scale(1.035);
+}
+
+.project-category {
+    position: absolute;
+    top: 13px;
+    left: 13px;
+
+    padding: 6px 12px;
+
+    border-radius: 20px;
+
+    background: #092746;
+    color: #ffffff;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.portfolio-content {
+    padding: 18px;
+}
+
+.portfolio-content h3 {
+    margin: 0 0 8px;
+
+    color: #092746;
+
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.portfolio-content p {
+    margin: 0;
+
+    color: #596273;
+
+    font-size: 14px;
+    line-height: 1.55;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+
+    overflow: hidden;
+}
+
+.portfolio-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    margin-top: 18px;
+    padding-top: 14px;
+
+    border-top: 1px solid #edf0f4;
+}
+
+.tech-stack {
+    display: flex;
+    align-items: center;
+}
+
+.tech-stack span {
+    width: 28px;
+    height: 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-right: -5px;
+
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+
+    background: #e8f0ff;
+    color: #092746;
+
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.project-open-btn {
+    width: 35px;
+    height: 35px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 7px;
+
+    background: transparent;
+    color: #092746;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+.project-open-btn:hover {
+    background: #edf3fb;
+    transform: translateY(-2px);
+}
+
+.project-open-btn .material-symbols-outlined {
+    font-size: 21px;
+}
+
+
+/* =========================================================
+   RESUME
+========================================================= */
+
+.resume-card {
+    overflow: hidden;
+
+    background: #d9e7fb;
+
+    border: 1px solid #cbdaf0;
+    border-radius: 14px;
+}
+
+.resume-header {
+    min-height: 60px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 14px 16px;
+
+    color: #092746;
+}
+
+.resume-header strong {
+    overflow: hidden;
+
+    font-size: 13px;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resume-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.resume-actions button {
+    width: 34px;
+    height: 34px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    border-radius: 6px;
+
+    background: #ffffff;
+    color: #092746;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.resume-actions button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(9, 39, 70, 0.12);
+}
+
+.resume-actions .material-symbols-outlined {
+    font-size: 19px;
+}
+
+.resume-preview {
+    padding: 24px;
+}
+
+.resume-paper {
+    min-height: 510px;
+
+    padding: 34px;
+
+    background: #ffffff;
+
+    color: #17273a;
+
+    transition: transform 0.25s ease;
+}
+
+.resume-paper h2 {
+    margin: 0 0 4px;
+
+    color: #092746;
+
+    font-size: 20px;
+    letter-spacing: 0.3px;
+}
+
+.resume-contact {
+    margin: 0;
+
+    color: #606977;
+
+    font-size: 9px;
+}
+
+.resume-divider {
+    height: 2px;
+
+    margin: 18px 0;
+
+    background: #092746;
+}
+
+.resume-section {
+    margin-bottom: 22px;
+}
+
+.resume-section h4 {
+    margin: 0 0 10px;
+
+    color: #a95b00;
+
+    font-size: 11px;
+}
+
+.resume-section strong {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #15283f;
+
+    font-size: 10px;
+}
+
+.resume-section small {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: #5d6672;
+
+    font-size: 8px;
+    font-style: italic;
+}
+
+.resume-section p {
+    margin: 0 0 13px;
+
+    color: #3d4653;
+
+    font-size: 8px;
+    line-height: 1.45;
+}
+
+.resume-document-placeholder {
+    height: 120px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin-top: 14px;
+
+    background: #fafbfd;
+
+    color: #b5bdc7;
+}
+
+.resume-document-placeholder .material-symbols-outlined {
+    font-size: 38px;
+}
+
+
+/* =========================================================
+   CERTIFICATES
+========================================================= */
+
+.certificates-card {
+    padding: 20px;
+}
+
+.certificate-list {
+    display: flex;
+    flex-direction: column;
+
+    gap: 10px;
+}
+
+.certificate-item {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 32px;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 12px;
+
+    background: #edf3ff;
+
+    border: 1px solid #dce7f7;
+    border-radius: 8px;
+}
+
+.certificate-icon {
+    width: 38px;
+    height: 38px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #ffffff;
+
+    border-radius: 7px;
+
+    color: #64758a;
+
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.certificate-info {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 2px;
+}
+
+.certificate-info strong {
+    color: #092746;
+
+    font-size: 12px;
+}
+
+.certificate-info span {
+    color: #626c7b;
+
+    font-size: 10px;
+}
+
+.certificate-item button {
+    width: 30px;
+    height: 30px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 0;
+    background: transparent;
+
+    color: #657181;
+
+    cursor: pointer;
+}
+
+.certificate-item button:hover {
+    color: #092746;
+}
+
+.certificate-item button .material-symbols-outlined {
+    font-size: 20px;
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+.candidate-toast {
+    position: fixed;
+
+    right: 28px;
+    bottom: 28px;
+
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    gap: 9px;
+
+    max-width: 340px;
+
+    padding: 13px 17px;
+
+    border-radius: 9px;
+
+    background: #092746;
+    color: #ffffff;
+
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+
+    font-size: 13px;
+
+    opacity: 0;
+    visibility: hidden;
+
+    transform: translateY(15px);
+
+    transition:
+        opacity 0.25s ease,
+        visibility 0.25s ease,
+        transform 0.25s ease;
+}
+
+.candidate-toast.show {
+    opacity: 1;
+    visibility: visible;
+
+    transform: translateY(0);
+}
+
+.candidate-toast .material-symbols-outlined {
+    color: #5ee18a;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1180px) {
+
+    .candidate-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .candidate-side-column {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+}
+
+@media (max-width: 850px) {
+
+    .company-candidates-page {
+        padding: 22px 20px 40px;
+    }
+
+    .candidate-profile-card {
+        align-items: flex-start;
+        flex-wrap: wrap;
+    }
+
+    .candidate-profile-actions {
+        width: 100%;
+
+        margin-left: 0;
+    }
+
+    .candidate-overview-grid,
+    .portfolio-grid,
+    .candidate-side-column {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+@media (max-width: 550px) {
+
+    .candidate-profile-card {
+        padding: 25px 20px 25px 32px;
+    }
+
+    .candidate-avatar {
+        width: 62px;
+        height: 62px;
+
+        font-size: 18px;
+    }
+
+    .candidate-info h1 {
+        font-size: 25px;
+    }
+
+    .candidate-profile-actions {
+        flex-direction: column;
+    }
+
+    .candidate-btn {
+        width: 100%;
+    }
+
+    .academic-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .portfolio-image {
+        height: 170px;
+    }
+
+}
+/* =========================================================
+   CANDIDATE CARDS - SAME HOVER STYLE AS DASHBOARD
+========================================================= */
+
+/* Profile Card */
+.candidate-profile-card {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.candidate-profile-card:hover {
+    transform: translateY(-2px);
+    border-color: #d4dde8;
+    box-shadow: 0 10px 26px rgba(15, 36, 64, 0.09);
+}
+
+
+/* Skills & Expertise Card */
+.candidate-card {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.candidate-card:hover {
+    transform: translateY(-2px);
+    border-color: #d4dde8;
+    box-shadow: 0 10px 26px rgba(15, 36, 64, 0.09);
+}
+
+
+/* Academic Snapshot */
+.academic-card {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease;
+}
+
+.academic-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(15, 36, 64, 0.09);
+}
+
+
+/* Portfolio Project Cards */
+.portfolio-card {
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+.portfolio-card:hover {
+    transform: translateY(-2px);
+    border-color: #d4dde8;
+    box-shadow: 0 10px 26px rgba(15, 36, 64, 0.09);
+}
+
+
+/* Profile orange left strip */
+.profile-accent {
+    transition: background-color 0.25s ease;
+}
+
+.candidate-profile-card:hover .profile-accent {
+    background: #d4dde8;
+}
