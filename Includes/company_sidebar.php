@@ -85,10 +85,17 @@ $internshipPages = ['internships.php', 'add_internship.php', 'edit_internship.ph
             </a>
 
         </nav>
-        <button class="post-new-btn" onclick="window.location.href='add_internship.php'" title="Post Internship" type="button">
-            <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
-            <span class="btn-text">Post Internships</span>
-        </button>
+        <?php if ($currentPage === 'internships.php'): ?>
+            <button class="post-new-btn" data-open-internship-modal title="Post Internship" type="button">
+                <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
+                <span class="btn-text">Post Internships</span>
+            </button>
+        <?php else: ?>
+            <button class="post-new-btn" onclick="window.location.href='internships.php?open_add=1'" title="Post Internship" type="button">
+                <span class="material-symbols-outlined" style="font-size:18px;">add_circle</span>
+                <span class="btn-text">Post Internships</span>
+            </button>
+        <?php endif; ?>
         <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
             <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
             <span class="btn-text">Logout</span>

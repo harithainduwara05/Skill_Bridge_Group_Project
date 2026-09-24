@@ -14,9 +14,7 @@ include __DIR__ . '/../../../Includes/dash_header.php';
                 <h1>Notifications</h1>
             </div>
         </div>
-        <div class="company-card" style="min-height: 220px;"></div>
     </div>
 </main>
 
 <?php include __DIR__ . '/../../../Includes/dash_footer.php'; ?>
-

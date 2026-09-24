@@ -445,6 +445,7 @@
 }
 
 .action-buttons a,
+.edit-action,
 .delete-action {
     width: 34px;
     height: 34px;
@@ -466,7 +467,8 @@
     cursor: pointer;
 }
 
-.action-buttons a:hover {
+.action-buttons a:hover,
+.edit-action:hover {
     background: #eef4ff;
     color: #264d89;
     border-color: #bfcde1;
@@ -651,6 +653,227 @@
     color: #a84444;
 
     font-size: 13px;
+}
+
+
+/* =========================================================
+   ADD INTERNSHIP MODAL
+========================================================= */
+
+body.internship-modal-open {
+    overflow: hidden;
+}
+
+.internship-modal[hidden] {
+    display: none;
+}
+
+.internship-modal {
+    position: fixed;
+    z-index: 1300;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.internship-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 30, 55, 0.52);
+    backdrop-filter: blur(4px);
+}
+
+.internship-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(760px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow: auto;
+    background: #ffffff;
+    border: 1px solid #dfe6f0;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(10, 31, 60, 0.25);
+}
+
+.internship-modal__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 26px 30px 20px;
+    border-bottom: 1px solid #e8edf3;
+}
+
+.internship-modal__header .page-label {
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.internship-modal__header h2 {
+    margin: 0;
+    color: #102d58;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.internship-modal__header p:last-child {
+    margin: 6px 0 0;
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.internship-modal__close {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    padding: 0;
+    border: 1px solid #dfe5ed;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #526176;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.internship-modal__close:hover {
+    background: #f4f7fb;
+    color: #18345f;
+}
+
+.internship-modal__body {
+    padding: 24px 30px 30px;
+}
+
+.internship-modal .form-actions {
+    margin-top: 24px;
+}
+
+
+/* =========================================================
+   DELETE INTERNSHIP CONFIRMATION MODAL
+========================================================= */
+
+.delete-internship-modal[hidden] {
+    display: none;
+}
+
+.delete-internship-modal {
+    position: fixed;
+    z-index: 1350;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.delete-internship-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 30, 55, 0.52);
+    backdrop-filter: blur(4px);
+}
+
+.delete-internship-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(430px, 100%);
+    padding: 32px;
+    text-align: center;
+    background: #ffffff;
+    border: 1px solid #dfe6f0;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(10, 31, 60, 0.25);
+}
+
+.delete-internship-modal__close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: 1px solid #dfe5ed;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #526176;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.delete-internship-modal__close:hover {
+    background: #f4f7fb;
+    color: #18345f;
+}
+
+.delete-internship-modal__icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    background: #fff0f0;
+    color: #bb4d4d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-internship-modal__icon .material-symbols-outlined {
+    font-size: 27px;
+}
+
+.delete-internship-modal h2 {
+    margin: 0;
+    color: #102d58;
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.delete-internship-modal p {
+    margin: 10px 0 0;
+    color: #6b7280;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.delete-internship-modal__actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 26px;
+}
+
+.delete-internship-modal__actions .secondary-btn,
+.delete-internship-modal__confirm {
+    flex: 1;
+    min-width: 0;
+}
+
+.delete-internship-modal__confirm {
+    min-height: 46px;
+    padding: 0 16px;
+    border: 1px solid #b94242;
+    border-radius: 8px;
+    background: #bb4d4d;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.delete-internship-modal__confirm:hover {
+    background: #a43f3f;
 }
 
 
@@ -974,6 +1197,45 @@
 
     .primary-btn,
     .secondary-btn {
+        width: 100%;
+    }
+
+    .internship-modal {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .internship-modal__panel {
+        max-height: min(92vh, 720px);
+        border-radius: 16px 16px 0 0;
+    }
+
+    .internship-modal__header {
+        padding: 20px 18px 16px;
+    }
+
+    .internship-modal__header h2 {
+        font-size: 19px;
+    }
+
+    .internship-modal__body {
+        padding: 20px 18px 24px;
+    }
+
+    .delete-internship-modal {
+        padding: 18px;
+    }
+
+    .delete-internship-modal__panel {
+        padding: 30px 20px 22px;
+    }
+
+    .delete-internship-modal__actions {
+        flex-direction: column-reverse;
+    }
+
+    .delete-internship-modal__actions .secondary-btn,
+    .delete-internship-modal__confirm {
         width: 100%;
     }
 
