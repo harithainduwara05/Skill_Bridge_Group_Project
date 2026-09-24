@@ -48,6 +48,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // ---- Logo removal (only when no new logo was uploaded in the same submit) ----
+    $removeLogo = empty($flash) && $logoPath === null && ($_POST['remove_logo'] ?? '') === '1';
+    $oldLogoFile = null;
+    if ($removeLogo) {
+        $q = $conn->prepare("SELECT logo FROM organization WHERE Email=?");
+        $q->bind_param("s", $organization_email);
+        $q->execute();
+        $oldLogoFile = $q->get_result()->fetch_assoc()['logo'] ?? null;
+    }
+
     if (empty($flash)) {
         if ($logoPath !== null) {
             $sql = "UPDATE organization
@@ -59,8 +69,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $name, $orgtype, $contactNumber, $website, $location, $about, $linkedin, $twitter, $facebook, $logoPath, $organization_email
             );
         } else {
+            $logoSql = $removeLogo ? ", logo=NULL" : "";
             $sql = "UPDATE organization
-                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?
+                    SET Name=?, orgtype=?, contactNumber=?, website=?, location=?, about=?, linkedin=?, twitter=?, facebook=?" . $logoSql . "
                     WHERE Email=?";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param(
@@ -71,7 +82,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($stmt->execute()) {
             $_SESSION['user']['username'] = $name;
-            $flash = ['type' => 'success', 'message' => 'Profile updated successfully.'];
+            if ($removeLogo) {
+                // delete the old image file too (only inside the org_logos folder)
+                if (!empty($oldLogoFile)) {
+                    $logoDir  = realpath(__DIR__ . '/../../../Assets/Uploads/org_logos');
+                    $logoFile = realpath(__DIR__ . '/../../../' . $oldLogoFile);
+                    if ($logoDir && $logoFile && strpos($logoFile, $logoDir) === 0 && is_file($logoFile)) {
+                        @unlink($logoFile);
+                    }
+                }
+                $flash = ['type' => 'success', 'message' => 'Logo removed successfully.'];
+            } else {
+                $flash = ['type' => 'success', 'message' => 'Profile updated successfully.'];
+            }
         } else {
             $flash = ['type' => 'error', 'message' => 'Update failed. Please try again.'];
         }
@@ -84,59 +107,43 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $org = $stmt->get_result()->fetch_assoc();
 
-// Stat cards
-$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$totalProjects = (int)$stmt->get_result()->fetch_row()[0];
-
-$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status='closed'");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$completedProjects = (int)$stmt->get_result()->fetch_row()[0];
-
-$stmt = $conn->prepare("SELECT COUNT(DISTINCT sp.project_id) FROM student_projects sp
-                         JOIN projects p ON sp.project_id = p.id
-                         WHERE p.organization_email = ?");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$activeTeams = (int)$stmt->get_result()->fetch_row()[0];
-
-// ---- Same demo/fake project pool as Manage Projects / Dashboard, so these
-//      stat cards show the same totals as everywhere else (real + demo) ----
-$demoTarget = 24;
-$fakePool = [
-    ['status' => 'open', 'applicants' => 5, 'assigned' => 0],
-    ['status' => 'reviewing', 'applicants' => 3, 'assigned' => 0],
-    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['status' => 'closed', 'applicants' => 6, 'assigned' => 2],
-    ['status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
-    ['status' => 'open', 'applicants' => 1, 'assigned' => 0],
-    ['status' => 'reviewing', 'applicants' => 7, 'assigned' => 0],
-    ['status' => 'inprogress', 'applicants' => 3, 'assigned' => 2],
-    ['status' => 'open', 'applicants' => 5, 'assigned' => 0],
-    ['status' => 'closed', 'applicants' => 9, 'assigned' => 3],
-    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['status' => 'reviewing', 'applicants' => 4, 'assigned' => 0],
-    ['status' => 'inprogress', 'applicants' => 3, 'assigned' => 1],
-    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['status' => 'closed', 'applicants' => 5, 'assigned' => 2],
-    ['status' => 'reviewing', 'applicants' => 1, 'assigned' => 0],
-    ['status' => 'open', 'applicants' => 3, 'assigned' => 0],
-    ['status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
-    ['status' => 'closed', 'applicants' => 8, 'assigned' => 3],
-    ['status' => 'open', 'applicants' => 2, 'assigned' => 0],
+// Stat cards — counted from the SAME project list Manage Projects shows
+// (real projects first, then the demo projects that pad the list to 24 rows).
+$useDemoData = true;          // false = count only real database projects
+$demoTarget  = 24;
+// demo projects in the same order as Manage Projects: [status, assigned students]
+$demoPool = [
+    ['open', 0], ['reviewing', 0], ['open', 0], ['closed', 2], ['inprogress', 1],
+    ['open', 0], ['reviewing', 0], ['inprogress', 2], ['open', 0], ['closed', 3],
+    ['open', 0], ['reviewing', 0], ['inprogress', 1], ['open', 0], ['closed', 2],
+    ['reviewing', 0], ['open', 0], ['inprogress', 1], ['closed', 3], ['open', 0],
 ];
-$neededForTotals = max(0, $demoTarget - $totalProjects);
-$fakeForTotals   = array_slice($fakePool, 0, $neededForTotals);
 
-$totalProjects     = $totalProjects + count($fakeForTotals);
-$completedProjects = $completedProjects + count(array_filter($fakeForTotals, function ($p) {
-    return $p['status'] === 'closed';
-}));
-$activeTeams       = $activeTeams + count(array_filter($fakeForTotals, function ($p) {
-    return (int)$p['assigned'] > 0;
-}));
+$projectRows = [];   // each: [status, assigned]
+$stmt = $conn->prepare("SELECT p.status,
+                               (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS team_count
+                        FROM projects p
+                        WHERE p.organization_email = ?");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $r) {
+    $projectRows[] = [$r['status'], (int)$r['team_count']];
+}
+if ($useDemoData) {
+    $needed = max(0, $demoTarget - count($projectRows));
+    $projectRows = array_merge($projectRows, array_slice($demoPool, 0, $needed));
+}
+
+$totalProjects     = count($projectRows);
+$completedProjects = 0;   // closed projects
+$activeTeams       = 0;   // projects with a team assigned that are not closed yet
+foreach ($projectRows as [$status, $assigned]) {
+    if ($status === 'closed') {
+        $completedProjects++;
+    } elseif ($assigned > 0) {
+        $activeTeams++;
+    }
+}
 
 include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
@@ -220,12 +227,26 @@ include "../../../Includes/dash_header.php";
         <div class="profile-col">
 
             <div class="card">
+                <style>
+                    /* Same size/look as the Admin profile photo: 120px circle, white border, soft shadow,
+                       and the uploaded image fills the whole circle. */
+                    .avatar-circle.logo-circle { width: 120px; height: 120px; box-sizing: border-box; background: #f8fafc;
+                                                 border: 4px solid #ffffff; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); }
+                    .avatar-circle.logo-circle img { width: 100%; height: 100%; object-fit: cover; }
+                    /* the default SkillBridge placeholder (no logo uploaded) is shown whole, not cropped */
+                    .avatar-circle.logo-circle img.is-default { width: 70%; height: 70%; object-fit: contain; }
+                </style>
                 <div class="avatar-wrap">
-                    <div class="avatar-circle">
-                        <img src="<?= !empty($org['logo']) ? '../../../' . htmlspecialchars($org['logo']) : '../../../Assets/Images/logo.png' ?>" alt="Organization Logo" id="logoPreview">
+                    <div class="avatar-circle logo-circle">
+                        <img src="<?= !empty($org['logo']) ? '../../../' . htmlspecialchars($org['logo']) : '../../../Assets/Images/logo.png' ?>" alt="" id="logoPreview" class="<?= empty($org['logo']) ? 'is-default' : '' ?>" onerror="this.onerror=null;this.classList.add('is-default');this.src='../../../Assets/Images/logo.png';">
                     </div>
                     <label for="logoInput" class="upload-link" style="cursor:pointer;">Upload New Logo</label>
                     <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').submit();">
+                    <?php if (!empty($org['logo'])): ?>
+                        <input type="hidden" name="remove_logo" id="removeLogo" value="0">
+                        <button type="button" class="upload-link" style="background:none;border:none;padding:0;cursor:pointer;color:#dc2626;font-family:inherit;display:inline-flex;align-items:center;gap:4px;"
+                                onclick="openRemoveLogoModal()"><span class="material-symbols-outlined" style="font-size:18px;">delete</span>Remove Logo</button>
+                    <?php endif; ?>
                     <span class="badge-status verified">Verified</span>
                 </div>
             </div>
@@ -310,6 +331,64 @@ include "../../../Includes/dash_header.php";
     </form>
 
 </main>
+
+<?php if (!empty($org['logo'])): ?>
+<!-- Remove Logo confirmation dialog -->
+<style>
+    .rl-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center;
+                  padding: 16px; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); }
+    .rl-overlay.show { display: flex; }
+    .rl-card { width: 100%; max-width: 400px; background: #fff; border-radius: 16px; padding: 28px 24px 22px; text-align: center;
+               box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25); animation: rlPop 0.18s ease-out; }
+    @keyframes rlPop { from { opacity: 0; transform: scale(0.94) translateY(6px); } to { opacity: 1; transform: none; } }
+    .rl-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 50%; background: #fee2e2; color: #dc2626;
+               display: flex; align-items: center; justify-content: center; }
+    .rl-icon .material-symbols-outlined { font-size: 28px; }
+    .rl-title { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #0f172a; }
+    .rl-text { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: #64748b; }
+    .rl-actions { display: flex; gap: 10px; }
+    .rl-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px;
+              border: none; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+              transition: background 0.15s ease; }
+    .rl-btn .material-symbols-outlined { font-size: 18px; }
+    .rl-cancel { background: #f1f5f9; color: #334155; }
+    .rl-cancel:hover { background: #e2e8f0; }
+    .rl-confirm { background: #dc2626; color: #fff; }
+    .rl-confirm:hover { background: #b91c1c; }
+</style>
+
+<div class="rl-overlay" id="removeLogoModal" onclick="closeRemoveLogoModal()">
+    <div class="rl-card" role="dialog" aria-modal="true" aria-labelledby="rlTitle" onclick="event.stopPropagation()">
+        <div class="rl-icon"><span class="material-symbols-outlined">delete</span></div>
+        <h3 class="rl-title" id="rlTitle">Remove logo?</h3>
+        <p class="rl-text">Your organization logo will be removed from your profile. You can upload a new one anytime.</p>
+        <div class="rl-actions">
+            <button type="button" class="rl-btn rl-cancel" id="rlCancel" onclick="closeRemoveLogoModal()">Cancel</button>
+            <button type="button" class="rl-btn rl-confirm" id="rlConfirm" onclick="confirmRemoveLogo()">
+                <span class="material-symbols-outlined">delete</span>Remove
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openRemoveLogoModal() {
+        document.getElementById('removeLogoModal').classList.add('show');
+        document.getElementById('rlCancel').focus();
+    }
+    function closeRemoveLogoModal() {
+        document.getElementById('removeLogoModal').classList.remove('show');
+    }
+    function confirmRemoveLogo() {
+        document.getElementById('rlConfirm').disabled = true;   // avoid double submit
+        document.getElementById('removeLogo').value = '1';
+        document.getElementById('profileForm').submit();
+    }
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeRemoveLogoModal();
+    });
+</script>
+<?php endif; ?>
 
 <script>
     // Auto-hide the flash toast message after a few seconds
