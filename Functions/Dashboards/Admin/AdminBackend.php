@@ -61,7 +61,8 @@ class AdminDB
 
     public function getStudentCountByDomain($domain)
     {
-        return $this->runCount("SELECT COUNT(*) FROM student WHERE Email LIKE ?", "s", '%@' . $domain);
+        $cleanDomain = ltrim(strtolower(trim($domain)), '@');
+        return $this->runCount("SELECT COUNT(*) FROM student WHERE Email LIKE ?", "s", '%@' . $cleanDomain);
     }
 
 

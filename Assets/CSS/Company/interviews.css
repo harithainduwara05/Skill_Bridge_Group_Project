@@ -1,0 +1,826 @@
+/* =========================================================
+   COMPANY - INTERVIEW MANAGEMENT
+   Only styles the Interviews page content.
+   Shared header/sidebar positioning is NOT changed here.
+========================================================= */
+
+.company-interviews-page {
+    width: 100%;
+    padding: 28px 32px 50px;
+    color: #092746;
+}
+
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.interviews-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.interviews-title h1 {
+    margin: 0 0 5px;
+    font-size: 32px;
+    line-height: 1.15;
+    font-weight: 800;
+    color: #092746;
+}
+
+.interviews-title p {
+    margin: 0;
+    font-size: 15px;
+    color: #657083;
+}
+
+.schedule-interview-btn {
+    border: none;
+    outline: none;
+    min-height: 48px;
+    padding: 0 22px;
+    border-radius: 8px;
+    background: #ad5a00;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 5px 14px rgba(173, 90, 0, 0.18);
+    transition: 0.2s ease;
+}
+
+.schedule-interview-btn:hover {
+    transform: translateY(-1px);
+    background: #944d00;
+}
+
+.schedule-interview-btn .material-symbols-outlined {
+    font-size: 21px;
+}
+
+
+/* =========================================================
+   SUMMARY CARDS
+========================================================= */
+
+.interview-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+    margin-bottom: 30px;
+}
+
+.interview-summary-card {
+    position: relative;
+    min-height: 136px;
+    padding: 25px 27px;
+    border-radius: 12px;
+    background: #ffffff;
+    border: 1px solid #edf0f5;
+    overflow: hidden;
+    box-shadow: 0 5px 18px rgba(24, 49, 83, 0.035);
+}
+
+.interview-summary-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 4px;
+}
+
+.today-card::before {
+    background: #ad5a00;
+}
+
+.feedback-card::before {
+    background: #0b3157;
+}
+
+.upcoming-card::before {
+    background: #8bbcff;
+}
+
+.summary-label {
+    display: block;
+    margin-bottom: 7px;
+    color: #4d5563;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.summary-number {
+    display: block;
+    color: #032747;
+    font-size: 38px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+.summary-note {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin: 9px 0 0;
+    color: #4c5360;
+    font-size: 14px;
+}
+
+.summary-positive {
+    color: #18a153;
+    font-weight: 700;
+}
+
+.summary-clock {
+    font-size: 16px;
+}
+
+.summary-progress {
+    height: 5px;
+    width: 100%;
+    margin-top: 17px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e4edfb;
+}
+
+.summary-progress span {
+    display: block;
+    width: 65%;
+    height: 100%;
+    border-radius: inherit;
+    background: #ad5a00;
+}
+
+
+/* =========================================================
+   INTERVIEWS TABLE CARD
+========================================================= */
+
+.interviews-table-card {
+    width: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #e9edf3;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(25, 49, 80, 0.035);
+}
+
+.interviews-table-header {
+    min-height: 76px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #d9dee7;
+}
+
+.interviews-table-header h2 {
+    margin: 0;
+    color: #14304f;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.table-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.table-icon-btn {
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #3d4652;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.table-icon-btn:hover {
+    background: #f0f4fa;
+    color: #092746;
+}
+
+.table-icon-btn .material-symbols-outlined {
+    font-size: 21px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.interviews-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.interviews-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.interviews-table thead {
+    background: #edf3ff;
+}
+
+.interviews-table th {
+    padding: 15px 24px;
+    color: #4b5360;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-align: left;
+    white-space: nowrap;
+}
+
+.interviews-table th:nth-child(1) {
+    width: 25%;
+}
+
+.interviews-table th:nth-child(2) {
+    width: 27%;
+}
+
+.interviews-table th:nth-child(3) {
+    width: 19%;
+}
+
+.interviews-table th:nth-child(4) {
+    width: 15%;
+}
+
+.interviews-table th:nth-child(5) {
+    width: 14%;
+}
+
+.interviews-table td {
+    padding: 22px 24px;
+    border-bottom: 1px solid #d9dee6;
+    vertical-align: middle;
+}
+
+.interviews-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.interviews-table tbody tr {
+    transition: background 0.15s ease;
+}
+
+.interviews-table tbody tr:hover {
+    background: #fafcff;
+}
+
+
+/* =========================================================
+   STUDENT
+========================================================= */
+
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.student-avatar {
+    position: relative;
+    flex: 0 0 40px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.avatar-one {
+    background: #315b88;
+}
+
+.avatar-two {
+    background: #936e55;
+}
+
+.avatar-three {
+    background: #244f64;
+}
+
+.online-dot,
+.offline-dot {
+    position: absolute;
+    right: -1px;
+    bottom: 1px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid #ffffff;
+    border-radius: 50%;
+}
+
+.online-dot {
+    background: #19b95d;
+}
+
+.offline-dot {
+    background: #b9c1cd;
+}
+
+.student-info strong,
+.internship-info strong,
+.date-info strong {
+    display: block;
+    color: #102b48;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.student-info small,
+.internship-info small,
+.date-info small {
+    display: block;
+    margin-top: 3px;
+    color: #606a79;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+.date-info small {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.date-info small .material-symbols-outlined {
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.interview-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.interview-status.interviewing {
+    background: #fff0dc;
+    color: #c45d00;
+}
+
+.interview-status.applied {
+    background: #f0f2f5;
+    color: #606977;
+}
+
+.interview-status.hired {
+    background: #dff8e8;
+    color: #16854a;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.interview-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.interview-action-btn {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #082c4d;
+    cursor: pointer;
+    transition: 0.15s ease;
+}
+
+.interview-action-btn:hover {
+    background: #eef4fb;
+}
+
+.interview-action-btn .material-symbols-outlined {
+    font-size: 21px;
+}
+
+.edit-interview-btn {
+    color: #ad5a00;
+}
+
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.interviews-pagination {
+    min-height: 78px;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #edf3ff;
+    border-top: 1px solid #d9dee7;
+}
+
+.interviews-pagination p {
+    margin: 0;
+    color: #4f5867;
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+.interviews-pagination > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pagination-btn {
+    min-width: 76px;
+    height: 32px;
+    padding: 0 14px;
+    border: 1px solid #c3cbd8;
+    border-radius: 4px;
+    background: transparent;
+    color: #1b2d43;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pagination-btn:hover {
+    background: #ffffff;
+}
+
+
+/* =========================================================
+   MODAL OVERLAY
+========================================================= */
+
+.interview-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    padding: 24px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(8, 25, 46, 0.58);
+    backdrop-filter: blur(3px);
+}
+
+.interview-modal-overlay.active {
+    display: flex;
+}
+
+.interview-modal {
+    width: min(620px, 100%);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 25px 65px rgba(0, 20, 45, 0.25);
+}
+
+.small-modal {
+    width: min(520px, 100%);
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.interview-modal-header {
+    padding: 24px 26px 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 1px solid #e6eaf0;
+}
+
+.modal-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #ad5a00;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.11em;
+}
+
+.interview-modal-header h2 {
+    margin: 0;
+    color: #092746;
+    font-size: 24px;
+    font-weight: 800;
+}
+
+.interview-modal-header p {
+    margin: 6px 0 0;
+    color: #687386;
+    font-size: 13px;
+}
+
+.modal-close-btn {
+    flex: 0 0 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: #f3f6fa;
+    color: #243c55;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.modal-close-btn:hover {
+    background: #e8edf4;
+}
+
+
+/* =========================================================
+   MODAL FORM
+========================================================= */
+
+.modal-form-grid {
+    padding: 24px 26px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
+    color: #213a55;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 1px solid #d4dbe5;
+    border-radius: 7px;
+    outline: none;
+    background: #ffffff;
+    color: #1c3148;
+    font: inherit;
+    font-size: 13px;
+    transition: 0.15s ease;
+}
+
+.form-group textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: #315f95;
+    box-shadow: 0 0 0 3px rgba(49, 95, 149, 0.09);
+}
+
+.form-group input[readonly] {
+    background: #f5f7fa;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.modal-footer {
+    padding: 18px 26px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    border-top: 1px solid #e6eaf0;
+}
+
+.modal-cancel-btn,
+.modal-primary-btn {
+    min-height: 42px;
+    padding: 0 18px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.modal-cancel-btn {
+    border: 1px solid #ccd4df;
+    background: #ffffff;
+    color: #33475d;
+}
+
+.modal-primary-btn {
+    border: 1px solid #0d3158;
+    background: #0d3158;
+    color: #ffffff;
+}
+
+.modal-primary-btn:hover {
+    background: #082746;
+}
+
+
+/* =========================================================
+   VIEW DETAILS
+========================================================= */
+
+.interview-details {
+    padding: 24px 26px;
+    display: grid;
+    gap: 13px;
+}
+
+.detail-item {
+    padding: 13px 15px;
+    border-radius: 8px;
+    background: #f6f8fb;
+}
+
+.detail-item span {
+    display: block;
+    margin-bottom: 4px;
+    color: #798394;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.detail-item strong {
+    color: #15314e;
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   RESPONSIVE - CONTENT ONLY
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .company-interviews-page {
+        padding: 28px 22px 45px;
+    }
+
+    .interview-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .interviews-table {
+        min-width: 850px;
+    }
+}
+
+@media (max-width: 850px) {
+    .company-interviews-page {
+        padding-top: 22px;
+    }
+}
+
+@media (max-width: 700px) {
+
+    .company-interviews-page {
+        padding: 22px 16px 40px;
+    }
+
+    .interviews-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .interviews-title h1 {
+        font-size: 27px;
+    }
+
+    .schedule-interview-btn {
+        width: 100%;
+    }
+
+    .modal-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-group.full-width {
+        grid-column: auto;
+    }
+
+    .interviews-pagination {
+        padding: 15px;
+        gap: 14px;
+        align-items: flex-start;
+        flex-direction: column;
+    }
+}
+/* ================================
+   SUMMARY CARD HOVER EFFECT ONLY
+================================ */
+
+.interview-summary-card {
+    cursor: pointer;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.interview-summary-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(9, 39, 70, 0.13);
+}
+.interview-summary-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.interview-summary-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+
+    /* Dashboard-style neutral hover */
+    border-left-color: #e2e8f0;
+} 
+/* ============================================
+   SUMMARY CARDS - DASHBOARD STYLE HOVER
+   ============================================ */
+
+.interview-summary-card {
+    cursor: pointer;
+    transition:
+        transform 0.25s ease,
+        box-shadow 0.25s ease,
+        border-color 0.25s ease;
+}
+
+/* Same movement + shadow style as Dashboard */
+.interview-summary-card:hover {
+    transform: translateY(-2px);
+    border-color: #d4dde8;
+    box-shadow: 0 10px 26px rgba(15, 36, 64, 0.09);
+}
+
+/* Left coloured strip */
+.interview-summary-card::before {
+    transition: background-color 0.25s ease;
+}
+
+/* Dashboard-style light gray strip on hover */
+.interview-summary-card:hover::before {
+    background: #d4dde8;
+}

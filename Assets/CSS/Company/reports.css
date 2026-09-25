@@ -1,0 +1,922 @@
+/* =========================================================
+   REPORTS PAGE ONLY
+   DO NOT style shared header/sidebar here
+========================================================= */
+
+.company-reports-page {
+    width: 100%;
+    min-height: 100vh;
+
+    margin: 0;
+
+    padding: 28px 32px 60px;
+
+    background: #f5f7fb;
+
+    box-sizing: border-box;
+}
+
+.company-reports-page * {
+    box-sizing: border-box;
+}
+
+
+/* PAGE HEADER */
+
+.reports-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    width: 100%;
+
+    margin-bottom: 28px;
+}
+
+.reports-title-area {
+    flex: 1;
+    min-width: 0;
+}
+
+.reports-title-area h1 {
+    margin: 0 0 5px;
+
+    color: #092746;
+
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.reports-title-area p {
+    margin: 0;
+
+    color: #5f6d80;
+
+    font-size: 14px;
+}
+
+
+/* HEADER ACTIONS */
+
+.reports-header-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    flex-shrink: 0;
+}
+
+.period-selector {
+    display: flex;
+
+    padding: 4px;
+
+    background: #ffffff;
+
+    border: 1px solid #ccd5e1;
+    border-radius: 9px;
+}
+
+.period-btn {
+    min-height: 46px;
+
+    padding: 0 17px;
+
+    border: none;
+    border-radius: 6px;
+
+    background: transparent;
+    color: #475569;
+
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.period-btn.active {
+    background: #123e70;
+    color: #ffffff;
+}
+
+.export-btn,
+.csv-btn {
+    min-height: 48px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding: 0 16px;
+
+    border-radius: 7px;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.export-btn {
+    border: 1px solid #123e70;
+
+    background: #123e70;
+    color: white;
+}
+
+.csv-btn {
+    border: 2px solid #123e70;
+
+    background: white;
+    color: #123e70;
+}
+
+.export-btn .material-symbols-outlined,
+.csv-btn .material-symbols-outlined {
+    font-size: 17px;
+}
+
+
+/* =========================================================
+   METRICS
+========================================================= */
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    gap: 20px;
+
+    width: 100%;
+
+    margin-bottom: 24px;
+}
+
+.metric-card {
+    min-width: 0;
+
+    padding: 21px;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f4;
+    border-radius: 13px;
+}
+
+.metric-label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #5d6470;
+
+    font-size: 10px;
+    font-weight: 700;
+
+    letter-spacing: .8px;
+}
+
+.metric-value-row {
+    display: flex;
+    align-items: flex-end;
+
+    gap: 9px;
+}
+
+.metric-value {
+    color: #082745;
+
+    font-size: 29px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.metric-change,
+.metric-small-text {
+    padding-bottom: 3px;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.metric-change.positive {
+    color: #0b9d50;
+}
+
+.metric-change.negative {
+    color: #ff3e42;
+}
+
+.metric-small-text {
+    color: #64748b;
+
+    font-size: 9px;
+}
+
+.metric-progress {
+    width: 100%;
+    height: 4px;
+
+    margin-top: 19px;
+
+    overflow: hidden;
+
+    background: #e6effb;
+
+    border-radius: 10px;
+}
+
+.metric-progress span {
+    display: block;
+
+    height: 100%;
+
+    background: #123e70;
+}
+
+.metric-progress.orange span {
+    background: #ed7d24;
+}
+
+
+/* =========================================================
+   ANALYTICS
+========================================================= */
+
+.analytics-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 2.1fr) minmax(280px, 1fr);
+
+    gap: 22px;
+
+    width: 100%;
+
+    margin-bottom: 24px;
+}
+
+.analytics-card {
+    min-width: 0;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f4;
+    border-radius: 13px;
+}
+
+.analytics-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    gap: 20px;
+
+    padding: 25px 27px 0;
+}
+
+.analytics-card-header h2 {
+    margin: 0 0 4px;
+
+    color: #092746;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.analytics-card-header p {
+    margin: 0;
+
+    color: #5f6876;
+
+    font-size: 12px;
+}
+
+
+/* CHART */
+
+.applications-chart-card {
+    min-height: 420px;
+}
+
+.chart-legend {
+    display: flex;
+
+    gap: 20px;
+
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.chart-legend span {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+}
+
+.legend-dot,
+.skill-dot {
+    display: inline-block;
+
+    width: 8px;
+    height: 8px;
+
+    border-radius: 50%;
+}
+
+.technical,
+.frontend {
+    background: #123e70;
+}
+
+.creative,
+.backend {
+    background: #ed7d24;
+}
+
+.design {
+    background: #85a6d6;
+}
+
+.product {
+    background: #4b5563;
+}
+
+.chart-area {
+    position: relative;
+
+    height: 315px;
+
+    margin: 10px 27px 20px;
+}
+
+.chart-grid-line {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+
+    height: 1px;
+
+    background: #eef2f7;
+}
+
+.line-one {
+    top: 20%;
+}
+
+.line-two {
+    top: 40%;
+}
+
+.line-three {
+    top: 60%;
+}
+
+.line-four {
+    top: 80%;
+}
+
+.chart-svg {
+    position: absolute;
+
+    top: 5px;
+    left: 0;
+
+    width: 100%;
+    height: 250px;
+}
+
+.chart-svg polyline {
+    fill: none;
+
+    stroke-width: 3;
+
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.technical-line {
+    stroke: #123e70;
+}
+
+.creative-line {
+    stroke: #ed7d24;
+}
+
+.chart-weeks {
+    position: absolute;
+
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+
+    color: #64748b;
+
+    font-size: 9px;
+
+    text-align: center;
+}
+
+
+/* SKILLS */
+
+.skills-card {
+    min-height: 420px;
+}
+
+.donut-wrapper {
+    display: flex;
+    justify-content: center;
+
+    padding: 32px 20px 20px;
+}
+
+.skills-donut {
+    position: relative;
+
+    width: 170px;
+    height: 170px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        conic-gradient(
+            #123e70 0 40%,
+            #ed7d24 40% 70%,
+            #85a6d6 70% 90%,
+            #4b5563 90% 100%
+        );
+}
+
+.skills-donut::after {
+    content: "";
+
+    position: absolute;
+
+    width: 125px;
+    height: 125px;
+
+    background: white;
+
+    border-radius: 50%;
+}
+
+.donut-center {
+    position: relative;
+
+    z-index: 2;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.donut-center strong {
+    color: #092746;
+
+    font-size: 24px;
+}
+
+.donut-center span {
+    color: #64748b;
+
+    font-size: 9px;
+}
+
+.skills-list {
+    padding: 0 27px 25px;
+}
+
+.skills-list > div {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 10px;
+
+    font-size: 10px;
+    font-weight: 650;
+}
+
+.skills-list span {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+}
+
+
+/* =========================================================
+   HIRING TABLE
+========================================================= */
+
+.hiring-card {
+    width: 100%;
+
+    margin-bottom: 24px;
+
+    overflow: hidden;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f4;
+    border-radius: 13px;
+}
+
+.hiring-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    padding: 22px 25px;
+}
+
+.hiring-card-header h2 {
+    margin: 0 0 3px;
+
+    color: #092746;
+
+    font-size: 15px;
+}
+
+.hiring-card-header p {
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 11px;
+}
+
+.details-btn {
+    border: none;
+
+    background: transparent;
+    color: #092746;
+
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.hiring-table-wrapper {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+.hiring-table {
+    width: 100%;
+
+    border-collapse: collapse;
+}
+
+.hiring-table thead {
+    background: #eef3fd;
+}
+
+.hiring-table th,
+.hiring-table td {
+    padding: 13px 20px;
+
+    text-align: left;
+}
+
+.hiring-table th {
+    color: #5f6876;
+
+    font-size: 9px;
+}
+
+.hiring-table td {
+    border-bottom: 1px solid #e9edf3;
+
+    color: #26384e;
+
+    font-size: 11px;
+}
+
+.department-cell {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    min-width: 210px;
+}
+
+.department-icon {
+    width: 36px;
+    height: 36px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    background: #e8f1ff;
+    color: #123e70;
+
+    border-radius: 7px;
+}
+
+.orange-icon {
+    background: #fff0dc;
+    color: #c96800;
+}
+
+.department-cell strong {
+    display: block;
+
+    color: #092746;
+}
+
+.department-cell small {
+    color: #64748b;
+
+    font-size: 7px;
+}
+
+.goal-bar {
+    display: inline-block;
+
+    width: 38px;
+    height: 5px;
+
+    margin-left: 7px;
+
+    overflow: hidden;
+
+    background: #e1eaf5;
+
+    border-radius: 10px;
+}
+
+.goal-bar i {
+    display: block;
+
+    height: 100%;
+
+    background: #123e70;
+}
+
+.orange-goal i {
+    background: #ed7d24;
+}
+
+.status-pill {
+    display: inline-flex;
+
+    padding: 5px 10px;
+
+    border-radius: 20px;
+
+    font-size: 7px;
+    font-weight: 800;
+}
+
+.on-track {
+    background: #dff8e8;
+    color: #07833d;
+}
+
+.interviewing {
+    background: #ffe6d0;
+    color: #8c4a00;
+}
+
+.completed {
+    background: #dceaff;
+    color: #08467b;
+}
+
+.velocity {
+    font-size: 9px;
+    font-weight: 750;
+}
+
+.velocity.positive {
+    color: #08a04c;
+}
+
+.velocity.stable {
+    color: #8b9099;
+}
+
+
+/* =========================================================
+   BOTTOM CARDS
+========================================================= */
+
+.bottom-insights {
+    display: grid;
+    grid-template-columns: minmax(230px, .75fr) minmax(0, 1.6fr);
+
+    gap: 22px;
+
+    width: 100%;
+}
+
+.time-to-hire-card,
+.impact-card {
+    min-height: 170px;
+
+    border-radius: 13px;
+}
+
+.time-to-hire-card {
+    padding: 25px;
+
+    background: #052e52;
+    color: white;
+}
+
+.insight-label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    font-size: 8px;
+    font-weight: 750;
+
+    letter-spacing: 1px;
+}
+
+.time-to-hire-card h2 {
+    margin: 0;
+
+    font-size: 20px;
+}
+
+.time-value {
+    display: flex;
+    align-items: flex-end;
+
+    gap: 12px;
+
+    margin-top: 30px;
+}
+
+.time-value > strong {
+    color: #92bff0;
+
+    font-size: 32px;
+}
+
+.time-value div {
+    display: flex;
+    flex-direction: column;
+
+    font-size: 9px;
+}
+
+.impact-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 25px;
+
+    padding: 25px;
+
+    background: #ed7d24;
+    color: white;
+}
+
+.impact-card h2 {
+    max-width: 520px;
+
+    margin: 0;
+
+    font-size: 20px;
+}
+
+.whitepaper-btn {
+    width: 170px;
+    min-height: 70px;
+
+    border: none;
+    border-radius: 11px;
+
+    background: white;
+    color: #914a00;
+
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1150px) {
+
+    .reports-page-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .reports-header-actions {
+        flex-wrap: wrap;
+
+        width: 100%;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 650px) {
+
+    .company-reports-page {
+        padding: 22px 15px 40px;
+    }
+
+    .metrics-grid,
+    .bottom-insights {
+        grid-template-columns: 1fr;
+    }
+
+    .period-selector {
+        width: 100%;
+    }
+
+    .period-btn {
+        flex: 1;
+    }
+
+    .chart-legend {
+        display: none;
+    }
+}
+/* =========================================
+   REPORTS & ANALYTICS - HOVER EFFECTS
+   Add this at the END of reports.css
+========================================= */
+
+/* Top 4 statistic cards */
+.report-stat-card,
+.reports-stat-card,
+.metric-card,
+.stat-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.report-stat-card:hover,
+.reports-stat-card:hover,
+.metric-card:hover,
+.stat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(9, 39, 70, 0.13);
+}
+
+
+/* Applications Over Time card */
+.applications-chart-card,
+.chart-card,
+.reports-chart-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.applications-chart-card:hover,
+.chart-card:hover,
+.reports-chart-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(9, 39, 70, 0.11);
+}
+
+
+/* Skills Distribution card */
+.skills-card,
+.skills-distribution-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.skills-card:hover,
+.skills-distribution-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(9, 39, 70, 0.11);
+}

@@ -23,7 +23,7 @@ const viewModal   = document.getElementById('viewModal');
 const viewContent = document.getElementById('viewModalContent');
 
 function openViewModal(name, faculty, domain, location, students, status) {
-    const badgeCls = status === 'Active' ? 'active' : status === 'Pending' ? 'pending' : 'inactive-badge';
+    const badgeCls = status === 'Active' ? 'active' : status === 'Hold' ? 'hold' : 'inactive';
     viewContent.innerHTML =
         detailRow('University',   escHtml(name)) +
         detailRow('Faculty',      escHtml(faculty)) +
@@ -107,28 +107,96 @@ function openEditModal(uni, faculty, domain, location, status) {
 
 // ── Delete Modal ─────────────────────────────────────────────────────────────
 const deleteModal = document.getElementById('deleteModal');
+let currentDeleteTarget = null;
+
 if (deleteModal) {
     const closeDel = document.getElementById('closeDeleteModal');
     const cancelDel = document.getElementById('cancelDeleteModal');
+    const editStatusInsteadBtn = document.getElementById('editStatusInsteadBtn');
+
     if (closeDel) closeDel.addEventListener('click', () => deleteModal.classList.remove('open'));
     if (cancelDel) cancelDel.addEventListener('click', () => deleteModal.classList.remove('open'));
     deleteModal.addEventListener('click', e => { if (e.target === deleteModal) deleteModal.classList.remove('open'); });
+
+    if (editStatusInsteadBtn) {
+        editStatusInsteadBtn.addEventListener('click', () => {
+            deleteModal.classList.remove('open');
+            if (currentDeleteTarget) {
+                openEditModal(
+                    currentDeleteTarget.name,
+                    currentDeleteTarget.faculty,
+                    currentDeleteTarget.domain,
+                    currentDeleteTarget.location,
+                    currentDeleteTarget.status
+                );
+            }
+        });
+    }
 }
 
-function openDeleteModal(domain, name) {
+function openDeleteModal(domain, name, stuCount = 0, faculty = '', location = '', status = 'Active') {
     const input = document.getElementById('deleteDomainInput');
     const uniDisplay = document.getElementById('deleteUniDisplay');
     const domainDisplay = document.getElementById('deleteDomainDisplay');
-    
+    const deleteModalHeader = document.getElementById('deleteModalHeader');
+    const deleteAllowedWrap = document.getElementById('deleteAllowedWrap');
+    const deleteBlockedWrap = document.getElementById('deleteBlockedWrap');
+    const confirmDeleteBtn  = document.getElementById('confirmDeleteBtn');
+    const editStatusInsteadBtn = document.getElementById('editStatusInsteadBtn');
+    const deleteBlockedStuCount = document.getElementById('deleteBlockedStuCount');
+    const deleteBlockedUni = document.getElementById('deleteBlockedUni');
+    const deleteBlockedDomain = document.getElementById('deleteBlockedDomain');
+
+    currentDeleteTarget = { domain, name, faculty, location, status, stuCount };
+
     if (input) input.value = domain;
     if (uniDisplay) uniDisplay.innerText = name || 'University';
     if (domainDisplay) domainDisplay.innerText = '@' + domain;
-    
+
+    if (stuCount > 0) {
+        // Blocked state: university has registered students!
+        if (deleteAllowedWrap) deleteAllowedWrap.style.display = 'none';
+        if (deleteBlockedWrap) deleteBlockedWrap.style.display = 'block';
+        if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
+        if (editStatusInsteadBtn) editStatusInsteadBtn.style.display = 'inline-flex';
+        if (deleteBlockedStuCount) deleteBlockedStuCount.innerText = stuCount + (stuCount === 1 ? ' active student' : ' active students');
+        if (deleteBlockedUni) deleteBlockedUni.innerText = name || 'University';
+        if (deleteBlockedDomain) deleteBlockedDomain.innerText = '@' + domain;
+        if (deleteModalHeader) {
+            deleteModalHeader.innerHTML = `
+                <h3 style="color:#b45309; display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:22px; color:#d97706;">gpp_maybe</span>
+                    <span>Cannot Delete Institution</span>
+                </h3>
+                <button class="univ-modal-close" id="closeDeleteModal" type="button" onclick="document.getElementById('deleteModal').classList.remove('open')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            `;
+        }
+    } else {
+        // Allowed state: 0 students
+        if (deleteAllowedWrap) deleteAllowedWrap.style.display = 'block';
+        if (deleteBlockedWrap) deleteBlockedWrap.style.display = 'none';
+        if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'inline-flex';
+        if (editStatusInsteadBtn) editStatusInsteadBtn.style.display = 'none';
+        if (deleteModalHeader) {
+            deleteModalHeader.innerHTML = `
+                <h3 style="color:#dc2626; display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:20px;">delete</span>
+                    <span>Delete University</span>
+                </h3>
+                <button class="univ-modal-close" id="closeDeleteModal" type="button" onclick="document.getElementById('deleteModal').classList.remove('open')">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            `;
+        }
+    }
+
     if (deleteModal) deleteModal.classList.add('open');
 }
 
-function confirmDelete(domain, name) {
-    openDeleteModal(domain, name);
+function confirmDelete(domain, name, stuCount = 0) {
+    openDeleteModal(domain, name, stuCount);
 }
 
 // ── University Searchable Combobox Dropdown ──────────────────────────────────

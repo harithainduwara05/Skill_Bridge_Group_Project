@@ -46,12 +46,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
         }
     } elseif ($action === 'delete') {
-        $domainToDelete = trim($_POST['delete_domain']);
-        try {
-            $adminDB->deleteUniversity($domainToDelete);
-            $flash = ['type' => 'success', 'message' => 'University deleted successfully'];
-        } catch (mysqli_sql_exception $e) {
-            $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+        $domainToDelete = trim($_POST['delete_domain'] ?? '');
+        $stuCount = $adminDB->getStudentCountByDomain($domainToDelete);
+        if ($stuCount > 0) {
+            $flash = [
+                'type' => 'error',
+                'message' => "Deletion Blocked: This institution currently has {$stuCount} enrolled student account(s) with domain @{$domainToDelete}. Deleting it is restricted to preserve student credentials. Please update its status to 'Hold' or 'Inactive' instead."
+            ];
+        } else {
+            try {
+                $adminDB->deleteUniversity($domainToDelete);
+                $flash = ['type' => 'success', 'message' => 'University deleted successfully'];
+            } catch (mysqli_sql_exception $e) {
+                $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+            }
         }
     }
 }
@@ -124,9 +132,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <span class="material-symbols-outlined">schedule</span>
             </div>
             <div class="univ-stat-info">
-                <div class="univ-stat-label">PENDING APPROVAL</div>
+                <div class="univ-stat-label">ON HOLD</div>
                 <div class="univ-stat-value">
-                    <?php echo $adminDB->getCountWhere("universityemails", "status", "Pending"); ?>
+                    <?php echo $adminDB->getCountWhere("universityemails", "status", "Hold"); ?>
                 </div>
             </div>
         </div>
@@ -175,7 +183,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <select name="status" class="univ-select-filter" onchange="this.form.submit()">
                             <option value="all" <?= $selectedStatus === 'all' ? 'selected' : '' ?>>All Statuses</option>
                             <option value="Active" <?= $selectedStatus === 'Active' ? 'selected' : '' ?>>Active</option>
-                            <option value="Pending" <?= $selectedStatus === 'Pending' ? 'selected' : '' ?>>Pending</option>
+                            <option value="Hold" <?= $selectedStatus === 'Hold' ? 'selected' : '' ?>>Hold</option>
                             <option value="Inactive" <?= $selectedStatus === 'Inactive' ? 'selected' : '' ?>>Inactive
                             </option>
                         </select>
@@ -220,8 +228,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                 $initials = strtoupper(substr($row['University'], 0, 3));
                                 $badgeCls = match (strtolower($row['Status'] ?? '')) {
                                     'active' => 'active',
-                                    'pending' => 'pending',
-                                    default => 'inactive-badge'
+                                    'hold' => 'hold',
+                                    'inactive', 'deactive' => 'inactive',
+                                    default => 'inactive'
                                 };
                                 ?>
                                 <tr>
@@ -261,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                             </button>
                                             <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
-                                                onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>')">
+                                                onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>', <?= (int)$stuCount ?>, '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
                                                 <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
                                             </button>
                                         </div>
@@ -355,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label class="form-label">Status</label>
                     <select class="form-input" name="status">
                         <option value="Active">Active</option>
-                        <option value="Pending">Pending</option>
+                        <option value="Hold">Hold</option>
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
@@ -417,7 +426,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <label class="form-label">Status</label>
                     <select class="form-input" name="status" id="editStatus">
                         <option value="Active">Active</option>
-                        <option value="Pending">Pending</option>
+                        <option value="Hold">Hold</option>
                         <option value="Inactive">Inactive</option>
                     </select>
                 </div>
@@ -449,20 +458,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <!-- Delete University Modal -->
 <div class="univ-modal-overlay" id="deleteModal">
     <div class="univ-modal">
-        <div class="univ-modal-header">
+        <div class="univ-modal-header" id="deleteModalHeader">
             <h3 style="color:#dc2626; display:flex; align-items:center; gap:8px;">
                 <span class="material-symbols-outlined" style="font-size:20px;">delete</span>
-                Delete University
+                <span>Delete University</span>
             </h3>
             <button class="univ-modal-close" id="closeDeleteModal" type="button">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <form action="" method="post">
+        <form action="" method="post" id="deleteUnivForm">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="delete_domain" id="deleteDomainInput">
 
-            <div class="univ-modal-body" style="padding: 22px 24px;">
+            <!-- STATE 1: Normal Deletion (No Students) -->
+            <div id="deleteAllowedWrap" class="univ-modal-body" style="padding: 22px 24px;">
                 <div style="display:flex; gap:16px; align-items:flex-start;">
                     <div
                         style="width:44px; height:44px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
@@ -493,9 +503,53 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                 </div>
             </div>
+
+            <!-- STATE 2: Blocked Deletion (Active Students Enrolled) -->
+            <div id="deleteBlockedWrap" class="univ-modal-body" style="padding: 22px 24px; display:none;">
+                <div style="display:flex; gap:16px; align-items:flex-start;">
+                    <div
+                        style="width:46px; height:46px; border-radius:50%; background:#fef3c7; color:#d97706; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <span class="material-symbols-outlined" style="font-size:26px;">gpp_maybe</span>
+                    </div>
+                    <div style="flex:1;">
+                        <h4 style="font-size: 15px; font-weight:700; color:#92400e; margin:0 0 6px 0;">
+                            Deletion Restricted: Enrolled Students Found
+                        </h4>
+                        <div
+                            style="background:#fffbeb; border:1.5px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:12.5px; color:#92400e; line-height:1.5;">
+                            This institution cannot be deleted because it currently has <strong id="deleteBlockedStuCount" style="color:#b45309; text-decoration:underline;">0 students</strong> enrolled on SkillBridge. Deleting it would orphan active student accounts and break login authorization.
+                        </div>
+
+                        <div
+                            style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:12px;">
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; font-size:12.5px;">
+                                <span style="color:#64748b; font-weight:600;">University:</span>
+                                <strong id="deleteBlockedUni" style="color:#0f172a; font-weight:600;"></strong>
+                            </div>
+                            <div
+                                style="display:flex; justify-content:space-between; align-items:center; font-size:12.5px;">
+                                <span style="color:#64748b; font-weight:600;">Authorized Domain:</span>
+                                <strong id="deleteBlockedDomain"
+                                    style="color:#2563eb; font-weight:600; font-family:'Courier New', monospace;"></strong>
+                            </div>
+                        </div>
+
+                        <p style="font-size:12px; color:#64748b; margin:0; line-height:1.4;">
+                            <span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#d97706;">lightbulb</span>
+                            <em>Recommended:</em> If you wish to suspend onboarding or platform access without removing user records, change the status to <strong>"Hold"</strong> or <strong>"Inactive"</strong> instead.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             <div class="univ-modal-footer">
                 <button type="button" class="univ-btn-cancel" id="cancelDeleteModal">Cancel</button>
-                <button type="submit" class="univ-btn-delete">
+                <button type="button" class="btn-primary" id="editStatusInsteadBtn" style="background:#d97706; border:none; display:none; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; cursor:pointer;">
+                    <span class="material-symbols-outlined" style="font-size:16px;">edit</span>
+                    Change Status Instead
+                </button>
+                <button type="submit" class="univ-btn-delete" id="confirmDeleteBtn">
                     <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
                     Delete University
                 </button>
