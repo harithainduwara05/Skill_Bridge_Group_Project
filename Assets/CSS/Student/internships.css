@@ -1,0 +1,684 @@
+/* =====================================
+   SKILLBRIDGE INTERNSHIP PAGE
+===================================== */
+
+.internship-page{
+
+    padding:25px 35px;
+    width:100%;
+    max-width:1300px;
+    margin:auto;
+    box-sizing:border-box;
+    animation:pageFade .5s ease;
+}
+
+
+/* =====================================
+ HEADER
+===================================== */
+
+.internship-header{
+
+    padding-top:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:30px;
+
+}
+
+
+.internship-header h1{
+
+    margin:0;
+    font-size:26px;
+    color:#082544;
+    font-weight:700;
+
+}
+
+
+.internship-header p{
+
+    margin-top:8px;
+    color:#667085;
+    font-size:14px;
+
+}
+
+
+.internship-header-actions{
+
+    display:flex;
+    align-items:center;
+
+}
+
+
+.btn-secondary{
+
+    height:45px;
+    padding:0 22px;
+    border:1px solid #082544;
+    border-radius:8px;
+    background:white;
+    color:#082544;
+    text-decoration:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-size:14px;
+    font-weight:700;
+    transition:.3s;
+
+}
+
+
+.btn-secondary:hover{
+
+    background:#082544;
+    color:white;
+
+}
+
+
+/* =====================================
+ FILTER
+===================================== */
+
+
+.internship-filter{
+
+    background:white;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+    border-radius:12px;
+    padding:20px;
+
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:18px;
+
+}
+
+
+
+.filter-box{
+
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+
+}
+
+
+.filter-box label{
+
+    font-size:12px;
+    font-weight:700;
+    color:#667085;
+
+}
+
+
+.filter-box select{
+
+    height:42px;
+    border-radius:8px;
+    border:1px solid #d0d5dd;
+    padding:0 12px;
+    background:white;
+    color:#082544;
+
+}
+
+
+
+/* CLEAR FILTER */
+
+
+.filter-action{
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+}
+
+
+.clear-filter{
+
+    border:none;
+    background:none;
+    padding-top: 15px;
+
+    color:#082544;
+
+    font-size:14px;
+    font-weight:700;
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    cursor:pointer;
+
+}
+
+
+.clear-filter:hover{
+
+    color:#ff8a00;
+
+}
+
+
+
+/* =====================================
+ INTERNSHIP GRID
+===================================== */
+
+
+.internship-grid{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,minmax(0,1fr));
+
+    gap:25px;
+
+    margin-top:25px;
+
+}
+
+
+
+
+
+/* =====================================
+ CARD
+===================================== */
+
+
+.internship-card{
+
+    background:white;
+
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+
+
+    border-radius:16px;
+
+    padding:25px;
+
+    min-width:0;
+
+    min-height:430px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    transition:.3s;
+
+    animation:cardShow .5s ease;
+
+}
+
+
+.internship-card:hover{
+
+    transform:translateY(-1px);
+
+    box-shadow:0 18px 35px rgba(8,37,68,.12);
+
+}
+
+
+
+
+
+/* TOP */
+
+
+.card-top{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    margin-bottom:25px;
+
+}
+
+
+
+.company-logo{
+
+    width:90px;
+
+    height:90px;
+
+    background:#f1f5f9;
+
+    border-radius:14px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-shrink:0;
+
+}
+
+
+
+.company-logo span{
+
+    font-size:32px;
+
+    font-weight:800;
+
+    color:#082544;
+
+    letter-spacing:2px;
+
+}
+
+
+
+.status-badge{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    padding:7px 16px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+    font-weight:700;
+
+}
+
+
+
+
+
+/* CONTENT */
+
+
+.internship-card h2{
+
+    color:#082544;
+
+    font-size:21px;
+
+    line-height:1.3;
+
+    margin:0 0 10px;
+
+    min-height:55px;
+
+}
+
+
+
+.company-name{
+
+    color:#475467;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    margin:0;
+
+}
+
+
+
+.location{
+
+    color:#667085;
+
+    font-size:14px;
+
+    margin-top:12px;
+
+}
+
+
+
+
+
+/* TAGS */
+
+
+.internship-tags{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+    margin-top:18px;
+
+    min-height:38px;
+
+}
+
+
+
+.internship-tags span{
+
+    background:#eef2f7;
+
+    color:#344054;
+
+    padding:7px 13px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+}
+
+
+
+
+
+/* INFO */
+
+
+.internship-info{
+
+    margin-top:auto;
+
+    padding-top:22px;
+
+    border-top:1px solid #edf0f5;
+
+    display:flex;
+
+    justify-content:space-between;
+
+}
+
+
+.internship-info small{
+
+    display:block;
+
+    color:#667085;
+
+    font-size:12px;
+
+}
+
+
+.internship-info strong{
+
+    color:#082544;
+
+    font-size:15px;
+
+    margin-top:5px;
+
+    display:block;
+
+}
+
+
+
+
+
+/* BUTTONS */
+
+
+.internship-actions{
+
+    display:flex;
+
+    gap:12px;
+
+    margin-top:22px;
+
+}
+
+
+
+.view-details,
+.apply-now{
+
+    flex:1;
+
+    height:45px;
+
+    border-radius:9px;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+    text-decoration:none;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+}
+
+
+
+.view-details{
+
+    border:1px solid #082544;
+
+    color:#082544;
+
+    background:white;
+
+}
+
+
+.view-details:hover{
+
+    background:#082544;
+
+    color:white;
+
+}
+
+
+
+.apply-now{
+
+    background:#ff8a00;
+
+    color:white;
+
+}
+
+
+.apply-now:hover{
+
+    background:#e97800;
+
+}
+
+
+
+
+
+/* =====================================
+ PAGINATION
+===================================== */
+
+
+.internship-pagination{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:15px;
+
+    margin:40px 0;
+
+}
+
+
+.internship-pagination button{
+
+    width:38px;
+
+    height:38px;
+
+    border-radius:50%;
+
+    border:1px solid #ccd5e0;
+
+    background:white;
+
+    cursor:pointer;
+
+}
+
+
+
+.internship-pagination .active{
+
+    background:#082544;
+
+    color:white;
+
+}
+
+
+
+
+
+/* =====================================
+ ANIMATION
+===================================== */
+
+
+@keyframes pageFade{
+
+    from{
+        opacity:0;
+    }
+
+    to{
+        opacity:1;
+    }
+
+}
+
+
+
+@keyframes cardShow{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(25px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+
+
+
+/* =====================================
+ RESPONSIVE
+===================================== */
+
+
+@media(max-width:1100px){
+
+    .internship-grid{
+
+        grid-template-columns:repeat(2,minmax(0,1fr));
+
+    }
+
+
+    .internship-filter{
+
+        grid-template-columns:repeat(2,minmax(0,1fr));
+
+    }
+
+}
+
+
+
+@media(max-width:700px){
+
+
+    .internship-page{
+
+        padding:20px;
+
+    }
+
+
+    .internship-header{
+
+        flex-direction:column;
+
+        align-items:flex-start;
+
+        gap:15px;
+
+    }
+
+
+    .internship-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .internship-filter{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .internship-actions{
+
+        flex-direction:column;
+
+    }
+
+}

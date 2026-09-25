@@ -1,0 +1,715 @@
+/* ==============================
+   INTERNSHIP APPLICATION PAGE
+============================== */
+
+.application-page{
+
+    padding:25px 35px;
+
+    max-width:1300px;
+
+    width:100%;
+
+    margin:auto;
+
+    box-sizing:border-box;
+
+    background:#f7f8fb;
+
+}
+
+
+/* HEADER */
+
+.application-header{
+
+    margin-bottom:25px;
+
+}
+
+
+.breadcrumb{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin-bottom:15px;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+.breadcrumb a{
+
+    color:#082544;
+
+    text-decoration:none;
+
+}
+
+
+.breadcrumb a:hover{
+
+    color:#ff8a00;
+
+}
+
+
+.breadcrumb span{
+
+    color:#98a2b3;
+
+}
+
+
+.breadcrumb strong{
+
+    color:#667085;
+
+}
+
+
+
+.application-header h1{
+
+    margin:0;
+
+    color:#082544;
+
+    font-size:32px;
+
+    font-weight:700;
+
+}
+
+
+
+.application-header p{
+
+    margin-top:10px;
+
+    color:#667085;
+
+    font-size:15px;
+
+}
+
+
+
+
+
+
+/* ==============================
+   MAIN GRID
+============================== */
+
+
+.application-layout{
+
+    display:grid;
+
+    grid-template-columns:minmax(0,2fr) minmax(300px,1fr);
+
+    gap:20px;
+
+    width:100%;
+
+    align-items:start;
+
+}
+
+
+
+.application-left,
+.application-right{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:20px;
+
+    min-width:0;
+
+}
+
+
+
+
+
+
+
+/* ==============================
+   CARDS
+============================== */
+
+
+.application-card,
+.upload-card,
+.summary-card{
+
+    background:white;
+
+    border:1px solid #e2e8f0;
+
+    border-radius:14px;
+
+    padding:25px;
+
+    width:100%;
+
+    box-sizing:border-box;
+
+    min-width:0;
+
+}
+
+
+
+.application-card h2,
+.upload-card h2,
+.summary-card h2{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    color:#082544;
+
+    font-size:20px;
+
+    padding-bottom:15px;
+
+    border-bottom:1px solid #e5e7eb;
+
+    margin:0 0 20px;
+
+}
+
+
+
+.application-card h2 i,
+.upload-card h2 i{
+
+    color:#ff8a00;
+
+}
+
+
+
+
+
+
+/* ==============================
+   FORM
+============================== */
+
+
+.application-card label{
+
+    display:block;
+
+    margin-top:18px;
+
+    margin-bottom:8px;
+
+    color:#082544;
+
+    font-size:14px;
+
+    font-weight:700;
+
+}
+
+
+
+.application-card input,
+.application-card textarea{
+
+    width:100%;
+
+    border:1px solid #d0d5dd;
+
+    border-radius:8px;
+
+    padding:12px;
+
+    font-family:inherit;
+
+    font-size:14px;
+
+    box-sizing:border-box;
+
+}
+
+
+
+.application-card textarea{
+
+    resize:none;
+
+}
+
+
+
+.application-card input:focus,
+.application-card textarea:focus{
+
+    outline:none;
+
+    border-color:#082544;
+
+}
+
+
+
+
+
+
+
+/* ==============================
+   SKILLS
+============================== */
+
+
+.skill-tags{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+}
+
+
+
+.skill-tags span{
+
+    background:#edf2f7;
+
+    color:#475569;
+
+    padding:7px 14px;
+
+    border-radius:20px;
+
+    font-size:13px;
+
+    font-weight:600;
+
+}
+
+
+
+.skill-input{
+
+    margin-top:18px;
+
+    border:1px solid #d0d5dd;
+
+    border-radius:8px;
+
+    padding:12px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#98a2b3;
+
+}
+
+
+
+.skill-input b{
+
+    color:#082544;
+
+}
+
+
+
+
+
+
+/* ==============================
+   UPLOAD
+============================== */
+
+
+.upload-card p{
+
+    color:#667085;
+
+    font-size:13px;
+
+    line-height:1.5;
+
+}
+
+
+
+.upload-box{
+
+    width:100%;
+
+    height:150px;
+
+    border:2px dashed #cbd5e1;
+
+    border-radius:12px;
+
+    display:flex;
+
+    flex-direction:column;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:8px;
+
+    position:relative;
+
+    text-align:center;
+
+    box-sizing:border-box;
+
+}
+
+
+
+.upload-box i{
+
+    font-size:38px;
+
+    color:#94a3b8;
+
+}
+
+
+
+.upload-box strong{
+
+    color:#082544;
+
+    font-size:16px;
+
+}
+
+
+
+.upload-box small{
+
+    color:#667085;
+
+}
+
+
+
+.upload-box input{
+
+    position:absolute;
+
+    inset:0;
+
+    opacity:0;
+
+    cursor:pointer;
+
+}
+
+
+
+
+
+.uploaded-file{
+
+    margin-top:18px;
+
+    height:60px;
+
+    width:100%;
+
+    border:1px solid #d0d5dd;
+
+    border-radius:10px;
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    padding:0 14px;
+
+    box-sizing:border-box;
+
+    overflow:hidden;
+
+}
+
+
+
+.uploaded-file i:first-child{
+
+    color:#082544;
+
+    font-size:22px;
+
+}
+
+
+
+.uploaded-file span:first-of-type{
+
+    flex:1;
+
+    overflow:hidden;
+
+    white-space:nowrap;
+
+    text-overflow:ellipsis;
+
+    color:#082544;
+
+    font-size:14px;
+
+    font-weight:600;
+
+}
+
+
+
+.uploaded-file span{
+
+    color:#667085;
+
+    font-size:12px;
+
+}
+
+
+
+.uploaded-file .fa-trash{
+
+    color:#dc2626;
+
+    cursor:pointer;
+
+}
+
+
+
+
+
+
+
+/* ==============================
+   SUMMARY
+============================== */
+
+
+.summary-card{
+
+    background:#062d55;
+
+    color:white;
+
+}
+
+
+
+.summary-card h2{
+
+    color:white;
+
+    border-color:#31557a;
+
+}
+
+
+
+.summary-item{
+
+    margin-bottom:18px;
+
+}
+
+
+
+.summary-item span{
+
+    display:block;
+
+    color:#b7c8da;
+
+    font-size:12px;
+
+}
+
+
+
+.summary-item strong{
+
+    color:white;
+
+    font-size:16px;
+
+}
+
+
+
+.summary-card ul{
+
+    list-style:none;
+
+    padding:0;
+
+    margin:20px 0;
+
+}
+
+
+
+.summary-card li{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    margin-bottom:15px;
+
+    font-size:14px;
+
+}
+
+
+
+.summary-card li i{
+
+    color:#ff8a00;
+
+}
+
+
+
+
+
+.submit-btn{
+
+    width:100%;
+
+    height:48px;
+
+    background:#ff8a00;
+
+    color:white;
+
+    border:none;
+
+    border-radius:8px;
+
+    font-size:15px;
+
+    font-weight:700;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:8px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+
+
+.submit-btn:hover{
+
+    background:#e87900;
+
+    transform:translateY(-2px);
+
+}
+
+
+
+.summary-card small{
+
+    display:block;
+
+    margin-top:15px;
+
+    color:#d7e3f5;
+
+    font-size:12px;
+
+    line-height:1.5;
+
+}
+
+
+
+
+
+
+
+/* ==============================
+   RESPONSIVE
+============================== */
+
+
+@media(max-width:1000px){
+
+    .application-layout{
+
+        grid-template-columns:1fr;
+
+    }
+
+}
+
+
+
+@media(max-width:700px){
+
+    .application-page{
+
+        padding:20px;
+
+    }
+
+
+    .application-header h1{
+
+        font-size:28px;
+
+    }
+
+
+    .application-card,
+    .upload-card,
+    .summary-card{
+
+        padding:20px;
+
+    }
+
+}
