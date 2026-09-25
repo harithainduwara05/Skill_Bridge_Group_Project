@@ -1,5 +1,18 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+if (!isset($conn)) {
+    @include_once __DIR__ . '/../Config/db.php';
+}
+
+$activeComplaintsCount = 0;
+if (isset($conn) && $conn instanceof mysqli) {
+    // Total complaints excluding RESOLVED and DISMISSED
+    $cntRes = $conn->query("SELECT COUNT(*) AS active_count FROM complain WHERE status NOT IN ('RESOLVED', 'DISMISSED')");
+    if ($cntRes && $cntRow = $cntRes->fetch_assoc()) {
+        $activeComplaintsCount = intval($cntRow['active_count'] ?? 0);
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -67,13 +80,15 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="nav-text">Internships</span>
             </a>
 
-            <a href="compain.php" class="<?= in_array($currentPage, ['complain.php']) ? 'active' : '' ?>"
+            <a href="complain.php" class="<?= in_array($currentPage, ['complain.php', 'compain.php']) ? 'active' : '' ?>"
                 title="Complaints">
                 <span class="icon">
                     <span class="material-symbols-outlined">report_problem</span>
                 </span>
                 <span class="nav-text">Complaints</span>
-                <span class="badge">12</span>
+                <?php if ($activeComplaintsCount > 0): ?>
+                    <span class="badge" id="sidebarComplaintBadge"><?= $activeComplaintsCount ?></span>
+                <?php endif; ?>
             </a>
 
             <a href="reportandAnalysist.php"
