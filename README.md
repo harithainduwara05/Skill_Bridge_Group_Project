@@ -125,7 +125,7 @@ SkillBridge is powered by a collaborative synergy between **four distinct actors
 ## 🏗️ System Architecture & Workflow
 
 <p align="center">
-  <img src="Assets/images/skillbridge_workflow.gif" alt="SkillBridge End-to-End Workflow Animation" width="780"/>
+  <img src="Assets/Images/skillbridge_workflow.gif" alt="SkillBridge End-to-End Workflow Animation" width="780"/>
 </p>
 
 <p align="center">
