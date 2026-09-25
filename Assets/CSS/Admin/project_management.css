@@ -483,9 +483,149 @@
     color: #c2410c;
 }
 
+.pm-status-pill.status-hold {
+    background-color: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+
 .pm-status-pill.status-rejected {
     background-color: #fee2e2;
     color: #dc2626;
+}
+
+.pm-btn-icon-hold {
+    color: #d97706;
+}
+
+.pm-btn-icon-hold:hover:not(:disabled) {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.pm-btn-icon-reactivate {
+    color: #16a34a;
+}
+
+.pm-btn-icon-reactivate:hover:not(:disabled) {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.pm-btn-hold {
+    background-color: #d97706;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.pm-btn-hold:hover:not(:disabled) {
+    background-color: #b45309;
+}
+
+.pm-btn-reactivate {
+    background-color: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.pm-btn-reactivate:hover:not(:disabled) {
+    background-color: #15803d;
+}
+
+/* Hold and Rejected Alert Banners in Details Modal */
+.pm-hold-banner {
+    background: #fffbeb;
+    border: 1.5px solid #fde68a;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 14px;
+}
+
+.pm-hold-banner-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b45309;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.pm-hold-banner-text {
+    font-size: 12.5px;
+    color: #92400e;
+    line-height: 1.45;
+    margin: 0 0 10px 0;
+}
+
+.pm-hold-meta-row {
+    font-size: 12.5px;
+    color: #78350f;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(254, 243, 199, 0.6);
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-top: 4px;
+}
+
+.pm-rejected-banner {
+    background: #fff5f5;
+    border: 1.5px solid #fecaca;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-top: 14px;
+}
+
+.pm-rejected-banner-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #b91c1c;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.pm-rejected-banner-text {
+    font-size: 12.5px;
+    color: #991b1b;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* Review & Resolution Modal Comparison Cards */
+.pm-review-card-admin {
+    background: #fffbeb;
+    border: 1.5px solid #fde68a;
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.pm-review-card-team {
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 12px;
+    padding: 14px 16px;
 }
 
 /* Created Date */

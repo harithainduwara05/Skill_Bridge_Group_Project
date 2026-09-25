@@ -121,11 +121,12 @@ include "../../../Includes/dash_header.php";
                         <input type="text" id="pmSearchInput" class="pm-search-input" placeholder="Search projects...">
                     </div>
 
-                    <!-- Project Status Filter (Active, Close, Review, Rejected) -->
+                    <!-- Project Status Filter (Active, Hold, Close, Review, Rejected) -->
                     <div class="pm-select-wrap">
                         <select id="pmStatusFilter" class="pm-select" aria-label="Filter by Project Status">
                             <option value="all">Project Status</option>
                             <option value="active">Active</option>
+                            <option value="hold">Hold</option>
                             <option value="close">Close</option>
                             <option value="review">Review</option>
                             <option value="rejected">Rejected</option>
@@ -171,7 +172,7 @@ include "../../../Includes/dash_header.php";
                     </thead>
                     <tbody id="pmTableBody">
                         
-                        <!-- Row 1: AI-Based Learning Platform -->
+                        <!-- Row 1: AI-Based Learning Platform (Active) -->
                         <tr class="pm-data-row" 
                             data-id="#PR001" 
                             data-title="AI-Based Learning Platform" 
@@ -213,19 +214,22 @@ include "../../../Includes/dash_header.php";
                                 <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR001')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="pm-btn-icon pm-btn-icon-reject" title="Reject Project" onclick="openRejectReasonModal('#PR001')">
-                                    <span class="material-symbols-outlined">block</span>
+                                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('#PR001')">
+                                    <span class="material-symbols-outlined">pause_circle</span>
                                 </button>
                             </td>
                         </tr>
 
-                        <!-- Row 2: Healthcare Management System -->
+                        <!-- Row 2: Healthcare Management System (On Hold with Grace Period) -->
                         <tr class="pm-data-row" 
                             data-id="#PR002" 
                             data-title="Healthcare Management System" 
                             data-category="HealthTech" 
                             data-org="ABC Institute" 
-                            data-status="Review" 
+                            data-status="Hold" 
+                            data-hold-reason="Complaint regarding student eligibility and milestone discrepancy. Awaiting formal explanation."
+                            data-hold-days="5"
+                            data-team-response="We have revised the system architecture diagram (v2.1) and clarified student roles in accordance with university guidelines. Please review the updated milestones."
                             data-skills="PHP MySQL">
                             <td class="pm-project-id">#PR002</td>
                             <td>
@@ -253,20 +257,22 @@ include "../../../Includes/dash_header.php";
                                 </div>
                             </td>
                             <td>
-                                <span class="pm-status-pill status-review">Review</span>
+                                <span class="pm-status-pill status-hold" title="On Hold: 5 days left in grace period">
+                                    <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (5d left)
+                                </span>
                             </td>
                             <td class="pm-created-date">18 June 2026</td>
                             <td class="pm-actions-cell">
                                 <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR002')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="pm-btn-icon pm-btn-icon-reject" title="Reject Project" onclick="openRejectReasonModal('#PR002')">
-                                    <span class="material-symbols-outlined">block</span>
+                                <button class="pm-btn-icon pm-btn-icon-reactivate" title="Review Hold & Decide Status" onclick="openReviewHoldModal('#PR002')">
+                                    <span class="material-symbols-outlined">check_circle</span>
                                 </button>
                             </td>
                         </tr>
 
-                        <!-- Row 3: Mobile Banking Application -->
+                        <!-- Row 3: Mobile Banking Application (Close) -->
                         <tr class="pm-data-row" 
                             data-id="#PR003" 
                             data-title="Mobile Banking Application" 
@@ -307,13 +313,10 @@ include "../../../Includes/dash_header.php";
                                 <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR003')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="pm-btn-icon pm-btn-icon-reject" title="Reject Project" onclick="openRejectReasonModal('#PR003')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
                             </td>
                         </tr>
 
-                        <!-- Row 4: Smart Logistics Engine -->
+                        <!-- Row 4: Smart Logistics Engine (Active) -->
                         <tr class="pm-data-row" 
                             data-id="#PR004" 
                             data-title="Smart Logistics Engine" 
@@ -355,19 +358,20 @@ include "../../../Includes/dash_header.php";
                                 <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR004')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="pm-btn-icon pm-btn-icon-reject" title="Reject Project" onclick="openRejectReasonModal('#PR004')">
-                                    <span class="material-symbols-outlined">block</span>
+                                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('#PR004')">
+                                    <span class="material-symbols-outlined">pause_circle</span>
                                 </button>
                             </td>
                         </tr>
 
-                        <!-- Row 5: IoT Soil & Crop Quality Monitor -->
+                        <!-- Row 5: IoT Soil & Crop Quality Monitor (Permanently Rejected) -->
                         <tr class="pm-data-row" 
                             data-id="#PR005" 
                             data-title="IoT Soil & Crop Quality Monitor" 
                             data-category="IoT & Sensors" 
                             data-org="SLIIT" 
                             data-status="Rejected" 
+                            data-reject-reason="Failure to provide intellectual property clearance after the 7-day hold grace period expired."
                             data-skills="Python Arduino MQTT">
                             <td class="pm-project-id">#PR005</td>
                             <td>
@@ -403,8 +407,8 @@ include "../../../Includes/dash_header.php";
                                 <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR005')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button class="pm-btn-icon pm-btn-icon-reject" title="Already Rejected" disabled>
-                                    <span class="material-symbols-outlined">block</span>
+                                <button class="pm-btn-icon" title="Permanently Rejected (Cannot be reactivated)" disabled style="color: #cbd5e1; cursor: not-allowed;">
+                                    <span class="material-symbols-outlined">lock</span>
                                 </button>
                             </td>
                         </tr>
@@ -518,15 +522,42 @@ include "../../../Includes/dash_header.php";
                     <strong>Required Skills:</strong> <span id="pmDetailSkills">Python, ML</span>
                 </div>
             </div>
-            <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-                <div>
-                    <label style="font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 2px;">Admin Action</label>
-                    <span style="font-size: 12px; color: #64748b;">Reject this project if it violates guidelines or platform policies.</span>
+
+            <!-- Hold Status Banner (shown when status is Hold) -->
+            <div id="pmDetailHoldBox" class="pm-hold-banner" style="display: none;">
+                <div class="pm-hold-banner-header">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">pause_circle</span>
+                    <span>Project Temporarily On Hold</span>
                 </div>
-                <button type="button" id="pmBtnRejectProject" class="pm-btn-reject" onclick="openRejectReasonModal()">
-                    <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
-                    <span>Reject</span>
-                </button>
+                <p class="pm-hold-banner-text" id="pmDetailHoldReason">
+                    Complaint received or workflow review required. Team has been granted a grace period to clarify.
+                </p>
+                <div class="pm-hold-meta-row">
+                    <span><strong>Grace Period Remaining:</strong> <span id="pmDetailHoldDeadline">5 Days Left</span></span>
+                    <span style="font-size: 11.5px; background: #fbbf24; color: #78350f; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Awaiting Response</span>
+                </div>
+            </div>
+
+            <!-- Permanent Rejected Banner (shown when status is Rejected) -->
+            <div id="pmDetailRejectedBox" class="pm-rejected-banner" style="display: none;">
+                <div class="pm-rejected-banner-header">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">block</span>
+                    <span>Permanently Rejected</span>
+                </div>
+                <p class="pm-rejected-banner-text" id="pmDetailRejectReason" style="margin-bottom: 8px;">
+                    Reason: Violated submission criteria and failed to provide acceptable justification.
+                </p>
+                <div style="font-size: 11.5px; color: #b91c1c; font-weight: 600; display: flex; align-items: center; gap: 5px;">
+                    <span class="material-symbols-outlined" style="font-size: 16px;">lock</span>
+                    <span>System Policy: Once rejected, this project CANNOT be reactivated.</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Moderation Action Area -->
+            <div id="pmDetailActionsArea" style="margin-top: 16px; padding-top: 14px; border-top: 1px solid #f1f5f9;">
+                <div id="pmDetailActionControls">
+                    <!-- Populated dynamically by project_management.js -->
+                </div>
             </div>
         </div>
         <div class="pm-modal-footer">
@@ -536,14 +567,209 @@ include "../../../Includes/dash_header.php";
 </div>
 
 <!-- ==========================================================================
-     8. Reject Project Reason Modal
+     8. Place Project on Hold Modal
+     ========================================================================== -->
+<div class="pm-modal-backdrop" id="pmHoldModal">
+    <div class="pm-modal-dialog" style="max-width: 520px;">
+        <div class="pm-modal-header" style="border-bottom: 1px solid #fef3c7; background-color: #fffbeb;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: #d97706; font-size: 22px;">pause_circle</span>
+                <h3 style="color: #92400e; margin: 0; font-size: 17px; font-weight: 700;">Place Project on Hold</h3>
+            </div>
+            <button type="button" class="pm-modal-close" onclick="closeHoldModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="pmHoldProjectForm">
+            <div class="pm-modal-body">
+                <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #92400e; line-height: 1.45;">
+                    <strong>Ethical Moderation Notice:</strong> Projects should not be rejected on first sight. Placing on Hold grants the team a fair grace period to address complaints or workflow issues before any permanent action is considered.
+                </div>
+                <p style="font-size: 13.5px; color: #475569; margin: 0; line-height: 1.5;">
+                    Placing <strong id="pmHoldProjectTitle" style="color: #0f172a;">this project</strong> (<span id="pmHoldProjectId" style="font-weight: 700;">#PR001</span>) on Hold.
+                </p>
+                <div class="pm-form-group">
+                    <label for="pmHoldReason" style="font-weight: 600; font-size: 13px; color: #1e293b;">
+                        Issue / Complaint Reason *
+                    </label>
+                    <textarea id="pmHoldReason" class="pm-form-control" rows="3" style="height: 85px; resize: vertical;" placeholder="Specify the complaint or issue (e.g., Inappropriate content report, milestone discrepancy, team conflict)..." required></textarea>
+                </div>
+                <div class="pm-form-group">
+                    <label for="pmHoldGracePeriod" style="font-weight: 600; font-size: 13px; color: #1e293b;">
+                        Grace Period (Days to respond) *
+                    </label>
+                    <select id="pmHoldGracePeriod" class="pm-form-control">
+                        <option value="7">7 Days (Standard Grace Period)</option>
+                        <option value="3">3 Days (Urgent Review)</option>
+                        <option value="5">5 Days (Moderate Review)</option>
+                        <option value="14">14 Days (Extended Inquiry)</option>
+                    </select>
+                    <span style="font-size: 11.5px; color: #64748b;">If the team fails to provide a proper justification within this period, the project can be permanently rejected.</span>
+                </div>
+            </div>
+            <div class="pm-modal-footer">
+                <button type="button" class="pm-btn-secondary" onclick="closeHoldModal()">Cancel</button>
+                <button type="submit" class="pm-btn-hold">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">pause_circle</span>
+                    <span>Confirm Hold</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     9. Review Hold & Resolution Modal (Multi-step: Review -> Final Reject Reason)
+     ========================================================================== -->
+<div class="pm-modal-backdrop" id="pmReviewHoldModal">
+    <div class="pm-modal-dialog" style="max-width: 620px;">
+        <div class="pm-modal-header" style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" id="pmReviewModalHeaderIcon" style="color: #0b2246; font-size: 24px;">task_alt</span>
+                <div>
+                    <h3 id="pmReviewModalHeaderTitle" style="color: #0f172a; margin: 0; font-size: 17px; font-weight: 700;">Hold Review & Decision</h3>
+                    <span id="pmReviewModalHeaderSub" style="font-size: 12px; color: #64748b;">Compare Admin pause reason against Team's submitted justification</span>
+                </div>
+            </div>
+            <button type="button" class="pm-modal-close" onclick="closeReviewHoldModal()">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <!-- STEP 1: Review & Decision Comparison -->
+        <div id="pmReviewStep1" class="pm-modal-body" style="gap: 14px; display: flex; flex-direction: column;">
+            <!-- Project Header Info -->
+            <div style="display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 12px;">
+                <div>
+                    <span id="pmReviewProjectId" style="font-weight: 700; color: #0b2246; font-size: 15px;">#PR002</span>
+                    <h4 id="pmReviewProjectTitle" style="margin: 2px 0 0; font-size: 14px; font-weight: 600; color: #334155;">Healthcare Management System</h4>
+                </div>
+                <span class="pm-status-pill status-hold" id="pmReviewStatusBadge">
+                    <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (5d left)
+                </span>
+            </div>
+
+            <!-- Two Comparison Cards -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                
+                <!-- Card 1: Admin's Pause Reason -->
+                <div class="pm-review-card-admin">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #92400e; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">pause_circle</span>
+                            Admin's Pause Reason (Why project was placed on Hold)
+                        </span>
+                        <span id="pmReviewHoldDaysBadge" style="font-size: 11.5px; font-weight: 600; color: #b45309; background: #fef3c7; padding: 2px 8px; border-radius: 6px;">Grace Period: 5d left</span>
+                    </div>
+                    <p id="pmReviewAdminReason" style="font-size: 13px; color: #78350f; margin: 0; line-height: 1.5;">
+                        Discrepancy in project architecture and pending team compliance explanation.
+                    </p>
+                </div>
+
+                <!-- Card 2: Team's Submitted Reason / Explanation -->
+                <div class="pm-review-card-team">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">forum</span>
+                            Team's Submitted Justification / Explanation
+                        </span>
+                        <span id="pmReviewTeamStatusBadge" style="font-size: 11.5px; font-weight: 600; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 6px;">Response Submitted</span>
+                    </div>
+                    <p id="pmReviewTeamResponse" style="font-size: 13px; color: #14532d; margin: 0; line-height: 1.5;">
+                        We have uploaded the revised software architecture diagram (v2.1) and clarified student roles in accordance with platform guidelines. Please review the updated milestones.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Decision Options Guidance -->
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #64748b; line-height: 1.45;">
+                <strong style="color: #334155;">Final Decision:</strong> Choose <strong>Reactivate Project</strong> to restore it to Active if the justification is valid. Choose <strong>Permanently Reject</strong> to proceed to state the final rejection reason.
+            </div>
+        </div>
+
+        <!-- STEP 1 FOOTER -->
+        <div id="pmReviewFooter1" class="pm-modal-footer" style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+            <button type="button" class="pm-btn-secondary" onclick="closeReviewHoldModal()">Cancel</button>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <!-- Permanently Reject Button -> Navigates to Step 2 -->
+                <button type="button" class="pm-btn-reject" onclick="goToRejectStep()" style="height: 40px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
+                    <span>Permanently Reject</span>
+                </button>
+                <!-- Reactivate to Active Button -->
+                <button type="button" class="pm-btn-reactivate" onclick="confirmReactivateFromReview()" style="height: 40px; padding: 0 18px;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+                    <span>Reactivate Project</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- STEP 2: State Reason for Permanent Rejection -->
+        <div id="pmReviewStep2" class="pm-modal-body" style="gap: 14px; display: none; flex-direction: column;">
+            <!-- Warning Banner -->
+            <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 12px; padding: 14px 16px;">
+                <div style="display: flex; align-items: center; gap: 8px; color: #b91c1c; font-weight: 700; font-size: 13.5px; margin-bottom: 4px;">
+                    <span class="material-symbols-outlined" style="font-size: 20px;">report_problem</span>
+                    <span>Permanent Terminal Action Warning</span>
+                </div>
+                <p style="font-size: 12.5px; color: #991b1b; margin: 0; line-height: 1.5;">
+                    Once this project is permanently rejected, it <strong>CANNOT</strong> be reactivated under any circumstance. Please provide the official reason for permanent termination.
+                </p>
+            </div>
+
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #334155;">
+                Rejecting Project: <strong id="pmReviewStep2ProjectTitle">Healthcare Management System</strong> (<span id="pmReviewStep2ProjectId" style="font-weight: 700; color: #0b2246;">#PR002</span>)
+            </div>
+
+            <!-- Rejection Category Dropdown -->
+            <div class="pm-form-group">
+                <label for="pmFinalRejectCategory" style="font-weight: 600; font-size: 13px; color: #1e293b;">
+                    Primary Rejection Category *
+                </label>
+                <select id="pmFinalRejectCategory" class="pm-form-control">
+                    <option value="Unsatisfactory Justification">Unsatisfactory or Inadequate Justification</option>
+                    <option value="Unresolved Complaint">Unresolved Complaint within Grace Period</option>
+                    <option value="Policy Violation">Violation of Platform Policies / Guidelines</option>
+                    <option value="Plagiarism / Falsification">Plagiarism or Falsified Project Information</option>
+                    <option value="Non-Responsive Team">Team Failed to Respond before Deadline</option>
+                    <option value="Other">Other Specific Grounds</option>
+                </select>
+            </div>
+
+            <!-- Detailed Rejection Reason Textarea -->
+            <div class="pm-form-group">
+                <label for="pmFinalRejectReason" style="font-weight: 600; font-size: 13px; color: #1e293b;">
+                    Official Rejection Reason & Findings *
+                </label>
+                <textarea id="pmFinalRejectReason" class="pm-form-control" rows="3" style="height: 85px; resize: vertical;" placeholder="Explain clearly why the team's explanation was rejected and why this project is being permanently terminated..." required></textarea>
+                <span id="pmFinalRejectError" style="display: none; font-size: 12px; color: #dc2626; font-weight: 500;">Please state the specific reason for rejecting this project.</span>
+            </div>
+        </div>
+
+        <!-- STEP 2 FOOTER -->
+        <div id="pmReviewFooter2" class="pm-modal-footer" style="display: none; align-items: center; justify-content: space-between; gap: 12px;">
+            <button type="button" class="pm-btn-secondary" onclick="goToReviewStep()" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">arrow_back</span>
+                <span>Back to Review</span>
+            </button>
+            <button type="button" class="pm-btn-danger" onclick="executePermanentRejection()" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
+                <span>Confirm Permanent Rejection</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ==========================================================================
+     10. Reject Project Reason Modal (Permanent & Irreversible)
      ========================================================================== -->
 <div class="pm-modal-backdrop" id="pmRejectModal">
-    <div class="pm-modal-dialog" style="max-width: 500px;">
+    <div class="pm-modal-dialog" style="max-width: 520px;">
         <div class="pm-modal-header" style="border-bottom: 1px solid #fee2e2; background-color: #fff5f5;">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="material-symbols-outlined" style="color: #dc2626; font-size: 22px;">report_problem</span>
-                <h3 style="color: #991b1b; margin: 0; font-size: 17px; font-weight: 700;">Reject Project</h3>
+                <h3 style="color: #991b1b; margin: 0; font-size: 17px; font-weight: 700;">Permanently Reject Project</h3>
             </div>
             <button type="button" class="pm-modal-close" onclick="closeRejectReasonModal()">
                 <span class="material-symbols-outlined">close</span>
@@ -551,19 +777,22 @@ include "../../../Includes/dash_header.php";
         </div>
         <form id="pmRejectProjectForm">
             <div class="pm-modal-body">
-                <p style="font-size: 13.5px; color: #475569; margin: 0 0 14px; line-height: 1.5;">
-                    Please state the reason for rejecting <strong id="pmRejectProjectTitle" style="color: #0f172a;">this project</strong> (<span id="pmRejectProjectId" style="font-weight: 700;">#PR001</span>). This reason will be recorded and notified.
+                <div style="background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; padding: 12px 14px; font-size: 12.5px; color: #991b1b; line-height: 1.45;">
+                    <strong>Permanent Action Warning:</strong> Once a project is placed in the <strong>Rejected</strong> state, it <u>CANNOT</u> be reactivated under any circumstance. Only proceed if the grace period has elapsed or the team failed to provide acceptable justification.
+                </div>
+                <p style="font-size: 13.5px; color: #475569; margin: 0; line-height: 1.5;">
+                    Rejecting <strong id="pmRejectProjectTitle" style="color: #0f172a;">this project</strong> (<span id="pmRejectProjectId" style="font-weight: 700;">#PR001</span>).
                 </p>
                 <div class="pm-form-group">
                     <label for="pmRejectReason" style="font-weight: 600; font-size: 13px; color: #1e293b;">
-                        Rejection Reason *
+                        Final Rejection Reason *
                     </label>
-                    <textarea id="pmRejectReason" class="pm-form-control" rows="4" style="height: 100px; resize: vertical;" placeholder="Enter specific reasons (e.g. Inadequate documentation, non-compliant technology stack, unauthorized duplicate submission)..." required></textarea>
+                    <textarea id="pmRejectReason" class="pm-form-control" rows="4" style="height: 95px; resize: vertical;" placeholder="State final reason for permanent rejection (e.g., Unresolved complaint after 7-day grace period, confirmed policy violation, failure to respond)..." required></textarea>
                 </div>
             </div>
             <div class="pm-modal-footer">
                 <button type="button" class="pm-btn-secondary" onclick="closeRejectReasonModal()">Cancel</button>
-                <button type="submit" class="pm-btn-danger">Confirm Rejection</button>
+                <button type="submit" class="pm-btn-danger">Confirm Final Rejection</button>
             </div>
         </form>
     </div>
