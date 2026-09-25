@@ -29,6 +29,8 @@ $output = fopen('php://output', 'w');
 fprintf($output, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
 // Header row
+$statusLabels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed', 'draft' => 'Draft'];
+
 fputcsv($output, [
     'Project Title', 'Category', 'Difficulty', 'Duration', 'Students Required',
     'Preferred Year', 'Visibility', 'Deadline', 'Status', 'Proposals Received', 'Date Posted'
@@ -44,7 +46,7 @@ foreach ($projects as $p) {
         $p['preferred_year'],
         $p['visibility'],
         $p['deadline'],
-        ucfirst($p['status']),
+        $statusLabels[$p['status']] ?? ucfirst($p['status']),
         $p['proposal_count'],
         date('Y-m-d', strtotime($p['posted_at'])),
     ]);

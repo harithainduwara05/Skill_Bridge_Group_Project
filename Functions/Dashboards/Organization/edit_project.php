@@ -15,12 +15,26 @@ $stmt->bind_param("is", $projectId, $organization_email);
 $stmt->execute();
 $project = $stmt->get_result()->fetch_assoc();
 
-if (!$project) {
+// On Hold / Rejected projects can't be edited here (On Hold is fixed from the
+// hold popup in Manage Projects, Rejected is final)
+if (!$project || in_array($project['status'], ['hold', 'rejected'], true)) {
     header("Location: manage_projects.php");
     exit;
 }
 
+// How many students are actually assigned right now — shown next to the
+// "Students Required" field so it's obvious if the team is over capacity.
+$assignedStmt = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
+$assignedStmt->bind_param("i", $projectId);
+$assignedStmt->execute();
+$assignedCount = (int)$assignedStmt->get_result()->fetch_row()[0];
+
 $flash = null;
+
+// Statuses the organization is allowed to choose.
+// "On Hold" and "Rejected" can only be set by the Admin.
+$orgStatusOptions = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed'];
+$adminOnlyStatusLabels = ['hold' => 'On Hold', 'rejected' => 'Rejected'];
 
 // ---- Handle update ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -38,6 +52,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $deadline            = trim($_POST['deadline'] ?? '');
     $visibility          = trim($_POST['visibility'] ?? 'Public');
     $status              = trim($_POST['status'] ?? $project['status']);
+
+    // If the Admin has put this project On Hold / Rejected, the organization
+    // cannot change it. Otherwise only the organization's own statuses are accepted.
+    if (isset($adminOnlyStatusLabels[$project['status']]) || !isset($orgStatusOptions[$status])) {
+        $status = $project['status'];
+    }
 
     $duration_text = $duration_weeks !== '' ? $duration_weeks . ' Weeks' : null;
 
@@ -198,6 +218,14 @@ include "../../../Includes/dash_header.php";
                     <div class="form-group">
                         <label class="form-label">No. of Students Required</label>
                         <input type="number" min="1" name="students_required" class="form-input" value="<?= (int)($project['members'] ?? 1) ?>">
+                        <?php if ($assignedCount > (int)($project['members'] ?? 1)): ?>
+                            <div class="form-hint" style="color:#d97706; display:flex; align-items:center; gap:4px;">
+                                <span class="material-symbols-outlined" style="font-size:15px;">warning</span>
+                                <?= $assignedCount ?> students are already assigned — more than this project asks for.
+                            </div>
+                        <?php elseif ($assignedCount > 0): ?>
+                            <div class="form-hint"><?= $assignedCount ?> student<?= $assignedCount === 1 ? '' : 's' ?> currently assigned.</div>
+                        <?php endif; ?>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Preferred Academic Year</label>
@@ -231,11 +259,21 @@ include "../../../Includes/dash_header.php";
 
                 <div class="form-group">
                     <label class="form-label">Project Status</label>
-                    <select name="status" class="form-select">
-                        <?php foreach (['open' => 'Open', 'reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed'] as $val => $label): ?>
-                            <option value="<?= $val ?>" <?= ($project['status'] === $val) ? 'selected' : '' ?>><?= $label ?></option>
-                        <?php endforeach; ?>
-                    </select>
+                    <?php if (isset($adminOnlyStatusLabels[$project['status']])): ?>
+                        <!-- Set by the Admin: shown read-only, the organization can't change it -->
+                        <select class="form-select" disabled>
+                            <option selected><?= htmlspecialchars($adminOnlyStatusLabels[$project['status']]) ?></option>
+                        </select>
+                        <div style="font-size:12px; color:#6b7280; margin-top:6px;">
+                            This status was set by the Admin and can't be changed here.
+                        </div>
+                    <?php else: ?>
+                        <select name="status" class="form-select">
+                            <?php foreach ($orgStatusOptions as $val => $label): ?>
+                                <option value="<?= $val ?>" <?= ($project['status'] === $val) ? 'selected' : '' ?>><?= $label ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    <?php endif; ?>
                 </div>
             </div>
 
