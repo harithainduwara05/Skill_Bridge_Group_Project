@@ -1,0 +1,1228 @@
+/**
+ * ==============================================================================
+ * SkillBridge - Reports & Performance Analytics Stylesheet (Admin)
+ * Modern, executive data visualization dashboard with rich aesthetics,
+ * harmonious palette, glassmorphism accents, and responsive layout.
+ * ==============================================================================
+ */
+
+:root {
+    --ra-primary: #0b2246;
+    --ra-primary-light: #16305b;
+    --ra-accent: #2563eb;
+    --ra-accent-hover: #1d4ed8;
+    --ra-success: #16a34a;
+    --ra-success-bg: #dcfce7;
+    --ra-warning: #d97706;
+    --ra-warning-bg: #fef3c7;
+    --ra-danger: #dc2626;
+    --ra-danger-bg: #fee2e2;
+    --ra-indigo: #4f46e5;
+    --ra-indigo-bg: #e0e7ff;
+    --ra-purple: #7c3aed;
+    --ra-purple-bg: #ede9fe;
+    
+    --ra-bg-page: #f8fafc;
+    --ra-bg-card: #ffffff;
+    --ra-border: #e2e8f0;
+    --ra-border-light: #f1f5f9;
+    
+    --ra-text-main: #0f172a;
+    --ra-text-muted: #64748b;
+    --ra-text-sub: #475569;
+    
+    --ra-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.04);
+    --ra-shadow-md: 0 4px 14px rgba(15, 23, 42, 0.06);
+    --ra-shadow-lg: 0 10px 25px rgba(15, 23, 42, 0.09);
+    --ra-radius-sm: 8px;
+    --ra-radius-md: 12px;
+    --ra-radius-lg: 16px;
+    --ra-radius-pill: 9999px;
+}
+
+/* Page Layout Container */
+.ra-container {
+    width: 100%;
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 24px 28px 48px;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--ra-text-main);
+}
+
+/* --------------------------------------------------------------------------
+   1. Page Header with Period Pills & Action Controls
+   -------------------------------------------------------------------------- */
+.ra-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+}
+
+.ra-header-info h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--ra-primary);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ra-header-info h1 .material-symbols-outlined {
+    font-size: 28px;
+    color: var(--ra-accent);
+}
+
+.ra-header-info p {
+    font-size: 13.5px;
+    color: var(--ra-text-muted);
+    margin: 0;
+    font-weight: 400;
+}
+
+.ra-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Period Pills Selector */
+.ra-period-pills {
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-md);
+    padding: 3px;
+    box-shadow: var(--ra-shadow-sm);
+}
+
+.ra-period-btn {
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ra-text-sub);
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.ra-period-btn:hover {
+    color: var(--ra-primary);
+    background: #f1f5f9;
+}
+
+.ra-period-btn.active {
+    background: var(--ra-primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(11, 34, 70, 0.2);
+}
+
+/* Primary Export Action Button */
+.ra-btn-export {
+    height: 38px;
+    padding: 0 18px;
+    background: linear-gradient(135deg, #0b2246 0%, #1e3a8a 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--ra-radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(11, 34, 70, 0.18);
+    transition: all 0.25s ease;
+}
+
+.ra-btn-export:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(11, 34, 70, 0.28);
+    background: linear-gradient(135deg, #102d5b 0%, #2563eb 100%);
+}
+
+.ra-btn-export .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.ra-btn-secondary {
+    height: 38px;
+    padding: 0 16px;
+    background: #ffffff;
+    color: var(--ra-text-sub);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-md);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.ra-btn-secondary:hover {
+    background: #f8fafc;
+    color: var(--ra-primary);
+    border-color: #cbd5e1;
+}
+
+.ra-btn-secondary .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   2. KPI Summary Cards Grid (4 Cards)
+   -------------------------------------------------------------------------- */
+.ra-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 26px;
+}
+
+.ra-kpi-card {
+    background: var(--ra-bg-card);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-lg);
+    padding: 20px 22px;
+    box-shadow: var(--ra-shadow-sm);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.ra-kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ra-shadow-md);
+    border-color: #cbd5e1;
+}
+
+.ra-kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.ra-kpi-card.kpi-blue::before { background: var(--ra-accent); }
+.ra-kpi-card.kpi-indigo::before { background: var(--ra-indigo); }
+.ra-kpi-card.kpi-green::before { background: var(--ra-success); }
+.ra-kpi-card.kpi-amber::before { background: var(--ra-warning); }
+
+.ra-kpi-card:hover::before {
+    opacity: 1;
+}
+
+.ra-kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+}
+
+.ra-kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: var(--ra-radius-md);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.ra-kpi-icon.icon-blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.ra-kpi-icon.icon-indigo {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+.ra-kpi-icon.icon-green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.ra-kpi-icon.icon-amber {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+.ra-kpi-icon .material-symbols-outlined {
+    font-size: 24px;
+}
+
+.ra-kpi-trend {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: var(--ra-radius-pill);
+}
+
+.ra-kpi-trend.trend-up {
+    background: var(--ra-success-bg);
+    color: var(--ra-success);
+}
+
+.ra-kpi-trend.trend-neutral {
+    background: #eff6ff;
+    color: var(--ra-accent);
+}
+
+.ra-kpi-trend .material-symbols-outlined {
+    font-size: 14px;
+}
+
+.ra-kpi-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ra-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 6px;
+}
+
+.ra-kpi-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ra-text-main);
+    line-height: 1.1;
+    margin-bottom: 6px;
+    letter-spacing: -0.02em;
+}
+
+.ra-kpi-subtext {
+    font-size: 12px;
+    color: var(--ra-text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ra-kpi-subtext .material-symbols-outlined {
+    font-size: 15px;
+    color: #94a3b8;
+}
+
+/* --------------------------------------------------------------------------
+   3. Domain Filter Navigation Tabs
+   -------------------------------------------------------------------------- */
+.ra-tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--ra-border);
+    margin-bottom: 24px;
+    padding-bottom: 4px;
+    overflow-x: auto;
+}
+
+.ra-tab-btn {
+    padding: 10px 18px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--ra-text-muted);
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.ra-tab-btn:hover {
+    color: var(--ra-primary);
+}
+
+.ra-tab-btn.active {
+    color: var(--ra-accent);
+    border-bottom-color: var(--ra-accent);
+    font-weight: 700;
+}
+
+.ra-tab-btn .material-symbols-outlined {
+    font-size: 18px;
+}
+
+/* --------------------------------------------------------------------------
+   4. Visual Analytics Charts Grid
+   -------------------------------------------------------------------------- */
+.ra-charts-grid-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.ra-charts-grid-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.ra-chart-card {
+    background: var(--ra-bg-card);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-lg);
+    padding: 22px 24px;
+    box-shadow: var(--ra-shadow-sm);
+    display: flex;
+    flex-direction: column;
+}
+
+.ra-chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.ra-chart-header h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ra-primary);
+}
+
+.ra-chart-header p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ra-text-muted);
+}
+
+.ra-chart-tools {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ra-badge-pill {
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: var(--ra-radius-pill);
+    background: #f1f5f9;
+    color: var(--ra-text-sub);
+}
+
+.ra-badge-pill.badge-live {
+    background: #dcfce7;
+    color: #15803d;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ra-badge-pill.badge-live::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #16a34a;
+    display: inline-block;
+    animation: ra-pulse 1.8s infinite;
+}
+
+@keyframes ra-pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+}
+
+/* --------------------------------------------------------------------------
+   Native SVG Area/Line Chart Styles (100% Vanilla CSS, Zero Libraries)
+   -------------------------------------------------------------------------- */
+.ra-svg-chart-container {
+    position: relative;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.ra-svg-chart {
+    width: 100%;
+    height: 230px;
+    display: block;
+    overflow: visible;
+}
+
+.ra-grid-lines line {
+    stroke: #f1f5f9;
+    stroke-dasharray: 4 4;
+}
+
+.ra-axis-labels-y text {
+    font-size: 11px;
+    fill: #94a3b8;
+    font-weight: 500;
+}
+
+#raPathLineApps,
+#raPathLineHired,
+#raPathAreaApps,
+#raPathAreaHired {
+    transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ra-chart-dots circle {
+    cursor: pointer;
+    transition: r 0.2s cubic-bezier(0.16, 1, 0.3, 1), stroke-width 0.2s ease;
+}
+
+.ra-chart-dots.apps circle {
+    fill: #2563eb;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+}
+
+.ra-chart-dots.hired circle {
+    fill: #16a34a;
+    stroke: #ffffff;
+    stroke-width: 2.5;
+}
+
+.ra-chart-dots circle:hover {
+    r: 6.5;
+    stroke-width: 3.5;
+}
+
+.ra-x-labels-row {
+    display: flex;
+    justify-content: space-between;
+    padding-left: 50px;
+    padding-right: 20px;
+    margin-top: 6px;
+}
+
+.ra-x-labels-row span {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+/* Interactive SVG Point Tooltip */
+.ra-svg-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+    white-space: nowrap;
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(-10px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    z-index: 100;
+}
+
+.ra-svg-tooltip.show {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(-12px);
+}
+
+.ra-svg-tooltip::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px 5px 0;
+    border-style: solid;
+    border-color: #0f172a transparent transparent transparent;
+}
+
+.ra-chart-legend-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 20px;
+    padding-top: 14px;
+    border-top: 1px solid var(--ra-border-light);
+    margin-top: 10px;
+}
+
+.ra-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ra-text-sub);
+}
+
+.ra-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.ra-legend-dot.dot-blue { background: #2563eb; }
+.ra-legend-dot.dot-green { background: #16a34a; }
+
+/* --------------------------------------------------------------------------
+   Native SVG Donut Chart Styles (100% Vanilla CSS)
+   -------------------------------------------------------------------------- */
+.ra-donut-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 0;
+    width: 100%;
+}
+
+.ra-donut-svg-box {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ra-donut-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.ra-donut-seg {
+    transition: stroke-dasharray 0.8s cubic-bezier(0.16, 1, 0.3, 1), stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ra-donut-center-info {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    pointer-events: none;
+}
+
+.ra-donut-center-info strong {
+    font-size: 24px;
+    font-weight: 800;
+    color: var(--ra-primary);
+    line-height: 1.1;
+}
+
+.ra-donut-center-info span {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--ra-text-muted);
+}
+
+.ra-donut-legend-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    width: 100%;
+}
+
+.ra-donut-legend-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12.5px;
+    padding: 7px 12px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid var(--ra-border-light);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.ra-donut-legend-item:hover {
+    background: #f1f5f9;
+    border-color: var(--ra-border);
+}
+
+.ra-donut-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+    flex-shrink: 0;
+}
+
+.ra-donut-uni-name {
+    flex: 1;
+    font-weight: 600;
+    color: var(--ra-text-main);
+}
+
+.ra-donut-val {
+    font-weight: 700;
+    color: var(--ra-primary);
+}
+
+/* --------------------------------------------------------------------------
+   5. In-Demand Skills Horizontal Progress Bars
+   -------------------------------------------------------------------------- */
+.ra-skills-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.ra-skill-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ra-skill-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ra-text-main);
+}
+
+.ra-skill-meta span:last-child {
+    font-weight: 700;
+    color: var(--ra-accent);
+}
+
+.ra-skill-bar-bg {
+    width: 100%;
+    height: 9px;
+    background: #f1f5f9;
+    border-radius: var(--ra-radius-pill);
+    overflow: hidden;
+    position: relative;
+}
+
+.ra-skill-bar-fill {
+    height: 100%;
+    border-radius: var(--ra-radius-pill);
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ra-skill-bar-fill.fill-blue {
+    background: linear-gradient(90deg, #2563eb, #3b82f6);
+}
+
+.ra-skill-bar-fill.fill-indigo {
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+}
+
+.ra-skill-bar-fill.fill-green {
+    background: linear-gradient(90deg, #16a34a, #22c55e);
+}
+
+.ra-skill-bar-fill.fill-amber {
+    background: linear-gradient(90deg, #d97706, #f59e0b);
+}
+
+.ra-skill-bar-fill.fill-purple {
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+}
+
+/* --------------------------------------------------------------------------
+   6. Hiring Funnel Progression Metric Steps
+   -------------------------------------------------------------------------- */
+.ra-funnel-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.ra-funnel-step {
+    background: #f8fafc;
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-md);
+    padding: 16px;
+    text-align: center;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.ra-funnel-step:hover {
+    background: #ffffff;
+    box-shadow: var(--ra-shadow-sm);
+    border-color: #cbd5e1;
+}
+
+.ra-funnel-step-num {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--ra-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+}
+
+.ra-funnel-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--ra-primary);
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.ra-funnel-label {
+    font-size: 12px;
+    color: var(--ra-text-sub);
+    font-weight: 500;
+}
+
+.ra-funnel-pct {
+    margin-top: 8px;
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: var(--ra-radius-pill);
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+/* --------------------------------------------------------------------------
+   7. Performance Leaderboard Tables Card
+   -------------------------------------------------------------------------- */
+.ra-table-card {
+    background: var(--ra-bg-card);
+    border: 1px solid var(--ra-border);
+    border-radius: var(--ra-radius-lg);
+    box-shadow: var(--ra-shadow-sm);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.ra-table-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--ra-border);
+    background: #ffffff;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.ra-table-header h3 {
+    margin: 0 0 3px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--ra-primary);
+}
+
+.ra-table-header p {
+    margin: 0;
+    font-size: 12.5px;
+    color: var(--ra-text-muted);
+}
+
+.ra-table-responsive {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.ra-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    min-width: 880px;
+}
+
+.ra-table thead {
+    background: #f8fafc;
+    border-bottom: 1px solid var(--ra-border);
+}
+
+.ra-table th {
+    padding: 13px 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ra-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+}
+
+.ra-table tbody tr {
+    border-bottom: 1px solid var(--ra-border-light);
+    transition: background 0.15s ease;
+}
+
+.ra-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.ra-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.ra-table td {
+    padding: 15px 20px;
+    font-size: 13px;
+    color: var(--ra-text-main);
+    vertical-align: middle;
+}
+
+/* University & Company Cell Meta */
+.ra-entity-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ra-entity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.ra-entity-icon.uni-sliit { background: #fee2e2; color: #b91c1c; }
+.ra-entity-icon.uni-ucsc { background: #eff6ff; color: #1d4ed8; }
+.ra-entity-icon.uni-moratuwa { background: #fef3c7; color: #b45309; }
+.ra-entity-icon.uni-kln { background: #ede9fe; color: #6d28d9; }
+
+.ra-entity-icon.comp-wso2 { background: #ffedd5; color: #ea580c; }
+.ra-entity-icon.comp-ifs { background: #f3e8ff; color: #7e22ce; }
+.ra-entity-icon.comp-virtusa { background: #e0f2fe; color: #0284c7; }
+.ra-entity-icon.comp-lseg { background: #dcfce7; color: #15803d; }
+
+.ra-entity-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.ra-entity-name {
+    font-weight: 700;
+    color: var(--ra-text-main);
+    font-size: 13.5px;
+}
+
+.ra-entity-sub {
+    font-size: 11.5px;
+    color: var(--ra-text-muted);
+}
+
+/* Rating Stars */
+.ra-rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 700;
+    color: #b45309;
+    background: #fef3c7;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+
+.ra-rating-badge .material-symbols-outlined {
+    font-size: 14px;
+    color: #f59e0b;
+}
+
+/* Pill Badges in Table */
+.ra-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: var(--ra-radius-pill);
+    font-size: 11.5px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.ra-pill-green {
+    background: var(--ra-success-bg);
+    color: var(--ra-success);
+}
+
+.ra-pill-blue {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+
+.ra-pill-purple {
+    background: var(--ra-purple-bg);
+    color: var(--ra-purple);
+}
+
+/* --------------------------------------------------------------------------
+   8. Export Report Custom Modal
+   -------------------------------------------------------------------------- */
+.ra-modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.ra-modal-backdrop.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.ra-modal-dialog {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 540px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    transform: scale(0.95);
+    transition: transform 0.25s ease;
+}
+
+.ra-modal-backdrop.show .ra-modal-dialog {
+    transform: scale(1);
+}
+
+.ra-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--ra-border);
+}
+
+.ra-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--ra-primary);
+}
+
+.ra-modal-close {
+    background: transparent;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ra-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.ra-modal-body {
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.ra-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ra-form-group label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #334155;
+}
+
+.ra-form-select,
+.ra-form-input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--ra-border);
+    border-radius: 10px;
+    font-size: 13.5px;
+    color: #1e293b;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.ra-form-select:focus,
+.ra-form-input:focus {
+    border-color: var(--ra-accent);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ra-format-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.ra-format-option {
+    border: 1.5px solid var(--ra-border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+}
+
+.ra-format-option:hover {
+    border-color: #94a3b8;
+    background: #f8fafc;
+}
+
+.ra-format-option.active {
+    border-color: var(--ra-accent);
+    background: #eff6ff;
+    color: var(--ra-accent);
+}
+
+.ra-format-option .material-symbols-outlined {
+    font-size: 24px;
+    margin-bottom: 4px;
+    display: block;
+}
+
+.ra-format-option span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ra-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px;
+    background: #f8fafc;
+    border-top: 1px solid var(--ra-border);
+}
+
+/* --------------------------------------------------------------------------
+   9. Custom Non-Blocking Toast
+   -------------------------------------------------------------------------- */
+.ra-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #0f172a;
+    color: #ffffff;
+    padding: 14px 20px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    font-size: 13.5px;
+    font-weight: 500;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ra-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.ra-toast .material-symbols-outlined {
+    font-size: 20px;
+    color: #22c55e;
+}
+
+/* --------------------------------------------------------------------------
+   10. Responsive Breakpoints
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+    .ra-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ra-charts-grid-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .ra-container {
+        padding: 16px 16px 36px;
+    }
+    
+    .ra-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .ra-charts-grid-equal {
+        grid-template-columns: 1fr;
+    }
+    
+    .ra-funnel-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .ra-header-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .ra-header-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+}

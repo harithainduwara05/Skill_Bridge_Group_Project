@@ -229,7 +229,7 @@ if (isset($_SESSION['user']) && (empty($_SESSION['user']['username']) || $_SESSI
                 <?php } ?>
 
             </div>
-            <a href="compain.php" class="see-all-link">See all
+            <a href="complain.php" class="see-all-link">See all
                 (<?php echo $adminDB->getUndismissedComplaintCount(); ?>) complaints</a>
         </div>
 

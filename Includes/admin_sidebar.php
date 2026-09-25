@@ -80,7 +80,7 @@ if (isset($conn) && $conn instanceof mysqli) {
                 <span class="nav-text">Internships</span>
             </a>
 
-            <a href="complain.php" class="<?= in_array($currentPage, ['complain.php', 'compain.php']) ? 'active' : '' ?>"
+            <a href="complain.php" class="<?= $currentPage === 'complain.php' ? 'active' : '' ?>"
                 title="Complaints">
                 <span class="icon">
                     <span class="material-symbols-outlined">report_problem</span>
