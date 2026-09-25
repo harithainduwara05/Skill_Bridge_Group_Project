@@ -1,7 +1,11 @@
 # 🎓 SkillBridge — Project-Driven Skill Development & Industry Gateway Platform
 
 <p align="center">
-  <img src="Assets/images/hero-illustration.png" alt="SkillBridge Platform Banner" width="680" onerror="this.style.display='none'"/>
+  <img src="Assets/images/logo.png" alt="SkillBridge Logo" width="340"/>
+</p>
+
+<p align="center">
+  <img src="Assets/images/landing.jpeg" alt="SkillBridge Platform Dashboard" width="760"/>
 </p>
 
 <p align="center">
@@ -112,49 +116,63 @@ function canApplyInternship($email) {
 
 ## 👥 Four-Tier Ecosystem & User Roles
 
-SkillBridge implements a robust **Role-Based Access Control (RBAC)** architecture supporting four interconnected stakeholders:
+SkillBridge is powered by a collaborative synergy between **four distinct actors**:
 
-| Role | Target Stakeholder | Primary Responsibilities & Features |
+| Role | Entity Profile | Core Purpose & Workflow in SkillBridge |
 | :--- | :--- | :--- |
-| 🎓 **Student** | Undergraduates (Years 1 – 4) | • Explore skills catalog & track learning milestones<br>• Form peer teams and author project proposals<br>• Submit milestone deliverables & view supervisor feedback<br>• Build public verified digital portfolio & earn certificates<br>• **Year 3 & 4 Only:** Browse openings, apply for internships & schedule interviews |
-| 🏛️ **Organization** | Academic Institutes & Supervisors (UCSC, UoM, Kelaniya, SLIIT, etc.) | • Publish real-world project briefs & specifications<br>• Review, approve, or request revisions on student proposals<br>• Monitor team milestones, grade progress & provide feedback<br>• Validate student academic credentials & verify email domains<br>• Download academic progress reports & student completion audits |
-| 🏢 **Company** | Corporate Partners & Tech Recruiters (WSO2, IFS, LSEG, Virtusa, etc.) | • Publish verified industrial internship drives for 3rd/4th years<br>• Screen candidates by inspecting completed projects & skill ratings<br>• Manage application funnels (Shortlisted, Technical Screen, Offer)<br>• Schedule candidate interview rounds (`interviews.php`)<br>• Monitor corporate placement velocity & talent conversion metrics |
-| 🛡️ **Admin** | System Administrators | • System-wide user management & bulk CSV student verification<br>• University accreditation & performance ranking governance<br>• Audit projects and corporate internship postings<br>• Grievance & complaint resolution workflow (`complain.php`)<br>• Executive Performance Analytics with native SVG data visualizations |
+| 🎓 **Student** | **The Contributor**<br>*(Undergraduates Years 1 – 4)* | • **Access & Identity:** Authenticated directly via official university email (`.ac.lk` / institutional domain).<br>• **Practical Learning:** Explores in-demand skill matrices (React, Python, Cloud, AI, DevOps) and levels up.<br>• **Project Contribution:** Browses projects posted by **Organizations (Project Owners)**, submits proposals (`proposal.php`), and joins as an active **Contributor**.<br>• **Teamwork & Proof-of-Work:** Delivers real code milestones, receives Project Owner ratings, and builds an undeniable public portfolio.<br>• **Senior Gateway (Years 3 & 4 Only):** Unlocks the exclusive gateway to apply for corporate **Internships** posted by Companies. |
+| 🏛️ **Organization** | **The Project Owner**<br>*(Individual, Lecturer, Researcher, or Team)* | • **Project Ownership:** Can be an **individual person**, a **university lecturer/professor**, a **researcher**, or an **organized team/club** who owns a software project or research initiative.<br>• **Member Recruitment:** Posts project specifications on SkillBridge, defining required contributor roles (Frontend, Backend, DevOps, UI/UX, AI).<br>• **Proposal Evaluation:** Reviews incoming student proposals (`proposal.php`), shortlists applicants, and forms the project team.<br>• **Project Delivery & Mentorship:** Coordinates deliverables, tracks milestones, and issues ratings/evaluations upon completion (`feedback.php`). |
+| 🏢 **Company** | **The Employer**<br>*(Corporate Industry Partners)* | • **Senior Internship Drives:** Posts industrial internship openings **targeted exclusively for 3rd and 4th-year undergraduates**.<br>• **Deliverables-Based Screening:** Discards generic paper resumes; screens applicants by inspecting **real project contributions** completed under Organizations.<br>• **Candidate Funnel:** Coordinates applicant pipeline, schedules technical/behavioral interviews (`interviews.php`), and extends job offers. |
+| 🛡️ **Admin** | **The Governor**<br>*(Platform Administrators)* | • **Ecosystem Oversight:** Manages institutional accreditations (UCSC, UoM, Kelaniya, SLIIT), user accounts, and bulk CSV uploads.<br>• **Grievance Resolution:** Investigates and resolves tickets submitted across the platform (`complain.php`).<br>• **Performance Analytics:** Monitors holistic ecosystem metrics using pure native SVG charts (`reportandAnalysist.php`). |
 
 ---
 
 ## 🏗️ System Architecture & Workflow
 
+<p align="center">
+  <img src="Assets/images/skillbridge_workflow.gif" alt="SkillBridge End-to-End Workflow Animation" width="780"/>
+</p>
+
+<p align="center">
+  <em>🎬 <strong>Interactive 5-Stage Journey:</strong> 1. University Student Onboarding &bull; 2. In-Demand Skill Acceleration &bull; 3. Organization (Project Owner) Posts Projects & Students Contribute &bull; 4. Senior Gateway Unlocked (Years 3 & 4) &bull; 5. Companies Hire Based on Real Deliverables</em>
+</p>
+
+<details>
+<summary>📐 <strong>Click here to view detailed technical system flowchart</strong></summary>
+
 ```mermaid
 flowchart TD
-    subgraph Academic_Ecosystem["🏛️ Academic & Skills Foundation (Years 1 - 4)"]
-        U[Universities / Organizations] -->|Post Projects & Mentorship| P[Projects Repository]
-        S[Undergraduate Students] -->|Form Teams & Submit Proposals| P
-        P -->|Milestone Submissions| F[Supervisor Evaluation & Feedback]
-        F -->|Verified Ratings & Badges| PORT[Dynamic Student Portfolio]
+    subgraph Project_Ecosystem["🛠️ Collaborative Project Hub (Years 1 - 4)"]
+        ORG["🏛️ Organization (Project Owner)<br>(Individual, Lecturer, or Team Lead)"] -->|1. Posts Project Brief with Skill Requirements| PROJ[Projects Catalog]
+        STU["🎓 Student (Contributor)<br>(Years 1 - 4 Undergraduates)"] -->|2. Submits Proposal with Skills & Plan| PROP[Proposal Review]
+        ORG -->|3. Approves Proposal & Assembles Team| PROP
+        PROP -->|4. Collaborative Milestone Development| DELIV[Code Deliverables on GitHub]
+        ORG -->|5. Milestone Grading & 5.0 Star Evaluation| CERT[Verified Project Portfolio]
     end
 
-    subgraph Eligibility_Gate["⚙️ Academic Gatekeeper"]
-        PORT --> EG{Student Year >= 3?}
-        EG -->|No: Years 1 & 2| DEV[Focus on Projects & Skill Acquisition]
-        DEV --> S
-        EG -->|Yes: Years 3 & 4| GATEWAY[Unlock Internship Gateway]
+    subgraph Eligibility_Gatekeeper["⚙️ Academic Gatekeeper"]
+        CERT --> GATE{Student Academic Year >= 3?}
+        GATE -->|No: Years 1 & 2| CONT[Continue Learning & Contributing to Projects]
+        CONT --> STU
+        GATE -->|Yes: Years 3 & 4| SENIOR[Unlock Senior Internship Gateway]
     end
 
-    subgraph Industry_Ecosystem["🏢 Industry & Placement Ecosystem"]
-        C[Corporate Partners] -->|Post Internship Drives| INT[Internship Portal]
-        GATEWAY -->|Direct Verified Applications| INT
-        INT -->|Screening by Real Projects| C
-        C -->|Interview Scheduling & Offers| PLACED[Confirmed Industrial Placement]
+    subgraph Corporate_Recruitment["🏢 Industry Placement (Years 3 & 4)"]
+        COMP["🏢 Company (Employer)<br>(WSO2, IFS, LSEG, Virtusa)"] -->|Posts Internship Drives| DRIVES[Internship Portal]
+        SENIOR -->|Applies with Verified Project Portfolio| DRIVES
+        DRIVES -->|Screened by Real Deliverables| COMP
+        COMP -->|Technical Interviews & Offer Letters| HIRED[🎉 Confirmed Placement]
     end
 
-    subgraph Platform_Governance["🛡️ Admin Governance & Analytics"]
-        ADM[Super Admin] -->|Accredit & Benchmark| U
-        ADM -->|Verify Accounts & Resolve Grievances| S
-        ADM -->|Audit Postings| C
-        ADM -->|Native SVG Real-Time Analytics| AN[Executive Performance Dashboard]
+    subgraph Governance["🛡️ Admin Governance & Analytics"]
+        ADM[Super Admin] -->|Institutional Verification & Support Log| ORG
+        ADM -->|User Moderation & Grievance Resolution| STU
+        ADM -->|Postings Audit| COMP
+        ADM -->|Native SVG Real-Time Analytics| METRICS[Executive Analytics Dashboard]
     end
 ```
+
+</details>
 
 ---
 
