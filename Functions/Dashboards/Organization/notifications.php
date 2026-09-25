@@ -141,6 +141,9 @@ include "../../../Includes/dash_header.php";
 .notif-icon.blue    { background: #dbeafe; color: #2563eb; }
 .notif-icon.green   { background: #16a34a; color: #fff; }
 .notif-icon.gray    { background: #f3f4f6; color: #9ca3af; }
+.notif-icon.red     { background: #fee2e2; color: #dc2626; }
+.notif-icon.amber   { background: #fef3c7; color: #b45309; }
+.notif-card:not(.is-read) { cursor: pointer; }
 
 .notif-body { flex: 1; min-width: 0; }
 .notif-top-row {
@@ -258,7 +261,7 @@ include "../../../Includes/dash_header.php";
         </a>
     </div>
     <p style="color:#6b7280; font-size:13.5px; margin-top:4px;">
-        Stay updated on your project proposals, internship applications, and team activities.
+        Stay updated on student proposals, your teams and your projects.
     </p>
 
     <!-- ===================== TOOLBAR ===================== -->
@@ -289,66 +292,96 @@ include "../../../Includes/dash_header.php";
 
 <script>
 (function () {
-    // ---- Fake dataset: 12 notifications across 3 pages (5 per page) ----
-    const templates = [
-        { icon: 'navy',  category: 'proposals', title: 'New Project Proposal Received',
-          msg: (n) => `<strong>${n.company}</strong> sent a new collaborative brief for the <strong>${n.project}</strong> project. Review the deliverables and timeline within 24 hours.`,
-          actions: '<a href="proposals.php" class="notif-btn primary">View Proposal</a><a href="#" class="notif-btn outline">Decline</a>' },
-        { icon: 'gray',  category: 'teams', title: 'Team Documents Updated',
-          msg: (n) => `The <strong>${n.project} Guidelines</strong> have been updated by ${n.person}. Please review the new linting rules.`,
-          actions: '' },
-        { icon: 'green', category: 'teams', title: 'New Team Member Joined',
-          msg: (n) => `<strong>${n.person}</strong> just joined the "${n.project}" workspace. Send a welcome message to start collaborating.`,
-          actions: '' },
-        { icon: 'gray',  category: 'system', title: 'System Maintenance Notice',
-          msg: () => `SkillBridge will undergo scheduled maintenance this weekend, from 02:00 AM to 04:00 AM EST.`,
-          actions: '' },
-        { icon: 'navy',  category: 'proposals', title: 'Proposal Deadline Approaching',
-          msg: (n) => `Reminder: the review window for <strong>${n.company}</strong>'s <strong>${n.project}</strong> proposal closes tomorrow.`,
-          actions: '<a href="proposals.php" class="notif-btn primary">Review Now</a>' },
-        { icon: 'green', category: 'teams', title: 'Project Milestone Completed',
-          msg: (n) => `<strong>${n.person}</strong> marked a milestone as complete on <strong>${n.project}</strong>. Take a look at the latest progress.`,
-          actions: '' },
-        { icon: 'navy',  category: 'system', title: 'Feedback Received',
-          msg: (n) => `A student left new feedback on <strong>${n.project}</strong>. Your response helps improve future collaborations.`,
-          actions: '' },
-    ];
-    const companies = ['FinTech Solutions', 'TechStream', 'NovaWorks', 'BrightPath Labs', 'CoreSys Ltd', 'Vertex Digital', 'ByteForge', 'Alpine Analytics'];
-    const projects  = ['API Integration', 'Cloud Architecture Internship', 'Backend Development', 'Project Phoenix', 'Mobile Attendance Tracker', 'Portfolio Website Builder', 'AI Chatbot Support', 'Data Pipeline Revamp'];
-    const people    = ['Sarah Miller', 'Jordan Peterson', 'Elena Vance', 'Marcus Thorne', 'Kevin Zhang', 'Priya Nair'];
-    const times     = ['2m ago', '45m ago', '3h ago', 'Yesterday', 'Oct 24', 'Oct 23', 'Oct 22', 'Oct 20', 'Oct 18'];
+    // ---- Demo notifications for an ORGANIZATION (10 items, 5 per page) ----
+    // Every button goes to the right page AND opens the right item there:
+    //   proposal.php?view=<id>                 -> that proposal
+    //   teams.php?team=<name>&open=<view|review|tasks|chat>
+    //   manage_projects.php?status=<status>    -> projects with that status
+    //   feedback.php?give=1                    -> "Submit feedback" form
+    // Notifications that only give information have no button.
+    const btn = (href, label, style) => `<a href="${href}" class="notif-btn ${style || 'primary'}">${label}</a>`;
+    const team = (name, open) => 'teams.php?team=' + encodeURIComponent(name) + '&open=' + open;
 
-    const TOTAL_ITEMS = 12;
+    const RAW_NOTIFICATIONS = [
+        { key: 'prop-1', icon: 'navy', glyph: 'description', category: 'proposals', title: 'New Project Proposal',
+          msg: '<strong>Nimasha Fernando</strong> sent a proposal for your <strong>Cloud Migration UI/UX</strong> project.',
+          time: '15m ago', unread: true,
+          actions: btn('proposal.php?view=1', 'Review Proposal') + btn('proposal.php#profile-1', 'View Profile', 'outline') },
+
+        { key: 'team-behind', icon: 'red', glyph: 'warning', category: 'teams', title: 'Team Behind Schedule',
+          msg: '<strong>Vortex Group</strong> is 5 days behind on <strong>Blockchain-Based Academic Credentials</strong>. Check what is blocking them.',
+          time: '1h ago', unread: true,
+          actions: btn(team('Vortex Group', 'review'), 'Review Delay') },
+
+        { key: 'prop-2', icon: 'navy', glyph: 'description', category: 'proposals', title: 'New Project Proposal',
+          msg: '<strong>Sahan Wickramasinghe</strong> sent a proposal for your <strong>AI Model Optimization</strong> project.',
+          time: '3h ago', unread: false,
+          actions: btn('proposal.php?view=2', 'Review Proposal') },
+
+        { key: 'team-chat', icon: 'blue', glyph: 'chat', category: 'teams', title: 'New Team Message',
+          msg: '<strong>Kavinda Jayasuriya</strong> (Alpha Ops): “Cluster is now in production. Please keep an eye on the alerts.”',
+          time: '5h ago', unread: false,
+          actions: btn(team('Alpha Ops', 'chat'), 'Open Chat') },
+
+        { key: 'team-deadline', icon: 'amber', glyph: 'schedule', category: 'teams', title: 'Team Deadline Approaching',
+          msg: 'The deadline for <strong>Nexus Systems</strong> is <strong>Oct 24</strong> (14 days left). Their progress is 72%.',
+          time: 'Yesterday', unread: false,
+          actions: btn(team('Nexus Systems', 'tasks'), 'View Tasks') },
+
+        { key: 'team-done', icon: 'green', glyph: 'task_alt', category: 'teams', title: 'Project Completed',
+          msg: '<strong>Quantum Analytics</strong> finished <strong>Predictive Maintenance for Smart Cities</strong> and submitted the final report.',
+          time: 'Yesterday', unread: false,
+          actions: btn(team('Quantum Analytics', 'view'), 'View Final Report') + btn('feedback.php?give=1', 'Give Feedback', 'outline') },
+
+        { key: 'proj-approved', icon: 'green', glyph: 'verified', category: 'projects', title: 'Project Approved',
+          msg: 'SkillBridge Admin approved your project. It is now <strong>Active</strong> and visible to students.',
+          time: '2 days ago', unread: false,
+          actions: btn('manage_projects.php?status=inprogress', 'View Project', 'outline') },
+
+        { key: 'proj-hold', icon: 'amber', glyph: 'pause_circle', category: 'projects', title: 'Project Put On Hold',
+          msg: 'Admin put one of your projects <strong>On Hold</strong> and asked for changes before it can go live.',
+          time: '3 days ago', unread: false,
+          actions: btn('manage_projects.php?status=hold', 'Fix & Resubmit') },
+
+        { key: 'report', icon: 'gray', glyph: 'bar_chart', category: 'system', title: 'Monthly Report Ready',
+          msg: 'Your <strong>September</strong> report on projects, teams and student progress is ready.',
+          time: '5 days ago', unread: false,
+          actions: btn('reports.php', 'View Report', 'outline') },
+
+        { key: 'verified', icon: 'gray', glyph: 'workspace_premium', category: 'system', title: 'Organization Verified',
+          msg: 'Your organization account was verified by SkillBridge. Students can now see a verified badge on your projects.',
+          time: '1 week ago', unread: false,
+          actions: '' }
+    ];
+
     const PAGE_SIZE = 5;
     const notifications = [];
 
     // "Mark all as read" is remembered per-browser, so it survives navigating
     // away and coming back (this dataset is regenerated fresh on every load).
-    const ALL_READ_KEY = 'skillbridge_org_notifs_all_read';
+    const ALL_READ_KEY = 'skillbridge_org_notifs_all_read_v2';
+    const READ_KEY = 'skillbridge_org_notifs_read_v2';          // keys of notifications opened one by one
     const allMarkedRead = localStorage.getItem(ALL_READ_KEY) === '1';
+    let readKeys = [];
+    try { readKeys = JSON.parse(localStorage.getItem(READ_KEY)) || []; } catch (e) {}
 
-    for (let i = 0; i < TOTAL_ITEMS; i++) {
-        const t = templates[i % templates.length];
-        const ctx = {
-            company: companies[i % companies.length],
-            project: projects[(i + 2) % projects.length],
-            person: people[i % people.length]
-        };
+    RAW_NOTIFICATIONS.forEach((n, i) => {
         notifications.push({
             id: i,
-            icon: t.icon,
-            category: t.category,
-            title: t.title,
-            msg: t.msg(ctx),
-            time: times[i % times.length],
-            actions: t.actions,
-            // Only the 2 newest stay unread by default (until "Mark all as read" is used)
-            read: allMarkedRead ? true : (i >= 2)
+            key: n.key,
+            icon: n.icon,
+            glyph: n.glyph,
+            category: n.category,
+            title: n.title,
+            msg: n.msg,
+            time: n.time,
+            actions: n.actions,
+            read: allMarkedRead || readKeys.includes(n.key) ? true : !n.unread
         });
-    }
+    });
 
     let currentPage = 1;
-    const totalPages = Math.ceil(TOTAL_ITEMS / PAGE_SIZE);
+    let totalPages = 1;
 
     const listEl        = document.getElementById('notifList');
     const emptyState    = document.getElementById('notifEmptyState');
@@ -368,7 +401,7 @@ include "../../../Includes/dash_header.php";
     function cardHtml(n) {
         return `
         <div class="notif-card ${n.read ? 'is-read' : ''}" data-id="${n.id}" data-read="${n.read ? 1 : 0}" data-category="${n.category}">
-            <div class="notif-icon ${n.icon}"><span class="material-symbols-outlined">${iconGlyph(n.icon, n.category)}</span></div>
+            <div class="notif-icon ${n.icon}"><span class="material-symbols-outlined">${n.glyph}</span></div>
             <div class="notif-body">
                 <div class="notif-top-row">
                     <div class="notif-heading">${n.read ? '' : '<span class="unread-dot"></span> '}${n.title}</div>
@@ -380,25 +413,35 @@ include "../../../Includes/dash_header.php";
         </div>`;
     }
 
-    function iconGlyph(icon, category) {
-        if (category === 'proposals' && icon === 'navy') return 'description';
-        if (category === 'proposals' && icon === 'blue') return 'work';
-        if (category === 'teams' && icon === 'green') return 'group_add';
-        if (category === 'teams') return 'article';
-        return 'info';
+    // search + filter work on ALL notifications, then the result is split into pages
+    const plain = html => { const d = document.createElement('div'); d.innerHTML = html; return d.textContent.toLowerCase(); };
+    function filtered() {
+        const query = (searchInput.value || '').trim().toLowerCase();
+        const filter = filterSelect.value;
+        return notifications.filter(n =>
+            (query === '' || (n.title + ' ' + plain(n.msg)).toLowerCase().includes(query)) &&
+            (filter === 'all' || !n.read));
     }
 
     function renderPage(page) {
+        const items = filtered();
+        totalPages = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
         currentPage = Math.min(Math.max(page, 1), totalPages);
         const start = (currentPage - 1) * PAGE_SIZE;
-        const pageItems = notifications.slice(start, start + PAGE_SIZE);
+        const pageItems = items.slice(start, start + PAGE_SIZE);
 
         listEl.innerHTML = pageItems.map(cardHtml).join('');
-        showingText.textContent = `Showing ${start + 1}\u2013${start + pageItems.length} of ${TOTAL_ITEMS} notifications`;
-
+        emptyState.style.display = items.length ? 'none' : 'block';
+        emptyState.textContent = (filterSelect.value === 'unread' && !searchInput.value.trim())
+            ? 'You’re all caught up. No unread notifications.'
+            : 'No notifications match your search.';
+        showingText.textContent = items.length
+            ? `Showing ${start + 1}\u2013${start + pageItems.length} of ${items.length} notifications`
+            : '';
         renderPagination();
-        applyFilters();
     }
+
+    function applyFilters() { renderPage(1); }
 
     function renderPagination() {
         paginationEl.innerHTML = '';
@@ -432,27 +475,22 @@ include "../../../Includes/dash_header.php";
         addBtn('\u203a', currentPage + 1, { disabled: currentPage === totalPages });
     }
 
-    function applyFilters() {
-        const query = (searchInput.value || '').trim().toLowerCase();
-        const filter = filterSelect.value;
-        const cards = Array.from(listEl.querySelectorAll('.notif-card'));
-        let visibleCount = 0;
-
-        cards.forEach(card => {
-            const text = card.textContent.toLowerCase();
-            const matchesSearch = query === '' || text.includes(query);
-            const matchesFilter =
-                filter === 'all' ||
-                (filter === 'unread' && card.dataset.read === '0') ||
-                (filter !== 'unread' && card.dataset.category === filter);
-
-            const visible = matchesSearch && matchesFilter;
-            card.style.display = visible ? '' : 'none';
-            if (visible) visibleCount++;
-        });
-
-        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    // Clicking a button (or the card) marks that notification as read.
+    // The button link then opens the right page.
+    function markRead(n) {
+        if (n.read) return;
+        n.read = true;
+        if (!readKeys.includes(n.key)) readKeys.push(n.key);
+        try { localStorage.setItem(READ_KEY, JSON.stringify(readKeys)); } catch (e) {}
+        updateUnreadBadge();
     }
+    listEl.addEventListener('click', function (e) {
+        const card = e.target.closest('.notif-card');
+        if (!card) return;
+        const n = notifications[Number(card.dataset.id)];
+        markRead(n);
+        if (!e.target.closest('a')) renderPage(currentPage);   // links leave the page anyway
+    });
 
     searchInput.addEventListener('input', applyFilters);
     filterSelect.addEventListener('change', applyFilters);

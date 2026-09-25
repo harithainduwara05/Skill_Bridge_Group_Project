@@ -162,13 +162,24 @@ include "../../../Includes/dash_header.php";
         .org-main-row { padding: 0 16px; }
         .full-width-section { padding: 0 16px 16px; }
     }
+
+    /* Bigger "Welcome back" + organization name on this dashboard only */
+    .dashboard-header .welcome-heading {
+        font-size: 30px;
+    }
+    .dashboard-header .overview-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: #111827;
+    }
 </style>
 
 <main class="content">
     <div class="dashboard-header">
 
         <div>
-            <h1>Welcome back, <?php echo htmlspecialchars($orgName); ?></h1>
+            <h1 class="welcome-heading">Welcome back! 👋</h1>
+            <h2 class="overview-title"><?php echo htmlspecialchars($orgName); ?></h2>
             <p>Here's what's happening with your projects today.</p>
         </div>
 

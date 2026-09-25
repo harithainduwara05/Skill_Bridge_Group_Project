@@ -8,6 +8,9 @@ require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
+include __DIR__ . "/team_schema.php";
+tmEnsureSchema($conn);
+
 /*
 |--------------------------------------------------------------------------
 | UI-ONLY DEMO DATA
@@ -158,6 +161,32 @@ foreach ($proposals as &$prop) {
     }
     $prop['submitted_on'] = date('M d, Y', strtotime('-' . (int)$prop['days_ago'] . ' days'));
 
+    // Link the proposal to this organization's project (by title) and
+    // use the decision saved in the database (Accept / Reject) if there is one.
+    $prop['project_id'] = 0;
+    try {
+        $pq = $conn->prepare("SELECT id FROM projects WHERE title = ? AND organization_email = ? LIMIT 1");
+        $pq->bind_param("ss", $prop['project'], $organization_email);
+        $pq->execute();
+        $prop['project_id'] = (int)($pq->get_result()->fetch_assoc()['id'] ?? 0);
+    } catch (Throwable $e) {}
+    $prop['db_status'] = '';
+    if ($prop['project_id']) {
+        try {
+            $sq = $conn->prepare("SELECT status FROM project_applications WHERE project_id = ? AND LOWER(Email) = LOWER(?) LIMIT 1");
+            $sq->bind_param("is", $prop['project_id'], $prop['email']);
+            $sq->execute();
+            $prop['db_status'] = $sq->get_result()->fetch_assoc()['status'] ?? '';
+        } catch (Throwable $e) {}
+        if (in_array($prop['db_status'], ['accepted', 'rejected'], true)) {
+            $prop['status'] = $prop['db_status'];
+        } elseif ($prop['status'] === 'accepted') {
+            // demo proposal that starts as "accepted" -> save it so Teams can use it
+            try { tmSaveApplicationStatus($conn, $prop['project_id'], $prop['email'], 'accepted'); $prop['db_status'] = 'accepted'; }
+            catch (Throwable $e) {}
+        }
+    }
+
     $email = $prop['email'];
 
     $stu = prFetchAll($conn, "SELECT Name, University, year, degree, profile_image, bio, github, linkedin, website
@@ -201,6 +230,64 @@ unset($prop);
 
 /*
 |--------------------------------------------------------------------------
+| ACCEPT PROPOSAL (AJAX)
+|--------------------------------------------------------------------------
+| Saves the student as "accepted" for the project (project_applications),
+| so the student can be picked when the organization creates a team.
+| silent=1 -> only sync the status, no notification (used for old
+| decisions that were saved only in the browser).
+*/
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'accept_proposal') {
+    header('Content-Type: application/json');
+
+    $proposalId = (int)($_POST['proposal_id'] ?? 0);
+    $silent     = !empty($_POST['silent']);
+
+    $proposal = null;
+    foreach ($proposals as $item) {
+        if ((int)$item['id'] === $proposalId) { $proposal = $item; break; }
+    }
+    if (!$proposal) {
+        echo json_encode(['ok' => false, 'message' => 'Proposal not found.']);
+        exit;
+    }
+
+    // The project only gets linked to a team when it matches one of this
+    // organization's own projects (project_id > 0). When it doesn't match,
+    // we still accept the proposal and notify the student — we just skip
+    // the team-linking step, without bothering the organization with a
+    // warning popup.
+    $isLinked = !empty($proposal['project_id']);
+
+    try {
+        if ($isLinked) {
+            tmSaveApplicationStatus($conn, (int)$proposal['project_id'], $proposal['email'], 'accepted');
+        }
+
+        if (!$silent) {
+            $on = $conn->prepare("SELECT Name FROM organization WHERE Email = ?");
+            $on->bind_param("s", $organization_email);
+            $on->execute();
+            $orgName = $on->get_result()->fetch_assoc()['Name'] ?? 'The organization';
+
+            $nTitle   = 'Proposal Accepted';
+            $nMessage = $orgName . ' accepted your proposal for "' . $proposal['project'] . '".'
+                      . ($isLinked ? ' You will be added to a project team soon.' : '');
+            $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
+                                  VALUES (?, ?, ?, 'project', 'Unread')");
+            $nq->bind_param("sss", $proposal['email'], $nTitle, $nMessage);
+            $nq->execute();
+        }
+
+        echo json_encode(['ok' => true, 'linked' => $isLinked]);
+    } catch (Throwable $e) {
+        echo json_encode(['ok' => false, 'message' => 'Could not save the decision. Please try again.']);
+    }
+    exit;
+}
+
+/*
+|--------------------------------------------------------------------------
 | REJECT WITH REASON (AJAX)
 |--------------------------------------------------------------------------
 | The page calls this with fetch(). It sends the rejection reason to the
@@ -241,6 +328,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'rejec
                               VALUES (?, ?, ?, 'project', 'Unread')");
         $nq->bind_param("sss", $proposal['email'], $nTitle, $nMessage);
         $nq->execute();
+
+        // remember the decision (a rejected student can't be added to a team)
+        if (!empty($proposal['project_id'])) {
+            tmSaveApplicationStatus($conn, (int)$proposal['project_id'], $proposal['email'], 'rejected');
+        }
 
         echo json_encode(['ok' => true]);
     } catch (Throwable $e) {
@@ -1212,14 +1304,19 @@ include "../../../Includes/dash_header.php";
     .pr-toast {
         position: fixed;
         right: 24px;
-        bottom: 24px;
-        background: #0f2a4a;
-        color: #fff;
-        padding: 13px 18px;
-        border-radius: 10px;
-        font-size: 14px;
-        box-shadow: 0 10px 30px rgba(0,0,0,.18);
-        transform: translateY(20px);
+        top: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 300px;
+        max-width: 420px;
+        background: #ffffff;
+        border: 1px solid #86efac;
+        border-left: 5px solid #10b981;
+        padding: 12px 18px;
+        border-radius: 12px;
+        box-shadow: 0 14px 35px rgba(0,0,0,.12), 0 4px 10px rgba(0,0,0,.04);
+        transform: translateY(-20px);
         opacity: 0;
         pointer-events: none;
         transition: .25s ease;
@@ -1229,6 +1326,43 @@ include "../../../Includes/dash_header.php";
     .pr-toast.show {
         transform: translateY(0);
         opacity: 1;
+    }
+
+    .pr-toast.error {
+        border-color: #fca5a5;
+        border-left-color: #ef4444;
+    }
+
+    .pr-toast-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #ecfdf5;
+        color: #059669;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .pr-toast.error .pr-toast-icon {
+        background: #fef2f2;
+        color: #dc2626;
+    }
+
+    .pr-toast-icon .material-symbols-outlined {
+        font-size: 20px;
+    }
+
+    .pr-toast-text {
+        font-size: 14px;
+        font-weight: 600;
+        color: #065f46;
+        line-height: 1.35;
+    }
+
+    .pr-toast.error .pr-toast-text {
+        color: #991b1b;
     }
 
 
@@ -1354,10 +1488,10 @@ include "../../../Includes/dash_header.php";
                 id="timeFilter"
             >
 
-                <option value="all">All Time</option>
-                <option value="1">Last 24 Hours</option>
-                <option value="7">Last 7 Days</option>
-                <option value="30">Last 30 Days</option>
+                <option value="all">Time: All</option>
+                <option value="daily">Daily (Today)</option>
+                <option value="weekly">Weekly (Last 7 days)</option>
+                <option value="monthly">Monthly (Last 30 days)</option>
 
             </select>
 
@@ -1910,6 +2044,10 @@ include "../../../Includes/dash_header.php";
     class="pr-toast"
     id="prToast"
 >
+    <div class="pr-toast-icon">
+        <span class="material-symbols-outlined" id="prToastIcon">check_circle</span>
+    </div>
+    <div class="pr-toast-text" id="prToastText"></div>
 </div>
 
 
@@ -2236,7 +2374,9 @@ function applyFilters()
 
         const timeMatch =
             selectedTime === 'all' ||
-            daysAgo <= parseInt(selectedTime, 10);
+            (selectedTime === 'daily' && daysAgo <= 0) ||
+            (selectedTime === 'weekly' && daysAgo <= 7) ||
+            (selectedTime === 'monthly' && daysAgo <= 30);
 
 
         const shouldShow =
@@ -2738,6 +2878,13 @@ document.getElementById('spBack').addEventListener('click', function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+    // opened from a notification: proposal.php?view=2 -> show that proposal
+    const viewId = new URLSearchParams(location.search).get('view');
+    if (viewId) {
+        history.replaceState(null, '', location.pathname);
+        showFullProposal(Number(viewId));
+    }
+
     const m = location.hash.match(/^#profile-(\d+)$/);
     if (m) {
         history.replaceState({ profile: Number(m[1]) }, '', location.hash);
@@ -2892,7 +3039,15 @@ function performAction()
     closeModal('confirmModal');
 
 
-    if (card && newStatus) {
+    if (card && newStatus === 'accepted') {
+        const acceptedProposal = proposalData.find(p => Number(p.id) === Number(id));
+        saveAcceptOnServer(id, false).then(function (data) {
+            updateCardStatus(card, 'accepted', false);
+            showToast(`Proposal accepted. ${acceptedProposal ? acceptedProposal.name : 'The student'} has been notified.`);
+        }).catch(function (err) {
+            showToast(err.message || 'Could not accept the proposal. Please try again.', 'error');
+        });
+    } else if (card && newStatus) {
 
         updateCardStatus(
             card,
@@ -2910,6 +3065,31 @@ function performAction()
 }
 
 
+/* Accept -> saved in the database so the student can be put in a team */
+async function saveAcceptOnServer(id, silent)
+{
+    const body = new FormData();
+    body.append('action', 'accept_proposal');
+    body.append('proposal_id', id);
+    if (silent) body.append('silent', '1');
+
+    const res  = await fetch('proposal.php', { method: 'POST', body: body });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.message || 'Something went wrong.');
+    return data;
+}
+
+/* Proposals accepted earlier (saved only in this browser) -> copy to the database once */
+document.addEventListener('DOMContentLoaded', function () {
+    const saved = loadSavedStatuses();
+    proposalData.forEach(function (p) {
+        if (saved[p.id] === 'accepted' && p.project_id && p.db_status !== 'accepted') {
+            saveAcceptOnServer(p.id, true).catch(function () {});
+        }
+    });
+});
+
+
 /* ================================================================
    TOAST
 ================================================================ */
@@ -2917,7 +3097,7 @@ function performAction()
 let toastTimer;
 
 
-function showToast(message)
+function showToast(message, type = 'success')
 {
 
     const toast =
@@ -2925,9 +3105,24 @@ function showToast(message)
             'prToast'
         );
 
+    const icon =
+        document.getElementById(
+            'prToastIcon'
+        );
 
-    toast.textContent =
+    const text =
+        document.getElementById(
+            'prToastText'
+        );
+
+
+    text.textContent =
         message;
+
+    toast.classList.toggle('error', type === 'error');
+
+    icon.textContent =
+        type === 'error' ? 'error' : 'check_circle';
 
 
     toast.classList.add('show');
@@ -3214,7 +3409,7 @@ rjSubmit.addEventListener('click', async function () {
             updateCardStatus(card, 'rejected', false);
         }
 
-        showToast(`Proposal rejected. ${proposal ? proposal.name : 'The student'} has been notified.`);
+        showToast(`Proposal rejected. ${proposal ? proposal.name : 'The student'} has been notified.`, 'error');
         rejectingId = null;
 
     } catch (err) {
