@@ -1,13 +1,8 @@
 # 🎓 SkillBridge — Project-Driven Skill Development & Industry Gateway Platform
 
 <p align="center">
-  <img src="Assets/images/logo.png" alt="SkillBridge Logo" width="340"/>
+  <img  alt="logo" src="https://github.com/user-attachments/assets/ae2f4792-c909-4fc7-bc52-ac741c89ec4a" width="340"/>
 </p>
-
-<p align="center">
-  <img src="Assets/images/landing.jpeg" alt="SkillBridge Platform Dashboard" width="760"/>
-</p>
-
 <p align="center">
   <strong>Bridging the Chasm Between Academic Theory and Industry Reality Through Practical, Project-Based Skill Acceleration.</strong>
 </p>
