@@ -8,6 +8,64 @@ $user = current_user();
 
 $flash = null;
 
+// ---- Supporting documents: allowed types + size limit ----
+const DOC_MAX_BYTES = 10 * 1024 * 1024; // 10MB per file
+const DOC_ALLOWED_EXT = ['pdf', 'doc', 'docx', 'ppt', 'pptx', 'xls', 'xlsx', 'txt', 'csv', 'png', 'jpg', 'jpeg', 'gif', 'webp', 'zip'];
+
+/**
+ * Save every file in $_FILES['attachments'] for the given project.
+ * Files with a wrong type or bigger than 10MB are skipped.
+ */
+function saveProjectDocuments(mysqli $conn, int $projectId): int
+{
+    if (empty($_FILES['attachments']) || !is_array($_FILES['attachments']['name'])) {
+        return 0;
+    }
+
+    $uploadDir = __DIR__ . '/../../../Assets/Uploads/project_docs/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0775, true);
+    }
+
+    $ins = $conn->prepare("INSERT INTO project_documents
+                           (project_id, original_name, file_path, file_size, mime_type)
+                           VALUES (?,?,?,?,?)");
+
+    $failed = 0;
+    $files  = $_FILES['attachments'];
+
+    foreach ($files['name'] as $i => $originalName) {
+        if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
+
+        $ext  = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $size = (int)$files['size'][$i];
+
+        if ($files['error'][$i] !== UPLOAD_ERR_OK
+            || !in_array($ext, DOC_ALLOWED_EXT, true)
+            || $size <= 0 || $size > DOC_MAX_BYTES) {
+            $failed++;
+            continue;
+        }
+
+        // Unique, safe file name on disk; the original name is kept in the DB
+        $storedName = 'project_' . $projectId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
+
+        if (!move_uploaded_file($files['tmp_name'][$i], $uploadDir . $storedName)) {
+            $failed++;
+            continue;
+        }
+
+        $relativePath = 'Assets/Uploads/project_docs/' . $storedName;
+        $mime         = mime_content_type($uploadDir . $storedName) ?: 'application/octet-stream';
+        $cleanName    = mb_substr(basename($originalName), 0, 255);
+
+        $ins->bind_param("issis", $projectId, $cleanName, $relativePath, $size, $mime);
+        $ins->execute();
+    }
+
+    return $failed;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $title               = trim($_POST['title'] ?? '');
@@ -24,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $visibility          = trim($_POST['visibility'] ?? 'Public');
     $action              = trim($_POST['action'] ?? 'publish'); // draft | publish
 
-    $status        = ($action === 'draft') ? 'draft' : 'open';
+    $status        = ($action === 'draft') ? 'draft' : 'reviewing';
     $duration_text = $duration_weeks !== '' ? $duration_weeks . ' Weeks' : null;
 
     if (empty($title) || empty($category) || empty($description)) {
@@ -51,6 +109,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             );
 
             if ($stmt->execute()) {
+                $projectId = (int)$conn->insert_id;
+                saveProjectDocuments($conn, $projectId);
+
                 header("Location: manage_projects.php?posted=1");
                 exit;
             } else {
@@ -66,6 +127,61 @@ include "../../../Includes/org_sidebar.php";
 include "../../../Includes/dash_header.php";
 
 ?>
+
+<style>
+    /* ---- Supporting documents: uploaded file list ---- */
+    .doc-upload-errors { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .doc-upload-errors:empty { display: none; }
+    .doc-upload-error {
+        display: flex; align-items: center; gap: 8px;
+        background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+        border-radius: 10px; padding: 8px 12px; font-size: 13px;
+    }
+    .doc-upload-error .material-symbols-outlined { font-size: 18px; }
+
+    .doc-upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .doc-upload-list:empty { display: none; }
+    .doc-upload-summary { font-size: 12px; color: #6b7280; margin-bottom: 2px; }
+
+    .doc-item {
+        display: flex; align-items: center; gap: 12px;
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+        padding: 10px 12px; transition: border-color .2s ease, box-shadow .2s ease;
+    }
+    .doc-item:hover { border-color: #bfdbfe; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+
+    .doc-thumb {
+        width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: #eff6ff; color: #2563eb; overflow: hidden;
+    }
+    .doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .doc-thumb.pdf   { background: #fef2f2; color: #dc2626; }
+    .doc-thumb.word  { background: #eff6ff; color: #2563eb; }
+    .doc-thumb.ppt   { background: #fff7ed; color: #ea580c; }
+    .doc-thumb.excel { background: #f0fdf4; color: #16a34a; }
+    .doc-thumb.zip   { background: #f5f3ff; color: #7c3aed; }
+    .doc-thumb.text  { background: #f3f4f6; color: #4b5563; }
+
+    .doc-info { flex: 1; min-width: 0; }
+    .doc-name {
+        display: block; font-size: 13px; font-weight: 600; color: #111827;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        text-decoration: none; cursor: pointer;
+    }
+    .doc-name:hover { color: #1e40af; text-decoration: underline; }
+    .doc-meta { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+    .doc-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .doc-btn {
+        width: 34px; height: 34px; border-radius: 8px; border: none; background: transparent;
+        display: flex; align-items: center; justify-content: center; cursor: pointer;
+        color: #6b7280; transition: background .15s ease, color .15s ease;
+    }
+    .doc-btn .material-symbols-outlined { font-size: 20px; }
+    .doc-btn.view:hover   { background: #eff6ff; color: #1e40af; }
+    .doc-btn.remove:hover { background: #fef2f2; color: #dc2626; }
+</style>
 
 <main class="content">
     <div class="dashboard-header">
@@ -216,10 +332,12 @@ include "../../../Includes/dash_header.php";
                 <div class="dropzone" id="dropzone">
                     <span class="material-symbols-outlined">cloud_upload</span>
                     <div class="dropzone-title">Drag &amp; drop files here, or click to browse</div>
-                    <div class="dropzone-sub">Upload project briefs, technical specs, or reference images (Max 10MB)</div>
-                    <input type="file" id="fileInput" name="attachments[]" multiple style="display:none;">
+                    <div class="dropzone-sub">PDF, Word, PowerPoint, Excel, images, TXT, CSV or ZIP (Max 10MB each)</div>
+                    <input type="file" id="fileInput" name="attachments[]" multiple style="display:none;"
+                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip">
                 </div>
-                <div class="dropzone-filelist" id="fileList"></div>
+                <div class="doc-upload-errors" id="fileErrors"></div>
+                <div class="doc-upload-list" id="fileList"></div>
             </div>
 
             <!-- ===================== FOOTER ACTIONS ===================== -->
@@ -248,6 +366,6 @@ include "../../../Includes/dash_header.php";
     </div>
 </footer>
 
-<script src="../../../Assets/JS/post-project.js"></script>
+<script src="../../../Assets/JS/post-project.js?v=<?= filemtime(__DIR__ . '/../../../Assets/JS/post-project.js') ?>"></script>
 
 <?php include "../../../Includes/dash_footer.php"; ?>

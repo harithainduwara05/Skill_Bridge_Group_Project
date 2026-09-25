@@ -103,7 +103,8 @@ include "../../../Includes/dash_header.php";
 
     /* ---- team cards ---- */
     .tm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
-    .tm-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .tm-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.04);
+               display: flex; flex-direction: column; }
     .tm-card.completed { background: #fafafa; border: 1.5px dashed #cbd5e1; box-shadow: none; }
     .tm-card.completed .tm-name, .tm-card.completed .tm-project { color: #6b7280; }
 
@@ -152,7 +153,7 @@ include "../../../Includes/dash_header.php";
     .tm-meta .right.warn { color: #dc2626; }
     .tm-meta .right.late { color: #b91c1c; }
 
-    .tm-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .tm-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: auto; }   /* always sit at the bottom of the card */
     .tm-actions.single { grid-template-columns: 1fr; }
     .tm-actions .tm-btn { padding: 9px 10px; }
     .tm-actions .tm-btn.report { background: #d1d5db; border-color: #d1d5db; color: #374151; }

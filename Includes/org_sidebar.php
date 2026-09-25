@@ -72,6 +72,14 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <span class="nav-text">Feedback</span>
         </a>
 
+        <a href="reports.php"
+        class="<?= $currentPage == 'reports.php' ? 'active' : '' ?>" title="Reports & Analytics">
+            <span class="icon">
+                <span class="material-symbols-outlined">bar_chart</span>
+            </span>
+            <span class="nav-text">Reports & Analytics</span>
+        </a>
+
         <a href="notifications.php"
         class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
             <span class="icon">

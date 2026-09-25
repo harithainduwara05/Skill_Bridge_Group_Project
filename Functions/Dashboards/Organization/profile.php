@@ -7,6 +7,10 @@ require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
+// Projects are NOT promoted automatically any more.
+// A new project starts as "Reviewing" and stays Reviewing even when the team is full;
+// the organization changes it to "Active" manually from Edit Project.
+
 $flash = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -107,18 +111,8 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $org = $stmt->get_result()->fetch_assoc();
 
-// Stat cards — counted from the SAME project list Manage Projects shows
-// (real projects first, then the demo projects that pad the list to 24 rows).
-$useDemoData = true;          // false = count only real database projects
-$demoTarget  = 24;
-// demo projects in the same order as Manage Projects: [status, assigned students]
-$demoPool = [
-    ['open', 0], ['reviewing', 0], ['open', 0], ['closed', 2], ['inprogress', 1],
-    ['open', 0], ['reviewing', 0], ['inprogress', 2], ['open', 0], ['closed', 3],
-    ['open', 0], ['reviewing', 0], ['inprogress', 1], ['open', 0], ['closed', 2],
-    ['reviewing', 0], ['open', 0], ['inprogress', 1], ['closed', 3], ['open', 0],
-];
-
+// Stat cards — counted straight from the organization's real projects in the
+// database (same source Manage Projects uses, which no longer pads with demo rows).
 $projectRows = [];   // each: [status, assigned]
 $stmt = $conn->prepare("SELECT p.status,
                                (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS team_count
@@ -128,10 +122,6 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $r) {
     $projectRows[] = [$r['status'], (int)$r['team_count']];
-}
-if ($useDemoData) {
-    $needed = max(0, $demoTarget - count($projectRows));
-    $projectRows = array_merge($projectRows, array_slice($demoPool, 0, $needed));
 }
 
 $totalProjects     = count($projectRows);

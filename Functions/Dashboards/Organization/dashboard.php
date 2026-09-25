@@ -8,13 +8,24 @@ require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
+// ---- Organization name for the "Welcome back" heading ----
+$orgStmt = $conn->prepare("SELECT Name FROM organization WHERE Email = ?");
+$orgStmt->bind_param("s", $organization_email);
+$orgStmt->execute();
+$orgRow  = $orgStmt->get_result()->fetch_assoc();
+$orgName = $orgRow['Name'] ?? ($user['username'] ?? 'Organization');
+
+// Projects are NOT promoted automatically any more.
+// A new project starts as "Reviewing" and stays Reviewing even when the team is full;
+// the organization changes it to "Active" manually from Edit Project.
+
 // ---- Stat cards: real counts ----
 $stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $totalProjects = (int)$stmt->get_result()->fetch_row()[0];
 
-$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status IN ('open','reviewing','inprogress')");
+$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status IN ('reviewing','inprogress')");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $activeProjects = (int)$stmt->get_result()->fetch_row()[0];
@@ -25,43 +36,6 @@ $stmt = $conn->prepare("SELECT COUNT(*) FROM student_projects sp
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $proposalsReceived = (int)$stmt->get_result()->fetch_row()[0];
-
-// ---- Same demo/fake project pool as Manage Projects, so the stat cards on
-//      this dashboard match the totals shown there (real + demo combined) ----
-$demoTarget = 24;
-$fakePool = [
-    ['category' => 'AI / Machine Learning', 'status' => 'open', 'applicants' => 5, 'assigned' => 0],
-    ['category' => 'Mobile Development', 'status' => 'reviewing', 'applicants' => 3, 'assigned' => 0],
-    ['category' => 'Web Development', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 6, 'assigned' => 2],
-    ['category' => 'Other', 'status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
-    ['category' => 'Cloud & DevOps', 'status' => 'open', 'applicants' => 1, 'assigned' => 0],
-    ['category' => 'Cybersecurity', 'status' => 'reviewing', 'applicants' => 7, 'assigned' => 0],
-    ['category' => 'Data Science', 'status' => 'inprogress', 'applicants' => 3, 'assigned' => 2],
-    ['category' => 'UI/UX Design', 'status' => 'open', 'applicants' => 5, 'assigned' => 0],
-    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 9, 'assigned' => 3],
-    ['category' => 'Mobile Development', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['category' => 'AI / Machine Learning', 'status' => 'reviewing', 'applicants' => 4, 'assigned' => 0],
-    ['category' => 'Web Development', 'status' => 'inprogress', 'applicants' => 3, 'assigned' => 1],
-    ['category' => 'Cybersecurity', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
-    ['category' => 'Cloud & DevOps', 'status' => 'closed', 'applicants' => 5, 'assigned' => 2],
-    ['category' => 'Data Science', 'status' => 'reviewing', 'applicants' => 1, 'assigned' => 0],
-    ['category' => 'UI/UX Design', 'status' => 'open', 'applicants' => 3, 'assigned' => 0],
-    ['category' => 'Mobile Development', 'status' => 'inprogress', 'applicants' => 4, 'assigned' => 1],
-    ['category' => 'Web Development', 'status' => 'closed', 'applicants' => 8, 'assigned' => 3],
-    ['category' => 'AI / Machine Learning', 'status' => 'open', 'applicants' => 2, 'assigned' => 0],
-];
-$neededForTotals = max(0, $demoTarget - $totalProjects);
-$fakeForTotals   = array_slice($fakePool, 0, $neededForTotals);
-
-// ---- Grand totals (real + demo combined) so these cards match Manage Projects ----
-$totalProjects      = $totalProjects + count($fakeForTotals);
-$activeProjects      = $activeProjects + count(array_filter($fakeForTotals, function ($p) {
-    return in_array($p['status'], ['open', 'reviewing', 'inprogress'], true);
-}));
-$proposalsReceived  = $proposalsReceived + array_sum(array_column($fakeForTotals, 'applicants'));
-// Display 30 fewer proposals on the dashboard stat card.
-$proposalsReceived = max(0, $proposalsReceived - 30);
 
 // ---- Unread notifications count ----
 $stmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE Email = ? AND status = 'Unread'");
@@ -80,11 +54,17 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $recentProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// Human-readable label for a status value (DB stores 'inprogress' for what's shown as "Active")
+function statusLabel($status) {
+    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed', 'draft' => 'Draft'];
+    return $labels[$status] ?? ucfirst($status);
+}
+
 // ---- Pad with demo/fake data for presentation so the table always shows 5 rows ----
 $fakeProjectPool = [
-    ['title' => 'AI Chatbot for Student Support', 'keywords' => 'Python, NLP, Flask', 'category' => 'AI/ML', 'posted_at' => date('Y-m-d', strtotime('-1 day')), 'proposal_count' => 5, 'status' => 'open'],
+    ['title' => 'AI Chatbot for Student Support', 'keywords' => 'Python, NLP, Flask', 'category' => 'AI/ML', 'posted_at' => date('Y-m-d', strtotime('-1 day')), 'proposal_count' => 5, 'status' => 'reviewing'],
     ['title' => 'Mobile Attendance Tracker', 'keywords' => 'Flutter, Firebase', 'category' => 'Mobile Development', 'posted_at' => date('Y-m-d', strtotime('-3 day')), 'proposal_count' => 3, 'status' => 'reviewing'],
-    ['title' => 'Portfolio Website Builder', 'keywords' => 'React, Tailwind CSS', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-10 day')), 'proposal_count' => 2, 'status' => 'open'],
+    ['title' => 'Portfolio Website Builder', 'keywords' => 'React, Tailwind CSS', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-10 day')), 'proposal_count' => 2, 'status' => 'reviewing'],
     ['title' => 'Campus Event Management System', 'keywords' => 'Laravel, MySQL', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-14 day')), 'proposal_count' => 6, 'status' => 'closed'],
     ['title' => 'Smart Library Assistant', 'keywords' => 'Java, Spring Boot', 'category' => 'Software Engineering', 'posted_at' => date('Y-m-d', strtotime('-18 day')), 'proposal_count' => 4, 'status' => 'inprogress'],
 ];
@@ -159,18 +139,38 @@ include "../../../Includes/dash_header.php";
 
 ?>
 
+<style>
+    /* Stat cards + Recent Project Posts/Team Progress + CTA banner
+       all share the same left/right edges (28px side gutter). */
+    .org-main-row {
+        display: flex;
+        gap: 14px;
+        align-items: stretch;
+        flex-wrap: wrap;
+        padding: 0 28px;
+        margin-bottom: 16px;
+        box-sizing: border-box;
+    }
+    .org-main-row > .card { margin-bottom: 0; }
+    .stats-grid { box-sizing: border-box; }
+
+    @media (max-width: 1200px) {
+        .org-main-row { padding: 0 20px; }
+        .full-width-section { padding: 0 20px 16px; }
+    }
+    @media (max-width: 768px) {
+        .org-main-row { padding: 0 16px; }
+        .full-width-section { padding: 0 16px 16px; }
+    }
+</style>
+
 <main class="content">
     <div class="dashboard-header">
 
         <div>
-            <h1>Organization Dashboard</h1>
-            <p>Welcome back, <?php echo htmlspecialchars($user['username'] ?? 'there'); ?>, here's what's happening with your projects today.</p>
+            <h1>Welcome back, <?php echo htmlspecialchars($orgName); ?></h1>
+            <p>Here's what's happening with your projects today.</p>
         </div>
-
-        <a href="download_report.php" class="btn-outline">
-            <span class="material-symbols-outlined">download</span>
-            Download Report
-        </a>
 
     </div>
 
@@ -228,7 +228,7 @@ include "../../../Includes/dash_header.php";
     </div>
 
     <!-- ===================== PROJECT POSTS + TEAM PROGRESS (TWO SEPARATE CARDS) ===================== -->
-    <div style="display:flex; gap:24px; align-items:stretch; flex-wrap:wrap; margin-bottom:24px;">
+    <div class="org-main-row">
 
         <!-- Left: Recent Project Posts -->
         <div class="card" style="flex:2; min-width:320px; margin-bottom:0;">
@@ -257,7 +257,7 @@ include "../../../Includes/dash_header.php";
                             </td>
                             <td><?= htmlspecialchars(date('M d, Y', strtotime($rp['posted_at']))) ?></td>
                             <td><?= (int)$rp['proposal_count'] ?></td>
-                            <td><span class="badge-status <?= htmlspecialchars($rp['status']) ?>"><?= htmlspecialchars(ucfirst($rp['status'])) ?></span></td>
+                            <td><span class="badge-status <?= htmlspecialchars($rp['status']) ?>"><?= htmlspecialchars(statusLabel($rp['status'])) ?></span></td>
                         </tr>
                         <?php endforeach; ?>
                     </tbody>
