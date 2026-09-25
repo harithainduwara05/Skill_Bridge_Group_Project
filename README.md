@@ -352,8 +352,8 @@ All demo accounts in [`mainDb.sql`](file:///c:/xampp/htdocs/Skill_Bridge_Group_P
 | :--- | :--- | :--- | :--- |
 | 🛡️ **Super Admin** | `skillbridge62@gmail.com` | `1234` | Full system governance, SVG analytics, user approvals & complaints |
 | 🛡️ **Admin (Secondary)**| `admin.sarath@skillbridge.lk` | `1234` | Platform operations supervisor |
-| 🎓 **Student (Year 4)** | `2024is058@stu.ucsc.cmb.ac.lk` | `1234` | UCSC senior eligible for both Projects and Corporate Internships |
-| 🎓 **Student (Junior)** | `2024is001@stu.ucsc.cmb.ac.lk` | `1234` | Undergraduate student focused on projects and skill building |
+| 🎓 **Student (Year 4)** | `2024is158@stu.ucsc.cmb.ac.lk` | `1234` | UCSC senior eligible for both Projects and Corporate Internships |
+| 🎓 **Student (Junior)** | `2024is120@stu.ucsc.cmb.ac.lk` | `1234` | Undergraduate student focused on projects and skill building |
 | 🏛️ **University Org** | `ieee@ucsc.cmb.ac.lk` | `1234` | UCSC Academic Faculty / IEEE Organization (Project Manager) |
 | 🏛️ **University Org** | `foss@sliit.lk` | `1234` | SLIIT FOSS Student Organization coordinator |
 | 🏢 **Corporate Partner** | `recruitment@wso2.com` | `1234` | WSO2 Talent Acquisition Partner (Active internship drives) |
