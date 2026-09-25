@@ -4,6 +4,19 @@ require_once "../../../Session/Session.php";
 require_login();
 require_role('admin');
 
+// Download Sample CSV for Bulk Student Import (Must run before any HTML output)
+if (isset($_GET['action']) && $_GET['action'] === 'download_sample_csv') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="sample_students_roster.csv"');
+    $out = fopen('php://output', 'w');
+    fputcsv($out, ['Name', 'Email', 'Degree', 'Academic_Year']);
+    fputcsv($out, ['Kavindu Perera', 'kavindu.p@itfac.mrt.ac.lk', 'Information Technology', '2024']);
+    fputcsv($out, ['Dilshan Fernando', 'dilshan.f@itfac.mrt.ac.lk', 'Information Systems', '2024']);
+    fputcsv($out, ['Rashmi Senanayake', 'rashmi.s@itfac.mrt.ac.lk', 'Cyber Security', '2023']);
+    fclose($out);
+    exit();
+}
+
 $loggedInUser = current_user();
 $currentAdminEmail = strtolower($loggedInUser['Email'] ?? $loggedInUser['email'] ?? '');
 
@@ -18,18 +31,28 @@ $flash = null;
 
 // Fetch Universities and Faculties from database (universityemails)
 $dbUniversities = [];
-$uniSql = "SELECT DISTINCT University, faculty FROM universityemails WHERE Status != 'De-Active' ORDER BY University ASC, faculty ASC";
+$activeInstitutions = []; // University => [ Faculty => domain, ... ]
+$uniSql = "SELECT DISTINCT University, faculty, emailEx, Status FROM universityemails WHERE Status != 'De-Active' ORDER BY University ASC, faculty ASC";
 $uniRes = $conn->query($uniSql);
 if ($uniRes) {
     while ($row = $uniRes->fetch_assoc()) {
         $uName = trim($row['University']);
         $fName = trim($row['faculty']);
+        $domain = strtolower(trim($row['emailEx'] ?? ''));
+        $status = trim($row['Status'] ?? '');
         if (!empty($uName)) {
             if (!isset($dbUniversities[$uName])) {
                 $dbUniversities[$uName] = [];
             }
             if (!empty($fName) && !in_array($fName, $dbUniversities[$uName])) {
                 $dbUniversities[$uName][] = $fName;
+            }
+            // Only Active status institutions are permitted for bulk onboarding (Hold/Inactive are strictly excluded)
+            if ($status === 'Active' && !empty($fName) && !empty($domain)) {
+                if (!isset($activeInstitutions[$uName])) {
+                    $activeInstitutions[$uName] = [];
+                }
+                $activeInstitutions[$uName][$fName] = ltrim($domain, '@');
             }
         }
     }
@@ -40,11 +63,10 @@ if ($uniRes) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // 1. ADD NEW USER
+    // 1. ADD NEW USER (Passwordless Zero-Knowledge Flow)
     if ($action === 'add') {
         $name     = trim($_POST['name'] ?? '');
         $email    = trim($_POST['email'] ?? '');
-        $password = trim($_POST['password'] ?? '');
         $role     = trim($_POST['role'] ?? 'student');
         $status   = trim($_POST['status'] ?? 'Active');
         $orgName  = trim($_POST['organization_name'] ?? '');
@@ -64,23 +86,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        if (empty($name) || empty($email) || empty($password) || empty($role)) {
-            $flash = ['type' => 'error', 'message' => 'Name, Email, Password, and Role are required fields.'];
+        if (empty($name) || empty($email) || empty($role)) {
+            $flash = ['type' => 'error', 'message' => 'Name, Email, and Role are required fields.'];
         } elseif ($role === 'student' && empty($orgName)) {
             $flash = ['type' => 'error', 'message' => 'Please select or enter a University for the student.'];
         } elseif ($adminDB->userExists($email)) {
             $flash = ['type' => 'error', 'message' => 'A user with this email address already exists!'];
         } else {
             try {
-                $ok = $adminDB->addUser($email, $password, $role, $name, $status, $orgName, $contact, $degree, $year);
+                // Generate a secure unactivated placeholder hash so no one can log in until activated
+                $unactivatedPassword = bin2hex(random_bytes(16));
+                $ok = $adminDB->addUser($email, $unactivatedPassword, $role, $name, $status, $orgName, $contact, $degree, $year);
                 if ($ok) {
                     $emailMsg = '';
                     try {
                         require_once __DIR__ . '/sendUserEmail.php';
-                        send_user_credentials_email($email, $name, $password);
-                        $emailMsg = ' Login credentials have been sent to ' . htmlspecialchars($email) . '.';
+                        send_user_activation_email($email, $name);
+                        $emailMsg = ' An activation email has been sent to ' . htmlspecialchars($email) . ' with password setup instructions.';
                     } catch (Exception $mailEx) {
-                        $emailMsg = ' (Note: User saved, but email sending failed: ' . htmlspecialchars($mailEx->getMessage()) . ')';
+                        $emailMsg = ' (User saved! Note: Email dispatch skipped: ' . htmlspecialchars($mailEx->getMessage()) . '. User can activate via Forgot Password).';
                     }
                     $flash = ['type' => 'success', 'message' => 'User created successfully!' . $emailMsg];
                 } else {
@@ -88,6 +112,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             } catch (Exception $e) {
                 $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
+            }
+        }
+    }
+
+    // 1.5 BULK IMPORT STUDENTS (Institutional Bulk Upload with Selected University & Faculty)
+    elseif ($action === 'bulk_upload') {
+        $selectedUni = trim($_POST['bulk_university'] ?? '');
+        $selectedFac = trim($_POST['bulk_faculty'] ?? '');
+
+        if (empty($selectedUni) || empty($selectedFac)) {
+            $flash = ['type' => 'error', 'message' => 'Please select both University and Faculty before uploading the CSV roster.'];
+        } elseif (!isset($_FILES['csv_file']) || $_FILES['csv_file']['error'] !== UPLOAD_ERR_OK) {
+            $flash = ['type' => 'error', 'message' => 'Please select a valid CSV file to upload.'];
+        } else {
+            $file = $_FILES['csv_file']['tmp_name'];
+            $fileName = $_FILES['csv_file']['name'];
+            $ext = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+            if ($ext !== 'csv') {
+                $flash = ['type' => 'error', 'message' => 'Only CSV files (.csv) are allowed.'];
+            } else {
+                // Verify the selected University & Faculty in universityemails and retrieve authorized email domain
+                $domStmt = $conn->prepare("SELECT LOWER(emailEx) AS domain FROM universityemails WHERE University = ? AND faculty = ? AND Status = 'Active' LIMIT 1");
+                $domStmt->bind_param("ss", $selectedUni, $selectedFac);
+                $domStmt->execute();
+                $domRes = $domStmt->get_result();
+
+                if (!$domRes || $domRes->num_rows === 0) {
+                    $flash = ['type' => 'error', 'message' => "The selected faculty '{$selectedFac}' under '{$selectedUni}' is not currently active in the system."];
+                } else {
+                    $targetDomain = trim($domRes->fetch_assoc()['domain']);
+                    $targetDomain = ltrim($targetDomain, '@');
+
+                    $handle = fopen($file, 'r');
+                    if ($handle === false) {
+                        $flash = ['type' => 'error', 'message' => 'Unable to read the uploaded CSV file.'];
+                    } else {
+                        // Skip UTF-8 BOM if present
+                        $bom = fread($handle, 3);
+                        if ($bom !== "\xEF\xBB\xBF") {
+                            rewind($handle);
+                        }
+
+                        $headers = fgetcsv($handle);
+                        if (!$headers) {
+                            $flash = ['type' => 'error', 'message' => 'The uploaded CSV file is empty.'];
+                        } else {
+                            // Map headers case-insensitively
+                            $colMap = [];
+                            foreach ($headers as $idx => $h) {
+                                $cleanH = strtolower(trim($h));
+                                $cleanH = str_replace([' ', '_', '-'], '', $cleanH);
+                                if (strpos($cleanH, 'name') !== false && !isset($colMap['name'])) $colMap['name'] = $idx;
+                                elseif (strpos($cleanH, 'email') !== false && !isset($colMap['email'])) $colMap['email'] = $idx;
+                                elseif (strpos($cleanH, 'deg') !== false && !isset($colMap['degree'])) $colMap['degree'] = $idx;
+                                elseif (strpos($cleanH, 'year') !== false && !isset($colMap['year'])) $colMap['year'] = $idx;
+                            }
+
+                            if (!isset($colMap['email']) || !isset($colMap['name'])) {
+                                $flash = ['type' => 'error', 'message' => 'CSV must contain at least "Name" and "Email" columns.'];
+                            } else {
+                                $importedCount = 0;
+                                $skippedCount  = 0;
+                                $invalidCount  = 0;
+                                $domainMismatchCount = 0;
+                                $finalOrg = $selectedUni . ' - ' . $selectedFac;
+
+                                while (($row = fgetcsv($handle)) !== false) {
+                                    if (empty(array_filter($row))) continue;
+
+                                    $stuName = trim($row[$colMap['name']] ?? '');
+                                    $stuEmail = trim($row[$colMap['email']] ?? '');
+                                    $stuDeg  = isset($colMap['degree']) ? trim($row[$colMap['degree']] ?? '') : 'General';
+                                    if (empty($stuDeg)) $stuDeg = 'General';
+                                    $stuYear = isset($colMap['year']) ? trim($row[$colMap['year']] ?? '') : date('Y');
+                                    if (empty($stuYear)) $stuYear = date('Y');
+
+                                    if (!filter_var($stuEmail, FILTER_VALIDATE_EMAIL) || empty($stuName)) {
+                                        $invalidCount++;
+                                        continue;
+                                    }
+
+                                    // Extract domain and verify against selected institution
+                                    $parts = explode('@', $stuEmail);
+                                    $emailDomain = strtolower(trim(end($parts)));
+
+                                    // Strict domain match after the @ symbol
+                                    if ($emailDomain !== $targetDomain) {
+                                        $domainMismatchCount++;
+                                        continue;
+                                    }
+
+                                    if ($adminDB->userExists($stuEmail)) {
+                                        $skippedCount++;
+                                        continue;
+                                    }
+
+                                    // Unactivated random password hash for zero-knowledge onboarding
+                                    $unactivatedPassword = bin2hex(random_bytes(16));
+
+                                    // Direct database insert (no bulk email dispatch)
+                                    $ok = $adminDB->addUser($stuEmail, $unactivatedPassword, 'student', $stuName, 'Active', $finalOrg, '', $stuDeg, $stuYear);
+                                    if ($ok) {
+                                        $importedCount++;
+                                    }
+                                }
+                                fclose($handle);
+
+                                $msg = "Bulk import completed for <strong>" . htmlspecialchars($finalOrg) . "</strong>: <strong>{$importedCount}</strong> student(s) imported successfully.";
+                                if ($skippedCount > 0) $msg .= " ({$skippedCount} existing account(s) skipped).";
+                                if ($domainMismatchCount > 0) $msg .= " <span style='color:#ef4444;'>({$domainMismatchCount} student(s) skipped because email domain did not match @{$targetDomain}).</span>";
+                                if ($invalidCount > 0) $msg .= " ({$invalidCount} row(s) had invalid email/data format).";
+
+                                $flash = [
+                                    'type' => $importedCount > 0 ? 'success' : 'warning',
+                                    'message' => $msg
+                                ];
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -207,10 +352,16 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                     Oversee, manage, and configure all user accounts across students, universities, partnering companies, and system administrators.
                 </p>
             </div>
-            <button class="btn-add-user" id="btnAddUser">
-                <span class="material-symbols-outlined" style="font-size:18px;">person_add</span>
-                Add New User
-            </button>
+            <div class="user-header-actions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button type="button" class="btn-bulk-user" id="btnBulkUpload">
+                    <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>
+                    Bulk Import Students
+                </button>
+                <button class="btn-add-user" id="btnAddUser">
+                    <span class="material-symbols-outlined" style="font-size:18px;">person_add</span>
+                    Add New User
+                </button>
+            </div>
         </div>
     </div>
 
@@ -483,13 +634,6 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                         <input type="email" name="email" required placeholder="user@example.com">
                     </div>
                     <div class="user-form-group">
-                        <label>Initial Password *</label>
-                        <input type="password" name="password" required placeholder="••••••••">
-                    </div>
-                </div>
-
-                <div class="user-form-row">
-                    <div class="user-form-group">
                         <label>Role *</label>
                         <select name="role" id="addRoleSelect" onchange="toggleAddFields(this.value)">
                             <option value="student">Student</option>
@@ -498,13 +642,21 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                             <option value="admin">Admin</option>
                         </select>
                     </div>
-                    <div class="user-form-group">
-                        <label>Status</label>
-                        <select name="status">
-                            <option value="Active">Active</option>
-                            <option value="De-Active">De-Active</option>
-                            <option value="Pending">Pending</option>
-                        </select>
+                </div>
+
+                <div class="user-form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="Active">Active</option>
+                        <option value="De-Active">De-Active</option>
+                        <option value="Hold">Hold</option>
+                    </select>
+                </div>
+
+                <div class="user-info-notice" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:11px 14px; font-size:12.5px; color:#166534; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span class="material-symbols-outlined" style="font-size:20px; color:#16a34a; flex-shrink:0;">verified_user</span>
+                    <div>
+                        <strong>Passwordless Security:</strong> No password required. An activation email will be sent to the user instructing them to securely set their password via a 6-digit OTP code.
                     </div>
                 </div>
 
@@ -566,6 +718,85 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
             <div class="user-modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeModal('addUserModal')">Cancel</button>
                 <button type="submit" class="btn-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: BULK IMPORT STUDENTS -->
+<div class="user-modal-overlay" id="bulkUploadModal">
+    <div class="user-modal" style="max-width:560px;">
+        <div class="user-modal-header">
+            <h3 style="display:flex; align-items:center; gap:8px;">
+                <span class="material-symbols-outlined" style="font-size:22px; color:#2563eb;">upload_file</span>
+                Bulk Import Students
+            </h3>
+            <button class="user-modal-close" onclick="closeModal('bulkUploadModal')">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form method="POST" action="" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="bulk_upload">
+            <div class="user-modal-body">
+                <div class="user-info-notice" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#1e40af; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px;">
+                    <span class="material-symbols-outlined" style="font-size:22px; color:#2563eb; flex-shrink:0;">info</span>
+                    <div>
+                        <strong>Institutional Bulk Onboarding:</strong> Select the institution and faculty providing the student roster. All imported accounts are created instantly in the database without sending individual emails. Students activate their accounts via <em>"Forgot Password / First-Time Setup"</em>.
+                    </div>
+                </div>
+
+                <!-- Step 1: Institutional Target Selection -->
+                <div class="user-form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                    <div class="user-form-group" style="margin-bottom:0;">
+                        <label>University / Institution <span style="color:#ef4444;">*</span></label>
+                        <select name="bulk_university" id="bulkUniSelect" required style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#fff; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s;">
+                            <option value="">-- Choose University --</option>
+                            <?php foreach (array_keys($activeInstitutions) as $u): ?>
+                                <option value="<?= htmlspecialchars($u) ?>"><?= htmlspecialchars($u) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="user-form-group" style="margin-bottom:0;">
+                        <label>Faculty / Department <span style="color:#ef4444;">*</span></label>
+                        <select name="bulk_faculty" id="bulkFacSelect" required disabled style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#f8fafc; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s; cursor:not-allowed;">
+                            <option value="">-- Choose University first --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Domain Whitelist Notice -->
+                <div id="bulkDomainBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px; transition:all 0.25s ease;">
+                    <span class="material-symbols-outlined" id="bulkDomainIcon" style="font-size:22px; color:#64748b; flex-shrink:0;">domain_verification</span>
+                    <div id="bulkDomainText" style="font-size:12.5px; line-height:1.4;">
+                        <span style="color:#64748b;">Please select a University and Faculty above to view the permitted student email domain.</span>
+                    </div>
+                </div>
+
+                <!-- Step 2: Upload CSV File -->
+                <div class="user-form-group">
+                    <label>Student Roster CSV File <span style="color:#ef4444;">*</span></label>
+                    <input type="file" name="csv_file" accept=".csv" required class="user-file-input" style="padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; width:100%; background:#f8fafc; cursor:pointer;">
+                    <small style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">Supported format: .csv (UTF-8)</small>
+                </div>
+
+                <!-- Step 3: Template Download -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        <strong style="font-size:12.5px; color:#1e293b; display:block;">Need the simplified template format?</strong>
+                        <span style="font-size:11.5px; color:#64748b;">Columns: <code>Name, Email, Degree, Academic_Year</code></span>
+                    </div>
+                    <a href="?action=download_sample_csv" class="btn-sample-download" style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none;">
+                        <span class="material-symbols-outlined" style="font-size:16px;">download</span>
+                        Download Sample CSV
+                    </a>
+                </div>
+            </div>
+            <div class="user-modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('bulkUploadModal')">Cancel</button>
+                <button type="submit" class="btn-primary" style="background:#2563eb;">
+                    <span class="material-symbols-outlined" style="font-size:18px;">cloud_upload</span>
+                    Import Students
+                </button>
             </div>
         </form>
     </div>
@@ -771,6 +1002,13 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
         openModal('addUserModal');
     });
 
+    const btnBulk = document.getElementById('btnBulkUpload');
+    if (btnBulk) {
+        btnBulk.addEventListener('click', function() {
+            openModal('bulkUploadModal');
+        });
+    }
+
     // Close on overlay click
     document.querySelectorAll('.user-modal-overlay').forEach(overlay => {
         overlay.addEventListener('click', function(e) {
@@ -782,6 +1020,80 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
 
     // Universities and Faculties fetched from database
     const dbUniversities = <?= json_encode($dbUniversities, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+    const activeInstitutions = <?= json_encode($activeInstitutions, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
+
+    // Bulk Import Modal: Dynamic University -> Faculty -> Authorized Domain Logic
+    const bulkUniSelect  = document.getElementById('bulkUniSelect');
+    const bulkFacSelect  = document.getElementById('bulkFacSelect');
+    const bulkDomainBox  = document.getElementById('bulkDomainBox');
+    const bulkDomainIcon = document.getElementById('bulkDomainIcon');
+    const bulkDomainText = document.getElementById('bulkDomainText');
+
+    function updateBulkDomainBadge(domain) {
+        if (!bulkDomainBox || !bulkDomainIcon || !bulkDomainText) return;
+        if (domain) {
+            bulkDomainBox.style.background = '#f0fdf4';
+            bulkDomainBox.style.borderColor = '#86efac';
+            bulkDomainIcon.style.color = '#16a34a';
+            bulkDomainIcon.textContent = 'verified';
+            bulkDomainText.innerHTML = `
+                <div style="font-weight:600; color:#15803d; font-size:12.5px; display:flex; align-items:center; gap:6px;">
+                    Authorized Email Domain: <code style="background:#dcfce7; color:#15803d; padding:2px 8px; border-radius:6px; font-family:monospace; font-weight:700; font-size:13px;">@${domain}</code>
+                </div>
+                <div style="font-size:11.5px; color:#166534; margin-top:2px;">
+                    Only student emails ending with <strong>@${domain}</strong> will be accepted in this batch.
+                </div>
+            `;
+        } else {
+            bulkDomainBox.style.background = '#f8fafc';
+            bulkDomainBox.style.borderColor = '#e2e8f0';
+            bulkDomainIcon.style.color = '#64748b';
+            bulkDomainIcon.textContent = 'domain_verification';
+            bulkDomainText.innerHTML = `
+                <span style="color:#64748b; font-size:12px;">Please select a University and Faculty above to view the permitted student email domain.</span>
+            `;
+        }
+    }
+
+    if (bulkUniSelect && bulkFacSelect) {
+        bulkUniSelect.addEventListener('change', function() {
+            const u = this.value;
+            bulkFacSelect.innerHTML = '<option value="">-- Choose Faculty --</option>';
+            if (u && activeInstitutions[u]) {
+                bulkFacSelect.disabled = false;
+                bulkFacSelect.style.cursor = 'pointer';
+                bulkFacSelect.style.background = '#ffffff';
+                const facs = Object.keys(activeInstitutions[u]);
+                facs.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f;
+                    opt.textContent = f;
+                    bulkFacSelect.appendChild(opt);
+                });
+                if (facs.length === 1) {
+                    bulkFacSelect.value = facs[0];
+                    updateBulkDomainBadge(activeInstitutions[u][facs[0]]);
+                } else {
+                    updateBulkDomainBadge(null);
+                }
+            } else {
+                bulkFacSelect.disabled = true;
+                bulkFacSelect.style.cursor = 'not-allowed';
+                bulkFacSelect.style.background = '#f8fafc';
+                updateBulkDomainBadge(null);
+            }
+        });
+
+        bulkFacSelect.addEventListener('change', function() {
+            const u = bulkUniSelect.value;
+            const f = this.value;
+            if (u && f && activeInstitutions[u] && activeInstitutions[u][f]) {
+                updateBulkDomainBadge(activeInstitutions[u][f]);
+            } else {
+                updateBulkDomainBadge(null);
+            }
+        });
+    }
 
     function setupSearchableCombobox(config) {
         const combobox = document.getElementById(config.comboboxId);

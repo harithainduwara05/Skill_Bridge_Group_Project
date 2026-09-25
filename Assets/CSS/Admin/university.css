@@ -167,8 +167,31 @@
     font-size: 12px; font-weight: 600; font-family: 'Courier New', monospace;
 }
 
-.badge-status.inactive-badge { background: #f3f4f6; color: #6b7280; }
-.badge-status.inactive-badge::before { content: '●'; font-size: 8px; margin-right: 4px; }
+.badge-status.inactive-badge,
+.badge-status.inactive {
+    background: #fef2f2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+}
+.badge-status.inactive-badge::before,
+.badge-status.inactive::before {
+    content: '●';
+    font-size: 8px;
+    margin-right: 4px;
+    color: #dc2626;
+}
+
+.badge-status.hold {
+    background: #fffbeb;
+    color: #b45309;
+    border: 1px solid #fde68a;
+}
+.badge-status.hold::before {
+    content: '●';
+    font-size: 8px;
+    margin-right: 4px;
+    color: #b45309;
+}
 
 .univ-actions-cell { display: flex; align-items: center; gap: 2px; }
 

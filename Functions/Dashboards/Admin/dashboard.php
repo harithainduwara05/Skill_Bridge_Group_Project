@@ -18,6 +18,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 include "../../../Includes/admin_sidebar.php";
 include "../../../Includes/dash_header.php";
+
+
+$adminEmail = $user['email'] ?? $user['Email'] ?? '';
+$adminProfile = (!empty($adminEmail) && isset($adminDB)) ? $adminDB->getAdminProfile($adminEmail) : null;
+$adminName = (!empty($user['username']) && $user['username'] !== 'User')
+    ? $user['username']
+    : ((!empty($name) && $name !== 'User')
+        ? $name
+        : ($adminProfile['name'] ?? 'Admin'));
+
+if (isset($_SESSION['user']) && (empty($_SESSION['user']['username']) || $_SESSION['user']['username'] === 'User') && $adminName !== 'Admin') {
+    $_SESSION['user']['username'] = $adminName;
+    $user['username'] = $adminName;
+}
 ?>
 
 <main class="content">
@@ -25,9 +39,10 @@ include "../../../Includes/dash_header.php";
     <!-- Dashboard Header -->
     <div class="dashboard-header">
         <div>
-            <h1>
-                Hi <?php echo $user['username']; ?>, Dashboard Overview
+            <h1 class="welcome-heading">
+                Welcome back, <?php echo htmlspecialchars($adminName); ?>! 👋
             </h1>
+            <h2 class="overview-title">Dashboard Overview</h2>
             <p>
                 Manage users, track platform growth, and oversee ongoing collaborations.
             </p>
@@ -99,106 +114,6 @@ include "../../../Includes/dash_header.php";
         </div>
 
     </div>
-
-
-    <!-- Chart + Activity Section -->
-    <!--<div class="dashboard-grid">
-
-
-        <div class="card">
-            <div class="card-header">
-                <div>
-                    <h3>User Growth Analytics</h3>
-                    <p class="card-subtitle">Active student enrollment vs industry partners</p>
-                </div>
-                <button class="filter-btn">
-                    Last 6 Months
-                    <span class="material-symbols-outlined" style="font-size:16px;">expand_more</span>
-                </button>
-            </div>
-
-            <div class="chart-bar-group">
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:55%;"></div>
-                        <div class="chart-bar light-blue" style="height:40%;"></div>
-                    </div>
-                    <span class="chart-bar-label">Jan</span>
-                </div>
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:75%;"></div>
-                        <div class="chart-bar light-blue" style="height:55%;"></div>
-                    </div>
-                    <span class="chart-bar-label">Feb</span>
-                </div>
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:90%;"></div>
-                        <div class="chart-bar light-blue" style="height:65%;"></div>
-                    </div>
-                    <span class="chart-bar-label">Mar</span>
-                </div>
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:65%;"></div>
-                        <div class="chart-bar light-blue" style="height:50%;"></div>
-                    </div>
-                    <span class="chart-bar-label">Apr</span>
-                </div>
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:80%;"></div>
-                        <div class="chart-bar light-blue" style="height:60%;"></div>
-                    </div>
-                    <span class="chart-bar-label">May</span>
-                </div>
-                <div class="chart-bar-item">
-                    <div style="display:flex; gap:4px; align-items:flex-end; height:100%;">
-                        <div class="chart-bar blue" style="height:100%;"></div>
-                        <div class="chart-bar light-blue" style="height:70%;"></div>
-                    </div>
-                    <span class="chart-bar-label">Jun</span>
-                </div>
-            </div>
-
-            <div class="chart-legend">
-                <div class="chart-legend-item">
-                    <span class="chart-legend-dot dark"></span>
-                    Students
-                </div>
-                <div class="chart-legend-item">
-                    <span class="chart-legend-dot light"></span>
-                    Industry Partners
-                </div>
-            </div>
-        </div>
-
-
-        <div class="card">
-            <div class="card-header">
-                <h3>Recent Activity</h3>
-                <a href="#" class="btn-link">View All</a>
-            </div>
-            <div class="card-body">
-                <ul class="activity-list">
-
-                    <li class="activity-item">
-                        <div class="activity-icon blue">
-                            <span class="material-symbols-outlined">person_add</span>
-                        </div>
-                        <div class="activity-content">
-                            <p><strong>New Student Signup:</strong> David Miller from Stanford University.</p>
-                            <span class="activity-time">2 minutes ago</span>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-        </div>
-
-    </div>-->
-
-
     <!-- Recent Registrations + Urgent Complaints -->
     <div class="two-col-grid">
 
@@ -237,14 +152,20 @@ include "../../../Includes/dash_header.php";
                                 <td>
                                     <div class="user-info">
                                         <div class="user-details">
-                                            <div class="user-name"><?php echo htmlspecialchars($allusers[$x]['user_name']); ?></div>
-                                            <div class="user-email"><?php echo htmlspecialchars($allusers[$x]['email']); ?></div>
+                                            <div class="user-name">
+                                                <?php echo htmlspecialchars($allusers[$x]['user_name']); ?></div>
+                                            <div class="user-email"><?php echo htmlspecialchars($allusers[$x]['email']); ?>
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
-                                <td><span class="badge-role <?= $userRole ?>"><?php echo htmlspecialchars(ucfirst($allusers[$x]['role'])); ?></span></td>
+                                <td><span
+                                        class="badge-role <?= $userRole ?>"><?php echo htmlspecialchars(ucfirst($allusers[$x]['role'])); ?></span>
+                                </td>
                                 <td><?php echo htmlspecialchars($allusers[$x]['organization_name'] ?: 'N/A'); ?></td>
-                                <td><span class="badge-status-pill <?= $statusClass ?>"><?php echo htmlspecialchars(ucfirst($userStatus)); ?></span></td>
+                                <td><span
+                                        class="badge-status-pill <?= $statusClass ?>"><?php echo htmlspecialchars(ucfirst($userStatus)); ?></span>
+                                </td>
                             </tr>
                         <?php } ?>
                     </tbody>
@@ -273,7 +194,8 @@ include "../../../Includes/dash_header.php";
                         <div class="complaint-item">
                             <div class="complaint-meta">
                                 <span class="complaint-id">#<?php echo $complains[$i]['id']; ?></span>
-                                <span class="complaint-priority <?php echo $priorityClass === 'urgent' || $priorityClass === 'high' ? 'high' : ($priorityClass === 'medium' ? 'medium' : 'low'); ?>">
+                                <span
+                                    class="complaint-priority <?php echo $priorityClass === 'urgent' || $priorityClass === 'high' ? 'high' : ($priorityClass === 'medium' ? 'medium' : 'low'); ?>">
                                     <?php echo htmlspecialchars($complains[$i]['priority']); ?>
                                 </span>
                             </div>
@@ -300,7 +222,8 @@ include "../../../Includes/dash_header.php";
                         <span class="material-symbols-outlined"
                             style="font-size: 48px; color: #9ca3af; margin-bottom: 12px;">inbox</span>
                         <h4 style="margin: 0; font-size: 16px; color: #4b5563; font-weight: 600;">No Urgent Complaints</h4>
-                        <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">There are no high risk complaints to display at
+                        <p style="margin: 6px 0 0 0; font-size: 13px; color: #6b7280;">There are no high risk complaints to
+                            display at
                             the moment.</p>
                     </div>
                 <?php } ?>

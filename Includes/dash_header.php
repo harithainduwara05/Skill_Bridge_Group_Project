@@ -42,6 +42,9 @@ if($user && isset($conn)){
             if($data = $result->fetch_assoc()){
                 if(!empty($data['db_name'])){
                     $name = $data['db_name'];
+                    if (isset($_SESSION['user']) && (empty($_SESSION['user']['username']) || $_SESSION['user']['username'] === 'User')) {
+                        $_SESSION['user']['username'] = $data['db_name'];
+                    }
                 }
                 if(!empty($data['role'])){
                     $role = ucfirst($data['role']);

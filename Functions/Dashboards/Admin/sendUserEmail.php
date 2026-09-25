@@ -143,3 +143,34 @@ function send_user_credentials_email($toEmail, $userName, $plainPassword, $usern
 
     return send_raw_smtp_email($toEmail, $subject, $message);
 }
+
+/**
+ * Sends an activation invitation email instructing the user to set their password via OTP.
+ * Zero-knowledge password security (no passwords sent in plaintext).
+ *
+ * @param string $toEmail User's email address
+ * @param string $userName User's display name
+ * @param string|null $subject Optional email subject
+ * @return bool True on success
+ * @throws Exception On SMTP error
+ */
+function send_user_activation_email($toEmail, $userName, $subject = null) {
+    if (empty($subject)) {
+        $subject = "Welcome to SkillBridge - Activate Your Account";
+    }
+
+    $message  = "Dear " . $userName . ",\r\n\r\n";
+    $message .= "Welcome to SkillBridge!\r\n\r\n";
+    $message .= "An account has been created for you on the SkillBridge platform by the administrator.\r\n\r\n";
+    $message .= "For your security, administrators do not set or view your password. To activate your account and choose your personal password, please follow these steps:\r\n\r\n";
+    $message .= "1. Visit the SkillBridge Login page.\r\n";
+    $message .= "2. Click on 'Forgot Password / First-Time Setup'.\r\n";
+    $message .= "3. Enter your registered email address (" . $toEmail . ") to receive a 6-digit verification code.\r\n";
+    $message .= "4. Enter the verification code and set your new private password.\r\n\r\n";
+    $message .= "Once completed, you can log in immediately and access your SkillBridge dashboard.\r\n\r\n";
+    $message .= "If you did not request this account or have any questions, please contact our administration team.\r\n\r\n";
+    $message .= "Best regards,\r\n";
+    $message .= "SkillBridge Administration Team\r\n";
+
+    return send_raw_smtp_email($toEmail, $subject, $message);
+}

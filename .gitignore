@@ -2,3 +2,6 @@
 .env
 .DS_Store
 **/.DS_Store
+test_students_10.csv
+test_students_moratuwa_it_10.csv
+test_students_sliit_10.csv

@@ -156,15 +156,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
 
             if ($result->num_rows === 1) {
                 $user = $result->fetch_assoc();
-                $sql = "SELECT name from  {$user['role']} where Email=?";
+                $sql = "SELECT Name FROM {$user['role']} WHERE Email=?";
                 $stmt = $conn->prepare($sql);
                 $stmt->bind_param("s", $email);
                 $stmt->execute();
                 $forignResult = $stmt->get_result();
-                $forignUser = $forignResult->fetch_assoc();
+                $forignUser = $forignResult ? $forignResult->fetch_assoc() : null;
                 if ($user['password'] === $hashPassword) {
+                    $fetchedUsername = $forignUser['Name'] ?? $forignUser['name'] ?? 'User';
                     $_SESSION['user'] = [
-                        'username' => $forignUser['Name'],
+                        'username' => $fetchedUsername,
                         'email' => $user['Email'],
                         'role' => $user['role'],
                     ];
@@ -277,8 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
                             <input type="checkbox" name="remember">
                             <span>Remember me</span>
                         </label>
-                        <a href="javascript:void(0);" id="forgotPasswordBtn" class="forgot-password">Forgot
-                            Password?</a>
+                        <a href="javascript:void(0);" id="forgotPasswordBtn" class="forgot-password">Forgot Password / First-Time Setup?</a>
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -340,9 +340,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
                         <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                     </svg>
                 </div>
-                <h3 class="fp-title" id="fpModalTitle">Reset Password</h3>
-                <p class="fp-subtitle">Enter your registered email address and we'll send you a 6-digit verification
-                    code.</p>
+                <h3 class="fp-title" id="fpModalTitle">Reset or Setup Password</h3>
+                <p class="fp-subtitle">Enter your registered email address to receive a 6-digit verification code to set your password.</p>
 
                 <form id="fpEmailForm" action="" method="POST">
                     <div class="form-group" style="text-align: left;">
