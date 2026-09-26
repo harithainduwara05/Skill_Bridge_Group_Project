@@ -43,14 +43,6 @@ $show = [
     'rating'  => $type === 'feedback',
 ];
 
-// data for the PDF (built in the browser)
-$pdfRows = [];
-foreach ($report['rows'] as $r) {
-    $line = [];
-    foreach ($report['columns'] as $k => $label) $line[] = rpCell($k, $r[$k] ?? '');
-    $pdfRows[] = $line;
-}
-
 function rpSel($a, $b) { return (string)$a === (string)$b ? 'selected' : ''; }
 $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
 
@@ -161,6 +153,8 @@ include "../../../Includes/dash_header.php";
     .rp-chart h4 { margin: 0 0 10px; font-size: 14px; font-weight: 700; color: #111827; }
     .rp-chart-box { position: relative; height: 240px; }
     .rp-chart.full .rp-chart-box { height: 220px; }
+    .rp-chart-box canvas { display: block; width: 100%; height: 100%; }
+    .rp-print-cards { display: none; }
     .rp-chart-empty { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 13px; color: #9ca3af; }
 
     .rp-table-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
@@ -204,6 +198,39 @@ include "../../../Includes/dash_header.php";
         .rp-head-actions { width: 100%; } .rp-head-actions .rp-btn { flex: 1; }
     }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+    /* ---------- PDF: "Download PDF" opens the browser's print window -> Save as PDF ---------- */
+    @page { size: A4 landscape; margin: 10mm; }
+    @media print {
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+        body { background: #fff !important; }
+        .sidebar, .top-header, .rp-head, .rp-builder, footer.footer, .flash-toast, .rp-wrap > .rp-cards { display: none !important; }
+        .main-wrapper { margin-left: 0 !important; }
+        .content > *:not(.top-header) { max-width: none !important; }
+        .rp-wrap { padding: 0 !important; }
+        .rp-layout { display: block !important; }
+        .rp-sheet { border: none !important; box-shadow: none !important; border-radius: 0 !important; overflow: visible !important; }
+        .rp-print-cards { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; }
+        .rp-card, .rp-chart, .rp-table tr { break-inside: avoid; page-break-inside: avoid; }
+        .rp-charts { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        .rp-chart-box { height: auto !important; }
+        .rp-chart-box canvas { height: auto !important; }
+        .rp-table-wrap { overflow: visible !important; }
+        /* the whole table fits the page width: smaller text, headers may wrap */
+        .rp-table { table-layout: auto; width: 100% !important; font-size: 10.5px !important; }
+        .rp-table th { white-space: normal !important; padding: 6px 6px !important; font-size: 10.5px !important; }
+        .rp-table td { padding: 6px 6px !important; }
+        .rp-table td.num { white-space: normal !important; }
+        .rp-prog { min-width: 0 !important; gap: 4px !important; }
+        .rp-prog-bar { min-width: 24px; }
+        .rp-pill { font-size: 9.5px !important; padding: 2px 6px !important; white-space: normal !important; }
+        .rp-table tr, .rp-table td { break-inside: avoid; page-break-inside: avoid; }
+        body.rp-print-no-cards .rp-print-cards,
+        body.rp-print-no-charts .rp-charts,
+        body.rp-print-no-table .rp-table-head,
+        body.rp-print-no-table .rp-table-wrap,
+        body.rp-print-no-table .rp-empty { display: none !important; }
+    }
 </style>
 
 <main class="content">
@@ -218,7 +245,7 @@ include "../../../Includes/dash_header.php";
             <a class="rp-btn" href="download_report.php?<?= $h($csvQuery) ?>">
                 <span class="material-symbols-outlined">table_view</span>Download CSV
             </a>
-            <button type="button" class="rp-btn solid" id="rpPdfBtn">
+            <button type="button" class="rp-btn solid" id="rpPdfBtn" title="Opens the print window – choose “Save as PDF”">
                 <span class="material-symbols-outlined">picture_as_pdf</span>Download PDF
             </button>
         </div>
@@ -408,6 +435,20 @@ include "../../../Includes/dash_header.php";
             </div>
 
             <div class="rp-body">
+                <!-- summary cards again, inside the report: shown only in the PDF / print -->
+                <div class="rp-cards rp-print-cards">
+                    <?php foreach ($report['cards'] as $c): ?>
+                        <div class="rp-card">
+                            <div class="rp-card-icon <?= $c['tone'] ?>"><span class="material-symbols-outlined"><?= $c['icon'] ?></span></div>
+                            <div>
+                                <div class="rp-card-label"><?= $h($c['label']) ?></div>
+                                <div class="rp-card-value"><?= $h($c['value']) ?></div>
+                                <div class="rp-card-sub"><?= $h($c['sub']) ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+
                 <div class="rp-charts">
                     <?php foreach ($report['charts'] as $i => $ch): ?>
                         <div class="rp-chart <?= $i === 0 || count($report['charts']) % 2 === 0 && $i === count($report['charts']) - 1 ? 'full' : '' ?>">
@@ -462,18 +503,12 @@ include "../../../Includes/dash_header.php";
 </div>
 </main>
 
-<!-- charts + PDF (loaded from the CDN) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
 <script>
 const RP = <?= json_encode([
     'type' => $type, 'title' => $report['type_label'] . ' Report', 'org' => $orgName,
     'period' => $report['period_text'], 'generated' => date('M d, Y h:i A'),
     'filters' => $report['filters'], 'sample' => $report['has_sample'],
     'cards' => $report['cards'], 'charts' => $report['charts'],
-    'columns' => array_values($report['columns']), 'rows' => $pdfRows, 'inc' => $params['inc'],
     'file' => 'skillbridge_' . $type . '_report_' . date('Y-m-d') . '.pdf',
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
 
@@ -515,180 +550,250 @@ const RP = <?= json_encode([
     });
 })();
 
-/* ================= CHARTS ================= */
+/* =================================================================
+   CHARTS – drawn with plain JavaScript on <canvas> (no chart library)
+   line: trend over time | bar: vertical or horizontal | doughnut
+================================================================= */
 const RP_COLORS = ['#0f3a66', '#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#7c3aed', '#64748b', '#0891b2'];
 const RP_STATUS_COLORS = {
     'On Track': '#16a34a', 'Behind Schedule': '#dc2626', 'Completed': '#64748b', 'Accepted': '#16a34a', 'Rejected': '#dc2626',
     'Pending': '#f59e0b', 'Active': '#2563eb', 'Reviewing': '#f59e0b', 'Open': '#0891b2', 'On Hold': '#dc2626', 'Closed': '#64748b',
     'Draft': '#94a3b8', 'Below 50%': '#dc2626', '50% – 79%': '#f59e0b', '80% and above': '#16a34a'
 };
-const rpCharts = {};
+const RP_FONT = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
+const RP_TEXT = '#4b5563', RP_GRID = '#eef1f5', RP_BAR = '#0f3a66', RP_LINE = '#2563eb';
 
-(function () {
-    if (!window.Chart) {
-        document.querySelectorAll('.rp-chart-box canvas').forEach(c =>
-            c.outerHTML = '<div class="rp-chart-empty">Charts need an internet connection to load.</div>');
+// round number for the top of an axis: 7 -> 8, 23 -> 25, 140 -> 150
+function rpNiceMax(v) {
+    if (v <= 0) return 1;
+    if (v <= 5) return Math.ceil(v);
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    const n = v / p;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+
+// cut a label so it fits in a width, with "…"
+function rpFit(g, text, maxW) {
+    text = String(text);
+    if (g.measureText(text).width <= maxW) return text;
+    while (text.length > 1 && g.measureText(text + '…').width > maxW) text = text.slice(0, -1);
+    return text + '…';
+}
+
+function rpRoundRect(g, x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.lineTo(x + w - r, y); g.quadraticCurveTo(x + w, y, x + w, y + r);
+    g.lineTo(x + w, y + h - r); g.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    g.lineTo(x + r, y + h); g.quadraticCurveTo(x, y + h, x, y + h - r);
+    g.lineTo(x, y + r); g.quadraticCurveTo(x, y, x + r, y);
+    g.closePath();
+}
+
+// value shown on an axis / next to a bar
+function rpNum(v, max) {
+    return max === 5 ? (Math.round(v * 10) / 10).toString() : Math.round(v).toString();
+}
+
+function rpDrawChart(canvas, ch) {
+    const box = canvas.parentElement;
+    const W = box.clientWidth, H = box.clientHeight;
+    if (!W || !H) return;
+
+    // draw at 2x (or more) so it stays sharp on screen and in the PDF
+    const dpr = Math.max(2, window.devicePixelRatio || 1);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    const g = canvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+    g.font = '12px ' + RP_FONT;
+    g.textBaseline = 'middle';
+
+    const labels = ch.labels.map(String);
+    const data = ch.series[0].data.map(v => Number(v) || 0);
+    const colors = labels.map((l, i) => RP_STATUS_COLORS[l] || RP_COLORS[i % RP_COLORS.length]);
+
+    if (ch.type === 'doughnut') return rpDoughnut(g, W, H, labels, data, colors);
+    if (ch.horizontal)          return rpHBar(g, W, H, labels, data, ch.max);
+    return rpVChart(g, W, H, labels, data, ch.max, ch.type === 'line');
+}
+
+// ---------- vertical bars / line ----------
+function rpVChart(g, W, H, labels, data, fixedMax, isLine) {
+    const max = fixedMax || rpNiceMax(Math.max(...data, 0));
+    const ticks = fixedMax || max >= 5 ? 5 : Math.max(1, Math.ceil(max));   // small counts: 0, 1, 2 ... (no repeated numbers)
+    const tickText = i => rpNum(max / ticks * i, fixedMax);
+    const left = Math.max(...Array.from({ length: ticks + 1 }, (_, i) => g.measureText(tickText(i)).width)) + 12;
+    const top = 16, right = 10, bottom = 26;
+    const pw = W - left - right, ph = H - top - bottom;
+    const n = Math.max(1, labels.length);
+    const slot = pw / n;
+    const yOf = v => top + ph - (Math.min(v, max) / max) * ph;
+    const xOf = i => left + slot * i + slot / 2;
+
+    // grid + y axis
+    g.textAlign = 'right';
+    for (let i = 0; i <= ticks; i++) {
+        const y = top + ph - (ph / ticks) * i;
+        g.strokeStyle = RP_GRID; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(left, Math.round(y) + 0.5); g.lineTo(W - right, Math.round(y) + 0.5); g.stroke();
+        g.fillStyle = RP_TEXT; g.fillText(tickText(i), left - 8, y);
+    }
+
+    // x labels: skip some when they don't fit
+    g.textAlign = 'center';
+    const widest = Math.max(...labels.map(l => g.measureText(l).width), 1);
+    const every = Math.max(1, Math.ceil((widest + 10) / slot));
+    labels.forEach((l, i) => {
+        if (i % every !== 0) return;
+        g.fillStyle = RP_TEXT;
+        g.fillText(rpFit(g, l, slot * every - 6), xOf(i), H - bottom / 2);
+    });
+
+    if (isLine) {
+        // area + line + points
+        g.beginPath();
+        data.forEach((v, i) => i ? g.lineTo(xOf(i), yOf(v)) : g.moveTo(xOf(i), yOf(v)));
+        g.lineTo(xOf(n - 1), top + ph); g.lineTo(xOf(0), top + ph); g.closePath();
+        g.fillStyle = 'rgba(37,99,235,0.12)'; g.fill();
+
+        g.beginPath();
+        data.forEach((v, i) => i ? g.lineTo(xOf(i), yOf(v)) : g.moveTo(xOf(i), yOf(v)));
+        g.strokeStyle = RP_LINE; g.lineWidth = 2; g.lineJoin = 'round'; g.stroke();
+
+        if (n <= 40) {
+            data.forEach((v, i) => {
+                g.beginPath(); g.arc(xOf(i), yOf(v), 3, 0, Math.PI * 2);
+                g.fillStyle = '#fff'; g.fill(); g.strokeStyle = RP_LINE; g.lineWidth = 2; g.stroke();
+            });
+        }
         return;
     }
-    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
-    Chart.defaults.color = '#4b5563';
 
+    // bars + value on top
+    const bw = Math.min(34, slot * 0.6);
+    data.forEach((v, i) => {
+        const y = yOf(v), h = top + ph - y;
+        g.fillStyle = RP_BAR;
+        rpRoundRect(g, xOf(i) - bw / 2, y, bw, h, 5); g.fill();
+        if (n <= 12 && v > 0) {
+            g.fillStyle = '#111827'; g.textAlign = 'center';
+            g.fillText(rpNum(v, fixedMax), xOf(i), Math.max(top - 6, y - 9));
+        }
+    });
+}
+
+// ---------- horizontal bars (progress by team / student ...) ----------
+function rpHBar(g, W, H, labels, data, fixedMax) {
+    const max = fixedMax || rpNiceMax(Math.max(...data, 0));
+    const ticks = fixedMax || max >= 5 ? 5 : Math.max(1, Math.ceil(max));   // small counts: 0, 1, 2 ... (no repeated numbers)
+    const labelW = Math.min(W * 0.38, Math.max(...labels.map(l => g.measureText(l).width), 20) + 12);
+    const left = labelW, right = 34, top = 6, bottom = 24;
+    const pw = W - left - right, ph = H - top - bottom;
+    const n = Math.max(1, labels.length);
+    const slot = ph / n;
+    const bh = Math.min(22, slot * 0.65);
+    const xOf = v => left + (Math.min(v, max) / max) * pw;
+
+    // grid + x axis
+    g.textAlign = 'center';
+    for (let i = 0; i <= ticks; i++) {
+        const x = left + (pw / ticks) * i;
+        g.strokeStyle = RP_GRID; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(Math.round(x) + 0.5, top); g.lineTo(Math.round(x) + 0.5, top + ph); g.stroke();
+        g.fillStyle = RP_TEXT; g.fillText(rpNum(max / ticks * i, fixedMax), x, H - bottom / 2);
+    }
+
+    labels.forEach((l, i) => {
+        const cy = top + slot * i + slot / 2;
+        g.textAlign = 'right'; g.fillStyle = RP_TEXT;
+        g.fillText(rpFit(g, l, labelW - 12), left - 8, cy);
+
+        const w = Math.max(2, xOf(data[i]) - left);
+        g.fillStyle = RP_BAR;
+        rpRoundRect(g, left, cy - bh / 2, w, bh, 4); g.fill();
+
+        g.textAlign = 'left'; g.fillStyle = '#111827';
+        g.fillText(rpNum(data[i], fixedMax), left + w + 6, cy);
+    });
+}
+
+// ---------- doughnut + legend ----------
+function rpDoughnut(g, W, H, labels, data, colors) {
+    const total = data.reduce((a, b) => a + b, 0) || 1;
+    const legend = labels.map((l, i) => l + '  (' + data[i] + ')');
+    const legendW = W > 360 ? Math.min(W * 0.5, Math.max(...legend.map(t => g.measureText(t).width)) + 34) : 0;
+    const areaW = W - legendW;
+    const r = Math.max(10, Math.min(areaW, H) / 2 - 8);
+    const cx = areaW / 2, cy = H / 2;
+
+    let a = -Math.PI / 2;
+    data.forEach((v, i) => {
+        const slice = (v / total) * Math.PI * 2;
+        g.beginPath(); g.moveTo(cx, cy); g.arc(cx, cy, r, a, a + slice); g.closePath();
+        g.fillStyle = colors[i]; g.fill();
+        g.strokeStyle = '#fff'; g.lineWidth = 2; g.stroke();
+        a += slice;
+    });
+    // hole in the middle + total
+    g.beginPath(); g.arc(cx, cy, r * 0.62, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill();
+    g.fillStyle = '#111827'; g.textAlign = 'center';
+    g.font = 'bold 20px ' + RP_FONT; g.fillText(String(data.reduce((x, y) => x + y, 0)), cx, cy - 6);
+    g.font = '11px ' + RP_FONT; g.fillStyle = RP_TEXT; g.fillText('total', cx, cy + 14);
+    g.font = '12px ' + RP_FONT;
+
+    // legend: colour + name + count (so colour is never the only clue)
+    if (legendW) {
+        const rowH = 22, startY = cy - (legend.length * rowH) / 2 + rowH / 2;
+        legend.forEach((t, i) => {
+            const y = startY + i * rowH, x = areaW + 8;
+            g.fillStyle = colors[i]; rpRoundRect(g, x, y - 6, 12, 12, 3); g.fill();
+            g.fillStyle = '#374151'; g.textAlign = 'left';
+            g.fillText(rpFit(g, t, legendW - 30), x + 20, y);
+        });
+    }
+}
+
+// draw every chart on the page, and again when the size changes
+function rpDrawAll() {
     RP.charts.forEach(ch => {
         const el = document.getElementById('rpChart_' + ch.id);
-        if (!el) return;
-        const s = ch.series[0];
-        const isPie = ch.type === 'doughnut';
-        const colors = ch.labels.map((l, i) => RP_STATUS_COLORS[l] || RP_COLORS[i % RP_COLORS.length]);
-
-        rpCharts[ch.id] = new Chart(el, {
-            type: ch.type,
-            data: {
-                labels: ch.labels,
-                datasets: [{
-                    label: s.label, data: s.data,
-                    backgroundColor: isPie ? colors : (ch.type === 'line' ? 'rgba(37,99,235,.12)' : '#0f3a66'),
-                    borderColor: isPie ? '#fff' : (ch.type === 'line' ? '#2563eb' : '#0f3a66'),
-                    borderWidth: isPie ? 2 : 2, borderRadius: ch.type === 'bar' ? 5 : 0,
-                    fill: ch.type === 'line', tension: .3, cubicInterpolationMode: 'monotone', pointRadius: ch.labels.length > 40 ? 0 : 3,
-                    maxBarThickness: 34
-                }]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false, animation: { duration: 400 },
-                indexAxis: ch.horizontal ? 'y' : 'x',
-                plugins: { legend: { display: isPie, position: 'right' } },
-                cutout: isPie ? '62%' : undefined,
-                scales: isPie ? {} : {
-                    [ch.horizontal ? 'x' : 'y']: { beginAtZero: true, max: ch.max, ticks: { precision: ch.max === 5 ? 1 : 0 }, grid: { color: '#eef1f5' } },
-                    [ch.horizontal ? 'y' : 'x']: { grid: { display: false }, ticks: { autoSkip: true, maxRotation: 0 } }
-                }
-            }
-        });
+        if (el) rpDrawChart(el, ch);
     });
-})();
+}
+rpDrawAll();
+let rpResizeTimer;
+window.addEventListener('resize', () => { clearTimeout(rpResizeTimer); rpResizeTimer = setTimeout(rpDrawAll, 150); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(rpDrawAll);
 
-/* ================= PDF DOWNLOAD ================= */
-document.getElementById('rpPdfBtn').addEventListener('click', async function () {
-    if (!window.jspdf) { alert('The PDF tool needs an internet connection. Please connect and try again.'); return; }
-    const btn = this;
-    btn.disabled = true;
-
-    try {
-        // Use whatever is checked in "Include in the download" RIGHT NOW,
-        // not the values from the last page load — so ticking/unticking a
-        // box and downloading straight away (without "Update report")
-        // actually changes what goes into the PDF.
-        const inc = Array.from(document.querySelectorAll('input[name="inc[]"]:checked')).map(el => el.value);
-        if (!inc.length) {
-            alert('Pick at least one of Summary cards, Charts or Table to include in the download.');
-            btn.disabled = false;
-            return;
-        }
-
-        // the built-in PDF font has no curly quotes / long dashes -> use plain ones
-        const t = v => String(v == null ? '' : v).replace(/[\u2013\u2014]/g, '-').replace(/[\u2018\u2019]/g, "'")
-                                                    .replace(/[\u201C\u201D]/g, '"').replace(/\u00B7/g, '-');
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-        const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 12;
-        const NAVY = [15, 42, 74];
-        let y;
-
-        // ---- title band ----
-        doc.setFillColor(...NAVY); doc.rect(0, 0, W, 30, 'F');
-        doc.setTextColor(159, 179, 204); doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-        doc.text('SkillBridge report', M, 9);
-        doc.setTextColor(255); doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
-        doc.text(t(RP.title), M, 19);
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(219, 229, 241);
-        doc.text(t(RP.org), M, 25.5);
-        doc.setFontSize(9);
-        doc.text(t('Period: ' + RP.period), W - M, 13, { align: 'right' });
-        doc.text('Generated: ' + RP.generated, W - M, 19, { align: 'right' });
-        doc.text(RP.rows.length + ' records', W - M, 25, { align: 'right' });
-
-        // ---- filters ----
-        const filters = Object.entries(RP.filters).map(([k, v]) => k + ': ' + v);
-        if (RP.sample) filters.push('Includes sample data');
-        doc.setTextColor(75, 85, 99); doc.setFontSize(9);
-        const fl = doc.splitTextToSize(t('Filters:  ' + filters.join('   |   ')), W - 2 * M);
-        doc.text(fl, M, 37);
-        y = 37 + fl.length * 4 + 3;
-
-        // ---- summary cards ----
-        if (inc.includes('cards')) {
-            const gap = 4, cw = (W - 2 * M - gap * 3) / 4, chH = 20;
-            RP.cards.forEach((c, i) => {
-                const x = M + i * (cw + gap);
-                doc.setDrawColor(229, 231, 235); doc.setFillColor(248, 250, 252);
-                doc.roundedRect(x, y, cw, chH, 2, 2, 'FD');
-                doc.setFillColor(...NAVY); doc.rect(x, y, 1.4, chH, 'F');
-                doc.setFontSize(8.5); doc.setTextColor(75, 85, 99); doc.text(t(c.label), x + 5, y + 6);
-                doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(17, 24, 39); doc.text(t(c.value), x + 5, y + 13);
-                doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128); doc.text(t(c.sub), x + 5, y + 17.5);
-            });
-            y += chH + 7;
-        }
-
-        // ---- charts (images of the charts on the page) ----
-        //   row 1: the trend chart across the page, row 2: the other charts side by side
-        if (inc.includes('charts')) {
-            const list = RP.charts.filter(ch => rpCharts[ch.id]);
-            const place = (ch, x, w, h) => {
-                doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(17, 24, 39);
-                doc.text(t(ch.title), x, y + 4);
-                doc.setDrawColor(229, 231, 235); doc.roundedRect(x, y + 6, w, h, 2, 2, 'S');
-                const canvas = rpCharts[ch.id].canvas, ratio = canvas.width / canvas.height;
-                let iw = w - 4, ih = iw / ratio;
-                if (ih > h - 4) { ih = h - 4; iw = ih * ratio; }
-                doc.addImage(canvas.toDataURL('image/png'), 'PNG', x + (w - iw) / 2, y + 6 + (h - ih) / 2, iw, ih);
-            };
-            const first = list[0] && list[0].id === 'trend' ? list.shift() : null;
-            if (first) {
-                if (y + 58 > H - 14) { doc.addPage(); y = M; }
-                place(first, M, W - 2 * M, 48);
-                y += 58;
-            }
-            for (let i = 0; i < list.length; i += 3) {
-                const row = list.slice(i, i + 3), gap = 5;
-                const w = (W - 2 * M - gap * (row.length - 1)) / row.length;
-                if (y + 64 > H - 14) { doc.addPage(); y = M; }
-                row.forEach((ch, k) => place(ch, M + k * (w + gap), w, 54));
-                y += 64;
-            }
-        }
-
-        // ---- table ----
-        if (inc.includes('table')) {
-            if (y > H - 40) { doc.addPage(); y = M; }
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(15, 58, 102);
-            doc.text('Details', M, y + 2);
-            doc.autoTable({
-                startY: y + 5, head: [RP.columns.map(t)],
-                body: RP.rows.length ? RP.rows.map(r => r.map(t)) : [[{ content: 'No records match these options.', colSpan: RP.columns.length }]],
-                margin: { left: M, right: M, bottom: 14 },
-                styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 2.2, textColor: [31, 41, 55], lineColor: [229, 231, 235], lineWidth: 0.1 },
-                headStyles: { fillColor: NAVY, textColor: 255, fontStyle: 'bold' },
-                alternateRowStyles: { fillColor: [248, 250, 252] }
-            });
-        }
-
-        // ---- footer on every page ----
-        const pages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(8); doc.setTextColor(156, 163, 175); doc.setFont('helvetica', 'normal');
-            doc.text(t('SkillBridge  |  ' + RP.org + '  |  ' + RP.title), M, H - 6);
-            doc.text('Page ' + i + ' of ' + pages, W - M, H - 6, { align: 'right' });
-        }
-
-        doc.save(RP.file);
-    } catch (err) {
-        console.error(err);
-        alert('Could not create the PDF. Please try again.');
-    } finally {
-        btn.disabled = false;
+/* =================================================================
+   PDF DOWNLOAD – the browser's own print window ("Save as PDF")
+   Only the report is printed (no sidebar, header or options).
+   The "Include in the download" boxes that are ticked RIGHT NOW decide
+   what goes into the PDF (summary cards, charts, table).
+================================================================= */
+document.getElementById('rpPdfBtn').addEventListener('click', function () {
+    const inc = Array.from(document.querySelectorAll('input[name="inc[]"]:checked')).map(el => el.value);
+    if (!inc.length) {
+        alert('Pick at least one of Summary cards, Charts or Table to include in the download.');
+        return;
     }
+    document.body.classList.toggle('rp-print-no-cards',  !inc.includes('cards'));
+    document.body.classList.toggle('rp-print-no-charts', !inc.includes('charts'));
+    document.body.classList.toggle('rp-print-no-table',  !inc.includes('table'));
+
+    // the PDF file name the browser suggests = the page title
+    const oldTitle = document.title;
+    document.title = RP.file.replace(/\.pdf$/, '');
+    const restore = () => {
+        document.title = oldTitle;
+        document.body.classList.remove('rp-print-no-cards', 'rp-print-no-charts', 'rp-print-no-table');
+        window.removeEventListener('afterprint', restore);
+    };
+    window.addEventListener('afterprint', restore);
+    window.print();
 });
 </script>
 
