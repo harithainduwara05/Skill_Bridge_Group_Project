@@ -200,6 +200,60 @@ $reviews = [
         'members' => [['name' => 'Ravindu Gamage', 'role' => 'Security Engineer'], ['name' => 'Sithumi Perera', 'role' => 'Backend Developer'],
                       ['name' => 'Kaveesha Jayalath', 'role' => 'QA Engineer']],
     ],
+    [
+        'icon' => 'smartphone', 'title' => 'Campus Event Management App', 'team' => 'Pixel Pioneers', 'days_ago' => 28,
+        'rating' => 5,
+        'skills' => ['Technical Skills' => 4.8, 'Communication' => 4.6, 'Teamwork' => 5.0, 'Problem-solving' => 4.7],
+        'summary' => 'A polished Flutter app with QR check-in that worked smoothly during a live faculty event. The team planned their sprints well and handled last-minute changes calmly.',
+        'improvements' => ['Accessibility', 'Automated UI Tests'],
+        'key' => 'demo-event', 'category' => 'Mobile Development', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Nadeesha Kumari', 'role' => 'Mobile Developer'], ['name' => 'Chathura Bandara', 'role' => 'Backend Developer'], ['name' => 'Isuri Madushani', 'role' => 'UI/UX Designer']],
+    ],
+    [
+        'icon' => 'psychology', 'title' => 'Sinhala Sentiment Analysis Model', 'team' => 'Lanka NLP Crew', 'days_ago' => 35,
+        'rating' => 4,
+        'skills' => ['Technical Skills' => 4.5, 'Communication' => 3.8, 'Teamwork' => 4.2, 'Problem-solving' => 4.4],
+        'summary' => 'Good model accuracy on a difficult local-language dataset. Documentation of the data cleaning steps was limited, which made it harder for us to reproduce the results.',
+        'improvements' => ['Documentation', 'Experiment Tracking', 'Data Versioning'],
+        'key' => 'demo-nlp', 'category' => 'AI / Machine Learning', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Dilshan Rathnayake', 'role' => 'ML Engineer'], ['name' => 'Sanduni Wijesekara', 'role' => 'Data Analyst'], ['name' => 'Pubudu Herath', 'role' => 'Backend Developer']],
+    ],
+    [
+        'icon' => 'language', 'title' => 'Community Library Website', 'team' => 'Code Crafters', 'days_ago' => 42,
+        'rating' => 3,
+        'skills' => ['Technical Skills' => 3.4, 'Communication' => 3.0, 'Teamwork' => 3.5, 'Problem-solving' => 3.2],
+        'summary' => 'The site meets the basic requirements, but several features were delivered late and the search page still has performance issues. Communication improved towards the end.',
+        'improvements' => ['Time Management', 'Performance Tuning', 'Code Reviews'],
+        'key' => 'demo-library', 'category' => 'Web Development', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Kasun Dissanayake', 'role' => 'Frontend Developer'], ['name' => 'Hansani Peiris', 'role' => 'Backend Developer']],
+    ],
+    [
+        'icon' => 'monitoring', 'title' => 'Sales Forecast Dashboard', 'team' => 'Data Dynamos', 'days_ago' => 56,
+        'rating' => 4,
+        'skills' => ['Technical Skills' => 4.3, 'Communication' => 4.4, 'Teamwork' => 4.0, 'Problem-solving' => 4.1],
+        'summary' => 'Clear and useful Power BI dashboards. Forecasts were reasonable, and the team explained their assumptions well in the final presentation.',
+        'improvements' => ['SQL Optimization', 'Unit Testing'],
+        'key' => 'demo-sales', 'category' => 'Data Science', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Tharaka Liyanage', 'role' => 'Data Analyst'], ['name' => 'Rashmi Gunasekara', 'role' => 'BI Developer'], ['name' => 'Akila Perera', 'role' => 'Data Engineer']],
+    ],
+    [
+        'icon' => 'palette', 'title' => 'Tourism App UI Redesign', 'team' => 'Design Pulse', 'days_ago' => 70,
+        'rating' => 5,
+        'skills' => ['Technical Skills' => 4.6, 'Communication' => 5.0, 'Teamwork' => 4.8, 'Problem-solving' => 4.7],
+        'summary' => 'Outstanding user research and a beautiful, consistent design system. The prototype tested very well with real tourists visiting Kandy.',
+        'improvements' => ['Design Handoff', 'Git Workflow'],
+        'key' => 'demo-tourism', 'category' => 'UI/UX Design', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Sachintha Fonseka', 'role' => 'UI/UX Designer'], ['name' => 'Imesha Ranasinghe', 'role' => 'UX Researcher']],
+    ],
+    [
+        'icon' => 'shield', 'title' => 'Network Intrusion Detection Lab', 'team' => 'Cipher Squad', 'days_ago' => 84,
+        'rating' => 4,
+        'skills' => ['Technical Skills' => 4.4, 'Communication' => 3.9, 'Teamwork' => 4.1, 'Problem-solving' => 4.5],
+        'summary' => 'Solid detection rules and a well-built lab setup. The final report could explain the false-positive analysis in more detail.',
+        'improvements' => ['Report Writing', 'Threat Modelling'],
+        'key' => 'demo-ids', 'category' => 'Cybersecurity', 'shared' => true, 'updated' => '',
+        'members' => [['name' => 'Pasan Jayawardena', 'role' => 'Security Analyst'], ['name' => 'Nethmi Abeyratne', 'role' => 'Network Engineer'], ['name' => 'Lahiru Silva', 'role' => 'Python Developer']],
+    ],
 ];
 
 foreach ($reviews as &$rv) { $rv['created'] = strtotime('-' . (int)$rv['days_ago'] . ' day'); }
@@ -316,7 +370,7 @@ include "../../../Includes/dash_header.php";
     .fb-search input:focus, .fb-select:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,.12); outline: none; }
     .fb-clear { background: none; border: none; font-family: inherit; font-size: 13.5px; font-weight: 600; color: #0f3a66; cursor: pointer; }
     .fb-clear:hover { text-decoration: underline; }
-    .fb-clear[hidden], .fb-card[hidden], .fb-empty[hidden] { display: none; }
+    .fb-clear[hidden], .fb-card[hidden], .fb-empty[hidden], #fbLoadMore[hidden] { display: none; }
     .fb-empty { text-align: center; padding: 40px 20px; background: #fff; border: 1px dashed #d1d5db; border-radius: 16px; color: #6b7280; font-weight: 600; }
     .fb-empty .material-symbols-outlined { font-size: 38px; color: #9ca3af; display: block; margin-bottom: 6px; }
     .fb-new { display: inline-block; vertical-align: middle; margin-left: 8px; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; }
@@ -466,7 +520,6 @@ include "../../../Includes/dash_header.php";
             <div class="fb-stat">
                 <div class="fb-stat-top">
                     <div class="fb-stat-icon blue"><span class="material-symbols-outlined">rate_review</span></div>
-                    <span class="fb-pill up"><?= htmlspecialchars($summary['submitted_change']) ?></span>
                 </div>
                 <div class="fb-stat-label">Feedback Submitted</div>
                 <div class="fb-stat-value"><?= (int)$summary['submitted'] ?></div>
@@ -474,7 +527,6 @@ include "../../../Includes/dash_header.php";
             <div class="fb-stat">
                 <div class="fb-stat-top">
                     <div class="fb-stat-icon sky"><span class="material-symbols-outlined">pending_actions</span></div>
-                    <span class="fb-pill urgent">Urgent</span>
                 </div>
                 <div class="fb-stat-label">Pending Reviews</div>
                 <div class="fb-stat-value"><?= (int)$summary['pending'] ?></div>
@@ -482,7 +534,6 @@ include "../../../Includes/dash_header.php";
             <div class="fb-stat">
                 <div class="fb-stat-top">
                     <div class="fb-stat-icon green"><span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1;">star</span></div>
-                    <div style="display:flex;"><?= fbStars($summary['avg'], 14) ?></div>
                 </div>
                 <div class="fb-stat-label">Average Rating</div>
                 <div class="fb-stat-value"><?= number_format($summary['avg'], 1) ?><small>/5.0</small></div>
@@ -590,8 +641,8 @@ include "../../../Includes/dash_header.php";
 
         <!-- Load more -->
         <div class="fb-more">
-            <button type="button" class="fb-btn outline">Load More Records</button>
-            <p>Showing <span id="fbShown"><?= count($reviews) ?></span> of <?= (int)$summary['submitted'] ?> completed reviews</p>
+            <button type="button" class="fb-btn outline" id="fbLoadMore"><span class="material-symbols-outlined">expand_more</span>Load More Records</button>
+            <p>Showing <span id="fbShown"><?= count($reviews) ?></span> of <span id="fbTotal"><?= count($reviews) ?></span> reviews</p>
         </div>
 
     </div>
@@ -750,30 +801,45 @@ document.body.appendChild(document.getElementById('fbModal'));
     const sort   = document.getElementById('fbSort');
     const clear  = document.getElementById('fbClear');
 
-    function apply() {
+    const PAGE = 3;                 // cards shown per "Load More"
+    let limit = PAGE;
+    const moreBtn = document.getElementById('fbLoadMore');
+
+    function apply(keepLimit) {
+        if (keepLimit !== true) limit = PAGE;          // filters changed -> start from the first page
         const q = search.value.trim().toLowerCase();
-        let shown = 0;
-        cards.forEach(c => {
-            const ok = (rating.value === 'all' || c.dataset.rating === rating.value)
-                    && (q === '' || c.dataset.search.includes(q));
-            c.hidden = !ok;
-            if (ok) shown++;
-        });
         const n = (c, k) => Number(c.dataset[k]) || 0;
-        cards.slice().sort((a, b) => {
+        const sorted = cards.slice().sort((a, b) => {
             if (sort.value === 'oldest') return n(a, 'created') - n(b, 'created');
             if (sort.value === 'high')   return n(b, 'rating') - n(a, 'rating') || n(b, 'created') - n(a, 'created');
             if (sort.value === 'low')    return n(a, 'rating') - n(b, 'rating') || n(b, 'created') - n(a, 'created');
             return n(b, 'created') - n(a, 'created');
-        }).forEach(c => list.appendChild(c));
+        });
+        sorted.forEach(c => list.appendChild(c));
 
+        const matching = sorted.filter(c => (rating.value === 'all' || c.dataset.rating === rating.value)
+                                         && (q === '' || c.dataset.search.includes(q)));
+        cards.forEach(c => { c.hidden = true; });
+        matching.slice(0, limit).forEach(c => { c.hidden = false; });
+
+        const shown = Math.min(limit, matching.length);
         document.getElementById('fbShown').textContent = shown;
-        document.getElementById('fbEmpty').hidden = shown !== 0;
+        document.getElementById('fbTotal').textContent = matching.length;
+        moreBtn.hidden = shown >= matching.length;
+        document.getElementById('fbEmpty').hidden = matching.length !== 0;
         clear.hidden = q === '' && rating.value === 'all' && sort.value === 'latest';
     }
-    search.addEventListener('input', apply);
-    rating.addEventListener('change', apply);
-    sort.addEventListener('change', apply);
+    search.addEventListener('input', () => apply());
+    rating.addEventListener('change', () => apply());
+    sort.addEventListener('change', () => apply());
+    moreBtn.addEventListener('click', () => {
+        const firstNew = limit;
+        limit += PAGE;
+        apply(true);
+        // scroll gently to the first newly loaded card
+        const visible = Array.from(list.querySelectorAll('.fb-card:not([hidden])'));
+        if (visible[firstNew]) visible[firstNew].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
     clear.addEventListener('click', () => { search.value = ''; rating.value = 'all'; sort.value = 'latest'; apply(); });
     apply();
 })();
@@ -795,6 +861,12 @@ document.body.appendChild(document.getElementById('fbModal'));
     function open() { modal.classList.add('open'); }
     function close() { modal.classList.remove('open'); }
     document.getElementById('fbOpenForm').addEventListener('click', () => window.fbOpenForm ? window.fbOpenForm(null) : open());
+
+    // opened from a notification: feedback.php?give=1 -> open the form straight away
+    if (new URLSearchParams(location.search).has('give')) {
+        history.replaceState(null, '', location.pathname);
+        setTimeout(() => document.getElementById('fbOpenForm').click(), 0);
+    }
     modal.querySelectorAll('[data-fb-close]').forEach(b => b.addEventListener('click', close));
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });

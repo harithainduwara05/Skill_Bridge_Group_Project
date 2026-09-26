@@ -7,6 +7,9 @@ require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
+include __DIR__ . "/team_schema.php";
+tmEnsureSchema($conn);
+
 function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
     try {
@@ -23,35 +26,147 @@ function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = 
 // ---------------------------------------------------------------
 // Data for "Create New Team"
 //   - only this organization's projects that can have a team
-//     (Reviewing / Active – not Draft, On Hold, Rejected or Closed)
-//   - for each project, only the students connected to it
-//     (already in the project team OR applied to it)
+//     (Open / Reviewing / Active – not Draft, On Hold, Rejected or Closed)
+//   - for each project, only the students whose PROPOSAL WAS ACCEPTED
+//     (project_applications.status = 'accepted', set from Proposals page)
+//   - a student who is already in a team of that project is shown but locked
 // ---------------------------------------------------------------
 $tmProjects = tmFetch($conn,
     "SELECT id, title, members, deadline, keywords
      FROM projects
-     WHERE organization_email = ? AND status IN ('reviewing', 'inprogress')
+     WHERE organization_email = ? AND status IN ('open', 'reviewing', 'inprogress')
      ORDER BY posted_at DESC", "s", [$organization_email]);
 
-$tmCandidates = [];   // project_id => [ {email, name, role, source} ]
+$tmCandidates = [];   // project_id => [ {email, name, sub, skills[], team, team_id} ]
 foreach ($tmProjects as $pr) {
     $pid = (int)$pr['id'];
-    $rows = tmFetch($conn,
-        "SELECT s.Email AS email, s.Name AS name, sp.role AS role, 'assigned' AS source
-         FROM student_projects sp JOIN student s ON s.Email = sp.Email
-         WHERE sp.project_id = ?", "i", [$pid]);
-    $rows = array_merge($rows, tmFetch($conn,
-        "SELECT s.Email AS email, s.Name AS name, NULL AS role, 'applied' AS source
-         FROM project_applications pa JOIN student s ON s.Email = pa.Email
-         WHERE pa.project_id = ? AND pa.status <> 'rejected'", "i", [$pid]));
 
-    $seen = [];
+    // who is already in a team for this project
+    $inTeam = [];
+    foreach (tmFetch($conn,
+        "SELECT LOWER(m.Email) AS email, t.id, t.name
+         FROM org_team_members m JOIN org_teams t ON t.id = m.team_id
+         WHERE t.project_id = ? AND t.organization_email = ?", "is", [$pid, $organization_email]) as $r) {
+        $inTeam[$r['email']] = ['id' => (int)$r['id'], 'name' => $r['name']];
+    }
+
     $tmCandidates[$pid] = [];
-    foreach ($rows as $r) {
+    $seen = [];
+    foreach (tmFetch($conn,
+        "SELECT s.Email AS email, s.Name AS name, s.University AS university, s.degree
+         FROM project_applications pa
+         JOIN student s ON LOWER(s.Email) = LOWER(pa.Email)
+         WHERE pa.project_id = ? AND pa.status = 'accepted'
+         ORDER BY s.Name", "i", [$pid]) as $r) {
         $key = strtolower($r['email']);
         if (isset($seen[$key])) continue;
         $seen[$key] = true;
-        $tmCandidates[$pid][] = $r;
+
+        $skills = array_column(tmFetch($conn,
+            "SELECT skill_name FROM skills WHERE Email = ? ORDER BY percentage DESC LIMIT 5", "s", [$r['email']]), 'skill_name');
+
+        $tmCandidates[$pid][] = [
+            'email'   => $key,
+            'name'    => $r['name'],
+            'sub'     => trim(preg_replace('/^B\.Sc\.\s*in\s*/i', '', (string)$r['degree']) . ($r['university'] ? ' · ' . $r['university'] : ''), ' ·'),
+            'skills'  => $skills,
+            'team'    => $inTeam[$key]['name'] ?? null,
+            'team_id' => $inTeam[$key]['id'] ?? null,
+        ];
+    }
+}
+
+// ---------- helpers for create / edit ----------
+function tmFindProject(array $projects, int $id): ?array
+{
+    foreach ($projects as $pr) { if ((int)$pr['id'] === $id) return $pr; }
+    return null;
+}
+
+// "React, node.js ,React" -> ['React', 'node.js']   (max 15, each max 40 chars)
+function tmCleanSkills(string $raw): array
+{
+    $out = [];
+    foreach (explode(',', $raw) as $sk) {
+        $sk = trim(preg_replace('/\s+/', ' ', $sk));
+        if ($sk === '' || mb_strlen($sk) > 40) continue;
+        $out[mb_strtolower($sk)] ??= $sk;   // keep the first spelling
+    }
+    return array_slice(array_values($out), 0, 15);
+}
+
+// roles[email] = role  ->  only for the chosen members, trimmed
+function tmCleanRoles(array $members, $rawRoles): array
+{
+    $rawRoles = is_array($rawRoles) ? array_change_key_case($rawRoles, CASE_LOWER) : [];
+    $roles = [];
+    foreach ($members as $m) { $roles[$m] = trim(preg_replace('/\s+/', ' ', (string)($rawRoles[$m] ?? ''))); }
+    return $roles;
+}
+
+// Team deadline: required, not in the past, not after the project deadline
+function tmCheckDeadline(string $deadline, ?array $project): ?string
+{
+    if ($deadline === '' || !strtotime($deadline)) return null;
+    $dl = date('Y-m-d', strtotime($deadline));
+    if ($dl < date('Y-m-d')) return null;
+    if ($project && !empty($project['deadline']) && strtotime($project['deadline'])
+        && $dl > date('Y-m-d', strtotime($project['deadline']))) return null;
+    return $dl;
+}
+
+// Save members + roles, and keep student_projects in sync so the
+// students see the project and their role in their own dashboard.
+function tmSaveMembers(mysqli $conn, int $teamId, int $projectId, array $roles, array $oldMembers = []): void
+{
+    $d = $conn->prepare("DELETE FROM org_team_members WHERE team_id = ?");
+    $d->bind_param("i", $teamId);
+    $d->execute();
+
+    $ins  = $conn->prepare("INSERT INTO org_team_members (team_id, Email, role) VALUES (?, ?, ?)");
+    $find = $conn->prepare("SELECT student_project_id FROM student_projects WHERE LOWER(Email) = ? AND project_id = ? LIMIT 1");
+    $upd  = $conn->prepare("UPDATE student_projects SET role = ? WHERE student_project_id = ?");
+    $add  = $conn->prepare("INSERT INTO student_projects (Email, project_id, role, progress, status) VALUES (?, ?, ?, 0, 'In Progress')");
+
+    foreach ($roles as $email => $role) {
+        $ins->bind_param("iss", $teamId, $email, $role);
+        $ins->execute();
+
+        $find->bind_param("si", $email, $projectId);
+        $find->execute();
+        $row = $find->get_result()->fetch_assoc();
+        if ($row) {
+            $spId = (int)$row['student_project_id'];
+            $upd->bind_param("si", $role, $spId);
+            $upd->execute();
+        } else {
+            $add->bind_param("sis", $email, $projectId, $role);
+            $add->execute();
+        }
+    }
+
+    // students removed from the team (and not in another team of this project) leave the project
+    $removed = array_diff($oldMembers, array_keys($roles));
+    if ($removed) {
+        $other = $conn->prepare("SELECT 1 FROM org_team_members m JOIN org_teams t ON t.id = m.team_id
+                                 WHERE LOWER(m.Email) = ? AND t.project_id = ? LIMIT 1");
+        $del = $conn->prepare("DELETE FROM student_projects WHERE LOWER(Email) = ? AND project_id = ?");
+        foreach ($removed as $email) {
+            $other->bind_param("si", $email, $projectId);
+            $other->execute();
+            if ($other->get_result()->fetch_row()) continue;
+            $del->bind_param("si", $email, $projectId);
+            $del->execute();
+        }
+    }
+}
+
+function tmNotify(mysqli $conn, array $emails, string $title, string $message): void
+{
+    $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'project', 'Unread')");
+    foreach ($emails as $e) {
+        $nq->bind_param("sss", $e, $title, $message);
+        $nq->execute();
     }
 }
 
@@ -59,61 +174,71 @@ foreach ($tmProjects as $pr) {
 // Save a new team
 // ---------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'create_team') {
-    $name      = trim($_POST['team_name'] ?? '');
+    $name      = trim(preg_replace('/\s+/', ' ', $_POST['team_name'] ?? ''));
     $projectId = (int)($_POST['project_id'] ?? 0);
-    $members   = array_values(array_unique(array_map('strtolower', (array)($_POST['members'] ?? []))));
+    $members   = array_values(array_unique(array_map(fn($m) => strtolower(trim($m)), (array)($_POST['members'] ?? []))));
     $leader    = strtolower(trim($_POST['leader'] ?? ''));
-    $deadline  = trim($_POST['deadline'] ?? '');
+    $roles     = tmCleanRoles($members, $_POST['roles'] ?? []);
+    $skills    = tmCleanSkills($_POST['skills'] ?? '');
+    $project   = tmFindProject($tmProjects, $projectId);
+    $deadline  = tmCheckDeadline(trim($_POST['deadline'] ?? ''), $project);
 
-    // project must belong to this organization and be open for teams
-    $project = null;
-    foreach ($tmProjects as $pr) { if ((int)$pr['id'] === $projectId) { $project = $pr; break; } }
+    // only accepted students who are not in another team of this project
+    $allowed = [];
+    foreach ($tmCandidates[$projectId] ?? [] as $c) { if (!$c['team_id']) $allowed[] = $c['email']; }
 
-    $allowed = array_map(fn($c) => strtolower($c['email']), $tmCandidates[$projectId] ?? []);
-    $validMembers = $project && $members && !array_diff($members, $allowed)
-                    && count($members) <= max(1, (int)$project['members']);
+    $error = null;
+    if ($name === '' || mb_strlen($name) > 100 || !$project)                              $error = '1';
+    elseif (!$members || array_diff($members, $allowed))                                   $error = 'members';
+    elseif (count($members) > max(1, (int)$project['members']))                            $error = 'members';
+    elseif (!in_array($leader, $members, true))                                            $error = '1';
+    elseif (in_array('', $roles, true) || max(array_map('mb_strlen', $roles)) > 50)        $error = 'roles';
+    elseif (!$skills)                                                                      $error = 'skills';
+    elseif (!$deadline)                                                                    $error = 'deadline';
 
-    $validDate = $deadline === '' || (bool)strtotime($deadline);
-
-    if ($name === '' || mb_strlen($name) > 100 || !$project || !$validMembers
-        || !in_array($leader, $members, true) || !$validDate) {
-        header("Location: teams.php?team_error=1");
-        exit;
-    }
+    if ($error) { header("Location: teams.php?team_error=" . $error); exit; }
 
     try {
         $conn->begin_transaction();
 
-        $dl = $deadline !== '' ? date('Y-m-d', strtotime($deadline)) : null;
-        $ins = $conn->prepare("INSERT INTO org_teams (organization_email, project_id, name, leader_email, deadline)
-                               VALUES (?, ?, ?, ?, ?)");
-        $ins->bind_param("sisss", $organization_email, $projectId, $name, $leader, $dl);
+        $skillText = implode(', ', $skills);
+        $ins = $conn->prepare("INSERT INTO org_teams (organization_email, project_id, name, leader_email, skills, deadline, status)
+                               VALUES (?, ?, ?, ?, ?, ?, 'ontrack')");
+        $ins->bind_param("sissss", $organization_email, $projectId, $name, $leader, $skillText, $deadline);
         $ins->execute();
         $teamId = (int)$conn->insert_id;
 
-        $mem = $conn->prepare("INSERT INTO org_team_members (team_id, Email) VALUES (?, ?)");
-        foreach ($members as $m) {
-            $mem->bind_param("is", $teamId, $m);
-            $mem->execute();
+        tmSaveMembers($conn, $teamId, $projectId, $roles);
+
+        // tell every member which team they are in and what their role is
+        $leaderName = $leader;
+        foreach ($tmCandidates[$projectId] as $c) { if ($c['email'] === $leader) $leaderName = $c['name']; }
+        $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, 'Added to a Team', ?, 'project', 'Unread')");
+        foreach ($roles as $email => $role) {
+            $msg = 'You were added to the team "' . $name . '" for the project "' . $project['title'] . '" as ' . $role
+                 . ($email === $leader ? ' (Team Leader)' : '. Team leader: ' . $leaderName)
+                 . '. Deadline: ' . date('M d, Y', strtotime($deadline)) . '.';
+            $nq->bind_param("ss", $email, $msg);
+            $nq->execute();
         }
 
         $conn->commit();
         header("Location: teams.php?team_created=1");
     } catch (Throwable $e) {
-        $conn->rollback();
+        try { $conn->rollback(); } catch (Throwable $ignore) {}
         // 1062 = duplicate team name for this organization
-        header("Location: teams.php?team_error=" . (($e->getCode() == 1062) ? 'duplicate' : '1'));
+        header("Location: teams.php?team_error=" . (($e->getCode() == 1062) ? 'duplicate' : 'save'));
     }
     exit;
 }
 
 // ---------------------------------------------------------------
 // ⋮ menu actions for teams saved in the database:
-//   edit_team (name, leader, members, deadline) | team_status | extend_deadline (Delay Review)
+//   edit_team (name, leader, members + roles, skills, deadline) | team_status | extend_deadline (Delay Review)
 // ---------------------------------------------------------------
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['edit_team', 'team_status', 'extend_deadline'], true)) {
     $teamId = (int)($_POST['team_id'] ?? 0);
-    $own = tmFetch($conn, "SELECT id, project_id FROM org_teams WHERE id = ? AND organization_email = ?",
+    $own = tmFetch($conn, "SELECT id, project_id, name, deadline FROM org_teams WHERE id = ? AND organization_email = ?",
                    "is", [$teamId, $organization_email])[0] ?? null;
     if (!$own) { header("Location: teams.php?team_error=1"); exit; }
 
@@ -142,9 +267,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
             $q->execute();
 
             // tell every member of the team
-            $tn = tmFetch($conn, "SELECT name FROM org_teams WHERE id = ?", "i", [$teamId])[0]['name'] ?? 'your team';
             $nTitle = 'Team Deadline Extended';
-            $nMsg   = 'The deadline for ' . $tn . ' was moved to ' . date('M d, Y', strtotime($dl)) . '. Reason: ' . mb_substr($reason, 0, 300);
+            $nMsg   = 'The deadline for ' . $own['name'] . ' was moved to ' . date('M d, Y', strtotime($dl)) . '. Reason: ' . mb_substr($reason, 0, 300);
             $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
                                   SELECT Email, ?, ?, 'project', 'Unread' FROM org_team_members WHERE team_id = ?");
             $nq->bind_param("ssi", $nTitle, $nMsg, $teamId);
@@ -155,38 +279,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
         }
 
         // edit_team
-        $name     = trim($_POST['team_name'] ?? '');
-        $members  = array_values(array_unique(array_map('strtolower', (array)($_POST['members'] ?? []))));
+        $name     = trim(preg_replace('/\s+/', ' ', $_POST['team_name'] ?? ''));
+        $members  = array_values(array_unique(array_map(fn($m) => strtolower(trim($m)), (array)($_POST['members'] ?? []))));
         $leader   = strtolower(trim($_POST['leader'] ?? ''));
-        $deadline = trim($_POST['deadline'] ?? '');
+        $roles    = tmCleanRoles($members, $_POST['roles'] ?? []);
+        $skills   = tmCleanSkills($_POST['skills'] ?? '');
 
         $pid = (int)$own['project_id'];
-        $project = null;
-        foreach ($tmProjects as $pr) { if ((int)$pr['id'] === $pid) { $project = $pr; break; } }
-        $allowed = array_map(fn($c) => strtolower($c['email']), $tmCandidates[$pid] ?? []);
-        // current members stay allowed even if the project is no longer open
-        $allowed = array_merge($allowed, array_map(fn($r) => strtolower($r['Email']),
-                   tmFetch($conn, "SELECT Email FROM org_team_members WHERE team_id = ?", "i", [$teamId])));
-        $max = $project ? max(1, (int)$project['members']) : max(1, count($members));
+        $project = tmFindProject($tmProjects, $pid);
+        $postedDl = trim($_POST['deadline'] ?? '');
+        // keeping the old deadline is always fine (even if it has already passed)
+        $deadline = (!empty($own['deadline']) && $postedDl !== '' && strtotime($postedDl)
+                     && date('Y-m-d', strtotime($postedDl)) === date('Y-m-d', strtotime($own['deadline'])))
+                    ? date('Y-m-d', strtotime($own['deadline']))
+                    : tmCheckDeadline($postedDl, $project);
+
+        $oldMembers = array_map(fn($r) => strtolower($r['Email']),
+                      tmFetch($conn, "SELECT Email FROM org_team_members WHERE team_id = ?", "i", [$teamId]));
+        // accepted students who are free or already in THIS team + the current members
+        $allowed = $oldMembers;
+        foreach ($tmCandidates[$pid] ?? [] as $c) { if (!$c['team_id'] || $c['team_id'] === $teamId) $allowed[] = $c['email']; }
+        $max = $project ? max(1, (int)$project['members'], count($oldMembers)) : max(1, count($oldMembers));
 
         if ($name === '' || mb_strlen($name) > 100 || !$members || array_diff($members, $allowed)
             || count($members) > $max || !in_array($leader, $members, true)
-            || ($deadline !== '' && !strtotime($deadline))) {
+            || in_array('', $roles, true) || max(array_map('mb_strlen', $roles)) > 50
+            || !$skills || !$deadline) {
             header("Location: teams.php?team_error=edit");
             exit;
         }
 
         $conn->begin_transaction();
-        $dl = $deadline !== '' ? date('Y-m-d', strtotime($deadline)) : null;
-        $q = $conn->prepare("UPDATE org_teams SET name = ?, leader_email = ?, deadline = ? WHERE id = ?");
-        $q->bind_param("sssi", $name, $leader, $dl, $teamId);
+        $skillText = implode(', ', $skills);
+        $q = $conn->prepare("UPDATE org_teams SET name = ?, leader_email = ?, skills = ?, deadline = ? WHERE id = ?");
+        $q->bind_param("ssssi", $name, $leader, $skillText, $deadline, $teamId);
         $q->execute();
 
-        $d = $conn->prepare("DELETE FROM org_team_members WHERE team_id = ?");
-        $d->bind_param("i", $teamId);
-        $d->execute();
-        $mem = $conn->prepare("INSERT INTO org_team_members (team_id, Email) VALUES (?, ?)");
-        foreach ($members as $m) { $mem->bind_param("is", $teamId, $m); $mem->execute(); }
+        tmSaveMembers($conn, $teamId, $pid, $roles, $oldMembers);
+
+        $added = array_diff($members, $oldMembers);
+        if ($added) {
+            tmNotify($conn, $added, 'Added to a Team',
+                'You were added to the team "' . $name . '" for the project "' . ($project['title'] ?? '') . '".');
+        }
         $conn->commit();
 
         header("Location: teams.php?team_updated=edited");
@@ -198,6 +333,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
 }
 
 $flash = null;
+$tmErrText = [
+    'members'  => 'Only students with an accepted proposal (and not already in another team) can be added, up to the number the project needs.',
+    'roles'    => 'Please give every team member a role (max 50 characters).',
+    'skills'   => 'Please add at least one required skill.',
+    'deadline' => 'Please pick a team deadline from today up to the project deadline.',
+    'save'     => 'Something went wrong while saving. Please try again.',
+];
 $tmUpdated = [
     'status'  => ['Status updated', 'The team status was changed.'],
     'edited'  => ['Team updated', 'Your changes to the team were saved.'],
@@ -211,6 +353,8 @@ if (isset($_GET['team_updated'], $tmUpdated[$_GET['team_updated']])) {
     $flash = ['type' => 'success', 'title' => 'Team created', 'message' => 'The new team was created successfully.'];
 } elseif (($_GET['team_error'] ?? '') === 'duplicate') {
     $flash = ['type' => 'error', 'title' => 'Name already used', 'message' => 'You already have a team with this name. Please choose another name.'];
+} elseif (isset($_GET['team_error'], $tmErrText[$_GET['team_error']])) {
+    $flash = ['type' => 'error', 'title' => 'Could not create team', 'message' => $tmErrText[$_GET['team_error']]];
 } elseif (isset($_GET['team_error'])) {
     $flash = ['type' => 'error', 'title' => 'Could not create team', 'message' => 'Please fill all required fields and try again.'];
 }
@@ -218,18 +362,26 @@ if (isset($_GET['team_updated'], $tmUpdated[$_GET['team_updated']])) {
 // ---------------------------------------------------------------
 // Teams created by this organization (from the database)
 // ---------------------------------------------------------------
+// Buttons at the bottom of a team card depend on the team status
+$tmStateActions = [
+    'ontrack'   => ['View', 'Task', 'Chat'],
+    'behind'    => ['View', 'Review', 'Chat'],
+    'completed' => ['Final Report'],
+];
+
 $dbTeams = [];
 foreach (tmFetch($conn,
-    "SELECT t.id, t.project_id, t.name, t.leader_email, t.deadline, t.status, t.created_at,
+    "SELECT t.id, t.project_id, t.name, t.leader_email, t.skills AS team_skills, t.deadline, t.status, t.created_at,
             p.title AS project, p.keywords, p.company, p.category, p.deadline AS project_deadline, p.duration
      FROM org_teams t JOIN projects p ON p.id = t.project_id
      WHERE t.organization_email = ?
      ORDER BY t.created_at DESC", "s", [$organization_email]) as $row) {
 
     $memberRows = tmFetch($conn,
-        "SELECT s.Email, s.Name, s.University, s.degree, s.year, sp.role, sp.progress, sp.status AS work_status
+        "SELECT s.Email, s.Name, s.University, s.degree, s.year, COALESCE(NULLIF(m.role, ''), sp.role) AS role,
+                sp.progress, sp.status AS work_status
          FROM org_team_members m
-         JOIN student s ON s.Email = m.Email
+         JOIN student s ON LOWER(s.Email) = LOWER(m.Email)
          LEFT JOIN student_projects sp ON sp.Email = m.Email
               AND sp.project_id = (SELECT project_id FROM org_teams WHERE id = m.team_id)
          WHERE m.team_id = ?", "i", [(int)$row['id']]);
@@ -274,17 +426,18 @@ foreach (tmFetch($conn,
         'project' => $row['project'],
         'leader' => $leaderName, 'role' => $leaderRole,
         'members' => array_slice($others, 0, 3), 'more' => max(0, count($others) - 3),
-        'skills' => array_values(array_filter(array_map('trim', explode(',', $row['keywords'] ?? '')))),
+        'skills' => array_values(array_filter(array_map('trim', explode(',', ($row['team_skills'] ?? '') !== '' ? $row['team_skills'] : ($row['keywords'] ?? ''))))),
         'phase' => $percent > 0 ? 'In Progress' : 'Phase 1: Planning', 'percent' => $percent,
         'deadline' => !empty($row['deadline']) ? date('M d', strtotime($row['deadline'])) : '',
         'time' => $time, 'tone' => $tone,
-        'actions' => ['View', 'Task', 'Chat'],
+        'actions' => $tmStateActions[$state] ?? $tmStateActions['ontrack'],
         'is_new' => true,
         'id' => (int)$row['id'],
         'project_id' => (int)$row['project_id'],
         'leader_email' => strtolower($row['leader_email']),
         'member_emails' => array_map(fn($m) => strtolower($m['Email']), $memberRows),
-        'deadline_raw' => $row['deadline'] ?? '',
+        'deadline_raw' => !empty($row['deadline']) ? date('Y-m-d', strtotime($row['deadline'])) : '',
+        'project_deadline_raw' => (!empty($row['project_deadline']) && strtotime($row['project_deadline'])) ? date('Y-m-d', strtotime($row['project_deadline'])) : '',
         'details' => [
             'company' => $row['company'], 'category' => $row['category'], 'duration' => $row['duration'],
             'project_deadline' => (!empty($row['project_deadline']) && strtotime($row['project_deadline'])) ? date('M d, Y', strtotime($row['project_deadline'])) : '',
@@ -683,6 +836,42 @@ include "../../../Includes/dash_header.php";
 
     .tm-modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 22px 18px; border-top: 1px solid #e5e7eb; }
 
+    /* ---- create / edit team: members + roles, skills tags ---- */
+    .tm-modal-wide { width: min(700px, 100%); }
+    .tm-step { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #0f3a66; margin: 4px 0 12px; }
+    .tm-step span { width: 22px; height: 22px; border-radius: 50%; background: #0f2a4a; color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+    .tm-step:not(:first-child) { margin-top: 10px; padding-top: 16px; border-top: 1px solid #f1f3f6; }
+    .tm-hint { font-size: 12px; color: #6b7280; margin-top: 6px; }
+    .tm-project-info { margin: -6px 0 16px; }
+
+    .tm-mrow { border-top: 1px solid #f1f3f6; }
+    .tm-mrow:first-child { border-top: none; }
+    .tm-mrow.on { background: #f8fbff; }
+    .tm-mrow .tm-member { border-top: none; }
+    .tm-mskills { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+    .tm-mskills span { font-size: 10.5px; background: #eef2f7; color: #334155; padding: 1px 7px; border-radius: 5px; }
+    .tm-src.locked { background: #f3f4f6; color: #6b7280; }
+    .tm-role-row { display: flex; align-items: center; gap: 8px; padding: 0 14px 12px 43px; }
+    .tm-role-row[hidden] { display: none; }
+    .tm-role-row .material-symbols-outlined { font-size: 18px; color: #0f3a66; }
+    .tm-role-row .tm-input { padding: 7px 10px; font-size: 13px; background: #fff; }
+    .tm-lead-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #0f2a4a; color: #fff; white-space: nowrap; }
+    .tm-lead-tag .material-symbols-outlined { font-size: 13px; color: #fff; }
+
+    .tm-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 44px; box-sizing: border-box; padding: 6px 8px;
+               border: 1px solid #e5e7eb; border-radius: 10px; background: #f9fafb; cursor: text; }
+    .tm-tags:focus-within { border-color: #93c5fd; background: #fff; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .tm-tags.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.1); }
+    .tm-tags input { flex: 1; min-width: 140px; border: none; background: transparent; outline: none; font-family: inherit; font-size: 14px; padding: 4px; color: #111827; }
+    .tm-tag { display: inline-flex; align-items: center; gap: 4px; background: #dbeafe; color: #1e3a5f; font-size: 12.5px; font-weight: 500; padding: 4px 6px 4px 10px; border-radius: 6px; }
+    .tm-tag button { border: none; background: none; padding: 0; cursor: pointer; color: #1e3a5f; display: flex; border-radius: 4px; }
+    .tm-tag button:hover { background: rgba(30,58,95,.12); }
+    .tm-tag .material-symbols-outlined { font-size: 15px; }
+    .tm-suggest { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: #6b7280; }
+    .tm-suggest:empty { display: none; }
+    .tm-sug { border: 1px dashed #93c5fd; background: #fff; color: #1e3a5f; font-family: inherit; font-size: 12px; padding: 3px 9px; border-radius: 6px; cursor: pointer; }
+    .tm-sug:hover { background: #eff6ff; }
+
     /* ---- team details (View) ---- */
     .tv-modal { width: min(940px, 100%); }
     .tv-head { display: flex; align-items: flex-start; gap: 12px; padding: 20px 24px 16px; border-bottom: 1px solid #e5e7eb; }
@@ -883,7 +1072,6 @@ include "../../../Includes/dash_header.php";
     .tw-chat.focus { box-shadow: 0 0 0 3px rgba(59,130,246,.25); }
     .tw-chat-head { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border-bottom: 1px solid #e5e7eb; }
     .tw-chat-head h3 { margin: 0; font-size: 16px; font-weight: 800; color: #0f3a66; }
-    .tw-online { font-size: 11px; font-weight: 700; background: #dcfce7; color: #166534; padding: 3px 10px; border-radius: 999px; }
     .tw-msgs { flex: 1; overflow-y: auto; padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; background: #fafbfc; }
     .tw-msg { display: flex; flex-direction: column; max-width: 85%; }
     .tw-msg-meta { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-bottom: 4px; }
@@ -1021,6 +1209,7 @@ include "../../../Includes/dash_header.php";
                     $deadlineTs = $t['deadline'] !== '' ? (int)strtotime($t['deadline']) : 0;
                 ?>
                 <div class="tm-card <?= $t['state'] === 'completed' ? 'completed' : '' ?>" data-team-index="<?= (int)$ti ?>"
+                     data-team-name="<?= htmlspecialchars(strtolower($t['name'])) ?>"
                      data-state="<?= htmlspecialchars($t['state']) ?>"
                      data-search="<?= htmlspecialchars($searchText) ?>"
                      data-order="<?= $tmOrder++ ?>"
@@ -1178,7 +1367,6 @@ include "../../../Includes/dash_header.php";
             <aside class="tw-chat" id="twChat">
                 <div class="tw-chat-head">
                     <h3>Team Discussion</h3>
-                    <span class="tw-online" id="twOnline"></span>
                 </div>
                 <div class="tw-msgs" id="twMsgs"></div>
                 <form class="tw-send" id="twSend">
@@ -1258,7 +1446,7 @@ include "../../../Includes/dash_header.php";
 
     <!-- ===================== EDIT TEAM ===================== -->
     <div class="tm-overlay" id="tmEditModal">
-        <form class="tm-modal" method="post" action="teams.php" id="tmEditForm" novalidate>
+        <form class="tm-modal tm-modal-wide" method="post" action="teams.php" id="tmEditForm" novalidate>
             <input type="hidden" name="action" value="edit_team">
             <input type="hidden" name="team_id" id="teId">
             <div class="tm-modal-head">
@@ -1274,7 +1462,7 @@ include "../../../Includes/dash_header.php";
                 </div>
                 <div class="tm-field">
                     <div class="tm-f-label-row">
-                        <label class="tm-f-label">Team Members *</label>
+                        <label class="tm-f-label">Team Members &amp; Roles *</label>
                         <span class="tm-picked" id="tePicked"></span>
                     </div>
                     <div class="tm-members" id="teMembers"></div>
@@ -1287,9 +1475,19 @@ include "../../../Includes/dash_header.php";
                         <div class="tm-err" id="teErrLeader"></div>
                     </div>
                     <div class="tm-field">
-                        <label class="tm-f-label" for="teDeadline">Team Deadline</label>
+                        <label class="tm-f-label" for="teDeadline">Team Deadline *</label>
                         <input type="date" id="teDeadline" name="deadline" class="tm-input">
+                        <div class="tm-err" id="teErrDeadline"></div>
                     </div>
+                </div>
+                <div class="tm-field">
+                    <label class="tm-f-label" for="teSkillInput">Required Skills *</label>
+                    <div class="tm-tags" id="teSkills">
+                        <input type="text" id="teSkillInput" maxlength="40" placeholder="Type a skill and press Enter">
+                    </div>
+                    <input type="hidden" name="skills" id="teSkillsValue">
+                    <div class="tm-suggest" id="teSkillSuggest"></div>
+                    <div class="tm-err" id="teErrSkills"></div>
                 </div>
             </div>
             <div class="tm-modal-foot">
@@ -1337,15 +1535,24 @@ include "../../../Includes/dash_header.php";
     </form>
 
     <!-- ===================== CREATE NEW TEAM ===================== -->
+    <!-- role suggestions for the "Role" boxes (organization can still type any role) -->
+    <datalist id="tmRoleList">
+        <option value="Team Leader"><option value="Project Coordinator"><option value="Frontend Developer">
+        <option value="Backend Developer"><option value="Full Stack Developer"><option value="Mobile Developer">
+        <option value="UI/UX Designer"><option value="Database Designer"><option value="ML Engineer">
+        <option value="Data Analyst"><option value="QA / Tester"><option value="DevOps Engineer">
+        <option value="Security Analyst"><option value="Technical Writer">
+    </datalist>
+
     <div class="tm-overlay" id="tmCreateModal">
-        <form class="tm-modal" method="post" action="teams.php" id="tmCreateForm" novalidate>
+        <form class="tm-modal tm-modal-wide" method="post" action="teams.php" id="tmCreateForm" novalidate>
             <input type="hidden" name="action" value="create_team">
 
             <div class="tm-modal-head">
                 <div class="tm-modal-icon"><span class="material-symbols-outlined">group_add</span></div>
                 <div>
                     <h3>Create New Team</h3>
-                    <p>Pick a project, then choose the team from the students connected to it.</p>
+                    <p>Build a team from the students whose proposals you accepted.</p>
                 </div>
                 <button type="button" class="tm-x" data-close aria-label="Close"><span class="material-symbols-outlined">close</span></button>
             </div>
@@ -1354,51 +1561,67 @@ include "../../../Includes/dash_header.php";
                 <?php if (empty($tmProjects)): ?>
                     <div class="tm-note warn">
                         <span class="material-symbols-outlined">info</span>
-                        You don’t have any Reviewing or Active projects yet. Post a project first, then create a team for it.
+                        You don’t have any open or active projects yet. Post a project first, then create a team for it.
                     </div>
                 <?php else: ?>
 
-                <div class="tm-field">
-                    <label class="tm-f-label" for="tmName">Team Name *</label>
-                    <input type="text" id="tmName" name="team_name" class="tm-input" maxlength="100" placeholder="e.g. Code Crafters">
-                    <div class="tm-err" data-err="name"></div>
+                <div class="tm-step"><span>1</span>Team &amp; Project</div>
+                <div class="tm-grid-2">
+                    <div class="tm-field">
+                        <label class="tm-f-label" for="tmName">Team Name *</label>
+                        <input type="text" id="tmName" name="team_name" class="tm-input" maxlength="100" placeholder="e.g. Code Crafters" autocomplete="off">
+                        <div class="tm-err" data-err="name"></div>
+                    </div>
+                    <div class="tm-field">
+                        <label class="tm-f-label" for="tmProject">Project *</label>
+                        <select id="tmProject" name="project_id" class="tm-input">
+                            <option value="">Select a project</option>
+                            <?php foreach ($tmProjects as $pr): ?>
+                                <option value="<?= (int)$pr['id'] ?>"><?= htmlspecialchars($pr['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <div class="tm-err" data-err="project"></div>
+                    </div>
                 </div>
+                <div class="tm-project-info" id="tmProjectInfo" hidden></div>
 
-                <div class="tm-field">
-                    <label class="tm-f-label" for="tmProject">Project *</label>
-                    <select id="tmProject" name="project_id" class="tm-input">
-                        <option value="">Select a project</option>
-                        <?php foreach ($tmProjects as $pr): ?>
-                            <option value="<?= (int)$pr['id'] ?>"><?= htmlspecialchars($pr['title']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="tm-project-info" id="tmProjectInfo" hidden></div>
-                    <div class="tm-err" data-err="project"></div>
-                </div>
-
+                <div class="tm-step"><span>2</span>Members &amp; Roles</div>
                 <div class="tm-field">
                     <div class="tm-f-label-row">
-                        <label class="tm-f-label">Team Members *</label>
+                        <label class="tm-f-label">Accepted Students *</label>
                         <span class="tm-picked" id="tmPicked"></span>
                     </div>
                     <div class="tm-members" id="tmMembers">
-                        <div class="tm-members-empty">Select a project to see its students.</div>
+                        <div class="tm-members-empty">Select a project to see the students you accepted for it.</div>
                     </div>
+                    <div class="tm-hint">Tick a student to add them, then give them a role in the team.</div>
                     <div class="tm-err" data-err="members"></div>
                 </div>
 
-                <div class="tm-grid-2">
-                    <div class="tm-field">
-                        <label class="tm-f-label" for="tmLeader">Team Leader *</label>
-                        <select id="tmLeader" name="leader" class="tm-input" disabled>
-                            <option value="">Choose members first</option>
-                        </select>
-                        <div class="tm-err" data-err="leader"></div>
+                <div class="tm-field">
+                    <label class="tm-f-label" for="tmLeader">Team Leader *</label>
+                    <select id="tmLeader" name="leader" class="tm-input" disabled>
+                        <option value="">Choose members first</option>
+                    </select>
+                    <div class="tm-err" data-err="leader"></div>
+                </div>
+
+                <div class="tm-step"><span>3</span>Skills &amp; Deadline</div>
+                <div class="tm-field">
+                    <label class="tm-f-label" for="tmSkillInput">Required Skills *</label>
+                    <div class="tm-tags" id="tmSkills">
+                        <input type="text" id="tmSkillInput" maxlength="40" placeholder="Type a skill and press Enter">
                     </div>
-                    <div class="tm-field">
-                        <label class="tm-f-label" for="tmDeadline">Team Deadline</label>
-                        <input type="date" id="tmDeadline" name="deadline" class="tm-input" min="<?= date('Y-m-d') ?>">
-                    </div>
+                    <input type="hidden" name="skills" id="tmSkillsValue">
+                    <div class="tm-suggest" id="tmSkillSuggest"></div>
+                    <div class="tm-err" data-err="skills"></div>
+                </div>
+
+                <div class="tm-field">
+                    <label class="tm-f-label" for="tmDeadline">Team Deadline *</label>
+                    <input type="date" id="tmDeadline" name="deadline" class="tm-input" min="<?= date('Y-m-d') ?>">
+                    <div class="tm-hint" id="tmDeadlineHint">Must be today or later, and not after the project deadline.</div>
+                    <div class="tm-err" data-err="deadline"></div>
                 </div>
 
                 <?php endif; ?>
@@ -1516,6 +1739,141 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
 
 
 /* =================================================================
+   SHARED FORM PARTS (used by Create Team and Edit Team)
+   - member list with a Role box for every ticked student
+   - skills "tag" input
+================================================================= */
+window.TMForm = (function () {
+    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
+    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
+    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+
+    /* people: [{ value, name, sub, skills[], badge, badgeClass, locked }]
+       chosen: { value: role }  -> ticked students and their roles          */
+    function renderMembers(box, people, chosen) {
+        chosen = chosen || {};
+        box.innerHTML = people.map(p => {
+            const on = Object.prototype.hasOwnProperty.call(chosen, p.value);
+            return `
+            <div class="tm-mrow ${on ? 'on' : ''}" data-value="${esc(p.value)}">
+                <label class="tm-member ${p.locked ? 'disabled' : ''}" ${p.locked ? 'title="' + esc(p.locked) + '"' : ''}>
+                    <input type="checkbox" name="members[]" value="${esc(p.value)}" data-name="${esc(p.name)}"
+                           ${on ? 'checked' : ''} ${p.locked ? 'disabled data-locked="1"' : ''}>
+                    <span class="tm-av" style="background:${colorFor(p.name)};">${esc(initials(p.name))}</span>
+                    <span class="tm-member-info">
+                        <span class="tm-member-name">${esc(p.name)}</span><br>
+                        <span class="tm-member-sub">${esc(p.sub || '')}</span>
+                        ${(p.skills || []).length ? `<span class="tm-mskills">${p.skills.map(s => `<span>${esc(s)}</span>`).join('')}</span>` : ''}
+                    </span>
+                    ${p.badge ? `<span class="tm-src ${esc(p.badgeClass || '')}">${esc(p.badge)}</span>` : ''}
+                </label>
+                <div class="tm-role-row" ${on ? '' : 'hidden'}>
+                    <span class="material-symbols-outlined">badge</span>
+                    <input type="text" class="tm-input" name="roles[${esc(p.value)}]" list="tmRoleList" maxlength="50"
+                           placeholder="Role in the team, e.g. Frontend Developer" value="${esc(on ? chosen[p.value] : '')}" ${on ? '' : 'disabled'}>
+                    <span class="tm-lead-tag" hidden><span class="material-symbols-outlined">star</span>Leader</span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    /* keeps role boxes, max members and the leader list in sync */
+    function syncMembers(box, leaderEl, max, pickedEl) {
+        const rows = Array.from(box.querySelectorAll('.tm-mrow'));
+        const picked = rows.filter(r => r.querySelector('input[type="checkbox"]').checked);
+
+        rows.forEach(r => {
+            const cb = r.querySelector('input[type="checkbox"]');
+            const role = r.querySelector('.tm-role-row input');
+            const full = !cb.checked && picked.length >= max;
+            if (!cb.dataset.locked) {
+                cb.disabled = full;
+                r.querySelector('.tm-member').classList.toggle('disabled', full);
+            }
+            r.classList.toggle('on', cb.checked);
+            r.querySelector('.tm-role-row').hidden = !cb.checked;
+            role.disabled = !cb.checked;           // unticked -> role is not sent
+        });
+
+        if (pickedEl) pickedEl.textContent = picked.length + ' / ' + max + ' selected';
+
+        const keep = leaderEl.value;
+        leaderEl.innerHTML = picked.length
+            ? '<option value="">Select the leader</option>' + picked.map(r => {
+                const cb = r.querySelector('input[type="checkbox"]');
+                return `<option value="${esc(cb.value)}">${esc(cb.dataset.name)}</option>`; }).join('')
+            : '<option value="">Choose members first</option>';
+        leaderEl.disabled = picked.length === 0;
+        if (picked.some(r => r.dataset.value === keep)) leaderEl.value = keep;
+        else if (picked.length === 1) leaderEl.value = picked[0].dataset.value;
+        markLeader(box, leaderEl.value);
+        return picked;
+    }
+
+    function markLeader(box, value) {
+        box.querySelectorAll('.tm-mrow').forEach(r => { r.querySelector('.tm-lead-tag').hidden = !value || r.dataset.value !== value; });
+    }
+
+    /* skills tag input */
+    function tagInput(wrap, hidden, suggestBox, onChange) {
+        const input = wrap.querySelector('input');
+        let tags = [], suggestions = [];
+
+        const has = t => tags.some(x => x.toLowerCase() === t.toLowerCase());
+        function render() {
+            wrap.querySelectorAll('.tm-tag').forEach(t => t.remove());
+            tags.forEach((t, i) => {
+                const chip = document.createElement('span');
+                chip.className = 'tm-tag';
+                chip.innerHTML = `${esc(t)}<button type="button" aria-label="Remove ${esc(t)}" data-i="${i}"><span class="material-symbols-outlined">close</span></button>`;
+                wrap.insertBefore(chip, input);
+            });
+            hidden.value = tags.join(', ');
+            const left = suggestions.filter(s => !has(s)).slice(0, 10);
+            suggestBox.innerHTML = left.length
+                ? '<span>Suggested:</span>' + left.map(s => `<button type="button" class="tm-sug" data-sug="${esc(s)}">+ ${esc(s)}</button>`).join('')
+                : '';
+            if (onChange) onChange(tags);
+        }
+        function add(raw) {
+            String(raw).split(',').map(s => s.trim().replace(/\s+/g, ' ')).filter(Boolean).forEach(s => {
+                if (s.length <= 40 && !has(s) && tags.length < 15) tags.push(s);
+            });
+            render();
+        }
+
+        input.addEventListener('keydown', e => {
+            if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(input.value); input.value = ''; }
+            else if (e.key === 'Backspace' && input.value === '' && tags.length) { tags.pop(); render(); }
+        });
+        input.addEventListener('blur', () => { if (input.value.trim()) { add(input.value); input.value = ''; } });
+        wrap.addEventListener('click', e => {
+            const b = e.target.closest('button[data-i]');
+            if (b) { tags.splice(Number(b.dataset.i), 1); render(); }
+            else input.focus();
+        });
+        suggestBox.addEventListener('click', e => {
+            const b = e.target.closest('[data-sug]');
+            if (b) add(b.dataset.sug);
+        });
+
+        return {
+            set(list) { tags = []; add((list || []).join(',')); },
+            suggest(list) {
+                const seen = {};
+                suggestions = (list || []).filter(s => s && !seen[s.toLowerCase()] && (seen[s.toLowerCase()] = true));
+                render();
+            },
+            get: () => tags.slice()
+        };
+    }
+
+    return { esc, initials, colorFor, renderMembers, syncMembers, markLeader, tagInput };
+})();
+
+
+/* =================================================================
    CREATE NEW TEAM
 ================================================================= */
 (function () {
@@ -1526,7 +1884,8 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
                             'skills' => array_values(array_filter(array_map('trim', explode(',', $p['keywords'] ?? '')))),
                         ], $tmProjects), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
     const CANDIDATES = <?= json_encode($tmCandidates, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
+    const TODAY = <?= json_encode(date('Y-m-d')) ?>;
+    const F = window.TMForm;
 
     const modal = document.getElementById('tmCreateModal');
     const form  = document.getElementById('tmCreateForm');
@@ -1539,11 +1898,9 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
     const pickedEl  = document.getElementById('tmPicked');
     const leaderEl  = document.getElementById('tmLeader');
     const deadlineEl= document.getElementById('tmDeadline');
+    const dlHint    = document.getElementById('tmDeadlineHint');
 
-    function esc(t) { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; }
-    function initials(n) { return String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join(''); }
-    function colorFor(n) { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; }
-    function err(key, msg) { const el = form.querySelector('[data-err="' + key + '"]'); if (el) el.textContent = msg || ''; }
+    const err = (key, msg) => { const el = form.querySelector('[data-err="' + key + '"]'); if (el) el.textContent = msg || ''; };
 
     function open() {
         modal.classList.add('open');
@@ -1558,95 +1915,125 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
 
     if (!projectEl) return;   // no projects -> only the info message is shown
 
-    function currentProject() { return PROJECTS.find(p => p.id === Number(projectEl.value)) || null; }
+    const skills = F.tagInput(document.getElementById('tmSkills'), document.getElementById('tmSkillsValue'),
+                              document.getElementById('tmSkillSuggest'), list => {
+        if (list.length) { err('skills', ''); document.getElementById('tmSkills').classList.remove('invalid'); }
+    });
 
-    function selectedMembers() {
-        return Array.from(membersEl.querySelectorAll('input[type="checkbox"]:checked'));
-    }
+    const currentProject = () => PROJECTS.find(p => p.id === Number(projectEl.value)) || null;
+    const pickedRows = () => Array.from(membersEl.querySelectorAll('.tm-mrow')).filter(r => r.querySelector('input[type="checkbox"]').checked);
 
-    function updateMembersState() {
+    function refresh() {
         const pr = currentProject();
-        const picked = selectedMembers();
-        const max = pr ? Math.max(1, pr.members) : 0;
-
-        pickedEl.textContent = pr ? picked.length + ' / ' + max + ' selected' : '';
-
-        // don't allow more members than the project needs
-        membersEl.querySelectorAll('.tm-member').forEach(function (row) {
-            const cb = row.querySelector('input');
-            const lock = !cb.checked && picked.length >= max;
-            cb.disabled = lock;
-            row.classList.toggle('disabled', lock);
-        });
-
-        // leader list = chosen members
-        const keep = leaderEl.value;
-        leaderEl.innerHTML = picked.length
-            ? '<option value="">Select the leader</option>' + picked.map(cb =>
-                `<option value="${esc(cb.value)}">${esc(cb.dataset.name)}</option>`).join('')
-            : '<option value="">Choose members first</option>';
-        leaderEl.disabled = picked.length === 0;
-        if (picked.some(cb => cb.value === keep)) leaderEl.value = keep;
-        else if (picked.length === 1) leaderEl.value = picked[0].value;
-
+        if (!pr) { pickedEl.textContent = ''; leaderEl.innerHTML = '<option value="">Choose members first</option>'; leaderEl.disabled = true; return; }
+        const picked = F.syncMembers(membersEl, leaderEl, Math.max(1, pr.members), pickedEl);
         if (picked.length) { err('members', ''); membersEl.classList.remove('invalid'); }
+
+        // suggestions = project skills + skills of the ticked students
+        const fromMembers = [];
+        picked.forEach(r => (CANDIDATES[pr.id].find(c => c.email === r.dataset.value) || {}).skills?.forEach(s => fromMembers.push(s)));
+        skills.suggest(pr.skills.concat(fromMembers));
     }
 
     projectEl.addEventListener('change', function () {
         const pr = currentProject();
         err('project', ''); projectEl.classList.remove('invalid');
+        err('members', ''); err('leader', ''); err('deadline', '');
+        deadlineEl.classList.remove('invalid'); document.getElementById('tmSkills').classList.remove('invalid');
 
         if (!pr) {
             infoEl.hidden = true;
-            membersEl.innerHTML = '<div class="tm-members-empty">Select a project to see its students.</div>';
-            updateMembersState();
+            membersEl.innerHTML = '<div class="tm-members-empty">Select a project to see the students you accepted for it.</div>';
+            skills.set([]); skills.suggest([]);
+            deadlineEl.max = '';
+            refresh();
             return;
         }
 
         infoEl.innerHTML =
             `<span class="tm-info-chip"><span class="material-symbols-outlined">group</span>${pr.members} student${pr.members === 1 ? '' : 's'} needed</span>` +
-            (pr.deadline_text ? `<span class="tm-info-chip"><span class="material-symbols-outlined">event</span>Project deadline: ${esc(pr.deadline_text)}</span>` : '') +
-            pr.skills.map(sk => `<span class="tm-info-chip skill">${esc(sk)}</span>`).join('');
+            (pr.deadline_text ? `<span class="tm-info-chip"><span class="material-symbols-outlined">event</span>Project deadline: ${F.esc(pr.deadline_text)}</span>` : '');
         infoEl.hidden = false;
 
-        // team deadline can't be after the project deadline
-        deadlineEl.max = pr.deadline || '';
-        if (pr.deadline && deadlineEl.value && deadlineEl.value > pr.deadline) deadlineEl.value = '';
+        // team deadline: today ... project deadline
+        deadlineEl.min = TODAY;
+        deadlineEl.max = pr.deadline && pr.deadline >= TODAY ? pr.deadline : '';
+        if (deadlineEl.value && ((deadlineEl.max && deadlineEl.value > deadlineEl.max) || deadlineEl.value < TODAY)) deadlineEl.value = '';
+        if (!deadlineEl.value && deadlineEl.max) deadlineEl.value = deadlineEl.max;   // default = project deadline
+        dlHint.textContent = pr.deadline_text
+            ? 'Pick a date from today up to the project deadline (' + pr.deadline_text + ').'
+            : 'Pick a date from today onwards.';
 
         const list = CANDIDATES[pr.id] || [];
-        membersEl.innerHTML = list.length
-            ? list.map(c => `
-                <label class="tm-member">
-                    <input type="checkbox" name="members[]" value="${esc(c.email)}" data-name="${esc(c.name)}">
-                    <span class="tm-av" style="background:${colorFor(c.name)};">${esc(initials(c.name))}</span>
-                    <span class="tm-member-info">
-                        <span class="tm-member-name">${esc(c.name)}</span><br>
-                        <span class="tm-member-sub">${esc(c.role || c.email)}</span>
-                    </span>
-                    <span class="tm-src ${c.source}">${c.source === 'assigned' ? 'Assigned' : 'Applied'}</span>
-                </label>`).join('')
-            : '<div class="tm-members-empty">No students have applied to this project yet.</div>';
+        if (list.length) {
+            F.renderMembers(membersEl, list.map(c => ({
+                value: c.email, name: c.name, sub: c.sub, skills: c.skills,
+                badge: c.team ? 'In ' + c.team : 'Accepted', badgeClass: c.team ? 'locked' : 'assigned',
+                locked: c.team ? 'Already in the team "' + c.team + '"' : ''
+            })), {});
+        } else {
+            membersEl.innerHTML = '<div class="tm-members-empty">No accepted students for this project yet.<br>' +
+                                  'Accept student proposals on the <a href="proposal.php">Proposals</a> page first.</div>';
+        }
 
-        updateMembersState();
+        skills.set(pr.skills);   // start with the project's skills; the organization can edit them
+        refresh();
     });
 
-    membersEl.addEventListener('change', updateMembersState);
-    leaderEl.addEventListener('change', () => { err('leader', ''); leaderEl.classList.remove('invalid'); });
+    membersEl.addEventListener('change', e => {
+        const cb = e.target.closest('input[type="checkbox"]');
+        refresh();
+        if (cb && cb.checked) {
+            const role = cb.closest('.tm-mrow').querySelector('.tm-role-row input');
+            setTimeout(() => role.focus(), 0);
+        }
+    });
+    membersEl.addEventListener('input', e => { if (e.target.matches('.tm-role-row input')) { e.target.classList.remove('invalid'); err('members', ''); } });
+
+    leaderEl.addEventListener('change', () => {
+        err('leader', ''); leaderEl.classList.remove('invalid');
+        F.markLeader(membersEl, leaderEl.value);
+        // leader with an empty role -> "Team Leader"
+        const row = membersEl.querySelector(`.tm-mrow[data-value="${CSS.escape(leaderEl.value)}"]`);
+        const role = row && row.querySelector('.tm-role-row input');
+        if (role && !role.value.trim()) role.value = 'Team Leader';
+    });
     nameEl.addEventListener('input', () => { err('name', ''); nameEl.classList.remove('invalid'); });
+    deadlineEl.addEventListener('change', () => { err('deadline', ''); deadlineEl.classList.remove('invalid'); });
 
     form.addEventListener('submit', function (e) {
         let ok = true;
+        const pr = currentProject();
+        const picked = pickedRows();
 
         if (nameEl.value.trim() === '') { err('name', 'Please enter a team name.'); nameEl.classList.add('invalid'); ok = false; }
-        if (!currentProject())          { err('project', 'Please select a project.'); projectEl.classList.add('invalid'); ok = false; }
-        if (currentProject() && selectedMembers().length === 0) {
-            err('members', 'Please choose at least one member.'); membersEl.classList.add('invalid'); ok = false;
+        if (!pr) { err('project', 'Please select a project.'); projectEl.classList.add('invalid'); ok = false; }
+
+        if (pr && picked.length === 0) {
+            err('members', 'Please choose at least one student.'); membersEl.classList.add('invalid'); ok = false;
+        } else {
+            const noRole = picked.map(r => r.querySelector('.tm-role-row input')).filter(i => !i.value.trim());
+            noRole.forEach(i => i.classList.add('invalid'));
+            if (noRole.length) { err('members', 'Please give every selected student a role.'); ok = false; }
         }
-        if (selectedMembers().length && !leaderEl.value) {
+        if (picked.length && !leaderEl.value) {
             err('leader', 'Please choose a team leader.'); leaderEl.classList.add('invalid'); ok = false;
         }
 
-        if (!ok) e.preventDefault();
+        if (pr && !skills.get().length) {
+            err('skills', 'Please add at least one skill the team needs.'); document.getElementById('tmSkills').classList.add('invalid'); ok = false;
+        }
+
+        const dl = deadlineEl.value;
+        if (!dl) { err('deadline', 'Please pick a team deadline.'); deadlineEl.classList.add('invalid'); ok = false; }
+        else if (dl < TODAY) { err('deadline', 'The deadline can’t be in the past.'); deadlineEl.classList.add('invalid'); ok = false; }
+        else if (deadlineEl.max && dl > deadlineEl.max) { err('deadline', 'The team deadline can’t be after the project deadline.'); deadlineEl.classList.add('invalid'); ok = false; }
+
+        if (!ok) {
+            e.preventDefault();
+            const first = form.querySelector('.tm-err:not(:empty)');
+            if (first) first.closest('.tm-field').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
     });
 })();
 
@@ -1781,8 +2168,11 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
 
     function close() { modal.classList.remove('open'); }
 
-    document.querySelectorAll('[data-view-team]').forEach(b =>
-        b.addEventListener('click', () => open(Number(b.dataset.viewTeam))));
+    // works for buttons redrawn after a status change too
+    document.addEventListener('click', e => {
+        const b = e.target.closest('[data-view-team]');
+        if (b) open(Number(b.dataset.viewTeam));
+    });
     modal.querySelectorAll('[data-close-view]').forEach(b => b.addEventListener('click', close));
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
@@ -1941,7 +2331,6 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
         document.getElementById('twProject').textContent = team.project;
         document.getElementById('twTeamName').textContent = (team.displayName || team.name) + ' · ' + team.members.length + ' members';
         document.getElementById('twAvatars').innerHTML = team.members.slice(0, 5).map(m => av(m.name)).join('');
-        document.getElementById('twOnline').textContent = Math.max(1, Math.min(team.members.length, 3)) + ' online';
 
         memberFilter.innerHTML = '<option value="all">All members</option>' +
             team.members.map(m => `<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
@@ -1970,8 +2359,10 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
         window.scrollTo(0, listScroll);
     }
 
-    document.querySelectorAll('[data-work-team]').forEach(b =>
-        b.addEventListener('click', () => openWorkspace(Number(b.dataset.workTeam), b.dataset.workFocus)));
+    document.addEventListener('click', e => {
+        const b = e.target.closest('[data-work-team]');
+        if (b) openWorkspace(Number(b.dataset.workTeam), b.dataset.workFocus);
+    });
 
     document.getElementById('twBack').addEventListener('click', function () {
         if (history.state && history.state.teamWork !== undefined) history.back();
@@ -2232,6 +2623,7 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
                     'leader' => $t['leader'], 'leader_email' => $t['leader_email'] ?? null,
                     'member_emails' => $t['member_emails'] ?? [],
                     'deadline_raw' => $t['deadline_raw'] ?? '', 'deadline' => $t['deadline'],
+                    'skills' => $t['skills'], 'project_deadline_raw' => $t['project_deadline_raw'] ?? '',
                     'members' => array_map(fn($m) => ['name' => $m['name'], 'email' => strtolower($m['email'] ?? ''), 'role' => $m['role'], 'leader' => !empty($m['leader'])],
                                            $t['details']['members'] ?? []),
                   ], $teams)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
@@ -2257,6 +2649,30 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
             o.state ? { state: o.state, status: STATUS[o.state][0] } : {});
     };
 
+    // ---------- buttons at the bottom of a card (depend on the status) ----------
+    //   On Track -> View, Task, Chat | Behind Schedule -> View, Review, Chat | Completed -> View Final Report
+    const ACTIONS = {
+        ontrack:   ['View', 'Task', 'Chat'],
+        behind:    ['View', 'Review', 'Chat'],
+        completed: ['Final Report']
+    };
+    const ACTION_ICON = { 'View': 'visibility', 'Task': 'task_alt', 'Chat': 'chat_bubble', 'Review': 'rate_review', 'Final Report': 'description' };
+
+    function renderActions(card, i, state) {
+        const box = card.querySelector('.tm-actions');
+        if (!box) return;
+        const list = ACTIONS[state] || ACTIONS.ontrack;
+        box.classList.toggle('single', list.length === 1);
+        box.innerHTML = list.map((a, k) => {
+            const cls  = a === 'Final Report' ? 'report' : (k === 0 ? 'solid' : '');
+            const data = (a === 'View' || a === 'Final Report') ? `data-view-team="${i}"`
+                       : (a === 'Task' || a === 'Chat') ? `data-work-team="${i}" data-work-focus="${a === 'Chat' ? 'chat' : 'tasks'}"`
+                       : `data-review-team="${i}"`;
+            return `<button type="button" class="tm-btn ${cls}" ${data}>` +
+                   `<span class="material-symbols-outlined">${ACTION_ICON[a]}</span>${a === 'Final Report' ? 'View Final Report' : a}</button>`;
+        }).join('');
+    }
+
     // ---------- update a card on the page ----------
     function applyToCard(i) {
         const t = TEAMS[i];
@@ -2276,6 +2692,7 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
             const box = card.querySelector('.tm-progress');
             box.classList.remove('behind', 'completed');
             if (o.state !== 'ontrack') box.classList.add(o.state);
+            renderActions(card, i, o.state);
         }
 
         if (o.members) {
@@ -2283,7 +2700,7 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
             const leader = all.find(m => m.name === o.leader) || all[0];
             if (leader) {
                 card.querySelector('.tm-leader-name').textContent = leader.name;
-                card.querySelector('.tm-leader-role').textContent = leader.role;
+                card.querySelector('.tm-leader-role').textContent = (o.roles && o.roles[leader.name]) || leader.role;
                 const la = card.querySelector('.tm-leader .tm-av');
                 la.textContent = initials(leader.name);
                 la.style.background = colorFor(leader.name);
@@ -2292,6 +2709,20 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
             card.querySelector('.tm-stack').innerHTML =
                 others.slice(0, 3).map(m => `<div class="tm-av" title="${esc(m.name)}" style="background:${colorFor(m.name)};">${esc(initials(m.name))}</div>`).join('') +
                 (others.length > 3 ? `<div class="tm-av more">+${others.length - 3}</div>` : '');
+        }
+
+        if (o.skills) {
+            let box = card.querySelector('.tm-skills');
+            if (!box && o.skills.length) {
+                box = document.createElement('div');
+                box.className = 'tm-skills';
+                box.innerHTML = '<div class="tm-label">Skills Covered</div><div class="tm-chips"></div>';
+                card.querySelector('.tm-progress').before(box);
+            }
+            if (box) {
+                box.hidden = !o.skills.length;
+                box.querySelector('.tm-chips').innerHTML = o.skills.map(sk => `<span class="tm-chip">${esc(sk)}</span>`).join('');
+            }
         }
 
         if (o.deadline) {
@@ -2390,12 +2821,20 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
     document.addEventListener('click', closeMenus);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMenus(); });
 
-    // ---------- Edit Team ----------
+    // ---------- Edit Team (name, members + roles, leader, skills, deadline) ----------
+    const F = window.TMForm;
+    const TODAY = <?= json_encode(date('Y-m-d')) ?>;
     const editModal = document.getElementById('tmEditModal');
     const editForm  = document.getElementById('tmEditForm');
     const teMembers = document.getElementById('teMembers');
     const teLeader  = document.getElementById('teLeader');
-    let editing = -1, editMax = 1;
+    const teDeadline = document.getElementById('teDeadline');
+    const teSkillBox = document.getElementById('teSkills');
+    const teSkills  = F.tagInput(teSkillBox, document.getElementById('teSkillsValue'), document.getElementById('teSkillSuggest'),
+                                 list => { if (list.length) { document.getElementById('teErrSkills').textContent = ''; teSkillBox.classList.remove('invalid'); } });
+    let editing = -1, editMax = 1, editOldDeadline = '';
+
+    const teErr = (id, msg) => { document.getElementById(id).textContent = msg || ''; };
 
     function openEdit(i) {
         editing = i;
@@ -2404,70 +2843,91 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
         document.getElementById('teId').value = isDb(t) ? t.id : '';
         document.getElementById('teProject').textContent = 'Project: ' + t.project;
         document.getElementById('teName').value = o.name || t.name;
-        ['teErrName', 'teErrMembers', 'teErrLeader'].forEach(id => document.getElementById(id).textContent = '');
+        ['teErrName', 'teErrMembers', 'teErrLeader', 'teErrDeadline', 'teErrSkills'].forEach(id => teErr(id, ''));
+        editForm.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 
-        let people, checked, leaderVal;
+        let people, chosen = {}, leaderVal, suggest = [];
         if (isDb(t)) {
-            // students of the project + the current members
+            // accepted students of the project (free or in THIS team) + the current members
             const map = {};
-            (CANDIDATES[t.project_id] || []).forEach(c => map[c.email.toLowerCase()] = { value: c.email.toLowerCase(), name: c.name, sub: c.role || c.email });
-            t.members.forEach(m => map[m.email] = map[m.email] || { value: m.email, name: m.name, sub: m.role });
+            (CANDIDATES[t.project_id] || []).forEach(c => {
+                const other = c.team_id && c.team_id !== t.id;
+                map[c.email] = { value: c.email, name: c.name, sub: c.sub, skills: c.skills,
+                                 badge: other ? 'In ' + c.team : '', badgeClass: 'locked', locked: other ? 'Already in the team "' + c.team + '"' : '' };
+                suggest = suggest.concat(c.skills || []);
+            });
+            t.members.forEach(m => {
+                map[m.email] = Object.assign(map[m.email] || { value: m.email, name: m.name, sub: m.email }, { locked: '', badge: '' });
+                chosen[m.email] = m.role || '';
+            });
             people = Object.values(map);
-            checked = t.member_emails;
             leaderVal = t.leader_email;
-            editMax = Math.max(PROJECT_MAX[t.project_id] || 0, checked.length, 1);
-            document.getElementById('teDeadline').value = t.deadline_raw || '';
+            editMax = Math.max(PROJECT_MAX[t.project_id] || 0, t.member_emails.length, 1);
+            editOldDeadline = t.deadline_raw || '';
+            teDeadline.value = editOldDeadline;
         } else {
             people = t.members.map(m => ({ value: m.name, name: m.name, sub: m.role }));
-            checked = o.members || t.members.map(m => m.name);
+            const names = o.members || t.members.map(m => m.name);
+            names.forEach(n => { chosen[n] = (o.roles && o.roles[n]) || (t.members.find(m => m.name === n) || {}).role || ''; });
             leaderVal = o.leader || (t.members.find(m => m.leader) || {}).name;
             editMax = t.members.length;
-            document.getElementById('teDeadline').value = o.deadline || '';
+            editOldDeadline = '';
+            teDeadline.value = o.deadline || '';
         }
 
-        teMembers.innerHTML = people.map(p => `
-            <label class="tm-member">
-                <input type="checkbox" name="members[]" value="${esc(p.value)}" data-name="${esc(p.name)}" ${checked.includes(p.value) ? 'checked' : ''}>
-                <span class="tm-av" style="background:${colorFor(p.name)};">${esc(initials(p.name))}</span>
-                <span class="tm-member-info"><span class="tm-member-name">${esc(p.name)}</span><br><span class="tm-member-sub">${esc(p.sub || '')}</span></span>
-            </label>`).join('') || '<div class="tm-members-empty">No students available.</div>';
+        // deadline: today ... project deadline (the current deadline can always be kept)
+        teDeadline.min = editOldDeadline && editOldDeadline < TODAY ? editOldDeadline : TODAY;
+        teDeadline.max = t.project_deadline_raw && t.project_deadline_raw >= TODAY ? t.project_deadline_raw : '';
 
-        refreshLeader(leaderVal);
+        if (people.length) F.renderMembers(teMembers, people, chosen);
+        else teMembers.innerHTML = '<div class="tm-members-empty">No students available.</div>';
+
+        teLeader.value = '';
+        F.syncMembers(teMembers, teLeader, editMax, document.getElementById('tePicked'));
+        teLeader.value = leaderVal || '';
+        F.markLeader(teMembers, teLeader.value);
+
+        teSkills.set(o.skills || t.skills || []);
+        teSkills.suggest(suggest);
         editModal.classList.add('open');
     }
 
-    function refreshLeader(keep) {
-        const picked = Array.from(teMembers.querySelectorAll('input:checked'));
-        document.getElementById('tePicked').textContent = picked.length + ' / ' + editMax + ' selected';
-        teMembers.querySelectorAll('.tm-member').forEach(row => {
-            const cb = row.querySelector('input');
-            const lock = !cb.checked && picked.length >= editMax;
-            cb.disabled = lock; row.classList.toggle('disabled', lock);
-        });
-        const want = keep !== undefined ? keep : teLeader.value;
-        teLeader.innerHTML = '<option value="">Select the leader</option>' +
-            picked.map(cb => `<option value="${esc(cb.value)}">${esc(cb.dataset.name)}</option>`).join('');
-        if (picked.some(cb => cb.value === want)) teLeader.value = want;
-    }
-    teMembers.addEventListener('change', () => refreshLeader());
+    teMembers.addEventListener('change', e => {
+        F.syncMembers(teMembers, teLeader, editMax, document.getElementById('tePicked'));
+        const cb = e.target.closest('input[type="checkbox"]');
+        if (cb && cb.checked) setTimeout(() => cb.closest('.tm-mrow').querySelector('.tm-role-row input').focus(), 0);
+    });
+    teMembers.addEventListener('input', e => { if (e.target.matches('.tm-role-row input')) e.target.classList.remove('invalid'); });
+    teLeader.addEventListener('change', () => { teErr('teErrLeader', ''); F.markLeader(teMembers, teLeader.value); });
 
     editModal.querySelectorAll('[data-close-edit]').forEach(b => b.addEventListener('click', () => editModal.classList.remove('open')));
     editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.remove('open'); });
 
     editForm.addEventListener('submit', function (e) {
         const name = document.getElementById('teName').value.trim();
-        const picked = Array.from(teMembers.querySelectorAll('input:checked'));
+        const picked = Array.from(teMembers.querySelectorAll('.tm-mrow')).filter(r => r.querySelector('input[type="checkbox"]').checked);
+        const dl = teDeadline.value;
         let ok = true;
-        if (!name) { document.getElementById('teErrName').textContent = 'Please enter a team name.'; ok = false; }
-        if (!picked.length) { document.getElementById('teErrMembers').textContent = 'Keep at least one member.'; ok = false; }
-        if (picked.length && !teLeader.value) { document.getElementById('teErrLeader').textContent = 'Please choose a team leader.'; ok = false; }
+
+        if (!name) { teErr('teErrName', 'Please enter a team name.'); ok = false; }
+        if (!picked.length) { teErr('teErrMembers', 'Keep at least one member.'); ok = false; }
+        const noRole = picked.map(r => r.querySelector('.tm-role-row input')).filter(inp => !inp.value.trim());
+        noRole.forEach(inp => inp.classList.add('invalid'));
+        if (noRole.length) { teErr('teErrMembers', 'Please give every member a role.'); ok = false; }
+        if (picked.length && !teLeader.value) { teErr('teErrLeader', 'Please choose a team leader.'); ok = false; }
+        if (!teSkills.get().length) { teErr('teErrSkills', 'Please add at least one skill.'); teSkillBox.classList.add('invalid'); ok = false; }
+        if (!dl) { teErr('teErrDeadline', 'Please pick a team deadline.'); ok = false; }
+        else if (dl !== editOldDeadline && dl < TODAY) { teErr('teErrDeadline', 'The deadline can’t be in the past.'); ok = false; }
+        else if (dl !== editOldDeadline && teDeadline.max && dl > teDeadline.max) { teErr('teErrDeadline', 'The team deadline can’t be after the project deadline.'); ok = false; }
         if (!ok) { e.preventDefault(); return; }
 
         if (!isDb(TEAMS[editing])) {          // demo team -> save in the browser
             e.preventDefault();
+            const roles = {};
+            picked.forEach(r => { roles[r.dataset.value] = r.querySelector('.tm-role-row input').value.trim(); });
             demoSave(editing, {
-                name: name, leader: teLeader.value, members: picked.map(cb => cb.value),
-                deadline: document.getElementById('teDeadline').value || undefined
+                name: name, leader: teLeader.value, members: picked.map(r => r.dataset.value), roles: roles,
+                skills: teSkills.get(), deadline: dl || undefined
             }, 'Team updated');
             editModal.classList.remove('open');
         }
@@ -2677,8 +3137,10 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
 
     function close() { modal.classList.remove('open'); }
 
-    document.querySelectorAll('[data-review-team]').forEach(b =>
-        b.addEventListener('click', () => open(Number(b.dataset.reviewTeam))));
+    document.addEventListener('click', e => {
+        const b = e.target.closest('[data-review-team]');
+        if (b) open(Number(b.dataset.reviewTeam));
+    });
     modal.querySelectorAll('[data-close-review]').forEach(b => b.addEventListener('click', close));
     modal.addEventListener('click', e => { if (e.target === modal) close(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
@@ -2686,6 +3148,36 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
         close();
         if (window.tmOpenWorkspace) window.tmOpenWorkspace(current, 'tasks');
     });
+})();
+
+
+/* =================================================================
+   OPENED FROM A NOTIFICATION
+   teams.php?team=Vortex%20Group&open=review   (open = view | review | tasks | chat)
+================================================================= */
+(function () {
+    const q = new URLSearchParams(location.search);
+    const name = (q.get('team') || '').trim().toLowerCase();
+    if (!name) return;
+    const open = q.get('open') || 'view';
+    history.replaceState(null, '', location.pathname);
+
+    const card = document.querySelector('.tm-card[data-team-name="' + CSS.escape(name) + '"]');
+    if (!card) return;
+    const i = Number(card.dataset.teamIndex);
+
+    if ((open === 'tasks' || open === 'chat') && window.tmOpenWorkspace) {
+        window.tmOpenWorkspace(i, open);
+        return;
+    }
+    card.scrollIntoView({ block: 'center' });
+    card.style.transition = 'box-shadow .3s ease';
+    card.style.boxShadow = '0 0 0 3px rgba(59,130,246,.45)';
+    setTimeout(() => card.style.boxShadow = '', 2500);
+
+    // Review only exists for Behind Schedule teams -> otherwise show the details
+    const btn = (open === 'review' && card.querySelector('[data-review-team]')) || card.querySelector('[data-view-team]');
+    if (btn) btn.click();
 })();
 
 
