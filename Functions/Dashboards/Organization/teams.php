@@ -1393,6 +1393,24 @@ include "../../../Includes/dash_header.php";
         </div>
     </section>
 
+    <!-- Confirm popup (remove file / delete task) -->
+    <div class="tm-overlay" id="twConfirmModal">
+        <div class="tm-modal" style="width:min(420px,100%);" role="alertdialog" aria-modal="true" aria-labelledby="twcTitle">
+            <div class="tm-modal-body" style="text-align:center; padding:28px 26px 10px;">
+                <div class="tm-del-icon"><span class="material-symbols-outlined" id="twcIcon">delete</span></div>
+                <h3 id="twcTitle" style="margin:14px 0 6px; font-size:19px; color:#111827;"></h3>
+                <p style="margin:0; font-size:14px; color:#4b5563; line-height:1.6;">
+                    <strong id="twcName" style="color:#111827; word-break:break-word;"></strong><br>
+                    <span id="twcText"></span>
+                </p>
+            </div>
+            <div class="tm-modal-foot" style="justify-content:center; border-top:none;">
+                <button type="button" class="tm-btn" id="twcCancel">Cancel</button>
+                <button type="button" class="tm-btn tm-btn-danger" id="twcOk"><span class="material-symbols-outlined">delete</span><span id="twcOkText">Remove</span></button>
+            </div>
+        </div>
+    </div>
+
     <!-- New Task popup -->
     <div class="tm-overlay" id="twTaskModal">
         <form class="tm-modal" id="twTaskForm" style="width:min(520px,100%);" novalidate>
@@ -2484,8 +2502,12 @@ window.TMForm = (function () {
             ev.stopPropagation();
             const mv = ev.target.closest('[data-move]');
             if (mv) moveTask(id, mv.dataset.move);
-            if (ev.target.closest('[data-del]') && confirm('Delete this task?')) {
-                tasks = tasks.filter(x => x.id !== id); save(taskKey(), tasks); renderBoard();
+            if (ev.target.closest('[data-del]')) {
+                board.querySelectorAll('.tw-menu').forEach(mn => mn.remove());
+                askConfirm({ title: 'Delete this task?', name: t.title,
+                             text: 'It will be removed from the Kanban board.', ok: 'Delete Task' }, () => {
+                    tasks = tasks.filter(x => x.id !== id); save(taskKey(), tasks); renderBoard();
+                });
             }
         });
         k.closest('.tw-card').appendChild(menu);
@@ -2579,14 +2601,36 @@ window.TMForm = (function () {
     ['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
     drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
 
+    // Nice confirm popup instead of the browser's confirm()
+    function askConfirm(opts, onYes) {
+        const m = document.getElementById('twConfirmModal');
+        document.getElementById('twcTitle').textContent = opts.title;
+        document.getElementById('twcName').textContent = opts.name || '';
+        document.getElementById('twcText').textContent = opts.text || '';
+        document.getElementById('twcOkText').textContent = opts.ok || 'Remove';
+        const ok = document.getElementById('twcOk'), cancel = document.getElementById('twcCancel');
+        const close = () => { m.classList.remove('open'); ok.onclick = cancel.onclick = m.onclick = null; document.removeEventListener('keydown', onKey); };
+        const onKey = ev => { if (ev.key === 'Escape') close(); };
+        ok.onclick = () => { close(); onYes(); };
+        cancel.onclick = close;
+        m.onclick = ev => { if (ev.target === m) close(); };
+        document.addEventListener('keydown', onKey);
+        m.classList.add('open');
+        setTimeout(() => cancel.focus(), 30);
+    }
+
     document.getElementById('twFiles').addEventListener('click', e => {
         const o = e.target.closest('[data-open-file]');
         if (o && fileUrls[o.dataset.openFile]) window.open(fileUrls[o.dataset.openFile], '_blank');
         const d = e.target.closest('[data-del-file]');
-        if (d && confirm('Remove this file?')) {
-            files = files.filter(f => f.id !== d.dataset.delFile);
-            save(fileKey(), files);
-            renderFiles();
+        if (d) {
+            const f = files.find(x => x.id === d.dataset.delFile);
+            askConfirm({ title: 'Remove this file?', name: f ? f.name : '',
+                         text: 'It will be removed from the team’s shared assets.', ok: 'Remove File' }, () => {
+                files = files.filter(x => x.id !== d.dataset.delFile);
+                save(fileKey(), files);
+                renderFiles();
+            });
         }
     });
 
