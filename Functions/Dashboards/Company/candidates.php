@@ -132,23 +132,23 @@ include '../../../Includes/dash_header.php';
                     <div class="academic-grid">
 
                         <div class="academic-item">
-                            <span>GPA</span>
-                            <strong>3.92 / 4.0</strong>
+                            <span>Academic Year</span>
+                            <strong>4th Year</strong>
                         </div>
 
                         <div class="academic-item">
                             <span>Projects</span>
-                            <strong>14 Active</strong>
+                            <strong>2 Projects</strong>
                         </div>
 
                         <div class="academic-item">
                             <span>Certificates</span>
-                            <strong>8 Earned</strong>
+                            <strong>2 Earned</strong>
                         </div>
 
                         <div class="academic-item">
-                            <span>Awards</span>
-                            <strong>Dean's List</strong>
+                            <span>Degree</span>
+                            <strong>B.S. in Computer Science</strong>
                         </div>
 
                     </div>

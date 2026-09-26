@@ -1265,3 +1265,258 @@ body.internship-modal-open {
     box-shadow: 0 14px 30px rgba(9, 39, 70, 0.13);
     border-color: #d8e1ec;
 }
+
+/* =========================================================
+   PROFESSIONAL POST / EDIT INTERNSHIP FORM
+========================================================= */
+
+.internship-modal__panel {
+    width: min(900px, 100%);
+    max-height: calc(100vh - 48px);
+
+    overflow-y: auto;
+    overflow-x: hidden;
+
+    /* Scroll works, scrollbar hidden */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.internship-modal__panel::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
+}
+
+
+/* =========================
+   FORM SECTIONS
+========================= */
+
+.internship-form-section {
+    padding-bottom: 24px;
+    margin-bottom: 24px;
+
+    border-bottom: 1px solid #e8edf3;
+}
+
+.internship-form-section:last-of-type {
+    margin-bottom: 0;
+}
+
+.internship-form-section h3 {
+    margin: 0 0 18px;
+
+    color: #102d58;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+
+/* =========================
+   FORM GRID
+========================= */
+
+.internship-modal .form-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+
+    gap: 18px 20px;
+}
+
+.internship-modal .form-group {
+    min-width: 0;
+}
+
+.internship-modal .form-group.full {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================
+   INPUT HELP TEXT
+========================= */
+
+.internship-modal .form-group small {
+    margin-top: 1px;
+
+    color: #7a8494;
+
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+
+/* =========================
+   FILE INPUT
+========================= */
+
+.internship-modal
+.form-group
+input[type="file"] {
+
+    min-height: 48px;
+
+    padding: 9px 11px;
+
+    background: #f9fbfd;
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   DATE INPUT
+========================= */
+
+.internship-modal
+.form-group
+input[type="date"] {
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   SELECT
+========================= */
+
+.internship-modal
+.form-group
+select {
+
+    cursor: pointer;
+}
+
+
+/* =========================
+   TEXTAREA
+========================= */
+
+.internship-modal
+.form-group
+textarea {
+
+    min-height: 120px;
+
+    line-height: 1.55;
+
+    resize: vertical;
+}
+
+
+/* =========================
+   DISABLED FIELD
+========================= */
+
+.internship-modal
+.form-group
+input:disabled {
+
+    background: #f1f4f8;
+
+    color: #98a2b3;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================
+   FORM ACTION AREA
+========================= */
+
+.internship-modal .form-actions {
+    position: sticky;
+
+    bottom: -30px;
+
+    z-index: 3;
+
+    margin:
+        0
+        -30px
+        -30px;
+
+    padding:
+        18px
+        30px;
+
+    background: #ffffff;
+
+    border-top:
+        1px solid #e8edf3;
+}
+
+
+/* =========================
+   BUTTON ICON
+========================= */
+
+.internship-modal
+.primary-btn
+.material-symbols-outlined {
+
+    margin-right: 7px;
+
+    font-size: 18px;
+}
+
+
+/* =========================
+   MOBILE / TABLET
+========================= */
+
+@media (max-width: 850px) {
+
+    .internship-modal__panel {
+        width: min(760px, 100%);
+    }
+
+}
+
+
+@media (max-width: 650px) {
+
+    .internship-modal .form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .internship-modal
+    .form-group.full {
+
+        grid-column: auto;
+    }
+
+}
+
+
+@media (max-width: 560px) {
+
+    .internship-modal__panel {
+        max-height: 92vh;
+    }
+
+    .internship-form-section {
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+    }
+
+    .internship-modal
+    .form-actions {
+
+        bottom: -24px;
+
+        margin:
+            0
+            -18px
+            -24px;
+
+        padding:
+            16px
+            18px;
+    }
+
+}

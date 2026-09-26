@@ -13,9 +13,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const editModal =
         document.getElementById("editInterviewModal");
 
-    const scheduleButton =
-        document.getElementById("openScheduleInterviewModal");
-
     const scheduleForm =
         document.getElementById("scheduleInterviewForm");
 
@@ -87,18 +84,27 @@ document.addEventListener("DOMContentLoaded", function () {
        SCHEDULE INTERVIEW
     ========================================================= */
 
-    if (scheduleButton) {
+    document.querySelectorAll(".schedule-row-interview-btn").forEach(function (button) {
 
-        scheduleButton.addEventListener(
-            "click",
-            function () {
+        button.addEventListener("click", function () {
 
-                openModal(scheduleModal);
+            const row = button.closest(".interview-row");
 
+            if (!row) {
+                return;
             }
-        );
 
-    }
+            document.getElementById("scheduleCandidate").value =
+                row.dataset.student || "";
+
+            document.getElementById("scheduleInternship").value =
+                row.dataset.internship || "";
+
+            openModal(scheduleModal);
+
+        });
+
+    });
 
 
     /* =========================================================
