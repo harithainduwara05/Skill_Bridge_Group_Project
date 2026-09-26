@@ -240,8 +240,8 @@ CREATE TABLE `notifications` (
 
 INSERT INTO `notifications` (`notification_id`, `Email`, `title`, `message`, `type`, `status`, `created_at`) VALUES
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 'Application Shortlisted', 'Congratulations! Your application for UI/UX Designer Intern has been shortlisted.', 'application', 'Read', '2026-08-26 04:30:00'),
-(2, '2024is058@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project "Smart Campus Energy Monitor".', 'project', 'Unread', '2026-09-01 09:00:00'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Application Accepted', 'Global Retail has accepted your application for Backend Developer Intern!', 'application', 'Read', '2026-08-24 10:50:00'),
+(2, '2024is078@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project "Smart Campus Energy Monitor".', 'project', 'Unread', '2026-09-01 09:00:00'),
+(3, '2024is078@stu.ucsc.cmb.ac.lk', 'Application Accepted', 'Global Retail has accepted your application for Backend Developer Intern!', 'application', 'Read', '2026-08-24 10:50:00'),
 (4, 'hr@company.com', 'New Candidate Application', 'Haritha Induwara has applied for the Mobile Application Developer Intern position.', 'candidate', 'Unread', '2026-08-29 03:45:00'),
 (5, 'careers@virtusa.com', 'Profile Verification Complete', 'Your company profile has been verified by SkillBridge Administration.', 'system', 'Read', '2026-08-21 05:30:00'),
 (6, 'skillbridge62@gmail.com', 'New Organization Registration', 'Organization "IEEE Student Branch UCSC" has registered and is pending review.', 'admin', 'Unread', '2026-09-02 03:15:00');
@@ -301,9 +301,9 @@ CREATE TABLE `portfolio` (
 INSERT INTO `portfolio` (`portfolio_id`, `Email`, `title`, `description`, `project_link`, `image`) VALUES
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 'SkillBridge Platform', 'Modern role-based internship matching and student portfolio management system built with PHP and MySQL.', 'https://github.com/harithainduwara/Skill_Bridge', 'portfolio_skillbridge.png'),
 (2, '2024is058@stu.ucsc.cmb.ac.lk', 'E-Commerce Microservices', 'High-performance microservices backend with product catalog, cart, and payment gateway integration.', 'https://github.com/harithainduwara/ecommerce-microservices', 'portfolio_ecommerce.png'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Skin Disease Detection with CNN', 'Deep learning mobile application that detects dermatological conditions from camera photos using Flutter and PyTorch.', 'https://github.com/kavinduperera/skin-disease-ai', 'portfolio_skindisease.png'),
-(4, '2024is015@stu.ucsc.cmb.ac.lk', 'FinTech Digital Wallet UI/UX', 'Complete UX research, wireframing, design tokens, and interactive Figma prototyping for digital wallet application.', 'https://www.behance.net/gallery/fintech-app-redesign', 'portfolio_fintech.png'),
-(5, '2024is032@stu.ucsc.cmb.ac.lk', 'Automated Network Security Scanner', 'Python CLI tool for security audits, port scanning, and CVE reporting using Nmap and Shodan APIs.', 'https://github.com/sahanw/vuln-scanner', 'portfolio_scanner.png'),
+(3, '2024is078@stu.ucsc.cmb.ac.lk', 'Skin Disease Detection with CNN', 'Deep learning mobile application that detects dermatological conditions from camera photos using Flutter and PyTorch.', 'https://github.com/kavinduperera/skin-disease-ai', 'portfolio_skindisease.png'),
+(4, '2024is078@stu.ucsc.cmb.ac.lk', 'FinTech Digital Wallet UI/UX', 'Complete UX research, wireframing, design tokens, and interactive Figma prototyping for digital wallet application.', 'https://www.behance.net/gallery/fintech-app-redesign', 'portfolio_fintech.png'),
+(5, '2024is078@stu.ucsc.cmb.ac.lk', 'Automated Network Security Scanner', 'Python CLI tool for security audits, port scanning, and CVE reporting using Nmap and Shodan APIs.', 'https://github.com/sahanw/vuln-scanner', 'portfolio_scanner.png'),
 (6, '2024is044@stu.ucsc.cmb.ac.lk', 'Real-Time Kubernetes Analytics Dashboard', 'Kubernetes-deployed dashboard visualizing live streaming server metrics using React, Kafka, and Grafana.', 'https://github.com/dinithij/k8s-analytics-dashboard', 'portfolio_k8s.png');
 
 -- --------------------------------------------------------
@@ -446,9 +446,9 @@ CREATE TABLE `student_projects` (
 INSERT INTO `student_projects` (`student_project_id`, `Email`, `project_id`, `role`, `progress`, `status`) VALUES
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 1, 'Full-Stack Developer', 60, 'In Progress'),
 (2, '2024is058@stu.ucsc.cmb.ac.lk', 4, 'Backend Lead', 85, 'In Progress'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 1, 'ML Model Engineer', 75, 'In Progress'),
-(4, '2024is001@stu.ucsc.cmb.ac.lk', 3, 'Firmware Developer', 40, 'In Progress'),
-(5, '2024is015@stu.ucsc.cmb.ac.lk', 2, 'Lead UI Designer', 90, 'Completed'),
+(3, '2024is078@stu.ucsc.cmb.ac.lk', 1, 'ML Model Engineer', 75, 'In Progress'),
+(4, '2024is078@stu.ucsc.cmb.ac.lk', 3, 'Firmware Developer', 40, 'In Progress'),
+(5, '2024is078@stu.ucsc.cmb.ac.lk', 2, 'Lead UI Designer', 90, 'Completed'),
 (6, '2024is032@stu.ucsc.cmb.ac.lk', 3, 'Network & Security Lead', 35, 'In Progress'),
 (7, '2024is044@stu.ucsc.cmb.ac.lk', 5, 'Backend & DevOps Engineer', 50, 'In Progress');
 
