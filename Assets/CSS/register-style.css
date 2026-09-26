@@ -25,7 +25,8 @@ body::-webkit-scrollbar,
   position: relative;
   overflow: hidden;
 }
-.side-panel .brand { display: flex; align-items: center; margin-bottom: 50px; }
+.side-panel .brand { display: flex; align-items: center; margin-bottom: 50px; text-decoration: none; cursor: pointer; width: fit-content; transition: transform 0.2s ease, opacity 0.2s ease; }
+.side-panel .brand:hover { transform: translateY(-2px); opacity: 0.95; }
 .brand-logo { height: 140px; width: auto; }
 .side-panel h1 { font-size: 32px; line-height: 1.25; margin-bottom: 16px; }
 .side-panel p { color: #cfe0f0; max-width: 380px; line-height: 1.5; }

@@ -210,9 +210,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillBridge - Login</title>
-    <link rel="stylesheet" href="../Assets/CSS/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../Assets/CSS/login.css?v=<?= time() ?>">
 </head>
 
 <body>
@@ -220,10 +221,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
         <div class="login-container">
             <!-- Left Side: Form -->
             <div class="login-left">
-                <div class="logo-container">
+                <a href="../index.php" class="logo-container" title="Back to SkillBridge Home" style="text-decoration:none;">
                     <img src="../Assets/Images/logoLog.png" alt="SkillBridge Logo" class="logo-icon">
                     <span class="logo-text">Skill</span>
-                </div>
+                </a>
 
                 <h1 class="welcome-title">Welcome Back</h1>
                 <p class="welcome-subtitle">Bridge the gap between learning and career success.</p>
@@ -278,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
                             <input type="checkbox" name="remember">
                             <span>Remember me</span>
                         </label>
-                        <a href="javascript:void(0);" id="forgotPasswordBtn" class="forgot-password">Forgot Password / First-Time Setup?</a>
+                        <a href="javascript:void(0);" id="forgotPasswordBtn" class="forgot-password">Forgot Password?</a>
                     </div>
 
                     <button type="submit" class="submit-btn">
@@ -303,15 +304,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
                 </div>
 
                 <h2 class="right-title">Master the Skills That<br>Industry Demands</h2>
+                <p class="right-subtitle">Bridge the gap between academic learning and real-<br>world industry experience with certified skill projects,<br>mentorship, and career pathways.</p>
 
-                <div class="demo-accounts">
-                    <p class="demo-title">Demo Accounts:</p>
-                    <ul class="demo-list">
-                        <li><strong>Admin :</strong> admin@skillbridge.com / admin123</li>
-                        <li><strong>Student :</strong> student1@uni.edu / student123</li>
-                        <li><strong>Organization :</strong> contact@organization.edu / org123</li>
-                        <li><strong>Company :</strong> hr@company.com / comp123</li>
-                    </ul>
+                <div class="right-features">
+                    <div class="features-row">
+                        <span class="feature-tag">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#f58220" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg>
+                            Verified Academia
+                        </span>
+                        <span class="feature-tag">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                            Real Projects
+                        </span>
+                    </div>
+                    <div class="features-row">
+                        <span class="feature-tag">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#facc15" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                            Certified Skills
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
