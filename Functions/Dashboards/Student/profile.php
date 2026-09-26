@@ -523,24 +523,25 @@ function previewImage(event){
 // SHARE PROFILE
 function shareProfile(){
 
-    navigator.clipboard.writeText(window.location.href)
-    .then(()=>{
+    const email = "<?= htmlspecialchars($student['Email']); ?>";
+    const profileURL = 
+    window.location.origin +
+    "Functions/Dashboards/Student/public_profile.php?email=" 
+    + encodeURIComponent(email);
 
+    navigator.clipboard.writeText(profileURL)
+    .then(()=>{
         showToast(
-            "Profile link copied successfully!",
+            "Public profile link copied successfully!",
             "success"
         );
-
     })
     .catch(()=>{
-
         showToast(
             "Failed to copy profile link.",
             "error"
         );
-
     });
-
 }
 
 function showToast(message,type){

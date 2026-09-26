@@ -488,33 +488,6 @@ $page_title = 'Applications';
 
     </section>
 
-
-    <!-- RECRUITMENT TIP -->
-    <section class="recruitment-tip">
-
-        <div class="tip-icon">
-            <span class="material-symbols-outlined">
-                lightbulb
-            </span>
-        </div>
-
-        <div>
-            <h3>Recruitment Tip</h3>
-
-            <p>
-                Students from Stanford University currently have a
-                15% higher retention rate in the UI/UX program.
-                Consider reviewing their portfolios first for the
-                upcoming Winter Cohort.
-            </p>
-
-            <button type="button">
-                View Cohort Analytics →
-            </button>
-        </div>
-
-    </section>
-
     <?php include '../../../Includes/company_dashboard_footer.php'; ?>
 </main>
 

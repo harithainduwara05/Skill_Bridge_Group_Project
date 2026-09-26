@@ -272,6 +272,10 @@
     min-width: 0;
 }
 
+.recent-internships-section {
+    margin-top: 28px;
+}
+
 /* ============================================
    CARD CONTAINER COMPONENT
    ============================================ */
