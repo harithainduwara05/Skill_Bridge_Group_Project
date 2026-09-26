@@ -62,8 +62,11 @@ function initProjectManagement() {
                 projectOrg.includes(searchTerm) ||
                 projectSkills.includes(searchTerm);
 
-            // Match status
-            const matchesStatus = (selectedStatus === 'all') || (projectStatus === selectedStatus);
+            // Match status (supports 'completed' and legacy 'close')
+            const matchesStatus = (selectedStatus === 'all') || 
+                (projectStatus === selectedStatus) ||
+                (selectedStatus === 'completed' && (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete')) ||
+                (selectedStatus === 'close' && (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete'));
 
             // Match type/category
             const matchesType = (selectedType === 'all') || (projectCategory.includes(selectedType));
@@ -188,8 +191,8 @@ function initProjectManagement() {
                 statusPill = `<span class="pm-status-pill status-active">Active</span>`;
             } else if (status === 'Hold') {
                 statusPill = `<span class="pm-status-pill status-hold"><span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (7d left)</span>`;
-            } else if (status === 'Close') {
-                statusPill = `<span class="pm-status-pill status-close">Close</span>`;
+            } else if (status === 'Completed' || status === 'Close' || status === 'Complete') {
+                statusPill = `<span class="pm-status-pill status-completed">Completed</span>`;
             } else if (status === 'Review') {
                 statusPill = `<span class="pm-status-pill status-review">Review</span>`;
             } else if (status === 'Rejected') {
@@ -329,9 +332,9 @@ function initProjectManagement() {
             } else if (status === 'Hold') {
                 statusEl.innerHTML = `<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (${holdDays}d left)`;
                 statusEl.classList.add('status-hold');
-            } else if (status === 'Close') {
-                statusEl.textContent = 'Close';
-                statusEl.classList.add('status-close');
+            } else if (status === 'Completed' || status === 'Close' || status === 'Complete') {
+                statusEl.textContent = 'Completed';
+                statusEl.classList.add('status-completed');
             } else if (status === 'Review') {
                 statusEl.textContent = 'Review';
                 statusEl.classList.add('status-review');
@@ -406,10 +409,10 @@ function initProjectManagement() {
                         <span style="font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">TERMINAL STATE</span>
                     </div>
                 `;
-            } else if (status === 'Close') {
+            } else if (status === 'Completed' || status === 'Close' || status === 'Complete') {
                 actionControls.innerHTML = `
                     <div style="font-size: 12.5px; color: #64748b; font-style: italic;">
-                        This project was closed by the owner or institution. No active moderation needed.
+                        This project has been completed. No active moderation needed.
                     </div>
                 `;
             }

@@ -61,7 +61,7 @@ include "../../../Includes/dash_header.php";
             <!-- Card 2: Active Projects -->
             <div class="pm-stat-card">
                 <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-orange">
+                    <div class="pm-stat-icon icon-green">
                         <span class="material-symbols-outlined">bolt</span>
                     </div>
                     <span class="pm-stat-trend trend-green">
@@ -74,34 +74,34 @@ include "../../../Includes/dash_header.php";
                 </div>
             </div>
 
-            <!-- Card 3: Under Review -->
+            <!-- Card 3: Reviewing -->
             <div class="pm-stat-card">
                 <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-pink">
+                    <div class="pm-stat-icon icon-blue">
                         <span class="material-symbols-outlined">rate_review</span>
                     </div>
-                    <span class="pm-stat-trend badge-new">
-                        ! Review
+                    <span class="pm-stat-trend badge-review">
+                        Reviewing
                     </span>
                 </div>
                 <div class="pm-stat-details">
-                    <div class="pm-stat-label">Under Review</div>
+                    <div class="pm-stat-label">Reviewing</div>
                     <div class="pm-stat-value">86</div>
                 </div>
             </div>
 
-            <!-- Card 4: Closed Projects -->
+            <!-- Card 4: Completed Projects -->
             <div class="pm-stat-card">
                 <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-blue">
-                        <span class="material-symbols-outlined">cancel</span>
+                    <div class="pm-stat-icon icon-gray">
+                        <span class="material-symbols-outlined">task_alt</span>
                     </div>
-                    <span class="pm-stat-trend trend-blue">
+                    <span class="pm-stat-trend trend-gray">
                         <span class="material-symbols-outlined" style="font-size:14px;">trending_up</span> 24%
                     </span>
                 </div>
                 <div class="pm-stat-details">
-                    <div class="pm-stat-label">Closed Projects</div>
+                    <div class="pm-stat-label">Completed Projects</div>
                     <div class="pm-stat-value">479</div>
                 </div>
             </div>
@@ -121,13 +121,13 @@ include "../../../Includes/dash_header.php";
                         <input type="text" id="pmSearchInput" class="pm-search-input" placeholder="Search projects...">
                     </div>
 
-                    <!-- Project Status Filter (Active, Hold, Close, Review, Rejected) -->
+                    <!-- Project Status Filter (Active, Hold, Completed, Review, Rejected) -->
                     <div class="pm-select-wrap">
                         <select id="pmStatusFilter" class="pm-select" aria-label="Filter by Project Status">
                             <option value="all">Project Status</option>
                             <option value="active">Active</option>
                             <option value="hold">Hold</option>
-                            <option value="close">Close</option>
+                            <option value="completed">Completed</option>
                             <option value="review">Review</option>
                             <option value="rejected">Rejected</option>
                         </select>
@@ -272,13 +272,13 @@ include "../../../Includes/dash_header.php";
                             </td>
                         </tr>
 
-                        <!-- Row 3: Mobile Banking Application (Close) -->
+                        <!-- Row 3: Mobile Banking Application (Completed) -->
                         <tr class="pm-data-row" 
                             data-id="#PR003" 
                             data-title="Mobile Banking Application" 
                             data-category="FinTech" 
                             data-org="Tech Solutions" 
-                            data-status="Close" 
+                            data-status="Completed" 
                             data-skills="Flutter Firebase">
                             <td class="pm-project-id">#PR003</td>
                             <td>
@@ -306,7 +306,7 @@ include "../../../Includes/dash_header.php";
                                 </div>
                             </td>
                             <td>
-                                <span class="pm-status-pill status-close">Close</span>
+                                <span class="pm-status-pill status-completed">Completed</span>
                             </td>
                             <td class="pm-created-date">25 June 2026</td>
                             <td class="pm-actions-cell">
@@ -477,7 +477,7 @@ include "../../../Includes/dash_header.php";
                         <select id="pmInputStatus" class="pm-form-control">
                             <option value="Active" selected>Active</option>
                             <option value="Review">Review</option>
-                            <option value="Close">Close</option>
+                            <option value="Completed">Completed</option>
                             <option value="Rejected">Rejected</option>
                         </select>
                     </div>
@@ -810,7 +810,7 @@ include "../../../Includes/dash_header.php";
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
     <div class="footer-links">
-        <a href="#">Help Center</a>
+        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
         <a href="#">Privacy Policy</a>
         <a href="#">Terms of Service</a>
     </div>
