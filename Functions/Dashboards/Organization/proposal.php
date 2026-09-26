@@ -148,6 +148,49 @@ function prFetchAll(mysqli $conn, string $sql, string $email): array
     }
 }
 
+/*
+| Demo proposals are written for sample project names. So that they work for
+| ANY organization (and the students can be put into a team), each proposal
+| is linked to one of the logged-in organization's own projects:
+|   - same title -> that project
+|   - otherwise  -> the organization's open / active projects, in turn
+*/
+$prOrgProjects = [];
+try {
+    $oq = $conn->prepare("SELECT title, status FROM projects WHERE organization_email = ? ORDER BY posted_at DESC, id DESC");
+    $oq->bind_param("s", $organization_email);
+    $oq->execute();
+    $prOrgProjects = $oq->get_result()->fetch_all(MYSQLI_ASSOC);
+} catch (Throwable $e) {}
+$prOrgTitles = array_column($prOrgProjects, 'title');
+$prOpenTitles = array_column(array_filter($prOrgProjects, fn($r) => in_array($r['status'], ['open', 'reviewing', 'inprogress'], true)), 'title')
+                ?: $prOrgTitles;
+$prNext = 0;
+foreach ($proposals as &$prop) {
+    if ($prOpenTitles && !in_array($prop['project'], $prOrgTitles, true)) {
+        $prop['project'] = $prOpenTitles[$prNext++ % count($prOpenTitles)];
+    }
+}
+unset($prop);
+
+/*
+| DEMO RESET: open proposal.php?reset_demo=1
+| Removes the Accept / Reject decisions saved for these proposals (database +
+| browser), so every proposal goes back to how it starts and the Accept /
+| Reject buttons show again. Teams that were already created are not touched.
+*/
+if (isset($_GET['reset_demo'])) {
+    foreach ($proposals as $rp) {
+        try {
+            $dq = $conn->prepare("DELETE pa FROM project_applications pa
+                                  JOIN projects p ON p.id = pa.project_id
+                                  WHERE p.title = ? AND p.organization_email = ? AND LOWER(pa.Email) = LOWER(?)");
+            $dq->bind_param("sss", $rp['project'], $organization_email, $rp['email']);
+            $dq->execute();
+        } catch (Throwable $e) {}
+    }
+}
+
 $projectDetails = [];   // title => details, for the "Applied project" box
 $studentProfiles = [];
 foreach ($proposals as &$prop) {
@@ -232,8 +275,9 @@ unset($prop);
 |--------------------------------------------------------------------------
 | ACCEPT PROPOSAL (AJAX)
 |--------------------------------------------------------------------------
-| Saves the student as "accepted" for the project (project_applications),
-| so the student can be picked when the organization creates a team.
+| Same as Reject: the organization writes a message and the student gets a
+| notification with it. The student is saved as "accepted" for the project
+| (project_applications), so they can be picked when creating a team.
 | silent=1 -> only sync the status, no notification (used for old
 | decisions that were saved only in the browser).
 */
@@ -242,6 +286,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'accep
 
     $proposalId = (int)($_POST['proposal_id'] ?? 0);
     $silent     = !empty($_POST['silent']);
+    $message    = trim($_POST['message'] ?? '');
 
     $proposal = null;
     foreach ($proposals as $item) {
@@ -251,16 +296,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'accep
         echo json_encode(['ok' => false, 'message' => 'Proposal not found.']);
         exit;
     }
-
-    // The project only gets linked to a team when it matches one of this
-    // organization's own projects (project_id > 0). When it doesn't match,
-    // we still accept the proposal and notify the student — we just skip
-    // the team-linking step, without bothering the organization with a
-    // warning popup.
-    $isLinked = !empty($proposal['project_id']);
+    if (!$silent && mb_strlen($message) < 10) {
+        echo json_encode(['ok' => false, 'message' => 'Please write a message (at least 10 characters).']);
+        exit;
+    }
+    $message = mb_substr($message, 0, 500);
 
     try {
-        if ($isLinked) {
+        // remember the decision -> the student can be added to a team for this project
+        $linked = !empty($proposal['project_id']);
+        if ($linked) {
             tmSaveApplicationStatus($conn, (int)$proposal['project_id'], $proposal['email'], 'accepted');
         }
 
@@ -271,17 +316,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'accep
             $orgName = $on->get_result()->fetch_assoc()['Name'] ?? 'The organization';
 
             $nTitle   = 'Proposal Accepted';
-            $nMessage = $orgName . ' accepted your proposal for "' . $proposal['project'] . '".'
-                      . ($isLinked ? ' You will be added to a project team soon.' : '');
+            $nMessage = $orgName . ' accepted your proposal for "' . $proposal['project'] . '". '
+                      . 'Message: ' . $message;
             $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
                                   VALUES (?, ?, ?, 'project', 'Unread')");
             $nq->bind_param("sss", $proposal['email'], $nTitle, $nMessage);
             $nq->execute();
         }
 
-        echo json_encode(['ok' => true, 'linked' => $isLinked]);
+        echo json_encode(['ok' => true, 'linked' => $linked]);
     } catch (Throwable $e) {
-        echo json_encode(['ok' => false, 'message' => 'Could not save the decision. Please try again.']);
+        echo json_encode(['ok' => false, 'message' => 'Could not accept the proposal. Please try again.']);
     }
     exit;
 }
@@ -1289,6 +1334,22 @@ include "../../../Includes/dash_header.php";
         padding: 14px 22px 20px; border-top: 1px solid #eef0f3;
     }
     #rjSubmit .material-symbols-outlined { font-size: 18px; }
+
+    /* Accept popup = same layout as Reject, in green */
+    .rj-head-icon.accept { background: #dcfce7; color: #16a34a; }
+    .rj-chip.ac-chip:hover { border-color: #86efac; background: #f0fdf4; color: #166534; }
+    .rj-chip.ac-chip.picked { border-color: #16a34a; background: #f0fdf4; color: #166534; }
+    #acMessage {
+        width: 100%; box-sizing: border-box; resize: vertical; min-height: 100px;
+        border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 12px;
+        font-family: inherit; font-size: 14px; line-height: 1.5; color: #111827; outline: none;
+    }
+    #acMessage:focus { border-color: #93c5fd; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    #acMessage.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.12); }
+    .pr-confirm-btn.success { background: #15803d; }
+    .pr-confirm-btn.success:hover { background: #166534; }
+    #acSubmit .material-symbols-outlined { font-size: 18px; }
+    #acSubmit:disabled { opacity: .7; cursor: wait; }
     #rjSubmit:disabled { opacity: .7; cursor: wait; }
 
     @media (max-width: 520px) {
@@ -1304,19 +1365,14 @@ include "../../../Includes/dash_header.php";
     .pr-toast {
         position: fixed;
         right: 24px;
-        top: 24px;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        min-width: 300px;
-        max-width: 420px;
-        background: #ffffff;
-        border: 1px solid #86efac;
-        border-left: 5px solid #10b981;
-        padding: 12px 18px;
-        border-radius: 12px;
-        box-shadow: 0 14px 35px rgba(0,0,0,.12), 0 4px 10px rgba(0,0,0,.04);
-        transform: translateY(-20px);
+        bottom: 24px;
+        background: #0f2a4a;
+        color: #fff;
+        padding: 13px 18px;
+        border-radius: 10px;
+        font-size: 14px;
+        box-shadow: 0 10px 30px rgba(0,0,0,.18);
+        transform: translateY(20px);
         opacity: 0;
         pointer-events: none;
         transition: .25s ease;
@@ -1326,43 +1382,6 @@ include "../../../Includes/dash_header.php";
     .pr-toast.show {
         transform: translateY(0);
         opacity: 1;
-    }
-
-    .pr-toast.error {
-        border-color: #fca5a5;
-        border-left-color: #ef4444;
-    }
-
-    .pr-toast-icon {
-        width: 34px;
-        height: 34px;
-        border-radius: 50%;
-        background: #ecfdf5;
-        color: #059669;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .pr-toast.error .pr-toast-icon {
-        background: #fef2f2;
-        color: #dc2626;
-    }
-
-    .pr-toast-icon .material-symbols-outlined {
-        font-size: 20px;
-    }
-
-    .pr-toast-text {
-        font-size: 14px;
-        font-weight: 600;
-        color: #065f46;
-        line-height: 1.35;
-    }
-
-    .pr-toast.error .pr-toast-text {
-        color: #991b1b;
     }
 
 
@@ -1982,6 +2001,61 @@ include "../../../Includes/dash_header.php";
 
 
 <!-- =============================================================
+     ACCEPT MODAL (message is sent to the student)
+============================================================== -->
+
+<div class="pr-modal-overlay" id="acceptModal">
+    <div class="pr-modal rj-modal">
+
+        <div class="rj-head">
+            <div class="rj-head-icon accept">
+                <span class="material-symbols-outlined">how_to_reg</span>
+            </div>
+            <div class="rj-head-text">
+                <h3>Accept Proposal</h3>
+                <p>From <strong id="acStudent"></strong> for <strong id="acProject"></strong></p>
+            </div>
+            <button type="button" class="rj-close" data-close-modal="acceptModal" aria-label="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="rj-body">
+            <label class="rj-label" for="acMessage">Message to the student *</label>
+
+            <div class="rj-quick">
+                <button type="button" class="rj-chip ac-chip">Great proposal! Welcome to the project. We will add you to a team soon.</button>
+                <button type="button" class="rj-chip ac-chip">Your skills are a great fit for this project. Watch your notifications for your team details.</button>
+                <button type="button" class="rj-chip ac-chip">We liked your plan. Please be ready for a short kick-off meeting next week.</button>
+                <button type="button" class="rj-chip ac-chip">Congratulations! Please keep the availability you mentioned in your proposal.</button>
+            </div>
+
+            <textarea id="acMessage" rows="4" maxlength="500"
+                      placeholder="Write a short welcome message or the next steps. Click a suggestion above to start quickly."></textarea>
+            <div class="rj-meta">
+                <span class="rj-error" id="acError"></span>
+                <span class="rj-count"><span id="acCount">0</span>/500</span>
+            </div>
+
+            <div class="rj-note">
+                <span class="material-symbols-outlined">notifications_active</span>
+                The student will get a notification with this message.
+            </div>
+        </div>
+
+        <div class="rj-foot">
+            <button type="button" class="pr-btn pr-cancel-btn" data-close-modal="acceptModal">Cancel</button>
+            <button type="button" class="pr-btn pr-confirm-btn success" id="acSubmit">
+                <span class="material-symbols-outlined">send</span>
+                Accept &amp; Notify Student
+            </button>
+        </div>
+
+    </div>
+</div>
+
+
+<!-- =============================================================
      REJECT MODAL (reason is sent to the student)
 ============================================================== -->
 
@@ -2044,10 +2118,6 @@ include "../../../Includes/dash_header.php";
     class="pr-toast"
     id="prToast"
 >
-    <div class="pr-toast-icon">
-        <span class="material-symbols-outlined" id="prToastIcon">check_circle</span>
-    </div>
-    <div class="pr-toast-text" id="prToastText"></div>
 </div>
 
 
@@ -2128,7 +2198,7 @@ let pendingAction = null;
 const STORAGE_KEY = 'skillbridge_organization_proposal_statuses';
 
 // DEMO RESET: open proposal.php?reset_demo=1 to put every proposal back
-// to its original status (clears the saved Accept / Reject decisions).
+// to its original status (the server clears the database; this clears the browser).
 if (new URLSearchParams(location.search).has('reset_demo')) {
     localStorage.removeItem(STORAGE_KEY);
     location.replace(location.pathname);
@@ -2683,7 +2753,7 @@ document.getElementById('proposalModalFoot').addEventListener('click', function 
     closeModal('proposalModal');
 
     if (btn.dataset.pfAction === 'profile') { showProfile(id); }
-    if (btn.dataset.pfAction === 'accept')  { askConfirmation(id, 'accept'); }
+    if (btn.dataset.pfAction === 'accept')  { openAcceptModal(id); }
     if (btn.dataset.pfAction === 'reject')  { openRejectModal(id); }
 });
 
@@ -3040,12 +3110,11 @@ function performAction()
 
 
     if (card && newStatus === 'accepted') {
-        const acceptedProposal = proposalData.find(p => Number(p.id) === Number(id));
         saveAcceptOnServer(id, false).then(function (data) {
-            updateCardStatus(card, 'accepted', false);
-            showToast(`Proposal accepted. ${acceptedProposal ? acceptedProposal.name : 'The student'} has been notified.`);
+            updateCardStatus(card, 'accepted', !data.message);
+            if (data.message) showToast(data.message);
         }).catch(function (err) {
-            showToast(err.message || 'Could not accept the proposal. Please try again.', 'error');
+            showToast(err.message || 'Could not accept the proposal. Please try again.');
         });
     } else if (card && newStatus) {
 
@@ -3066,12 +3135,13 @@ function performAction()
 
 
 /* Accept -> saved in the database so the student can be put in a team */
-async function saveAcceptOnServer(id, silent)
+async function saveAcceptOnServer(id, silent, message)
 {
     const body = new FormData();
     body.append('action', 'accept_proposal');
     body.append('proposal_id', id);
     if (silent) body.append('silent', '1');
+    if (message) body.append('message', message);
 
     const res  = await fetch('proposal.php', { method: 'POST', body: body });
     const data = await res.json();
@@ -3097,7 +3167,7 @@ document.addEventListener('DOMContentLoaded', function () {
 let toastTimer;
 
 
-function showToast(message, type = 'success')
+function showToast(message)
 {
 
     const toast =
@@ -3105,24 +3175,9 @@ function showToast(message, type = 'success')
             'prToast'
         );
 
-    const icon =
-        document.getElementById(
-            'prToastIcon'
-        );
 
-    const text =
-        document.getElementById(
-            'prToastText'
-        );
-
-
-    text.textContent =
+    toast.textContent =
         message;
-
-    toast.classList.toggle('error', type === 'error');
-
-    icon.textContent =
-        type === 'error' ? 'error' : 'check_circle';
 
 
     toast.classList.add('show');
@@ -3289,9 +3344,8 @@ document.addEventListener(
 
             if (!acceptButton.disabled) {
 
-                askConfirmation(
-                    acceptButton.dataset.id,
-                    'accept'
+                openAcceptModal(
+                    acceptButton.dataset.id
                 );
 
             }
@@ -3320,6 +3374,104 @@ document.addEventListener(
 
 
 /* ================================================================
+   ACCEPT WITH MESSAGE  (same as Reject: the student gets a notification)
+================================================================ */
+
+let acceptingId = null;
+
+const acMessage = document.getElementById('acMessage');
+const acError   = document.getElementById('acError');
+const acSubmit  = document.getElementById('acSubmit');
+
+function openAcceptModal(id)
+{
+    const proposal = proposalData.find(p => Number(p.id) === Number(id));
+    if (!proposal) {
+        return;
+    }
+
+    acceptingId = Number(id);
+
+    document.getElementById('acStudent').textContent = proposal.name;
+    document.getElementById('acProject').textContent = proposal.project;
+
+    acMessage.value = '';
+    acMessage.classList.remove('invalid');
+    acError.textContent = '';
+    document.getElementById('acCount').textContent = '0';
+    document.querySelectorAll('#acceptModal .ac-chip').forEach(c => c.classList.remove('picked'));
+
+    acSubmit.disabled = false;
+
+    openModal('acceptModal');
+    setTimeout(() => acMessage.focus(), 50);
+}
+
+// Quick messages fill the textarea (can still be edited)
+document.querySelectorAll('#acceptModal .ac-chip').forEach(function (chip) {
+    chip.addEventListener('click', function () {
+        document.querySelectorAll('#acceptModal .ac-chip').forEach(c => c.classList.remove('picked'));
+        chip.classList.add('picked');
+        acMessage.value = chip.textContent.trim();
+        acMessage.dispatchEvent(new Event('input'));
+        acMessage.focus();
+    });
+});
+
+acMessage.addEventListener('input', function () {
+    document.getElementById('acCount').textContent = acMessage.value.length;
+    if (acMessage.value.trim().length >= 10) {
+        acMessage.classList.remove('invalid');
+        acError.textContent = '';
+    }
+});
+
+acSubmit.addEventListener('click', async function () {
+    const message = acMessage.value.trim();
+
+    if (message.length < 10) {
+        acMessage.classList.add('invalid');
+        acError.textContent = 'Please write a message (at least 10 characters).';
+        acMessage.focus();
+        return;
+    }
+
+    const proposal = proposalData.find(p => Number(p.id) === acceptingId);
+    const card = document.querySelector(`.pr-card[data-id="${acceptingId}"]`);
+
+    acSubmit.disabled = true;
+    const oldLabel = acSubmit.innerHTML;
+    acSubmit.innerHTML = '<span class="material-symbols-outlined">hourglass_top</span> Accepting…';
+
+    try {
+        await saveAcceptOnServer(acceptingId, false, message);
+
+        // Accepted straight away + popup closes
+        closeModal('acceptModal');
+
+        if (card) {
+            updateCardStatus(card, 'accepted', false);
+        }
+
+        showToast(`Proposal accepted. ${proposal ? proposal.name : 'The student'} has been notified.`);
+        acceptingId = null;
+
+    } catch (err) {
+        acError.textContent = err.message || 'Could not accept the proposal. Please try again.';
+    } finally {
+        acSubmit.disabled = false;
+        acSubmit.innerHTML = oldLabel;
+    }
+});
+
+document.getElementById('acceptModal').addEventListener('click', function (e) {
+    if (e.target === this) {
+        closeModal('acceptModal');
+    }
+});
+
+
+/* ================================================================
    REJECT WITH REASON
 ================================================================ */
 
@@ -3345,7 +3497,7 @@ function openRejectModal(id)
     rjReason.classList.remove('invalid');
     rjError.textContent = '';
     document.getElementById('rjCount').textContent = '0';
-    document.querySelectorAll('.rj-chip').forEach(c => c.classList.remove('picked'));
+    document.querySelectorAll('#rejectModal .rj-chip').forEach(c => c.classList.remove('picked'));
 
     rjSubmit.disabled = false;
 
@@ -3354,9 +3506,9 @@ function openRejectModal(id)
 }
 
 // Quick reasons fill the textarea (can still be edited)
-document.querySelectorAll('.rj-chip').forEach(function (chip) {
+document.querySelectorAll('#rejectModal .rj-chip').forEach(function (chip) {
     chip.addEventListener('click', function () {
-        document.querySelectorAll('.rj-chip').forEach(c => c.classList.remove('picked'));
+        document.querySelectorAll('#rejectModal .rj-chip').forEach(c => c.classList.remove('picked'));
         chip.classList.add('picked');
         rjReason.value = chip.textContent.trim();
         rjReason.dispatchEvent(new Event('input'));
@@ -3409,7 +3561,7 @@ rjSubmit.addEventListener('click', async function () {
             updateCardStatus(card, 'rejected', false);
         }
 
-        showToast(`Proposal rejected. ${proposal ? proposal.name : 'The student'} has been notified.`, 'error');
+        showToast(`Proposal rejected. ${proposal ? proposal.name : 'The student'} has been notified.`);
         rejectingId = null;
 
     } catch (err) {
