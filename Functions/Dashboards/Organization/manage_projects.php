@@ -20,10 +20,12 @@ if (isset($_GET['delete'])) {
     $delProject = $dq->get_result()->fetch_assoc();
 
     $delAllowed = false;
-    if ($delProject) {
+    // Rule: Rejected projects, or projects with 0 applicants (Draft, Reviewing...).
+    //       On Hold projects can never be deleted (Admin process).
+    if ($delProject && $delProject['status'] !== 'hold') {
         if ($delProject['status'] === 'rejected') {
             $delAllowed = true;
-        } elseif ($delProject['status'] === 'reviewing') {
+        } else {
             $cq = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
             $cq->bind_param("i", $delId);
             $cq->execute();
@@ -142,7 +144,7 @@ $flash = null;
 if (isset($_GET['deleted'])) {
     $flash = ['type' => 'success', 'title' => 'Project deleted', 'message' => 'The project was deleted successfully.'];
 } elseif (isset($_GET['delete_blocked'])) {
-    $flash = ['type' => 'error', 'title' => 'Can’t delete this project', 'message' => 'Only Rejected projects, or Reviewing projects with 0 applicants, can be deleted.'];
+    $flash = ['type' => 'error', 'title' => 'Can’t delete this project', 'message' => 'Only Rejected projects, or projects with 0 applicants, can be deleted.'];
 } elseif (isset($_GET['hold_resolved'])) {
     $flash = ['type' => 'success', 'title' => 'Activation request sent', 'message' => 'Your changes were saved. The project stays On Hold until the Admin activates it.'];
 } elseif (isset($_GET['hold_error'])) {
@@ -221,15 +223,12 @@ function applicantCount($projectId) {
 function deleteBlockReason($project) {
     $status = $project['status'] ?? '';
     if ($status === 'rejected') return '';
-    $apps = applicantCount($project['id']);
-    if ($status === 'reviewing' && $apps === 0) return '';
+    if ($status === 'hold') return "This project is On Hold by the Admin, so it can’t be deleted.";
 
-    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'On Hold', 'closed' => 'Closed', 'draft' => 'Draft'];
-    $label  = $labels[$status] ?? ucfirst($status);
-    if ($status === 'reviewing') {
-        return "This project already has $apps applicant" . ($apps === 1 ? '' : 's') . ", so it can’t be deleted.";
-    }
-    return "This project is $label, so it can’t be deleted.";
+    $apps = applicantCount($project['id']);
+    if ($apps === 0) return '';
+
+    return "This project already has $apps applicant" . ($apps === 1 ? '' : 's') . ", so it can’t be deleted.";
 }
 
 // Assigned = students actually in the team, but never more than the number required
@@ -952,7 +951,7 @@ $avgResponseTime = null;
             <p id="blockedReason" style="margin-bottom:12px;"></p>
             <div class="delete-rule-box">
                 <span class="material-symbols-outlined">info</span>
-                <span id="blockedRule">Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.</span>
+                <span id="blockedRule">Only <b>Rejected</b> projects, or projects with <b>0 applicants</b> (like a Draft), can be deleted.</span>
             </div>
             <div class="confirm-modal-actions">
                 <button type="button" class="hm-btn primary" id="blockedHoldBtn" hidden>
@@ -1308,7 +1307,7 @@ $avgResponseTime = null;
         if (blockReason) {
             showBlocked(
                 'You can’t delete this project', title, blockReason,
-                'Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.'
+                'Only <b>Rejected</b> projects, or projects with <b>0 applicants</b> (like a Draft), can be deleted.'
             );
             return;
         }
@@ -1627,5 +1626,3 @@ $avgResponseTime = null;
 </footer>
 
 <?php include "../../../Includes/dash_footer.php"; ?>
-
-
