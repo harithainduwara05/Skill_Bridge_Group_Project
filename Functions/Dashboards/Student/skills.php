@@ -302,7 +302,7 @@ include "../../../Includes/dash_header.php";
 <p class="experience">
 <i class="fa-solid fa-clock"></i>
 <?php echo calculateExperience($skill['initial_experience'],$skill['created_at']);?>
-Experience </p>
+ Experience </p>
 
 </div>
 
