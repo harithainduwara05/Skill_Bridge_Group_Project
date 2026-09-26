@@ -184,8 +184,8 @@ class AdminDB
             $updated = $this->runAction("UPDATE complain SET status = ?, update_at = CURRENT_TIMESTAMP WHERE id = ?", "si", $cleanStatus, $id);
         }
 
-        // Student Notification: Except for dismiss, send notification to complainant
-        if ($updated && $cleanStatus !== 'DISMISSED' && $cmp && !empty($cmp['email'])) {
+        // Complainant Notification: Notify complainant regarding status and resolution/dismissal notes
+        if ($updated && $cmp && !empty($cmp['email'])) {
             $recipientEmail = $cmp['email'];
             $complaintTitle = $cmp['title'] ?? 'Complaint';
             $paddedId = '#CMP-' . str_pad($id, 4, '0', STR_PAD_LEFT);
@@ -200,6 +200,11 @@ class AdminDB
                 $notifMsg = !empty($notes) 
                     ? "Resolution for \"$complaintTitle\": $notes"
                     : "Your reported issue ($paddedId) has been successfully resolved and finalized.";
+            } elseif ($cleanStatus === 'DISMISSED') {
+                $notifTitle = "Complaint Dismissed ($paddedId)";
+                $notifMsg = !empty($notes) 
+                    ? "Your complaint \"$complaintTitle\" was dismissed. Reason: $notes"
+                    : "Your reported issue ($paddedId) has been dismissed by administrators.";
             } else {
                 $notifTitle = "Complaint Update ($paddedId)";
                 $notifMsg = !empty($notes) ? $notes : "Your complaint status has been updated to $cleanStatus.";

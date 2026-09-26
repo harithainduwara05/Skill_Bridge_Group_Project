@@ -136,6 +136,6 @@ include "../../../Includes/dash_header.php";
     </div>
 </main>
 
-<footer class="company-footer"><span>&copy; 2026 SkillBridge. All rights reserved.</span><nav><a href="#">Help Center</a><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></nav></footer>
+<footer class="company-footer"><span>&copy; 2026 SkillBridge. All rights reserved.</span><nav><a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></nav></footer>
 <script src="../../../Assets/JS/Company/profile.js"></script>
 <?php include "../../../Includes/dash_footer.php"; ?>

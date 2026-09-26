@@ -381,13 +381,33 @@ function initComplaintManagement() {
         } else if (val === 'DISMISSED') {
             btnSubmitAction.classList.add('cm-btn-danger');
             btnSubmitAction.innerHTML = `<span class="material-symbols-outlined">cancel</span> Dismiss Complaint`;
+            
+            const modalNotesLabel = document.getElementById('modalNotesLabel');
+            const modalResolutionNotes = document.getElementById('modalResolutionNotes');
+            if (modalNotesLabel) {
+                modalNotesLabel.innerHTML = 'Dismissal Reason <span style="color: #ef4444; font-weight: 700;">* (Mandatory)</span>';
+            }
+            if (modalResolutionNotes) {
+                modalResolutionNotes.placeholder = 'Please state clearly why this complaint is being dismissed (required for complainant)...';
+                modalResolutionNotes.style.borderColor = '#ef4444';
+            }
             if (notifHint) {
-                notifHint.innerHTML = `<span class="material-symbols-outlined" style="font-size: 15px; color: #64748b;">notifications_off</span> Internal dismissal: No notification will be sent to the student.`;
-                notifHint.style.color = '#64748b';
+                notifHint.innerHTML = `<span class="material-symbols-outlined" style="font-size: 15px; color: #ef4444;">error</span> A dismissal reason is mandatory so the complainant knows why their complaint was dismissed.`;
+                notifHint.style.color = '#ef4444';
             }
         } else {
             btnSubmitAction.classList.add('cm-btn-warning');
             btnSubmitAction.innerHTML = `<span class="material-symbols-outlined">schedule</span> Keep as Pending`;
+            
+            const modalNotesLabel = document.getElementById('modalNotesLabel');
+            const modalResolutionNotes = document.getElementById('modalResolutionNotes');
+            if (modalNotesLabel) {
+                modalNotesLabel.innerHTML = 'Investigation Findings / Resolution Notes';
+            }
+            if (modalResolutionNotes) {
+                modalResolutionNotes.placeholder = 'Record investigation notes, corrective action taken, or explanation for dismissal...';
+                modalResolutionNotes.style.borderColor = '';
+            }
             if (notifHint) {
                 notifHint.innerHTML = `<span class="material-symbols-outlined" style="font-size: 15px; color: #d97706;">info</span> Keeps this complaint in pending review queue.`;
                 notifHint.style.color = '#d97706';
@@ -489,6 +509,16 @@ function initComplaintManagement() {
         const newStatus = statusSelect.value;
         const notes = notesField ? notesField.value.trim() : '';
 
+        // Dismissal reason is strictly mandatory
+        if (newStatus === 'DISMISSED' && (!notes || notes.length < 5)) {
+            showToast('A dismissal reason is mandatory (at least 5 characters).', 'warning');
+            if (notesField) {
+                notesField.focus();
+                notesField.style.borderColor = '#ef4444';
+            }
+            return;
+        }
+
         // Visual button loading state
         const origContent = btnSubmit ? btnSubmit.innerHTML : '';
         if (btnSubmit) {
@@ -509,16 +539,22 @@ function initComplaintManagement() {
             } else if (newStatus === 'IN_REVIEW') {
                 feedbackMsg = `Complaint #${complaintId} marked In Progress & student notified.`;
             } else if (newStatus === 'DISMISSED') {
-                feedbackMsg = `Complaint #${complaintId} dismissed.`;
+                feedbackMsg = `Complaint #${complaintId} dismissed with explanation.`;
             }
             showToast(feedbackMsg, 'success');
+        }, (errorMsg) => {
+            if (btnSubmit) {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = origContent;
+            }
+            showToast(errorMsg || 'Failed to update complaint status.', 'error');
         });
     }
 
     // --------------------------------------------------------------------------
     // AJAX Status Update Handler
     // --------------------------------------------------------------------------
-    function updateComplaintStatus(id, newStatus, notes, onSuccess) {
+    function updateComplaintStatus(id, newStatus, notes, onSuccess, onError) {
         const formData = new FormData();
         formData.append('ajax_action', 'update_complaint_status');
         formData.append('complaint_id', id);
@@ -555,11 +591,13 @@ function initComplaintManagement() {
 
                 if (typeof onSuccess === 'function') onSuccess();
             } else {
+                if (typeof onError === 'function') onError(result.message);
                 showToast(result.message || 'Failed to update complaint status.', 'error');
             }
         })
         .catch(err => {
             console.error('Network Error:', err);
+            if (typeof onError === 'function') onError('A network error occurred.');
             const targetRow = document.querySelector(`tr.cm-data-row[data-id="${id}"]`);
             if (targetRow) {
                 const normStatus = newStatus.toLowerCase();

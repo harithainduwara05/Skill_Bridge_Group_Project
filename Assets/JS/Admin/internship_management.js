@@ -312,24 +312,24 @@ function initInternshipManagement() {
                 row.setAttribute('data-status', 'Suspended');
                 row.setAttribute('data-reason', `${category}: ${reason}`);
 
-                // Update Status Cell
+                // Update Status Cell (Orange Suspended badge)
                 const statusCell = row.querySelector('.im-status-cell');
                 if (statusCell) {
                     statusCell.innerHTML = `
                         <span class="im-status-badge status-suspended">
-                            <span class="material-symbols-outlined" style="font-size: 13px;">block</span> Suspended
+                            <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
                         </span>
                     `;
                 }
 
-                // Update Actions Cell to Reactivate button
+                // Update Actions Cell to Review/Reactivate button
                 const actionsCell = row.querySelector('.im-actions-cell');
                 if (actionsCell) {
                     actionsCell.innerHTML = `
                         <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${targetId}')">
                             <span class="material-symbols-outlined">visibility</span>
                         </button>
-                        <button type="button" class="im-btn-action im-btn-action-reactivate" title="Reactivate Post" onclick="reactivateInternship('${targetId}')">
+                        <button type="button" class="im-btn-action im-btn-action-reactivate" title="Review Suspension & Decide" onclick="openReviewSuspensionModal('${targetId}')">
                             <span class="material-symbols-outlined">check_circle</span>
                         </button>
                     `;
@@ -341,7 +341,7 @@ function initInternshipManagement() {
                     if (detailBadge) {
                         detailBadge.innerHTML = `
                             <span class="im-status-badge status-suspended">
-                                <span class="material-symbols-outlined" style="font-size: 13px;">block</span> Suspended
+                                <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
                             </span>
                         `;
                     }
@@ -354,9 +354,9 @@ function initInternshipManagement() {
                     const modActionContainer = document.getElementById('imModerationActionContainer');
                     if (modActionContainer) {
                         modActionContainer.innerHTML = `
-                            <button type="button" class="im-btn-reactivate" onclick="reactivateInternship('${targetId}')">
-                                <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
-                                <span>Reactivate Post</span>
+                            <button type="button" class="im-btn-reactivate" onclick="closeInternshipDetailsModal(); openReviewSuspensionModal('${targetId}')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">rate_review</span>
+                                <span>Review Suspension & Decide</span>
                             </button>
                         `;
                     }
@@ -447,6 +447,134 @@ function initInternshipManagement() {
     };
 
     // --------------------------------------------------------------------------
+    // Review Suspended Internship & Decision Modal Logic
+    // --------------------------------------------------------------------------
+    const reviewSuspensionModal = document.getElementById('imReviewSuspensionModal');
+    const revTargetId = document.getElementById('imRevTargetId');
+    const revId = document.getElementById('imRevId');
+    const revPosition = document.getElementById('imRevPosition');
+    const revCompany = document.getElementById('imRevCompany');
+    const revReasonText = document.getElementById('imRevReasonText');
+    const revActionCard = document.getElementById('imRevActionCard');
+    const revActionText = document.getElementById('imRevActionText');
+    const revNoActionCard = document.getElementById('imRevNoActionCard');
+
+    window.openReviewSuspensionModal = function(internshipId) {
+        if (!reviewSuspensionModal) return;
+        const row = document.querySelector(`tr[data-id="${internshipId}"]`);
+        if (!row) return;
+
+        const currentStatus = (row.getAttribute('data-status') || '').toLowerCase();
+        if (currentStatus === 'terminated') {
+            showToast(`Listing ${internshipId} is permanently terminated and cannot be reactivated or modified.`);
+            return;
+        }
+
+        const position = row.getAttribute('data-position') || 'Internship';
+        const company = row.getAttribute('data-company') || 'Company';
+        const reason = row.getAttribute('data-reason') || 'Violation of terms or policy complaint reported.';
+        const companyAction = (row.getAttribute('data-company-action') || '').trim();
+
+        if (revTargetId) revTargetId.value = internshipId;
+        if (revId) revId.textContent = internshipId;
+        if (revPosition) revPosition.textContent = position;
+        if (revCompany) revCompany.textContent = company;
+        if (revReasonText) revReasonText.textContent = reason;
+
+        if (companyAction) {
+            if (revActionCard) revActionCard.style.display = 'block';
+            if (revActionText) revActionText.textContent = companyAction;
+            if (revNoActionCard) revNoActionCard.style.display = 'none';
+        } else {
+            if (revActionCard) revActionCard.style.display = 'none';
+            if (revNoActionCard) revNoActionCard.style.display = 'block';
+        }
+
+        reviewSuspensionModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    };
+
+    window.closeReviewSuspensionModal = function() {
+        if (reviewSuspensionModal) {
+            reviewSuspensionModal.classList.remove('show');
+            if (!detailsModal || !detailsModal.classList.contains('show')) {
+                document.body.style.overflow = '';
+            }
+        }
+    };
+
+    if (reviewSuspensionModal) {
+        reviewSuspensionModal.addEventListener('click', (e) => {
+            if (e.target === reviewSuspensionModal) {
+                window.closeReviewSuspensionModal();
+            }
+        });
+    }
+
+    // Option 1: Admin is satisfied with the action -> Reactivate to Active
+    window.executeReactivationFromReview = function() {
+        const targetId = revTargetId ? revTargetId.value : '';
+        if (!targetId) return;
+
+        window.reactivateInternship(targetId);
+        window.closeReviewSuspensionModal();
+    };
+
+    // Option 2: Admin is NOT satisfied -> Permanently Terminate
+    window.executeTerminationFromReview = function() {
+        const targetId = revTargetId ? revTargetId.value : '';
+        if (!targetId) return;
+
+        const row = document.querySelector(`tr[data-id="${targetId}"]`);
+        if (!row) return;
+
+        row.setAttribute('data-status', 'Terminated');
+        row.setAttribute('data-terminate-reason', 'Terminated by Admin due to unsatisfactory resolution or failure to resolve policy complaints.');
+
+        // Update status cell in table (Red Terminated badge)
+        const statusCell = row.querySelector('.im-status-cell');
+        if (statusCell) {
+            statusCell.innerHTML = `
+                <span class="im-status-badge status-terminated">
+                    <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Terminated
+                </span>
+            `;
+        }
+
+        // Update actions cell: View Details + locked icon (Cannot be reactivated or edited!)
+        const actionsCell = row.querySelector('.im-actions-cell');
+        if (actionsCell) {
+            actionsCell.innerHTML = `
+                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${targetId}')">
+                    <span class="material-symbols-outlined">visibility</span>
+                </button>
+                <button type="button" class="im-btn-action" disabled title="Permanently Terminated (Cannot be modified)" style="color: #cbd5e1; cursor: not-allowed;">
+                    <span class="material-symbols-outlined">lock</span>
+                </button>
+            `;
+        }
+
+        // If details modal is open, refresh it
+        if (detailsModal && detailsModal.classList.contains('show')) {
+            const detailId = document.getElementById('imDetailId');
+            if (detailId && detailId.textContent === targetId) {
+                window.viewInternshipDetails(targetId);
+            }
+        }
+
+        // Update KPI counter
+        const kpiSuspended = document.getElementById('kpiSuspendedCount');
+        if (kpiSuspended) {
+            const current = parseInt(kpiSuspended.textContent.replace(/,/g, ''), 10) || 0;
+            if (current > 0) kpiSuspended.textContent = current - 1;
+        }
+
+        window.closeReviewSuspensionModal();
+        showToast(`Listing ${targetId} has been permanently terminated. State is locked.`);
+        applyFilters();
+    };
+
+    // --------------------------------------------------------------------------
     // Details Modal
     // --------------------------------------------------------------------------
     window.viewInternshipDetails = function(internshipId) {
@@ -477,13 +605,16 @@ function initInternshipManagement() {
         const statusBadgeContainer = document.getElementById('imDetailStatusBadge');
         const suspendedBox = document.getElementById('imDetailSuspendedBox');
         const suspendedReasonText = document.getElementById('imDetailSuspensionReason');
+        const terminatedBox = document.getElementById('imDetailTerminatedBox');
+        const terminatedReasonText = document.getElementById('imDetailTerminationReason');
         const moderationActionContainer = document.getElementById('imModerationActionContainer');
+        const terminateReason = row.getAttribute('data-terminate-reason') || '';
 
         if (status === 'suspended') {
             if (statusBadgeContainer) {
                 statusBadgeContainer.innerHTML = `
                     <span class="im-status-badge status-suspended">
-                        <span class="material-symbols-outlined" style="font-size: 13px;">block</span> Suspended
+                        <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
                     </span>
                 `;
             }
@@ -493,12 +624,56 @@ function initInternshipManagement() {
                     suspendedReasonText.textContent = reason || 'Violation of terms or policy complaints reported.';
                 }
             }
+            if (terminatedBox) terminatedBox.style.display = 'none';
             if (moderationActionContainer) {
                 moderationActionContainer.innerHTML = `
-                    <button type="button" class="im-btn-reactivate" onclick="reactivateInternship('${internshipId}')">
-                        <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
-                        <span>Reactivate Post</span>
+                    <button type="button" class="im-btn-reactivate" onclick="closeInternshipDetailsModal(); openReviewSuspensionModal('${internshipId}')">
+                        <span class="material-symbols-outlined" style="font-size: 18px;">rate_review</span>
+                        <span>Review Suspension & Decide</span>
                     </button>
+                `;
+            }
+        } else if (status === 'terminated') {
+            if (statusBadgeContainer) {
+                statusBadgeContainer.innerHTML = `
+                    <span class="im-status-badge status-terminated">
+                        <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Terminated
+                    </span>
+                `;
+            }
+            if (suspendedBox) suspendedBox.style.display = 'none';
+            if (terminatedBox) {
+                terminatedBox.style.display = 'flex';
+                if (terminatedReasonText) {
+                    terminatedReasonText.textContent = terminateReason || reason || 'Permanently terminated due to policy non-compliance or failure to resolve complaints.';
+                }
+            }
+            if (moderationActionContainer) {
+                moderationActionContainer.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #fef2f2; border-radius: 10px; border: 1px dashed #fca5a5; width: 100%;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="material-symbols-outlined" style="color: #dc2626; font-size: 20px;">lock</span>
+                            <span style="font-size: 12.5px; color: #991b1b; font-weight: 500;">Permanently Terminated State. This post cannot be reactivated or edited.</span>
+                        </div>
+                        <span style="font-size: 11px; font-weight: 700; color: #dc2626; background: #fee2e2; padding: 4px 8px; border-radius: 6px; white-space: nowrap;">TERMINAL STATE</span>
+                    </div>
+                `;
+            }
+        } else if (status === 'closed') {
+            if (statusBadgeContainer) {
+                statusBadgeContainer.innerHTML = `
+                    <span class="im-status-badge status-closed">
+                        <span class="im-status-dot"></span> Closed
+                    </span>
+                `;
+            }
+            if (suspendedBox) suspendedBox.style.display = 'none';
+            if (terminatedBox) terminatedBox.style.display = 'none';
+            if (moderationActionContainer) {
+                moderationActionContainer.innerHTML = `
+                    <div style="font-size: 12.5px; color: #64748b; font-style: italic;">
+                        This internship listing has closed. No active moderation needed.
+                    </div>
                 `;
             }
         } else {
@@ -509,9 +684,8 @@ function initInternshipManagement() {
                     </span>
                 `;
             }
-            if (suspendedBox) {
-                suspendedBox.style.display = 'none';
-            }
+            if (suspendedBox) suspendedBox.style.display = 'none';
+            if (terminatedBox) terminatedBox.style.display = 'none';
             if (moderationActionContainer) {
                 moderationActionContainer.innerHTML = `
                     <button type="button" class="im-btn-suspend" onclick="openSuspendModal('${internshipId}')">

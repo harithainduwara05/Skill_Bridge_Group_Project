@@ -108,14 +108,24 @@
     color: #ea580c;
 }
 
+.pm-stat-icon.icon-green {
+    background-color: #dcfce7;
+    color: #16a34a;
+}
+
 .pm-stat-icon.icon-pink {
     background-color: #fee2e2;
     color: #dc2626;
 }
 
 .pm-stat-icon.icon-blue {
-    background-color: #e0e7ff;
-    color: #3b82f6;
+    background-color: #eff6ff;
+    color: #2563eb;
+}
+
+.pm-stat-icon.icon-gray {
+    background-color: #f1f5f9;
+    color: #64748b;
 }
 
 /* Stat Trend / Notification Pills */
@@ -138,6 +148,18 @@
 .pm-stat-trend.trend-blue {
     background-color: #eff6ff;
     color: #2563eb;
+}
+
+.pm-stat-trend.trend-gray {
+    background-color: #f1f5f9;
+    color: #64748b;
+}
+
+.pm-stat-trend.badge-review {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    font-weight: 700;
 }
 
 .pm-stat-trend.badge-new {
@@ -473,9 +495,12 @@
     color: #15803d;
 }
 
+.pm-status-pill.status-completed,
+.pm-status-pill.status-complete,
 .pm-status-pill.status-close {
     background-color: #f1f5f9;
     color: #475569;
+    border: 1px solid #e2e8f0;
 }
 
 .pm-status-pill.status-review {
