@@ -54,19 +54,6 @@ include "../../../Includes/dash_header.php";
 
             </div>
 
-            <button
-                type="button"
-                class="schedule-interview-btn"
-                id="openScheduleInterviewModal">
-
-                <span class="material-symbols-outlined">
-                    event
-                </span>
-
-                Schedule Interview
-
-            </button>
-
         </section>
 
 
@@ -303,6 +290,17 @@ include "../../../Includes/dash_header.php";
 
                                     <button
                                         type="button"
+                                        class="interview-action-btn schedule-row-interview-btn"
+                                        title="Schedule Interview">
+
+                                        <span class="material-symbols-outlined">
+                                            event
+                                        </span>
+
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         class="interview-action-btn view-interview-btn"
                                         title="View Interview">
 
@@ -423,6 +421,17 @@ include "../../../Includes/dash_header.php";
                             <td>
 
                                 <div class="interview-actions">
+
+                                    <button
+                                        type="button"
+                                        class="interview-action-btn schedule-row-interview-btn"
+                                        title="Schedule Interview">
+
+                                        <span class="material-symbols-outlined">
+                                            event
+                                        </span>
+
+                                    </button>
 
                                     <button
                                         type="button"
@@ -549,6 +558,17 @@ include "../../../Includes/dash_header.php";
 
                                     <button
                                         type="button"
+                                        class="interview-action-btn schedule-row-interview-btn"
+                                        title="Schedule Interview">
+
+                                        <span class="material-symbols-outlined">
+                                            event
+                                        </span>
+
+                                    </button>
+
+                                    <button
+                                        type="button"
                                         class="interview-action-btn view-interview-btn"
                                         title="View Interview">
 
@@ -672,28 +692,9 @@ include "../../../Includes/dash_header.php";
                         Candidate
                     </label>
 
-                    <select id="scheduleCandidate" required>
-
-                        <option value="">
-                            Select candidate
-                        </option>
-
-                        <option value="Alex Rivera">
-                            Alex Rivera
-                        </option>
-
-                        <option value="Elena Sorova">
-                            Elena Sorova
-                        </option>
-
-                        <option value="Jordan Smith">
-                            Jordan Smith
-                        </option>
-
-                    </select>
+                    <input type="text" id="scheduleCandidate" readonly>
 
                 </div>
-
 
                 <div class="form-group full-width">
 
@@ -701,25 +702,7 @@ include "../../../Includes/dash_header.php";
                         Internship
                     </label>
 
-                    <select id="scheduleInternship" required>
-
-                        <option value="">
-                            Select internship
-                        </option>
-
-                        <option>
-                            Software Engineering Intern
-                        </option>
-
-                        <option>
-                            Product Design Fellowship
-                        </option>
-
-                        <option>
-                            Data Analyst Intern
-                        </option>
-
-                    </select>
+                    <input type="text" id="scheduleInternship" readonly>
 
                 </div>
 

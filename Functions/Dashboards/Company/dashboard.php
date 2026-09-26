@@ -229,67 +229,6 @@ $companyImageExists = !empty($image) && file_exists(
                     </div>
                 </div>
 
-                <!-- Recent Internships Section -->
-                <div class="recent-internships-section">
-                    <div class="section-header-row">
-                        <h2>Recent Internships</h2>
-                        <div class="slider-controls">
-                            <button class="slider-btn prev" type="button" aria-label="Previous internships">
-                                <span class="material-symbols-outlined">chevron_left</span>
-                            </button>
-                            <button class="slider-btn next" type="button" aria-label="Next internships">
-                                <span class="material-symbols-outlined">chevron_right</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="internships-grid">
-                        <!-- Internship Card 1 -->
-                        <div class="internship-card">
-                            <div class="internship-card-top">
-                                <div class="internship-icon-box navy">
-                                    <span class="material-symbols-outlined">terminal</span>
-                                </div>
-                                <span class="status-pill status-active">Active</span>
-                            </div>
-                            <div class="internship-card-info">
-                                <h3>Full Stack Developer</h3>
-                                <p>Building next-generation enterprise tools using React, Node.js, and modern cloud architectures...</p>
-                            </div>
-                            <div class="internship-card-footer">
-                                <span class="internship-meta-item">
-                                    <span class="material-symbols-outlined">group</span> 12 Applicants
-                                </span>
-                                <span class="internship-meta-item">
-                                    <span class="material-symbols-outlined">schedule</span> 3 Days left
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Internship Card 2 -->
-                        <div class="internship-card">
-                            <div class="internship-card-top">
-                                <div class="internship-icon-box orange">
-                                    <span class="material-symbols-outlined">bar_chart</span>
-                                </div>
-                                <span class="status-pill status-active">Active</span>
-                            </div>
-                            <div class="internship-card-info">
-                                <h3>Data Science Intern</h3>
-                                <p>Analyzing complex recruitment datasets to optimize talent pipeline performance and predictive models...</p>
-                            </div>
-                            <div class="internship-card-footer">
-                                <span class="internship-meta-item">
-                                    <span class="material-symbols-outlined">group</span> 85 Applicants
-                                </span>
-                                <span class="internship-meta-item">
-                                    <span class="material-symbols-outlined">schedule</span> 1 Week left
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
             </div>
 
             <!-- RIGHT COLUMN-->
@@ -358,27 +297,71 @@ $companyImageExists = !empty($image) && file_exists(
                     <a href="internships.php" class="view-all-schedule-btn">View All Schedule</a>
                 </div>
 
-                <!-- Hiring Goal Card -->
-                <div class="hiring-goal-card">
-                    <h3>Hiring Goal</h3>
-                    <p>You are 65% towards your quarterly intern intake goal.</p>
-
-                    <div class="goal-progress-wrap">
-                        <div class="goal-progress-bar">
-                            <div class="goal-progress-fill"></div>
-                        </div>
-                        <div class="goal-labels">
-                            <span>13 Hired</span>
-                            <span>20 Goal</span>
-                        </div>
-                    </div>
-
-                    <button class="btn-boost-listings" type="button" id="openBoostListingModal">Boost Listings</button>
-                </div>
-
             </div>
 
         </div>
+
+        <!-- Recent Internships Section -->
+        <div class="recent-internships-section">
+            <div class="section-header-row">
+                <h2>Recent Internships</h2>
+                <div class="slider-controls">
+                    <button class="slider-btn prev" type="button" aria-label="Previous internships">
+                        <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    <button class="slider-btn next" type="button" aria-label="Next internships">
+                        <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="internships-grid">
+                <!-- Internship Card 1 -->
+                <div class="internship-card">
+                    <div class="internship-card-top">
+                        <div class="internship-icon-box navy">
+                            <span class="material-symbols-outlined">terminal</span>
+                        </div>
+                        <span class="status-pill status-active">Active</span>
+                    </div>
+                    <div class="internship-card-info">
+                        <h3>Full Stack Developer</h3>
+                        <p>Building next-generation enterprise tools using React, Node.js, and modern cloud architectures...</p>
+                    </div>
+                    <div class="internship-card-footer">
+                        <span class="internship-meta-item">
+                            <span class="material-symbols-outlined">group</span> 12 Applicants
+                        </span>
+                        <span class="internship-meta-item">
+                            <span class="material-symbols-outlined">schedule</span> 3 Days left
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Internship Card 2 -->
+                <div class="internship-card">
+                    <div class="internship-card-top">
+                        <div class="internship-icon-box orange">
+                            <span class="material-symbols-outlined">bar_chart</span>
+                        </div>
+                        <span class="status-pill status-active">Active</span>
+                    </div>
+                    <div class="internship-card-info">
+                        <h3>Data Science Intern</h3>
+                        <p>Analyzing complex recruitment datasets to optimize talent pipeline performance and predictive models...</p>
+                    </div>
+                    <div class="internship-card-footer">
+                        <span class="internship-meta-item">
+                            <span class="material-symbols-outlined">group</span> 85 Applicants
+                        </span>
+                        <span class="internship-meta-item">
+                            <span class="material-symbols-outlined">schedule</span> 1 Week left
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <?php include "../../../Includes/company_dashboard_footer.php"; ?>
 
     </div>
