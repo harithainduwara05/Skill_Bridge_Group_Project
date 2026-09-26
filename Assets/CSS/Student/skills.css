@@ -3,16 +3,18 @@
 }
 
 .skills-container{
-    padding:30px;
-    width:100%;
-    max-width:1400px;
-    margin:auto;
+    padding: 25px 35px;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    box-sizing: border-box;
 }
 
 
 /* HEADER */
 
 .skills-header{
+    padding-top: 15px;
     display:flex;
     justify-content:space-between;
     align-items:center;
@@ -21,7 +23,7 @@
 
 .skills-header h1{
     margin:0;
-    font-size:34px;
+    font-size:26px;
     font-weight:700;
     color:#082544;
 }
@@ -66,7 +68,6 @@
 
 .stat-card{
     background:#ffffff;
-    min-height:150px;
     padding:25px;
     border-radius:18px;
     display:flex !important;
@@ -92,7 +93,7 @@
 
 .stat-card h2{
     margin:0;
-    font-size:32px;
+    font-size:28px;
     color:#082544;
 }
 
@@ -102,9 +103,6 @@
     color:#667085;
     font-size:15px;
 }
-
-
-
 
 
 /* SECTION */

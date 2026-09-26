@@ -37,13 +37,6 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
             <span class="nav-text">Skills</span>
         </a>
 
-        <a href="certificates.php" class="<?= $currentPage == 'certificates.php' ? 'active' : '' ?>" title="Certificates">
-            <span class="icon">
-                <span class="material-symbols-outlined">verified</span>
-            </span>
-            <span class="nav-text">Certificates</span>
-        </a>
-
         <a href="portfolio.php" class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>" title="Portfolio">
             <span class="icon">
                 <span class="material-symbols-outlined">badge</span>

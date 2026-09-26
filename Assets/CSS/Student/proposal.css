@@ -1,0 +1,424 @@
+/* ================================
+   PROPOSAL PAGE
+================================ */
+
+.proposal-page{
+    padding:25px 35px;
+    animation:fade .5s ease;
+}
+
+
+/* BREADCRUMB */
+
+.breadcrumb{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:10px;
+}
+
+.breadcrumb a{
+    color:#082544;
+    text-decoration:none;
+}
+
+.breadcrumb a:hover{
+    color:#ff8a00;
+}
+
+.breadcrumb span{
+    color:#98a2b3;
+}
+
+.breadcrumb strong{
+    color:#667085;
+}
+
+
+/* HEADER */
+
+.proposal-header h1{
+    font-size:26px;
+    color:#082544;
+    margin:10px 0;
+}
+
+.proposal-header p{
+    color:#667085;
+    font-size:14px;
+}
+
+
+/* MAIN LAYOUT */
+
+.proposal-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 320px;
+    gap:20px;
+    margin-top:25px;
+}
+
+
+/* CARDS */
+
+.proposal-card,
+.mini-card,
+.upload-card,
+.summary-card{
+    background:white;
+    border-radius:12px;
+    padding:20px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+    animation:up .5s ease;
+}
+
+.summary-card h3{
+    padding-bottom: 10px;
+}
+
+/* FORM */
+
+.proposal-card label{
+    display:block;
+    margin-top:18px;
+    font-weight:600;
+    color:#082544;
+}
+
+.proposal-card input,
+.proposal-card textarea,
+.mini-card select{
+    width:100%;
+    margin-top:8px;
+    padding:12px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+    border-radius:8px;
+    font-family:inherit;
+}
+
+.proposal-card small{
+    color:#98a2b3;
+}
+
+
+/* RIGHT SIDE */
+
+.proposal-right{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+
+/* SKILLS / DURATION */
+
+.bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    margin-top:20px;
+    margin-bottom: 40px;
+}
+
+
+.mini-card h3{
+    color:#082544;
+    font-size:17px;
+}
+
+
+.skill-tags span{
+    display:inline-block;
+    background:#f8eadb;
+    color:#b56a00;
+    padding:7px 12px;
+    border-radius:20px;
+    font-size:13px;
+    margin:5px;
+}
+
+
+.skill-input{
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    margin-top:15px;
+    border:1px solid #ddd;
+    border-radius:8px;
+    font-size: 14px;
+}
+
+
+.availability{
+    margin-top:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+
+.availability span{
+    background:#d9fbe5;
+    color:#008044;
+    padding:5px 10px;
+    border-radius:8px;
+}
+
+.duration-input{
+
+width:100%;
+height:48px;
+
+border:1px solid #cbd5e1;
+border-radius:12px;
+margin-top: 10px;
+padding:0 16px;
+
+font-size:16px;
+font-weight:500;
+
+color:#082544;
+
+background:white;
+
+transition:.3s;
+
+}
+
+
+.duration-input:focus{
+
+outline:none;
+
+border:2px solid #0066cc;
+
+}
+/* PORTFOLIO */
+
+.upload-card h2,
+.summary-card h2{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#082544;
+    font-size:18px;
+}
+
+
+.upload-card p{
+    color:#667085;
+    font-size:13px;
+    line-height:1.5;
+    padding-bottom: 10px;
+}
+
+
+.upload-box{
+    height:145px;
+    border:2px dashed #cbd5e1;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    position:relative;
+    text-align:center;
+    
+}
+
+
+.upload-box i{
+    font-size:38px;
+    color:#94a3b8;
+}
+
+
+.upload-box strong{
+    color:#082544;
+    font-size:17px;
+}
+
+
+.upload-box small{
+    color:#475467;
+}
+
+
+.upload-box input{
+    position:absolute;
+    width:100%;
+    height:100%;
+    opacity:0;
+    cursor:pointer;
+}
+.role-select{
+
+width:100%;
+
+height:48px;
+
+border:1px solid #cbd5e1;
+
+border-radius:10px;
+
+padding:0 15px;
+
+background:white;
+
+font-size:15px;
+
+font-weight:500;
+
+color:#082544;
+
+cursor:pointer;
+
+}
+
+
+.role-select:focus{
+
+outline:none;
+
+border-color:#082544;
+
+}
+
+/* FILE */
+
+.uploaded-file{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    height:65px;
+    padding:0 14px;
+    margin-top:18px;
+    border:1px solid #d0d5dd;
+    border-radius:12px;
+}
+
+
+.uploaded-file > i:first-child{
+    font-size:25px;
+    color:#082544;
+}
+
+
+.file-name{
+    flex:1;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    color:#082544;
+    font-size:14px;
+}
+
+
+.uploaded-file span{
+    font-size:12px;
+    color:#667085;
+}
+
+
+.uploaded-file .fa-trash{
+    color:#ff4d4f;
+    cursor:pointer;
+}
+
+
+/* SUMMARY */
+
+.summary-card{
+    background:#06345c;
+    color:white;
+    padding:25px;
+}
+
+
+.summary-card h2{
+    color:white;
+    font-size:22px;
+}
+
+
+.summary-card ul{
+    padding:0;
+}
+
+
+.summary-card li{
+    list-style:none;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:18px 0;
+    font-size:15px;
+}
+
+
+.summary-card li i{
+    color:#ff9800;
+}
+
+
+.submit-btn{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:8px;
+    background:#ff8a00;
+    color:white;
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.3s;
+    margin-bottom: 10px;
+}
+
+
+.submit-btn:hover{
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(255,138,0,.35);
+}
+
+
+/* ANIMATION */
+
+@keyframes fade{
+    from{
+        opacity:0;
+    }
+    to{
+        opacity:1;
+    }
+}
+
+
+@keyframes up{
+    from{
+        opacity:0;
+        transform:translateY(20px);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0);
+    }
+}
+
+
+/* RESPONSIVE */
+
+@media(max-width:900px){
+
+    .proposal-layout{
+        grid-template-columns:1fr;
+    }
+
+    .bottom-grid{
+        grid-template-columns:1fr;
+    }
+
+}

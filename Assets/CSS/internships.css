@@ -353,6 +353,7 @@
     color: #94a3b8;
 }
 
+
 @media (max-width: 992px) {
     .internships-layout {
         grid-template-columns: 1fr;
