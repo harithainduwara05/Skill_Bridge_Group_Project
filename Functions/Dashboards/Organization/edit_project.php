@@ -32,9 +32,9 @@ $assignedCount = (int)$assignedStmt->get_result()->fetch_row()[0];
 $flash = null;
 
 // Statuses the organization is allowed to choose.
-// "On Hold" and "Rejected" can only be set by the Admin.
-$orgStatusOptions = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed'];
-$adminOnlyStatusLabels = ['hold' => 'On Hold', 'rejected' => 'Rejected'];
+// "Hold" and "Rejected" can only be set by the Admin.
+$orgStatusOptions = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'completed' => 'Completed'];
+$adminOnlyStatusLabels = ['hold' => 'Hold', 'rejected' => 'Rejected'];
 
 // ---- Handle update ----
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

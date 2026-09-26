@@ -54,9 +54,19 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $recentProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
+// An "Active" project whose team is not full yet is still shown as "Reviewing":
+// it only becomes Active when the number of students it needs have joined.
+foreach ($recentProjects as &$rp) {
+    $needed = (int)($rp['members'] ?? 0);
+    if ($rp['status'] === 'inprogress' && $needed > 0 && (int)$rp['proposal_count'] < $needed) {
+        $rp['status'] = 'reviewing';
+    }
+}
+unset($rp);
+
 // Human-readable label for a status value (DB stores 'inprogress' for what's shown as "Active")
 function statusLabel($status) {
-    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'closed' => 'Closed', 'draft' => 'Draft'];
+    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'rejected' => 'Rejected', 'completed' => 'Completed', 'draft' => 'Draft'];
     return $labels[$status] ?? ucfirst($status);
 }
 
@@ -65,7 +75,7 @@ $fakeProjectPool = [
     ['title' => 'AI Chatbot for Student Support', 'keywords' => 'Python, NLP, Flask', 'category' => 'AI/ML', 'posted_at' => date('Y-m-d', strtotime('-1 day')), 'proposal_count' => 5, 'status' => 'reviewing'],
     ['title' => 'Mobile Attendance Tracker', 'keywords' => 'Flutter, Firebase', 'category' => 'Mobile Development', 'posted_at' => date('Y-m-d', strtotime('-3 day')), 'proposal_count' => 3, 'status' => 'reviewing'],
     ['title' => 'Portfolio Website Builder', 'keywords' => 'React, Tailwind CSS', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-10 day')), 'proposal_count' => 2, 'status' => 'reviewing'],
-    ['title' => 'Campus Event Management System', 'keywords' => 'Laravel, MySQL', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-14 day')), 'proposal_count' => 6, 'status' => 'closed'],
+    ['title' => 'Campus Event Management System', 'keywords' => 'Laravel, MySQL', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-14 day')), 'proposal_count' => 6, 'status' => 'completed'],
     ['title' => 'Smart Library Assistant', 'keywords' => 'Java, Spring Boot', 'category' => 'Software Engineering', 'posted_at' => date('Y-m-d', strtotime('-18 day')), 'proposal_count' => 4, 'status' => 'inprogress'],
 ];
 $needed = 5 - count($recentProjects);
@@ -140,6 +150,17 @@ include "../../../Includes/dash_header.php";
 ?>
 
 <style>
+    /* Project status colours: Active = green, Rejected = red, On Hold = yellow
+       (kept here so the shared dashboard.css used by other modules is not changed) */
+    .badge-status.inprogress { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-status.inprogress::before { content: '●'; font-size: 8px; }
+    .badge-status.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .badge-status.rejected::before { content: '●'; font-size: 8px; }
+    .badge-status.completed { background: #f3f4f6; color: #6b7280; }
+    .badge-status.completed::before { content: '●'; font-size: 8px; }
+    .badge-status.hold { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
+    .badge-status.hold::before { content: '●'; font-size: 8px; }
+
     /* Stat cards + Recent Project Posts/Team Progress + CTA banner
        all share the same left/right edges (28px side gutter). */
     .org-main-row {
@@ -163,14 +184,17 @@ include "../../../Includes/dash_header.php";
         .full-width-section { padding: 0 16px 16px; }
     }
 
-    /* Bigger "Welcome back" + organization name on this dashboard only */
+    /* "Welcome back, <organization name>" – same style as the student dashboard */
     .dashboard-header .welcome-heading {
         font-size: 30px;
-    }
-    .dashboard-header .overview-title {
-        font-size: 22px;
         font-weight: 800;
-        color: #111827;
+        color: #0f2a4a;
+        letter-spacing: -0.01em;
+    }
+    .dashboard-header .welcome-sub {
+        font-size: 16px;
+        color: #1f2937;
+        margin-top: 2px;
     }
 </style>
 
@@ -178,9 +202,8 @@ include "../../../Includes/dash_header.php";
     <div class="dashboard-header">
 
         <div>
-            <h1 class="welcome-heading">Welcome back! 👋</h1>
-            <h2 class="overview-title"><?php echo htmlspecialchars($orgName); ?></h2>
-            <p>Here's what's happening with your projects today.</p>
+            <h1 class="welcome-heading">Welcome back, <?php echo htmlspecialchars($orgName); ?></h1>
+            <p class="welcome-sub">Here's what's happening with your projects today.</p>
         </div>
 
     </div>

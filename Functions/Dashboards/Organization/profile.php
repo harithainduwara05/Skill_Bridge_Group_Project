@@ -125,10 +125,10 @@ foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $r) {
 }
 
 $totalProjects     = count($projectRows);
-$completedProjects = 0;   // closed projects
-$activeTeams       = 0;   // projects with a team assigned that are not closed yet
+$completedProjects = 0;   // completed projects
+$activeTeams       = 0;   // projects with a team assigned that are not completed yet
 foreach ($projectRows as [$status, $assigned]) {
-    if ($status === 'closed') {
+    if ($status === 'completed') {
         $completedProjects++;
     } elseif ($assigned > 0) {
         $activeTeams++;

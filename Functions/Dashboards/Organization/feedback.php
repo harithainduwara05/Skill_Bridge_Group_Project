@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submi
     }
     $summaryText  = trim($_POST['summary'] ?? '');
     $improvements = implode(', ', array_slice(array_filter(array_map('trim', explode(',', $_POST['improvements'] ?? ''))), 0, 8));
-    $share        = !empty($_POST['share']) ? 1 : 0;
+    $share        = 1;   // the team always gets a notification when feedback is submitted
 
     $project = null;
     foreach ($fbProjects as $fp) { if ($fp['id'] === $pid) { $project = $fp; break; } }
@@ -93,52 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submi
     exit;
 }
 
-// ---------------------------------------------------------------
-// Edit saved feedback
-// ---------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'update_feedback') {
-    $fid    = (int)($_POST['feedback_id'] ?? 0);
-    $own    = fbFetch($conn, "SELECT f.id, f.project_id, p.title FROM project_feedback f JOIN projects p ON p.id = f.project_id
-                              WHERE f.id = ? AND f.organization_email = ?", "is", [$fid, $organization_email])[0] ?? null;
-    $rating = (int)($_POST['rating'] ?? 0);
-    $scores = [];
-    foreach (['technical', 'communication', 'teamwork', 'problem_solving'] as $k) {
-        $scores[$k] = round((float)($_POST[$k] ?? 0) * 2) / 2;
-    }
-    $summaryText  = trim($_POST['summary'] ?? '');
-    $improvements = implode(', ', array_slice(array_filter(array_map('trim', explode(',', $_POST['improvements'] ?? ''))), 0, 8));
-    $share        = !empty($_POST['share']) ? 1 : 0;
-    $scoresOk     = count(array_filter($scores, fn($v) => $v >= 1 && $v <= 5)) === 4;
-
-    if (!$own || $rating < 1 || $rating > 5 || !$scoresOk || mb_strlen($summaryText) < 20) {
-        header("Location: feedback.php?fb_error=1");
-        exit;
-    }
-    try {
-        $q = $conn->prepare("UPDATE project_feedback SET rating = ?, technical = ?, communication = ?, teamwork = ?, problem_solving = ?,
-                             summary = ?, improvements = ?, shared_with_students = ?, updated_at = NOW() WHERE id = ?");
-        $q->bind_param("iddddssii", $rating, $scores['technical'], $scores['communication'], $scores['teamwork'],
-                       $scores['problem_solving'], $summaryText, $improvements, $share, $fid);
-        $q->execute();
-
-        if ($share) {
-            $nTitle = 'Project Feedback Updated';
-            $nMsg   = 'The feedback for "' . $own['title'] . '" was updated (' . $rating . '/5).';
-            $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
-                                 SELECT Email, ?, ?, 'project', 'Unread' FROM student_projects WHERE project_id = ?");
-            $pidN = (int)$own['project_id'];
-            $n->bind_param("ssi", $nTitle, $nMsg, $pidN);
-            $n->execute();
-        }
-        header("Location: feedback.php?fb_updated=1");
-    } catch (Throwable $e) {
-        header("Location: feedback.php?fb_error=1");
-    }
-    exit;
-}
-
 $flash = null;
-if (isset($_GET['fb_updated'])) $flash = ['type' => 'success', 'title' => 'Feedback updated', 'message' => 'Your changes to the feedback were saved.'];
 if (isset($_GET['fb_saved'])) $flash = ['type' => 'success', 'title' => 'Feedback submitted', 'message' => 'Your feedback was saved and shared with the team.'];
 if (isset($_GET['fb_error'])) $flash = ['type' => 'error', 'title' => 'Could not submit feedback', 'message' => 'Please fill all required fields and try again.'];
 
@@ -624,7 +579,6 @@ include "../../../Includes/dash_header.php";
                                 </div>
                             </div>
                             <div class="fb-foot">
-                                <button type="button" class="fb-textbtn" data-fb-edit="<?= (int)$ri ?>"><span class="material-symbols-outlined">edit</span>Edit</button>
                                 <button type="button" class="fb-btn solid" data-fb-view="<?= (int)$ri ?>">View Full Details</button>
                             </div>
                         </div>
@@ -668,7 +622,6 @@ include "../../../Includes/dash_header.php";
                 <button type="button" class="fb-btn outline" id="fvPrint"><span class="material-symbols-outlined">print</span>Print / Save PDF</button>
                 <div style="display:flex; gap:10px; margin-left:auto;">
                     <button type="button" class="fb-btn outline" data-fv-close>Close</button>
-                    <button type="button" class="fb-btn solid" id="fvEdit"><span class="material-symbols-outlined">edit</span>Edit Feedback</button>
                 </div>
             </div>
         </div>
@@ -760,10 +713,6 @@ include "../../../Includes/dash_header.php";
                     </div>
                 </div>
 
-                <label class="fb-share">
-                    <input type="checkbox" name="share" value="1" id="fbShare" checked>
-                    <span><strong>Share with the students</strong><br><small>Team members get a notification about this feedback.</small></span>
-                </label>
 
                 <?php endif; ?>
             </div>
@@ -848,7 +797,7 @@ document.body.appendChild(document.getElementById('fbModal'));
 (function () {
     const PROJECTS = <?= json_encode($fbProjects, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
     const LABELS = { 1: 'Needs Work', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Exceptional' };
-    const STATUS = { reviewing: 'Reviewing', inprogress: 'Active', closed: 'Closed', hold: 'On Hold' };
+    const STATUS = { reviewing: 'Reviewing', inprogress: 'Active', completed: 'Completed', hold: 'Hold' };
     const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
 
     const modal = document.getElementById('fbModal');
@@ -970,7 +919,7 @@ document.body.appendChild(document.getElementById('fbModal'));
                           'Teamwork': val('teamwork'), 'Problem-solving': val('problem_solving') },
                 summary: summary.value.trim(),
                 improvements: chips.slice(),
-                shared: document.getElementById('fbShare').checked,
+                shared: true,
                 updated: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
             });
             close();
@@ -1014,7 +963,6 @@ document.body.appendChild(document.getElementById('fbModal'));
         document.getElementById('fbCount').textContent = summary.value.length;
         chips = edit ? r.improvements.slice() : [];
         renderChips();
-        document.getElementById('fbShare').checked = edit ? !!r.shared : true;
 
         if (edit) {
             // the project of a feedback can't be changed
@@ -1039,7 +987,7 @@ document.body.appendChild(document.getElementById('fbModal'));
     };
 })();
 
-/* ================= VIEW FULL DETAILS + EDIT ================= */
+/* ================= VIEW FULL DETAILS ================= */
 (function () {
     const REVIEWS = <?= json_encode(array_values(array_map(fn($r) => [
                         'key' => $r['key'], 'id' => $r['id'] ?? null, 'project_id' => $r['project_id'] ?? null,
@@ -1154,7 +1102,6 @@ document.body.appendChild(document.getElementById('fbModal'));
                 <div class="fv-card">
                     <h4><span class="material-symbols-outlined">info</span> Feedback Info</h4>
                     <div class="fv-info-row"><span>Submitted on</span><strong>${esc(r.date)}</strong></div>
-                    <div class="fv-info-row"><span>Last edited</span><strong>${esc(r.updated || 'Not edited')}</strong></div>
                     <div class="fv-info-row"><span>Shared with students</span><strong style="color:${r.shared ? '#15803d' : '#6b7280'}">${r.shared ? 'Yes' : 'No'}</strong></div>
                     <div class="fv-info-row"><span>Team size</span><strong>${r.members.length} member${r.members.length === 1 ? '' : 's'}</strong></div>
                 </div>
@@ -1169,15 +1116,9 @@ document.body.appendChild(document.getElementById('fbModal'));
     modal.addEventListener('click', e => { if (e.target === modal) closeView(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeView(); });
     document.getElementById('fvPrint').addEventListener('click', () => window.print());
-    document.getElementById('fvEdit').addEventListener('click', () => { closeView(); openEdit(current); });
 
-    function openEdit(i) {
-        if (!window.fbOpenForm) { alert('Editing is not available right now.'); return; }
-        window.fbOpenForm(effective(i));
-    }
 
     document.querySelectorAll('[data-fb-view]').forEach(b => b.addEventListener('click', () => openView(Number(b.dataset.fbView))));
-    document.querySelectorAll('[data-fb-edit]').forEach(b => b.addEventListener('click', () => openEdit(Number(b.dataset.fbEdit))));
 })();
 
 /* hide the success / error message */

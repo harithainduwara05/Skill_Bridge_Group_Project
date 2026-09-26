@@ -47,7 +47,7 @@ function rpSel($a, $b) { return (string)$a === (string)$b ? 'selected' : ''; }
 $h = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES);
 
 $pillClass = ['On Track' => 'ok', 'Completed' => 'done', 'Behind Schedule' => 'late', 'Accepted' => 'ok', 'Rejected' => 'late',
-              'Pending' => 'wait', 'Active' => 'ok', 'Reviewing' => 'wait', 'Open' => 'wait', 'On Hold' => 'late', 'Closed' => 'done',
+              'Pending' => 'wait', 'Active' => 'ok', 'Reviewing' => 'wait', 'Open' => 'wait', 'Hold' => 'late',
               'Draft' => 'done', 'In Progress' => 'wait', 'Not started' => 'done'];
 
 include "../../../Includes/org_sidebar.php";
@@ -557,7 +557,7 @@ const RP = <?= json_encode([
 const RP_COLORS = ['#0f3a66', '#2563eb', '#0f766e', '#f59e0b', '#dc2626', '#7c3aed', '#64748b', '#0891b2'];
 const RP_STATUS_COLORS = {
     'On Track': '#16a34a', 'Behind Schedule': '#dc2626', 'Completed': '#64748b', 'Accepted': '#16a34a', 'Rejected': '#dc2626',
-    'Pending': '#f59e0b', 'Active': '#2563eb', 'Reviewing': '#f59e0b', 'Open': '#0891b2', 'On Hold': '#dc2626', 'Closed': '#64748b',
+    'Pending': '#f59e0b', 'Active': '#2563eb', 'Reviewing': '#f59e0b', 'Open': '#0891b2', 'Hold': '#dc2626',
     'Draft': '#94a3b8', 'Below 50%': '#dc2626', '50% – 79%': '#f59e0b', '80% and above': '#16a34a'
 };
 const RP_FONT = "Inter, system-ui, -apple-system, 'Segoe UI', sans-serif";
