@@ -27,8 +27,10 @@ function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = 
 // Data for "Create New Team"
 //   - only this organization's projects that can have a team
 //     (Open / Reviewing / Active – not Draft, On Hold, Rejected or Closed)
-//   - for each project, only the students whose PROPOSAL WAS ACCEPTED
-//     (project_applications.status = 'accepted', set from Proposals page)
+//   - for each project, the students the organization has accepted:
+//       * proposal accepted on the Proposals page (project_applications.status = 'accepted')
+//       * or already working on the project (student_projects)
+//     (students whose proposal was rejected are never shown)
 //   - a student who is already in a team of that project is shown but locked
 // ---------------------------------------------------------------
 $tmProjects = tmFetch($conn,
@@ -52,12 +54,25 @@ foreach ($tmProjects as $pr) {
 
     $tmCandidates[$pid] = [];
     $seen = [];
-    foreach (tmFetch($conn,
-        "SELECT s.Email AS email, s.Name AS name, s.University AS university, s.degree
-         FROM project_applications pa
-         JOIN student s ON LOWER(s.Email) = LOWER(pa.Email)
-         WHERE pa.project_id = ? AND pa.status = 'accepted'
-         ORDER BY s.Name", "i", [$pid]) as $r) {
+    $rows = array_merge(
+        // proposal accepted
+        tmFetch($conn,
+            "SELECT s.Email AS email, s.Name AS name, s.University AS university, s.degree, 'accepted' AS source
+             FROM project_applications pa
+             JOIN student s ON LOWER(s.Email) = LOWER(pa.Email)
+             WHERE pa.project_id = ? AND pa.status = 'accepted'
+             ORDER BY s.Name", "i", [$pid]),
+        // already working on the project (and not rejected)
+        tmFetch($conn,
+            "SELECT s.Email AS email, s.Name AS name, s.University AS university, s.degree, 'project' AS source
+             FROM student_projects sp
+             JOIN student s ON LOWER(s.Email) = LOWER(sp.Email)
+             WHERE sp.project_id = ?
+               AND NOT EXISTS (SELECT 1 FROM project_applications pa
+                               WHERE pa.project_id = sp.project_id AND LOWER(pa.Email) = LOWER(sp.Email) AND pa.status = 'rejected')
+             ORDER BY s.Name", "i", [$pid])
+    );
+    foreach ($rows as $r) {
         $key = strtolower($r['email']);
         if (isset($seen[$key])) continue;
         $seen[$key] = true;
@@ -70,6 +85,7 @@ foreach ($tmProjects as $pr) {
             'name'    => $r['name'],
             'sub'     => trim(preg_replace('/^B\.Sc\.\s*in\s*/i', '', (string)$r['degree']) . ($r['university'] ? ' · ' . $r['university'] : ''), ' ·'),
             'skills'  => $skills,
+            'source'  => $r['source'],
             'team'    => $inTeam[$key]['name'] ?? null,
             'team_id' => $inTeam[$key]['id'] ?? null,
         ];
@@ -334,7 +350,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
 
 $flash = null;
 $tmErrText = [
-    'members'  => 'Only students with an accepted proposal (and not already in another team) can be added, up to the number the project needs.',
+    'members'  => 'Only students accepted for this project (and not already in another team) can be added, up to the number the project needs.',
     'roles'    => 'Please give every team member a role (max 50 characters).',
     'skills'   => 'Please add at least one required skill.',
     'deadline' => 'Please pick a team deadline from today up to the project deadline.',
@@ -1552,7 +1568,7 @@ include "../../../Includes/dash_header.php";
                 <div class="tm-modal-icon"><span class="material-symbols-outlined">group_add</span></div>
                 <div>
                     <h3>Create New Team</h3>
-                    <p>Build a team from the students whose proposals you accepted.</p>
+                    <p>Build a team from the students you accepted for a project.</p>
                 </div>
                 <button type="button" class="tm-x" data-close aria-label="Close"><span class="material-symbols-outlined">close</span></button>
             </div>
@@ -1588,11 +1604,11 @@ include "../../../Includes/dash_header.php";
                 <div class="tm-step"><span>2</span>Members &amp; Roles</div>
                 <div class="tm-field">
                     <div class="tm-f-label-row">
-                        <label class="tm-f-label">Accepted Students *</label>
+                        <label class="tm-f-label">Students *</label>
                         <span class="tm-picked" id="tmPicked"></span>
                     </div>
                     <div class="tm-members" id="tmMembers">
-                        <div class="tm-members-empty">Select a project to see the students you accepted for it.</div>
+                        <div class="tm-members-empty">Select a project to see the students you can add.</div>
                     </div>
                     <div class="tm-hint">Tick a student to add them, then give them a role in the team.</div>
                     <div class="tm-err" data-err="members"></div>
@@ -1943,7 +1959,7 @@ window.TMForm = (function () {
 
         if (!pr) {
             infoEl.hidden = true;
-            membersEl.innerHTML = '<div class="tm-members-empty">Select a project to see the students you accepted for it.</div>';
+            membersEl.innerHTML = '<div class="tm-members-empty">Select a project to see the students you can add.</div>';
             skills.set([]); skills.suggest([]);
             deadlineEl.max = '';
             refresh();
@@ -1968,12 +1984,13 @@ window.TMForm = (function () {
         if (list.length) {
             F.renderMembers(membersEl, list.map(c => ({
                 value: c.email, name: c.name, sub: c.sub, skills: c.skills,
-                badge: c.team ? 'In ' + c.team : 'Accepted', badgeClass: c.team ? 'locked' : 'assigned',
+                badge: c.team ? 'In ' + c.team : (c.source === 'project' ? 'On project' : 'Accepted'),
+                badgeClass: c.team ? 'locked' : (c.source === 'project' ? 'applied' : 'assigned'),
                 locked: c.team ? 'Already in the team "' + c.team + '"' : ''
             })), {});
         } else {
-            membersEl.innerHTML = '<div class="tm-members-empty">No accepted students for this project yet.<br>' +
-                                  'Accept student proposals on the <a href="proposal.php">Proposals</a> page first.</div>';
+            membersEl.innerHTML = '<div class="tm-members-empty">No students for this project yet.<br>' +
+                                  'Accept student proposals on the <a href="proposal.php">Proposals</a> page, then come back here.</div>';
         }
 
         skills.set(pr.skills);   // start with the project's skills; the organization can edit them

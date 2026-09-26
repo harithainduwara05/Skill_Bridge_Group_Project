@@ -2,6 +2,11 @@
 /*
 | CSV download of the report built on reports.php
 | (same options: reports.php?type=teams&period=3m...  ->  download_report.php?type=teams&period=3m...)
+|
+| The CSV is one clean table: the column names on the first row, then one row
+| per record. This opens correctly in Excel / Google Sheets and can be imported
+| into other tools. (A CSV can't keep column widths or colours – for a formatted
+| report use "Download Excel", download_excel.php.)
 */
 include "../../../Config/db.php";
 include "../../../Session/Session.php";
@@ -17,39 +22,32 @@ tmEnsureSchema($conn);
 $params = rpParams($_GET);
 $report = rpBuild(rpDataset($conn, $organization_email), $params);
 
-$orgName = rpQuery($conn, "SELECT Name FROM organization WHERE Email = ?", "s", [$organization_email])[0]['Name']
-           ?? ($user['username'] ?? 'Organization');
+// same values as the table, but dates as YYYY-MM-DD so every spreadsheet reads them as dates
+function csvCell(string $key, $v): string
+{
+    if (in_array($key, ['posted', 'deadline', 'created', 'joined', 'submitted', 'date'], true)) {
+        return ($v && strtotime((string)$v)) ? date('Y-m-d', strtotime((string)$v)) : '';
+    }
+    if ($key === 'rating') return $v === null || $v === '' ? '' : (string)(int)$v;
+    return rpCell($key, $v);
+}
 
-$filename = 'skillbridge_' . $report['type'] . '_report_' . date('Y-m-d') . '.csv';
+$filename = 'skillbridge_' . $report['type'] . '_report_'
+          . $report['from'] . '_to_' . $report['to'] . '.csv';
 header('Content-Type: text/csv; charset=utf-8');
 header('Content-Disposition: attachment; filename="' . $filename . '"');
 
 $out = fopen('php://output', 'w');
 fprintf($out, chr(0xEF) . chr(0xBB) . chr(0xBF));   // BOM so Excel opens UTF-8 correctly
 
-// ---- report details ----
-fputcsv($out, ['SkillBridge – ' . $report['type_label'] . ' Report']);
-fputcsv($out, ['Organization', $orgName]);
-fputcsv($out, ['Generated on', date('M d, Y h:i A')]);
-foreach ($report['filters'] as $k => $v) fputcsv($out, [$k, $v]);
-if ($report['has_sample']) fputcsv($out, ['Note', 'Includes sample data']);
-fputcsv($out, []);
+$head = array_values($report['columns']);
+foreach ($head as $i => $label) if ($label === 'Rating') $head[$i] = 'Rating (out of 5)';
+fputcsv($out, $head);
 
-// ---- summary (stat cards) ----
-if (in_array('cards', $params['inc'], true)) {
-    fputcsv($out, ['Summary']);
-    foreach ($report['cards'] as $c) fputcsv($out, [$c['label'], $c['value'], $c['sub']]);
-    fputcsv($out, []);
-}
-
-// ---- table ----
-fputcsv($out, array_values($report['columns']));
 foreach ($report['rows'] as $r) {
     $line = [];
-    foreach ($report['columns'] as $key => $label) $line[] = rpCell($key, $r[$key] ?? '');
+    foreach ($report['columns'] as $key => $label) $line[] = csvCell($key, $r[$key] ?? null);
     fputcsv($out, $line);
 }
-fputcsv($out, []);
-fputcsv($out, ['Total rows', $report['total_rows']]);
 
 fclose($out);
