@@ -20,12 +20,10 @@ if (isset($_GET['delete'])) {
     $delProject = $dq->get_result()->fetch_assoc();
 
     $delAllowed = false;
-    // Rule: Rejected projects, or projects with 0 applicants (Draft, Reviewing...).
-    //       On Hold projects can never be deleted (Admin process).
-    if ($delProject && $delProject['status'] !== 'hold') {
+    if ($delProject) {
         if ($delProject['status'] === 'rejected') {
             $delAllowed = true;
-        } else {
+        } elseif ($delProject['status'] === 'reviewing') {
             $cq = $conn->prepare("SELECT COUNT(*) FROM student_projects WHERE project_id = ?");
             $cq->bind_param("i", $delId);
             $cq->execute();
@@ -144,7 +142,7 @@ $flash = null;
 if (isset($_GET['deleted'])) {
     $flash = ['type' => 'success', 'title' => 'Project deleted', 'message' => 'The project was deleted successfully.'];
 } elseif (isset($_GET['delete_blocked'])) {
-    $flash = ['type' => 'error', 'title' => 'Can’t delete this project', 'message' => 'Only Rejected projects, or projects with 0 applicants, can be deleted.'];
+    $flash = ['type' => 'error', 'title' => 'Can’t delete this project', 'message' => 'Only Rejected projects, or Reviewing projects with 0 applicants, can be deleted.'];
 } elseif (isset($_GET['hold_resolved'])) {
     $flash = ['type' => 'success', 'title' => 'Activation request sent', 'message' => 'Your changes were saved. The project stays On Hold until the Admin activates it.'];
 } elseif (isset($_GET['hold_error'])) {
@@ -186,6 +184,18 @@ foreach ($tcStmt->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
     $teamCounts[(int)$row['project_id']] = (int)$row['c'];
 }
 
+// An "Active" project whose team is not full yet is still shown as "Reviewing":
+// it only becomes Active when the number of students it needs have joined.
+// (db_status keeps the saved value for the delete rules below.)
+foreach ($allProjects as &$ap) {
+    $ap['db_status'] = $ap['status'];
+    $needed = (int)($ap['members'] ?? 0);
+    if ($ap['status'] === 'inprogress' && $needed > 0 && ($teamCounts[(int)$ap['id']] ?? 0) < $needed) {
+        $ap['status'] = 'reviewing';
+    }
+}
+unset($ap);
+
 // ---- Applicant counts ----
 // Applicants = students who applied (project_applications)
 //            + students already in the team (student_projects),
@@ -221,25 +231,36 @@ function applicantCount($projectId) {
 
 // Can the organization delete this project? Returns '' if yes, otherwise the reason why not.
 function deleteBlockReason($project) {
-    $status = $project['status'] ?? '';
+    $status = $project['db_status'] ?? ($project['status'] ?? '');
     if ($status === 'rejected') return '';
-    if ($status === 'hold') return "This project is On Hold by the Admin, so it can’t be deleted.";
-
     $apps = applicantCount($project['id']);
-    if ($apps === 0) return '';
+    if ($status === 'reviewing' && $apps === 0) return '';
 
-    return "This project already has $apps applicant" . ($apps === 1 ? '' : 's') . ", so it can’t be deleted.";
+    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'rejected' => 'Rejected', 'completed' => 'Completed', 'draft' => 'Draft'];
+    $label  = $labels[$status] ?? ucfirst($status);
+    if ($status === 'reviewing') {
+        return "This project already has $apps applicant" . ($apps === 1 ? '' : 's') . ", so it can’t be deleted.";
+    }
+    if ($status === 'inprogress') {
+        return "This project has already been approved and students are joining it, so it can’t be deleted.";
+    }
+    return "This project is $label, so it can’t be deleted.";
 }
 
-// Assigned = students actually in the team, but never more than the number required
+// Assigned = students actually in the team, but never more than the number required.
+// A Rejected project can't have a team, so it always shows "Not Assigned".
 function assignedCount($project) {
     global $teamCounts;
+    if (($project['db_status'] ?? $project['status'] ?? '') === 'rejected') return 0;
     $inTeam   = $teamCounts[(int)$project['id']] ?? 0;
     $required = (int)($project['members'] ?? 0);
     return $required > 0 ? min($inTeam, $required) : $inTeam;
 }
 
 $totalProjectsAll = count($allProjects);
+// "Reviewing Projects" card = projects shown with the Reviewing badge
+// (saved as Reviewing, or Active but the team is not full yet)
+$reviewingProjects = count(array_filter($allProjects, fn($p) => ($p['status'] ?? '') === 'reviewing'));
 // Time filter is based on the date the project was posted:
 //   daily   = posted today
 //   weekly  = posted in the last 7 days
@@ -283,7 +304,7 @@ function formatDeadline($raw) {
 
 // Human-readable label for a status value (DB stores 'inprogress' for what's shown as "Active")
 function statusLabel($status) {
-    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'On Hold', 'closed' => 'Closed', 'draft' => 'Draft'];
+    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'rejected' => 'Rejected', 'completed' => 'Completed', 'draft' => 'Draft'];
     return $labels[$status] ?? ucfirst($status);
 }
 
@@ -299,24 +320,30 @@ function buildPageUrl($pageNum, $statusFilter, $timeFilter) {
     return '?' . http_build_query($query);
 }
 
-// ---- Bottom summary stat cards (real data) ----
-$stmt = $conn->prepare("SELECT COUNT(*) FROM student_projects sp
-                         JOIN projects p ON sp.project_id = p.id
-                         WHERE p.organization_email = ?");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$activeApplications = (int)$stmt->get_result()->fetch_row()[0];
+// ---- Summary stat cards (real data) ----
+// "Active Applications" = proposals still waiting for the organization's decision (pending)
+$activeApplications = 0;
+try {
+    $stmt = $conn->prepare("SELECT COUNT(*) FROM project_applications pa
+                             JOIN projects p ON pa.project_id = p.id
+                             WHERE p.organization_email = ? AND pa.status = 'pending'");
+    $stmt->bind_param("s", $organization_email);
+    $stmt->execute();
+    $activeApplications = (int)$stmt->get_result()->fetch_row()[0];
+} catch (Throwable $e) {
+    // project_applications table not created yet
+}
 
-// "Assigned Teams" = number of this org's projects that have at least one student attached
-$stmt = $conn->prepare("SELECT COUNT(DISTINCT sp.project_id) FROM student_projects sp
-                         JOIN projects p ON sp.project_id = p.id
-                         WHERE p.organization_email = ?");
-$stmt->bind_param("s", $organization_email);
-$stmt->execute();
-$assignedTeams = (int)$stmt->get_result()->fetch_row()[0];
+// "Assigned Teams" = projects whose team is COMPLETE (all the students it needs have joined).
+// Same rule as the Active badge; Rejected and Hold projects are not counted.
+$assignedTeams = 0;
+foreach ($allProjects as $ap) {
+    $dbStatus = $ap['db_status'] ?? $ap['status'];
+    $needed   = (int)($ap['members'] ?? 0);
+    if (in_array($dbStatus, ['rejected', 'hold'], true) || $needed < 1) continue;
+    if (($teamCounts[(int)$ap['id']] ?? 0) >= $needed) $assignedTeams++;
+}
 
-// No timestamp data exists yet to measure real response time
-$avgResponseTime = null;
 ?>
 
 <style>
@@ -433,9 +460,14 @@ $avgResponseTime = null;
     .pv-btn-close:hover { background: #e2e8f0; }
     @media (max-width: 520px) { .pv-info { grid-template-columns: 1fr; } }
 
-    /* "Rejected" status badge (dashboard.css doesn't have this one — the other status colors live there) */
-    .badge-status.rejected { background: #fef2f2; color: #b91c1c; }
+    /* Project status colours: Active = green, Rejected = red, On Hold = yellow
+       (kept here so the shared dashboard.css used by other modules is not changed) */
+    .badge-status.inprogress { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .badge-status.inprogress::before { content: '●'; font-size: 8px; }
+    .badge-status.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
     .badge-status.rejected::before { content: '●'; font-size: 8px; }
+    .badge-status.completed { background: #f3f4f6; color: #6b7280; }
+    .badge-status.completed::before { content: '●'; font-size: 8px; }
 
     /* "Not Assigned" team label (king coconut / thambili orange) */
     .team-cell.not-assigned { color: #ea7a1a; font-size: 12px; font-style: italic; font-weight: 600; }
@@ -637,6 +669,18 @@ $avgResponseTime = null;
 
         <div class="stat-card">
             <div class="stat-card-top">
+                <div class="stat-icon orange">
+                    <span class="material-symbols-outlined">hourglass_top</span>
+                </div>
+            </div>
+            <div class="stat-info">
+                <div class="stat-label">Reviewing Projects</div>
+                <div class="stat-value"><?= (int)$reviewingProjects ?></div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-card-top">
                 <div class="stat-icon green">
                     <span class="material-symbols-outlined">groups</span>
                 </div>
@@ -659,18 +703,6 @@ $avgResponseTime = null;
             </div>
         </div>
 
-        <div class="stat-card">
-            <div class="stat-card-top">
-                <div class="stat-icon navy">
-                    <span class="material-symbols-outlined">timer</span>
-                </div>
-            </div>
-            <div class="stat-info">
-                <div class="stat-label">Avg. Response Time</div>
-                <div class="stat-value"><?= $avgResponseTime ?? 'N/A' ?></div>
-            </div>
-        </div>
-
     </div>
 
     <!-- ===================== TOOLBAR: FILTERS + VIEW ===================== -->
@@ -686,8 +718,8 @@ $avgResponseTime = null;
                 <option value="all" <?= (($_GET['status'] ?? 'all') == 'all') ? 'selected' : '' ?>>Status: All</option>
                 <option value="reviewing" <?= (($_GET['status'] ?? '') == 'reviewing') ? 'selected' : '' ?>>Reviewing</option>
                 <option value="inprogress" <?= (($_GET['status'] ?? '') == 'inprogress') ? 'selected' : '' ?>>Active</option>
-                <option value="hold" <?= (($_GET['status'] ?? '') == 'hold') ? 'selected' : '' ?>>On Hold</option>
-                <option value="closed" <?= (($_GET['status'] ?? '') == 'closed') ? 'selected' : '' ?>>Closed</option>
+                <option value="hold" <?= (($_GET['status'] ?? '') == 'hold') ? 'selected' : '' ?>>Hold</option>
+                <option value="completed" <?= (($_GET['status'] ?? '') == 'completed') ? 'selected' : '' ?>>Completed</option>
                 <option value="rejected" <?= (($_GET['status'] ?? '') == 'rejected') ? 'selected' : '' ?>>Rejected</option>
             </select>
 
@@ -951,7 +983,7 @@ $avgResponseTime = null;
             <p id="blockedReason" style="margin-bottom:12px;"></p>
             <div class="delete-rule-box">
                 <span class="material-symbols-outlined">info</span>
-                <span id="blockedRule">Only <b>Rejected</b> projects, or projects with <b>0 applicants</b> (like a Draft), can be deleted.</span>
+                <span id="blockedRule">Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.</span>
             </div>
             <div class="confirm-modal-actions">
                 <button type="button" class="hm-btn primary" id="blockedHoldBtn" hidden>
@@ -1158,7 +1190,7 @@ $avgResponseTime = null;
                 <section class="hm-panel" data-panel="3" hidden>
                     <div class="hm-flow">
                         <div class="hm-flow-item">
-                            <span class="badge-status hold">On Hold</span>
+                            <span class="badge-status hold">Hold</span>
                             <small>Now</small>
                         </div>
                         <span class="material-symbols-outlined hm-flow-arrow">arrow_forward</span>
@@ -1233,7 +1265,7 @@ $avgResponseTime = null;
 
         document.getElementById('pvTitle').textContent = d.title;
         document.getElementById('pvCategory').textContent = d.category;
-        const STATUS_LABELS = { reviewing: 'Reviewing', inprogress: 'Active', hold: 'On Hold', closed: 'Closed', draft: 'Draft' };
+        const STATUS_LABELS = { reviewing: 'Reviewing', inprogress: 'Active', hold: 'Hold', completed: 'Completed', draft: 'Draft' };
         const st = document.getElementById('pvStatus');
         st.className = 'badge-status ' + d.status;
         st.textContent = d.status ? (STATUS_LABELS[d.status] || (d.status.charAt(0).toUpperCase() + d.status.slice(1))) : '';
@@ -1307,7 +1339,7 @@ $avgResponseTime = null;
         if (blockReason) {
             showBlocked(
                 'You can’t delete this project', title, blockReason,
-                'Only <b>Rejected</b> projects, or projects with <b>0 applicants</b> (like a Draft), can be deleted.'
+                'Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.'
             );
             return;
         }

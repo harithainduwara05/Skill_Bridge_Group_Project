@@ -59,7 +59,7 @@ const RP_COLUMNS = [
 const RP_DATE_FIELD = ['projects' => 'posted', 'teams' => 'created', 'individual' => 'joined', 'proposals' => 'submitted', 'feedback' => 'date'];
 
 const RP_STATUS = [
-    'projects'   => ['open' => 'Open', 'reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'On Hold', 'closed' => 'Closed', 'draft' => 'Draft', 'rejected' => 'Rejected'],
+    'projects'   => ['open' => 'Open', 'reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'completed' => 'Completed', 'draft' => 'Draft', 'rejected' => 'Rejected'],
     'teams'      => ['ontrack' => 'On Track', 'behind' => 'Behind Schedule', 'completed' => 'Completed'],
     'individual' => ['In Progress' => 'In Progress', 'Completed' => 'Completed', 'Not started' => 'Not started'],
     'proposals'  => ['pending' => 'Pending', 'accepted' => 'Accepted', 'rejected' => 'Rejected'],
@@ -101,7 +101,10 @@ function rpDataset(mysqli $conn, string $org): array
         $teams = rpQuery($conn, "SELECT COUNT(*) AS c FROM org_teams WHERE project_id = ?", "i", [$pid]);
         $d['projects'][] = [
             'title' => $p['title'], 'category' => $p['category'] ?: 'Uncategorized',
-            'status_key' => $p['status'] ?: 'reviewing', 'posted' => rpDate($p['posted_at']), 'deadline' => rpDate($p['deadline']),
+            // an "Active" project is shown as "Reviewing" until its team is full
+            'status_key' => ($p['status'] === 'inprogress' && (int)$p['members'] > 0 && (int)$p['students'] < (int)$p['members'])
+                            ? 'reviewing' : ($p['status'] ?: 'reviewing'),
+            'posted' => rpDate($p['posted_at']), 'deadline' => rpDate($p['deadline']),
             'needed' => (int)$p['members'], 'proposals' => count($apps),
             'accepted' => count(array_filter($apps, fn($a) => $a['status'] === 'accepted')),
             'teams' => (int)($teams[0]['c'] ?? 0), 'students' => (int)$p['students'], 'progress' => (int)round($p['progress']),
@@ -248,7 +251,7 @@ function rpAddSample(array &$d): void
         $d['teams'][] = ['team' => $name, 'project' => $project, 'category' => $cat, 'status_key' => $status,
             'leader' => $members[0][0], 'members' => count($members), 'progress' => (int)round($sum / count($members)),
             'created' => $created, 'deadline' => $deadline, 'skills' => $skills, 'sample' => true];
-        $d['projects'][] = ['title' => $project, 'category' => $cat, 'status_key' => $status === 'completed' ? 'closed' : 'inprogress',
+        $d['projects'][] = ['title' => $project, 'category' => $cat, 'status_key' => $status === 'completed' ? 'completed' : 'inprogress',
             'posted' => $posted, 'deadline' => $deadline, 'needed' => $needed, 'proposals' => count($members) + 2, 'accepted' => count($members),
             'teams' => 1, 'students' => count($members), 'progress' => (int)round($sum / count($members)), 'sample' => true];
         // two proposals per project that were not accepted
