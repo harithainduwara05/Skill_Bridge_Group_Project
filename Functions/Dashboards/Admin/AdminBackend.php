@@ -369,6 +369,12 @@ class AdminDB
         return $this->runQuery("SELECT emailEx FROM universityemails WHERE emailEx = ?", "s", $domain)->num_rows > 0;
     }
 
+    public function getUniversityByDomain($domain)
+    {
+        $res = $this->runQuery("SELECT * FROM universityemails WHERE emailEx = ?", "s", $domain);
+        return ($res && $res->num_rows > 0) ? $res->fetch_assoc() : null;
+    }
+
     public function addUniversity($university, $faculty, $domain, $status, $location)
     {
         return $this->runAction("INSERT INTO universityemails (University, faculty, emailEx, Status, Location) VALUES (?, ?, ?, ?, ?)", "sssss", $university, $faculty, $domain, $status, $location);

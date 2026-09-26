@@ -79,26 +79,54 @@ document.getElementById('exportBtn').addEventListener('click', function () {
 
 // ── Edit Modal ────────────────────────────────────────────────────────────────
 const editModal = document.getElementById('editModal');
+const editStatusSelect = document.getElementById('editStatus');
+const inactiveStatusNotice = document.getElementById('inactiveStatusNotice');
+
+if (editStatusSelect && inactiveStatusNotice) {
+    editStatusSelect.addEventListener('change', () => {
+        inactiveStatusNotice.style.display = editStatusSelect.value.toLowerCase() === 'inactive' ? 'block' : 'none';
+    });
+}
+
 if (editModal) {
-    document.getElementById('closeEditModal').addEventListener('click',  () => editModal.classList.remove('open'));
-    document.getElementById('cancelEditModal').addEventListener('click', () => editModal.classList.remove('open'));
-    editModal.addEventListener('click', e => { if (e.target === editModal) editModal.classList.remove('open'); });
+    document.getElementById('closeEditModal').addEventListener('click',  () => {
+        editModal.classList.remove('open');
+        if (inactiveStatusNotice) inactiveStatusNotice.style.display = 'none';
+    });
+    document.getElementById('cancelEditModal').addEventListener('click', () => {
+        editModal.classList.remove('open');
+        if (inactiveStatusNotice) inactiveStatusNotice.style.display = 'none';
+    });
+    editModal.addEventListener('click', e => { 
+        if (e.target === editModal) {
+            editModal.classList.remove('open');
+            if (inactiveStatusNotice) inactiveStatusNotice.style.display = 'none';
+        }
+    });
 }
 
 function openEditModal(uni, faculty, domain, location, status) {
+    // If university is already Inactive, prevent editing entirely
+    if ((status || '').toLowerCase() === 'inactive') {
+        alert('This university is currently Inactive and its state or details cannot be modified.');
+        return;
+    }
+
     document.getElementById('editOrigDomain').value = domain;
     document.getElementById('editUni').value = uni;
     document.getElementById('editFac').value = faculty;
     document.getElementById('editDomain').value = domain;
     document.getElementById('editLocation').value = location;
     
-    const statusSelect = document.getElementById('editStatus');
-    if (statusSelect) {
-        for (let i = 0; i < statusSelect.options.length; i++) {
-            if (statusSelect.options[i].value.toLowerCase() === (status || '').toLowerCase()) {
-                statusSelect.selectedIndex = i;
+    if (editStatusSelect) {
+        for (let i = 0; i < editStatusSelect.options.length; i++) {
+            if (editStatusSelect.options[i].value.toLowerCase() === (status || '').toLowerCase()) {
+                editStatusSelect.selectedIndex = i;
                 break;
             }
+        }
+        if (inactiveStatusNotice) {
+            inactiveStatusNotice.style.display = editStatusSelect.value.toLowerCase() === 'inactive' ? 'block' : 'none';
         }
     }
     
@@ -121,7 +149,7 @@ if (deleteModal) {
     if (editStatusInsteadBtn) {
         editStatusInsteadBtn.addEventListener('click', () => {
             deleteModal.classList.remove('open');
-            if (currentDeleteTarget) {
+            if (currentDeleteTarget && (currentDeleteTarget.status || '').toLowerCase() !== 'inactive') {
                 openEditModal(
                     currentDeleteTarget.name,
                     currentDeleteTarget.faculty,
@@ -146,6 +174,7 @@ function openDeleteModal(domain, name, stuCount = 0, faculty = '', location = ''
     const deleteBlockedStuCount = document.getElementById('deleteBlockedStuCount');
     const deleteBlockedUni = document.getElementById('deleteBlockedUni');
     const deleteBlockedDomain = document.getElementById('deleteBlockedDomain');
+    const deleteModalRecommendation = document.getElementById('deleteModalRecommendation');
 
     currentDeleteTarget = { domain, name, faculty, location, status, stuCount };
 
@@ -153,12 +182,41 @@ function openDeleteModal(domain, name, stuCount = 0, faculty = '', location = ''
     if (uniDisplay) uniDisplay.innerText = name || 'University';
     if (domainDisplay) domainDisplay.innerText = '@' + domain;
 
+    const s = String(status || '').trim().toLowerCase();
+    const isInactive = (s === 'inactive' || s === 'deactive' || s === 'disabled');
+
     if (stuCount > 0) {
         // Blocked state: university has registered students!
         if (deleteAllowedWrap) deleteAllowedWrap.style.display = 'none';
         if (deleteBlockedWrap) deleteBlockedWrap.style.display = 'block';
         if (confirmDeleteBtn) confirmDeleteBtn.style.display = 'none';
-        if (editStatusInsteadBtn) editStatusInsteadBtn.style.display = 'inline-flex';
+
+        // When inactive, hide the "Change Status Instead" button completely
+        if (editStatusInsteadBtn) {
+            if (isInactive) {
+                editStatusInsteadBtn.style.display = 'none';
+                editStatusInsteadBtn.setAttribute('style', 'display: none !important;');
+            } else {
+                editStatusInsteadBtn.style.display = 'inline-flex';
+                editStatusInsteadBtn.setAttribute('style', 'background:#d97706; border:none; display:inline-flex; align-items:center; gap:6px; padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; color:#fff; cursor:pointer;');
+            }
+        }
+
+        // Adjust recommendation text for inactive institutions
+        if (deleteModalRecommendation) {
+            if (isInactive) {
+                deleteModalRecommendation.innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#d97706;">lock</span>
+                    <em>Status:</em> This institution is currently <strong>Inactive</strong> and locked. Deleting it is restricted while student accounts remain enrolled.
+                `;
+            } else {
+                deleteModalRecommendation.innerHTML = `
+                    <span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#d97706;">lightbulb</span>
+                    <em>Recommended:</em> If you wish to suspend onboarding or platform access without removing user records, change the status to <strong>"Hold"</strong> or <strong>"Inactive"</strong> instead.
+                `;
+            }
+        }
+
         if (deleteBlockedStuCount) deleteBlockedStuCount.innerText = stuCount + (stuCount === 1 ? ' active student' : ' active students');
         if (deleteBlockedUni) deleteBlockedUni.innerText = name || 'University';
         if (deleteBlockedDomain) deleteBlockedDomain.innerText = '@' + domain;

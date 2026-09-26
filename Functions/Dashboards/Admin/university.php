@@ -40,8 +40,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $location = trim($_POST['location']);
         $status = trim($_POST['status']);
         try {
-            $adminDB->updateUniversity($university, $faculty, $domain, $status, $location, $origDomain);
-            $flash = ['type' => 'success', 'message' => 'University updated successfully'];
+            $existingUni = $adminDB->getUniversityByDomain($origDomain);
+            if ($existingUni && strcasecmp($existingUni['Status'] ?? '', 'Inactive') === 0) {
+                $flash = ['type' => 'error', 'message' => 'This university is currently Inactive and its status or details cannot be modified.'];
+            } else {
+                $adminDB->updateUniversity($university, $faculty, $domain, $status, $location, $origDomain);
+                $flash = ['type' => 'success', 'message' => 'University updated successfully'];
+            }
         } catch (mysqli_sql_exception $e) {
             $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
         }
@@ -261,6 +266,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                                 <span class="material-symbols-outlined"
                                                     style="font-size:18px;">visibility</span>
                                             </button>
+                                            <?php if (strcasecmp($row['Status'] ?? '', 'Inactive') !== 0): ?>
                                             <button class="action-btn" type="button" title="Edit" onclick="openEditModal(
                                             '<?= htmlspecialchars(addslashes($row['University'])) ?>',
                                             '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>',
@@ -269,8 +275,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                                             '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
                                                 <span class="material-symbols-outlined" style="font-size:18px;">edit</span>
                                             </button>
+                                            <?php endif; ?>
                                             <button class="action-btn" type="button" title="Delete" style="color:#dc2626;"
-                                                onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>', <?= (int)$stuCount ?>, '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($row['Status'] ?? '')) ?>')">
+                                                data-status="<?= htmlspecialchars(trim($row['Status'] ?? '')) ?>"
+                                                onclick="openDeleteModal('<?= htmlspecialchars(addslashes($row['emailEx'])) ?>', '<?= htmlspecialchars(addslashes($row['University'])) ?>', <?= (int)$stuCount ?>, '<?= htmlspecialchars(addslashes($row['faculty'] ?? '')) ?>', '<?= htmlspecialchars(addslashes($row['Location'] ?? '')) ?>', '<?= htmlspecialchars(addslashes(trim($row['Status'] ?? ''))) ?>')">
                                                 <span class="material-symbols-outlined" style="font-size:18px;">delete</span>
                                             </button>
                                         </div>
@@ -429,6 +437,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <option value="Hold">Hold</option>
                         <option value="Inactive">Inactive</option>
                     </select>
+                    <small id="inactiveStatusNotice" style="color:#b45309; font-size:11.5px; margin-top:5px; display:none; line-height:1.4;">
+                        <span class="material-symbols-outlined" style="font-size:13px; vertical-align:middle;">warning</span>
+                        <strong>Permanent Change:</strong> Once saved as <em>Inactive</em>, this university cannot be edited or modified again.
+                    </small>
                 </div>
             </div>
             <div class="univ-modal-footer">
@@ -535,7 +547,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             </div>
                         </div>
 
-                        <p style="font-size:12px; color:#64748b; margin:0; line-height:1.4;">
+                        <p id="deleteModalRecommendation" style="font-size:12px; color:#64748b; margin:0; line-height:1.4;">
                             <span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#d97706;">lightbulb</span>
                             <em>Recommended:</em> If you wish to suspend onboarding or platform access without removing user records, change the status to <strong>"Hold"</strong> or <strong>"Inactive"</strong> instead.
                         </p>
@@ -569,4 +581,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <?php include "../../../Includes/dash_footer.php"; ?>
 <script src="../../../Assets/JS/Admin/universityData.js"></script>
-<script src="../../../Assets/JS/Admin/university.js"></script>
+<script src="../../../Assets/JS/Admin/university.js?v=<?= time() ?>"></script>
+<script>
+// Direct safety guarantee to hide Change Status button for Inactive universities
+(function() {
+    var origFn = window.openDeleteModal;
+    window.openDeleteModal = function(domain, name, stuCount, faculty, location, status) {
+        if (typeof origFn === 'function') {
+            origFn(domain, name, stuCount, faculty, location, status);
+        }
+        var s = String(status || '').trim().toLowerCase();
+        var isInactive = (s === 'inactive' || s === 'deactive' || s === 'disabled');
+        var btn = document.getElementById('editStatusInsteadBtn');
+        var rec = document.getElementById('deleteModalRecommendation');
+        if (btn && isInactive) {
+            btn.style.setProperty('display', 'none', 'important');
+        }
+        if (rec && isInactive) {
+            rec.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px; vertical-align:middle; color:#d97706;">lock</span> <em>Status:</em> This institution is currently <strong>Inactive</strong> and locked. Deleting it is restricted while student accounts remain enrolled.';
+        }
+    };
+})();
+</script>
