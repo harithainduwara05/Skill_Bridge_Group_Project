@@ -1,0 +1,483 @@
+/* =====================================
+   VIEW TEAM PAGE
+===================================== */
+
+
+.view-team-page{
+
+    padding:25px 35px;
+    background:#f7f8fb;
+    min-height:calc(100vh - 80px);
+
+}
+
+
+
+
+/* TEAM HEADER */
+
+
+.team-banner{
+
+    background:white;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:18px;
+
+    padding:25px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+}
+
+
+
+.team-banner-left{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:20px;
+
+}
+
+
+
+.large-team-logo{
+
+    width:80px;
+
+    height:80px;
+
+    border-radius:18px;
+
+    background:#082544;
+
+    color:white;
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    font-size:28px;
+
+    font-weight:800;
+
+}
+
+
+
+.team-status{
+
+    background:#dcfce7;
+
+    color:#15803d;
+
+    padding:5px 12px;
+
+    border-radius:20px;
+
+    font-size:11px;
+
+    font-weight:800;
+
+}
+
+
+
+.team-banner h1{
+
+    color:#082544;
+
+    margin:10px 0 5px;
+
+    font-size:30px;
+
+}
+
+
+
+.team-banner p{
+
+    color:#667085;
+
+}
+
+
+
+
+.team-meta{
+
+    display:flex;
+
+    gap:25px;
+
+    margin-top:15px;
+
+    font-size:13px;
+
+    color:#475467;
+
+}
+
+
+
+
+
+
+
+/* PROGRESS */
+
+
+.team-progress-card{
+
+    width:260px;
+
+}
+
+
+
+.team-progress-card h3{
+
+    color:#082544;
+
+}
+
+
+
+.team-progress-card strong{
+
+    display:block;
+
+    text-align:right;
+
+    color:#ff8a00;
+
+    font-size:25px;
+
+}
+
+
+
+.progress-track{
+
+    height:8px;
+
+    background:#e5e7eb;
+
+    border-radius:20px;
+
+}
+
+
+
+.progress-track div{
+
+    height:100%;
+
+    background:#ff8a00;
+
+    border-radius:20px;
+
+}
+
+
+
+
+
+/* TABS */
+
+
+.team-tabs{
+
+    margin:20px 0;
+
+    background:white;
+
+    padding:8px;
+
+    border-radius:12px;
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+
+
+.team-tabs button{
+
+    padding:10px 20px;
+
+    border:none;
+
+    background:none;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-weight:600;
+
+}
+
+
+
+.team-tabs .active{
+
+    background:#082544;
+
+    color:white;
+
+}
+
+
+
+
+
+
+/* CONTENT */
+
+
+.team-layout{
+
+    display:grid;
+
+    grid-template-columns:1fr 320px;
+
+    gap:20px;
+
+}
+
+
+
+.detail-card{
+
+    background:white;
+
+    border:1px solid #e5e7eb;
+
+    border-radius:15px;
+
+    padding:20px;
+
+    margin-bottom:20px;
+
+}
+
+
+
+.detail-card h2{
+
+    color:#082544;
+
+    font-size:18px;
+    padding-bottom: 10px;
+
+}
+
+
+
+.detail-card p{
+
+    color:#667085;
+
+    line-height:1.6;
+
+}
+
+
+
+
+
+
+
+/* SKILLS */
+
+
+.skill-list{
+
+    display:flex;
+
+    flex-wrap:wrap;
+
+    gap:8px;
+
+}
+
+
+
+.skill-list span{
+
+    background:#eef2f6;
+
+    color:#082544;
+
+    padding:7px 14px;
+
+    border-radius:20px;
+
+    font-size:12px;
+
+    font-weight:600;
+
+}
+
+
+
+
+
+
+
+/* TASKS */
+
+
+.card-title-row{
+
+    display:flex;
+
+    justify-content:space-between;
+
+}
+
+
+
+.card-title-row a{
+
+    color:#ff8a00;
+    font-size: 14px;
+    text-decoration:none;
+
+}
+
+
+
+.task-preview{
+
+    display:grid;
+
+    grid-template-columns:repeat(3,1fr);
+
+    gap:15px;
+
+}
+
+
+
+.task-preview div{
+
+    border:1px solid #e5e7eb;
+
+    border-radius:12px;
+
+    padding:15px;
+
+}
+
+
+
+.task-preview span{
+
+    font-size:10px;
+
+    color:#b45309;
+
+    font-weight:800;
+
+}
+
+
+
+
+
+/* MEMBERS */
+
+
+.member-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:12px;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.member-item img{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+}
+
+
+
+.member-item p{
+
+    margin:3px 0;
+
+    font-size:12px;
+
+}
+
+
+
+
+
+.activity-card p{
+
+    font-size:13px;
+
+}
+
+
+
+
+
+
+
+@media(max-width:1000px){
+
+
+.team-layout{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.team-banner{
+
+    flex-direction:column;
+
+    align-items:flex-start;
+
+    gap:20px;
+
+}
+
+
+.task-preview{
+
+    grid-template-columns:1fr;
+
+}
+
+
+}

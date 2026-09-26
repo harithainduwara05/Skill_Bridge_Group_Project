@@ -59,18 +59,36 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         </a>
 
         <?php
-        $user = current_user();
-        $email = $user['Email'] ?? $user['email'] ?? null;
+            $user = current_user();
+            $email = $user['Email'] ?? $user['email'] ?? null;
         ?>
         <?php if($email && canApplyInternship($email)){ ?>
+            <a href="../../../Functions/Dashboards/Student/internships.php"
+            class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>"
+            title="Internships">
+                <span class="icon">
+                    <span class="material-symbols-outlined">
+                        work
+                    </span>
+                </span>
+                <span class="nav-text">
+                    Internships
+                </span>
+            </a>
 
-        <a href="../../../Functions/Dashboards/Student/internships.php"
-        class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>" title="Internships">
-            <span class="icon">
-                <span class="material-symbols-outlined">work</span>
-            </span>
-            <span class="nav-text">Internships</span>
-        </a>
+            <a href="../../../Functions/Dashboards/Student/applications.php"
+            class="<?= $currentPage == 'applications.php' ? 'active' : '' ?>"
+            title="Applications">
+                <span class="icon">
+                    <span class="material-symbols-outlined">
+                        assignment
+                    </span>
+                </span>
+                <span class="nav-text">
+                    Applications
+                </span>
+            </a>
+
         <?php } ?>
 
         <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">

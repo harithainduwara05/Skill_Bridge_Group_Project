@@ -43,11 +43,6 @@ $result = $conn->query($query);
             <i class="fa-solid fa-bookmark"></i>
             Saved Projects
         </a>
-
-        <a href="propose_project.php" class="btn-primary">
-            <i class="fa-solid fa-plus"></i>
-            Post Project
-        </a>
     </div>
 
 </section>

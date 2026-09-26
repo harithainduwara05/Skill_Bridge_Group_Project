@@ -80,7 +80,7 @@ include "../../../Includes/dash_header.php";
     <p>Continue building your skills and career journey.</p>
 </div>
 
-<a href="projects.php"class="post-btn">+ Post New Project</a></div>
+<a href="projects.php"class="post-btn">Browse Projects</a></div>
 
 <!-- PROFILE + STATS -->
 <div class="top-section">
@@ -139,7 +139,8 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
 <div class="profile-buttons">
     <a href="settings.php"class="btn">Complete Profile</a>
-    <a href="#"class="outline">View Public CV</a>
+    <a href="../../../Functions/Dashboards/Student/cv_builder.php" class="outline">
+    View Public CV</a>
 </div>
 
 </div>

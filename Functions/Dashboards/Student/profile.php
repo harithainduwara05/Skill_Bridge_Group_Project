@@ -408,10 +408,10 @@ $completion = calculateProfileCompletion($student,$skill_count,$certificate_coun
     <label>University</label>
 
     <input type="text" name="university"
-    value="<?= htmlspecialchars($student['University']); ?>">
+    value="<?= htmlspecialchars($student['University']); ?>"readonly>
 
     <label>Degree</label>
-    <input type="text" name="degree" value="<?= htmlspecialchars($student['degree']); ?>">
+    <input type="text" name="degree" value="<?= htmlspecialchars($student['degree']); ?>"readonly>
     <label>Year</label>
     <input type="text" name="year"value="<?= htmlspecialchars($student['year']); ?>"readonly>
 </div>

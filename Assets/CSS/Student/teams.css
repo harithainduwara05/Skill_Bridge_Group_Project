@@ -1,0 +1,817 @@
+/* =====================================
+   STUDENT TEAMS PAGE
+===================================== */
+
+
+.teams-page{
+
+    padding: 25px 35px;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    box-sizing: border-box;
+
+}
+
+
+
+/* HEADER */
+
+.teams-header{
+    padding-top:15px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:25px;
+
+}
+
+
+
+.teams-header h1{
+
+    margin:0;
+    font-size:26px;
+    font-weight:700;
+    color:#082544;
+
+}
+
+
+
+.teams-header p{
+
+    margin-top:8px;
+    color:#667085;
+    font-size:14px;
+
+}
+
+
+
+
+.team-actions-top{
+
+    display:flex;
+    gap:12px;
+
+}
+
+
+
+.team-primary-btn,
+.team-secondary-btn{
+
+    height:42px;
+    padding:0 18px;
+    border-radius:10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    cursor:pointer;
+    font-weight:700;
+    border:none;
+
+}
+
+
+
+.team-primary-btn{
+
+    background:#ff8a00;
+    color:white;
+
+}
+
+
+
+.team-secondary-btn{
+
+    background:white;
+    color:#082544;
+    border:1px solid #d0d5dd;
+
+}
+
+
+
+
+
+
+/* STATISTICS */
+
+
+.team-stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:18px;
+    margin-bottom:30px;
+}
+
+
+
+.team-stat-card{
+    background:white;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
+    border-radius:15px;
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:18px;
+    min-height:100px;
+    transition:.3s;
+    animation:slideUp .5s ease;
+
+}
+
+
+.team-stat-card:nth-child(1){
+
+    animation-delay:.1s;
+
+}
+
+
+.team-stat-card:nth-child(2){
+
+    animation-delay:.2s;
+
+}
+
+
+.team-stat-card:nth-child(3){
+
+    animation-delay:.3s;
+
+}
+.team-stat-card:hover{
+
+    transform:translateY(-6px);
+
+    box-shadow:
+    0 12px 30px rgba(8,37,68,.12);
+
+}
+
+
+
+
+.stat-icon{
+
+    width:45px;
+    height:45px;
+    border-radius:12px;
+    background:#e8eef7;
+    color:#082544;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+}
+
+
+
+.stat-icon.orange{
+
+    background:#fff1e6;
+    color:#ff8a00;
+
+}
+
+
+
+.stat-icon.green{
+
+    background:#dcfce7;
+    color:#16a34a;
+
+}
+
+
+
+.team-stat-card h3{
+
+    margin:0;
+    color:#082544;
+    font-size:25px;
+
+}
+
+
+
+.team-stat-card p{
+
+    margin:3px 0;
+    color:#667085;
+    font-size:13px;
+
+}
+
+
+
+
+
+
+
+
+/* SECTION */
+
+.invitation-section h2,
+.active-team-section h2{
+
+    color:#082544;
+    font-size:20px;
+    margin-bottom:15px;
+
+}
+
+
+
+
+
+
+
+/* INVITATION */
+
+
+.invitation-card{
+
+    background:#082544;
+    color:white;
+    border-radius:16px;
+    padding:22px;
+    display:flex;
+    gap:20px;
+    margin-bottom:30px;
+
+}
+
+
+
+.team-logo{
+
+    width:55px;
+    height:55px;
+    border-radius:14px;
+    background:#e8eef7;
+    color:#082544;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-size:18px;
+    font-weight:800;
+    flex-shrink:0;
+
+}
+
+
+
+.invitation-card .team-logo{
+
+    background:#ff8a00;
+    color:white;
+
+}
+
+
+
+.invitation-content{
+
+    flex:1;
+
+}
+
+
+
+.invitation-title{
+
+    display:flex;
+    align-items:center;
+    gap:15px;
+
+}
+
+
+
+.invitation-title h3{
+    padding-bottom: 10px;
+    margin:0;
+    font-size:18px;
+
+}
+
+
+
+.invitation-title span{
+
+    background:#ff8a00;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:10px;
+    font-weight:800;
+
+}
+
+
+
+.invitation-content p{
+    padding-bottom: 10px;
+    color:#d0d5dd;
+
+}
+
+
+
+.skill-tags,
+.skills{
+
+    display:flex;
+    flex-wrap:wrap;
+    gap:7px;
+
+}
+
+
+
+.skill-tags span,
+.skills span{
+
+    background:#eef2f6;
+    color:#344054;
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+
+}
+
+
+
+.invitation-footer{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:18px;
+
+}
+
+
+
+.inviter{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+}
+
+
+
+.inviter img{
+
+    width:35px;
+    height:35px;
+    border-radius:50%;
+
+}
+
+
+
+.accept-btn,
+.decline-btn{
+
+    height:36px;
+    padding:0 15px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:700;
+
+}
+
+
+
+.accept-btn{
+
+    background:#ff8a00;
+    color:white;
+    border:none;
+
+}
+
+
+
+.decline-btn{
+
+    background:transparent;
+    color:white;
+    border:1px solid white;
+
+}
+
+
+
+
+
+
+
+/* TEAM GRID */
+
+
+.teams-grid{
+
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:20px;
+
+}
+
+
+
+.student-team-card{
+
+    background:white;
+    border-radius:16px;
+    padding:20px;
+    border:1px solid #e5e7eb;
+    transition:.2s;
+
+}
+
+
+
+.student-team-card:hover{
+
+    transform:translateY(-3px);
+    box-shadow:0 8px 20px rgba(0,0,0,.07);
+
+}
+
+
+
+
+
+.card-top{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+
+.status-track,
+.status-warning,
+.status-complete{
+
+    padding:5px 10px;
+    border-radius:20px;
+    font-size:10px;
+    font-weight:800;
+
+}
+
+
+
+.status-track{
+
+    background:#dcfce7;
+    color:#15803d;
+
+}
+
+
+
+.status-warning{
+
+    background:#fff1e6;
+    color:#b45309;
+
+}
+
+
+
+.status-complete{
+
+    background:#dbeafe;
+    color:#2563eb;
+
+}
+
+
+
+
+
+.student-team-card h3{
+
+    color:#082544;
+    margin-top:20px;
+
+}
+
+
+
+.project-name{
+
+    color:#667085;
+    font-size:13px;
+    min-height:35px;
+
+}
+
+
+.avatar{
+
+    width:42px;
+    height:42px;
+
+    border-radius:50%;
+
+    background:#e8eef7;
+
+    color:#082544;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:14px;
+    font-weight:800;
+
+    flex-shrink:0;
+
+}
+
+
+
+
+/* LEADER */
+
+.leader{
+
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:18px 0;
+
+}
+
+
+
+.leader img{
+
+    width:38px;
+    height:38px;
+    border-radius:50%;
+
+}
+
+
+
+.leader p{
+
+    margin:2px 0;
+    color:#667085;
+    font-size:12px;
+
+}
+
+
+
+
+
+/* MEMBERS */
+
+
+.members{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+}
+
+
+
+.members img{
+
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    border:2px solid white;
+    margin-left:-8px;
+
+}
+
+
+
+.members span{
+
+    display:inline-flex;
+    width:30px;
+    height:30px;
+    border-radius:50%;
+    background:#082544;
+    color:white;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+
+}
+
+
+
+.members p{
+
+    font-size:12px;
+    color:#667085;
+
+}
+
+
+
+
+
+
+
+/* PROGRESS */
+
+
+.progress-area{
+
+    margin-top:18px;
+
+}
+
+
+
+.progress-label{
+
+    display:flex;
+    justify-content:space-between;
+    font-size:12px;
+    margin-bottom:8px;
+
+}
+
+
+
+.progress-label strong{
+
+    color:#ff8a00;
+
+}
+
+
+
+.progress-bar{
+
+    height:7px;
+    background:#e5e7eb;
+    border-radius:20px;
+    overflow:hidden;
+
+}
+
+
+
+.progress-bar div{
+
+    height:100%;
+    background:#ff8a00;
+    border-radius:20px;
+
+}
+
+
+
+
+
+/* DEADLINE */
+
+
+.deadline{
+
+    margin-top:15px;
+    padding-top:15px;
+    border-top:1px solid #e5e7eb;
+    color:#667085;
+    font-size:12px;
+
+}
+
+
+
+.deadline strong{
+
+    color:#082544;
+
+}
+
+
+
+
+
+
+
+/* BUTTONS */
+
+
+.card-buttons{
+
+    display:flex;
+    gap:10px;
+    margin-top:18px;
+
+}
+
+
+
+.card-buttons a{
+
+    flex:1;
+    height:38px;
+    border-radius:8px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    text-decoration:none;
+    font-size:13px;
+    font-weight:700;
+
+}
+
+
+
+.card-buttons a:first-child{
+
+    background:#082544;
+    color:white;
+
+}
+
+
+
+.card-buttons a:last-child{
+
+    background:white;
+    color:#082544;
+    border:1px solid #082544;
+
+}
+
+
+
+
+
+
+
+
+/* RESPONSIVE */
+
+
+@media(max-width:1200px){
+
+    .teams-grid{
+
+        grid-template-columns:repeat(2,1fr);
+
+    }
+
+}
+
+
+
+@media(max-width:900px){
+
+    .team-stat-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .teams-header{
+
+        flex-direction:column;
+        align-items:flex-start;
+        gap:20px;
+
+    }
+
+
+    .teams-grid{
+
+        grid-template-columns:1fr;
+
+    }
+
+
+    .invitation-card{
+
+        flex-direction:column;
+
+    }
+
+}
