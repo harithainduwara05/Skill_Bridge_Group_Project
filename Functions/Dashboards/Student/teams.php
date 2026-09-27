@@ -91,7 +91,7 @@ Discover Teams
 </h3>
 
 <p>
-Active Teams
+All Teams
 </p>
 
 </div>
@@ -99,9 +99,29 @@ Active Teams
 
 </div>
 
+<div class="team-stat-card">
+
+<div class="stat-icon green">
+
+<i class="fa-solid fa-user-group"></i>
+
+</div>
 
 
+<div>
 
+<h3>
+14
+</h3>
+
+<p>
+Active Teams
+</p>
+
+</div>
+
+
+</div>
 
 <div class="team-stat-card">
 
@@ -126,35 +146,6 @@ Pending Invitation
 
 
 </div>
-
-
-
-
-
-<div class="team-stat-card">
-
-<div class="stat-icon green">
-
-<i class="fa-solid fa-user-group"></i>
-
-</div>
-
-
-<div>
-
-<h3>
-14
-</h3>
-
-<p>
-Collaborators
-</p>
-
-</div>
-
-
-</div>
-
 
 
 </section>
@@ -534,9 +525,9 @@ UC
 
 
 
-<span class="status-warning">
+<span class="status-track">
 
-AT RISK
+ON TRACK
 
 </span>
 

@@ -28,7 +28,19 @@ include "../../../Includes/dash_header.php";
 ?>
 
 <main class="content workspace-page">
+<div class="breadcrumb">
 
+<a href="teams.php">
+Teams
+</a>
+
+<span>></span>
+
+<strong>
+Workspace
+</strong>
+
+</div>
 <section class="workspace-header">
 
 <div>

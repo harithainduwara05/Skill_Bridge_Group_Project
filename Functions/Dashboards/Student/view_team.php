@@ -40,6 +40,19 @@ include "../../../Includes/dash_header.php";
 
 <main class="content view-team-page">
 
+<div class="breadcrumb">
+
+<a href="teams.php">
+Teams
+</a>
+
+<span>></span>
+
+<strong>
+View Team
+</strong>
+
+</div>
 
 
 <section class="team-banner">
