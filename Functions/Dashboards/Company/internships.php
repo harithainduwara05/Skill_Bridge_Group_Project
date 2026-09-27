@@ -524,9 +524,7 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
     ? 'This status change is not allowed. Active status requires a valid future deadline.'
     : ((($_GET['notice'] ?? '') === 'reactivation_unavailable')
         ? 'A reactivation request could not be submitted.'
-        : ((($_GET['notice'] ?? '') === 'delete_blocked')
-            ? 'This internship cannot be deleted because applications have already been submitted.'
-            : ''));
+        : '');
 
 
 
@@ -1620,15 +1618,41 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 
                                 <div class="action-buttons">
 
-                                <a
-    href="view_internship.php?id=<?= (int) $internship['id'] ?>"
-    class="view-action"
-    title="View Internship"
->
-    <span class="material-symbols-outlined">
-        visibility
-    </span>
-</a>
+                                    <button
+                                        type="button"
+                                        class="view-action"
+                                        title="View Internship"
+                                        aria-label="View Internship"
+                                        data-view-internship='<?= htmlspecialchars(json_encode([
+                                            'id' => (int) $internship['id'],
+                                            'status' => $statusText,
+                                            'title' => $internship['title'] ?? '',
+                                            'company' => $internship['company'] ?? '',
+                                            'industry' => $internship['industry'] ?? '',
+                                            'description' => $internship['description'] ?? '',
+                                            'tech_tags' => $internship['tech_tags'] ?? '',
+                                            'academic_year' => $internship['academic_year'] ?? '',
+                                            'experience_level' => $internship['experience_level'] ?? '',
+                                            'vacancies' => (int) ($internship['vacancies'] ?? 1),
+                                            'duration' => $internship['duration'] ?? '',
+                                            'internship_type' => $internship['internship_type'] ?? '',
+                                            'work_mode' => $internship['work_mode'] ?? '',
+                                            'location' => $internship['location'] ?? '',
+                                            'start_date' => !empty($internship['start_date']) ? date('M j, Y', strtotime($internship['start_date'])) : '',
+                                            'deadline' => !empty($internship['deadline']) ? date('M j, Y', strtotime($internship['deadline'])) : '',
+                                            'paid_status' => $internship['paid_status'] ?? 'Unpaid',
+                                            'stipend' => !empty($internship['stipend']) ? number_format((float) $internship['stipend'], 2) : '',
+                                            'responsibilities' => $internship['responsibilities'] ?? '',
+                                            'benefits' => $internship['benefits'] ?? '',
+                                            'cover_image' => !empty($internship['cover_image']) ? '../../../' . ltrim($internship['cover_image'], '/') : '',
+                                            'supporting_document' => !empty($internship['supporting_document']) ? '../../../' . ltrim($internship['supporting_document'], '/') : '',
+                                            'applicant_count' => (int) ($internship['applicant_count'] ?? 0)
+                                        ]), ENT_QUOTES, 'UTF-8') ?>'
+                                    >
+                                        <span class="material-symbols-outlined">
+                                            visibility
+                                        </span>
+                                    </button>
 
 
 
@@ -1716,6 +1740,10 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
                                         data-applicant-count="<?= (int) ($internship['applicant_count'] ?? 0) ?>"
 
                                         data-status="<?= strtolower($statusText) ?>"
+
+                                        data-internship-id="<?= (int) $internship['id'] ?>"
+
+                                        data-internship-title="<?= htmlspecialchars($internship['title'] ?? 'Internship Opportunity', ENT_QUOTES, 'UTF-8') ?>"
 
                                     >
 
@@ -2069,9 +2097,146 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 </div>
 
 <!-- =========================
+     VIEW INTERNSHIP MODAL
+========================== -->
+<div class="internship-modal" id="viewInternshipModal" role="dialog" aria-modal="true"
+    aria-labelledby="viewModalMainTitle" aria-hidden="true" hidden>
+    <div class="internship-modal__backdrop" data-view-modal-close></div>
 
+    <section class="internship-modal__panel view-internship-modal__panel" role="document">
+        <div class="internship-modal__header">
+            <div>
+                <p class="page-label">INTERNSHIP PREVIEW</p>
+                <h2 id="viewModalTitle">Internship Details</h2>
+                <p id="viewModalSubtitle">Detailed information about this opportunity.</p>
+            </div>
+            <button type="button" class="internship-modal__close" data-view-modal-close aria-label="Close view dialog">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        <div class="internship-modal__body" style="padding: 24px 30px;">
+            <!-- COVER IMAGE (IF ANY) -->
+            <div id="viewModalCoverContainer" style="display: none; margin-bottom: 20px; border-radius: 12px; overflow: hidden; max-height: 220px; background: #eef3f9;">
+                <img id="viewModalCoverImg" src="" alt="Cover Image" style="width: 100%; height: 220px; object-fit: cover; display: block;">
+            </div>
+
+            <!-- TOP SUMMARY STRIP -->
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 22px; padding-bottom: 16px; border-bottom: 1px solid #edf2f7; flex-wrap: wrap;">
+                <div>
+                    <h3 id="viewModalMainTitle" style="margin: 0 0 6px; color: #102d58; font-size: 20px; font-weight: 800;"></h3>
+                    <p style="margin: 0; color: #64748b; font-size: 13.5px; display: flex; align-items: center; gap: 6px;">
+                        <span class="material-symbols-outlined" style="font-size: 17px; color: #0284c7;">domain</span>
+                        <span id="viewModalCompany"></span> &bull; <span id="viewModalIndustry"></span>
+                    </p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="viewModalStatusBadge" class="status-pill status-active" style="padding: 6px 14px; font-size: 12px; font-weight: 700; border-radius: 50px;">Active</span>
+                </div>
+            </div>
+
+            <!-- DESCRIPTION -->
+            <div class="internship-form-section" style="margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 10px; color: #102d58; font-weight: 700;">Description</h3>
+                <p id="viewModalDescription" style="margin: 0; color: #475569; font-size: 13.5px; line-height: 1.7; white-space: pre-line; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 16px; border-radius: 9px;"></p>
+            </div>
+
+            <!-- KEY ATTRIBUTES GRID -->
+            <div class="internship-form-section" style="margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 12px; color: #102d58; font-weight: 700;">Overview &amp; Specifications</h3>
+                <div class="detail-grid" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;">
+                    <div>
+                        <span>Duration</span>
+                        <strong id="viewModalDuration">-</strong>
+                    </div>
+                    <div>
+                        <span>Internship Type</span>
+                        <strong id="viewModalType">-</strong>
+                    </div>
+                    <div>
+                        <span>Work Mode</span>
+                        <strong id="viewModalWorkMode">-</strong>
+                    </div>
+                    <div>
+                        <span>Location</span>
+                        <strong id="viewModalLocation">-</strong>
+                    </div>
+                    <div>
+                        <span>Vacancies</span>
+                        <strong id="viewModalVacancies">-</strong>
+                    </div>
+                    <div>
+                        <span>Experience Level</span>
+                        <strong id="viewModalExperience">-</strong>
+                    </div>
+                    <div>
+                        <span>Preferred Academic Year</span>
+                        <strong id="viewModalAcademicYear">-</strong>
+                    </div>
+                    <div>
+                        <span>Start Date</span>
+                        <strong id="viewModalStartDate">-</strong>
+                    </div>
+                    <div>
+                        <span>Application Deadline</span>
+                        <strong id="viewModalDeadline">-</strong>
+                    </div>
+                    <div>
+                        <span>Allowance / Stipend</span>
+                        <strong id="viewModalPaidStatus">-</strong>
+                    </div>
+                    <div>
+                        <span>Monthly Allowance</span>
+                        <strong id="viewModalStipend">-</strong>
+                    </div>
+                    <div>
+                        <span>Applications Received</span>
+                        <strong id="viewModalApplicantsCount">-</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REQUIRED SKILLS -->
+            <div class="internship-form-section" style="margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 10px; color: #102d58; font-weight: 700;">Required Skills / Technologies</h3>
+                <div id="viewModalSkillsList" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                </div>
+            </div>
+
+            <!-- RESPONSIBILITIES -->
+            <div class="internship-form-section" id="viewModalResponsibilitiesGroup" style="margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 10px; color: #102d58; font-weight: 700;">Key Responsibilities</h3>
+                <p id="viewModalResponsibilities" style="margin: 0; color: #475569; font-size: 13.5px; line-height: 1.7; white-space: pre-line; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 16px; border-radius: 9px;"></p>
+            </div>
+
+            <!-- BENEFITS -->
+            <div class="internship-form-section" id="viewModalBenefitsGroup" style="margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 10px; color: #102d58; font-weight: 700;">Learning Opportunities &amp; Benefits</h3>
+                <p id="viewModalBenefits" style="margin: 0; color: #475569; font-size: 13.5px; line-height: 1.7; white-space: pre-line; background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px 16px; border-radius: 9px;"></p>
+            </div>
+
+            <!-- SUPPORTING DOCUMENT -->
+            <div class="internship-form-section" id="viewModalDocumentGroup" style="display: none; margin-bottom: 20px;">
+                <h3 style="font-size: 14.5px; margin-bottom: 10px; color: #102d58; font-weight: 700;">Supporting Document</h3>
+                <a id="viewModalDocumentLink" href="#" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; border-radius: 8px; font-size: 13px; font-weight: 700; text-decoration: none;">
+                    <span class="material-symbols-outlined" style="font-size: 18px;">description</span>
+                    <span>Download / View Supporting Document</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="form-actions view-modal-actions" style="padding: 16px 30px; border-top: 1px solid #e8edf3; display: flex; justify-content: center; align-items: center; gap: 14px; background: #fbfcfe;">
+            <button type="button" class="secondary-btn" data-view-modal-close style="min-width: 130px;">Close</button>
+            <button type="button" class="primary-btn" id="viewModalEditBtn" style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 160px;">
+                <span class="material-symbols-outlined" style="font-size: 17px;">edit</span>
+                <span>Edit Internship</span>
+            </button>
+        </div>
+    </section>
+</div>
+
+<!-- =========================
      DELETE INTERNSHIP MODAL
-
 ========================== -->
 
 <div
@@ -2089,12 +2254,9 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
     aria-hidden="true"
 
     hidden
-
-\>
+>
 
     <div class="delete-internship-modal__backdrop" data-delete-modal-close></div>
-
-
 
     <section class="delete-internship-modal__panel" role="document">
 
@@ -2104,21 +2266,15 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 
         </button>
 
-
-
         <div class="delete-internship-modal__icon" aria-hidden="true">
 
             <span class="material-symbols-outlined">delete</span>
 
         </div>
 
-
-
         <h2 id="deleteInternshipModalTitle">Delete Internship?</h2>
 
         <p>Are you sure you want to delete this internship? This action cannot be undone.</p>
-
-
 
         <div class="delete-internship-modal__actions">
 
@@ -2136,6 +2292,90 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 
     </section>
 
+</div>
+
+<!-- =========================
+     DELETE BLOCKED RESTRICTION MODAL
+========================== -->
+<div
+    class="delete-blocked-modal"
+    id="deleteBlockedModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="deleteBlockedModalTitle"
+    aria-hidden="true"
+    hidden
+>
+    <div class="delete-blocked-modal__backdrop" data-delete-blocked-close></div>
+
+    <section class="delete-blocked-modal__panel" role="document">
+        <button type="button" class="delete-blocked-modal__close" data-delete-blocked-close aria-label="Close message">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+
+        <div class="delete-blocked-modal__header">
+            <div class="delete-blocked-modal__icon" aria-hidden="true">
+                <span class="material-symbols-outlined" id="deleteBlockedIcon">shield_lock</span>
+            </div>
+            <span class="delete-blocked-modal__tag" id="deleteBlockedTag">Action Restricted</span>
+            <h2 id="deleteBlockedModalTitle">Cannot Delete Internship</h2>
+            <p class="delete-blocked-modal__subtitle" id="deleteBlockedModalSubtitle">
+                This internship posting is protected by platform data policies.
+            </p>
+        </div>
+
+        <div class="delete-blocked-modal__body">
+            <div class="delete-blocked-internship-card">
+                <div class="delete-blocked-internship-info">
+                    <span class="material-symbols-outlined icon">work</span>
+                    <strong id="deleteBlockedInternshipTitle">Internship Opportunity</strong>
+                </div>
+                <div class="delete-blocked-pills">
+                    <span class="delete-blocked-applicant-badge" id="deleteBlockedApplicantBadge">
+                        <span class="material-symbols-outlined">group</span>
+                        <span id="deleteBlockedApplicantCount">0</span> Applications
+                    </span>
+                    <span class="delete-blocked-status-badge status" id="deleteBlockedStatusBadge">
+                        Active
+                    </span>
+                </div>
+            </div>
+
+            <div class="delete-blocked-callouts">
+                <div class="delete-blocked-callout delete-blocked-callout--reason">
+                    <div class="delete-blocked-callout__icon">
+                        <span class="material-symbols-outlined">error</span>
+                    </div>
+                    <div class="delete-blocked-callout__content">
+                        <strong id="deleteBlockedReasonTitle">Why is this action restricted?</strong>
+                        <p id="deleteBlockedReasonText">
+                            Students have already submitted applications for this opportunity. Deleting it would remove candidate submissions, interview logs, and historical evaluations.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="delete-blocked-callout delete-blocked-callout--tip" id="deleteBlockedTipBox">
+                    <div class="delete-blocked-callout__icon">
+                        <span class="material-symbols-outlined">lightbulb</span>
+                    </div>
+                    <div class="delete-blocked-callout__content">
+                        <strong>Recommended Alternative</strong>
+                        <p id="deleteBlockedTipText">
+                            Change the internship status to <strong>Closed</strong>. This removes it from the public student listing so no further applications can be submitted, while keeping existing applicant records safe.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="delete-blocked-modal__actions">
+            <button type="button" class="secondary-btn" data-delete-blocked-close>Close</button>
+            <button type="button" class="primary-btn" id="deleteBlockedEditBtn">
+                <span class="material-symbols-outlined">edit_note</span>
+                <span id="deleteBlockedEditBtnText">Edit Internship / Change Status</span>
+            </button>
+        </div>
+    </section>
 </div>
 
 

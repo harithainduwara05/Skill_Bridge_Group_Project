@@ -445,6 +445,8 @@
 }
 
 .action-buttons a,
+.action-buttons .view-action,
+.view-action,
 .edit-action,
 .delete-action {
     width: 34px;
@@ -468,6 +470,8 @@
 }
 
 .action-buttons a:hover,
+.action-buttons .view-action:hover,
+.view-action:hover,
 .edit-action:hover {
     background: #eef4ff;
     color: #264d89;
@@ -1574,6 +1578,7 @@ input:disabled {
 
 .action-buttons .delete-form { display: contents; }
 .action-buttons a,
+.action-buttons .view-action,
 .action-buttons .edit-action,
 .action-buttons .delete-action {
     box-sizing: border-box;
@@ -1586,6 +1591,20 @@ input:disabled {
     margin: 0;
     padding: 0;
     border-radius: 8px;
+    background: #ffffff;
+    border: 1px solid #dfe5ed;
+    color: #627086;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.action-buttons a:hover,
+.action-buttons .view-action:hover,
+.action-buttons .edit-action:hover {
+    background: #eef4ff;
+    color: #264d89;
+    border-color: #bfcde1;
 }
 .action-buttons .material-symbols-outlined { font-size: 18px; line-height: 1; }
 
@@ -1666,3 +1685,404 @@ input:disabled {
 .admin-reason-modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 .admin-reason-modal__actions button { min-width: 120px; }
 .admin-reason-modal__actions #fixSuspendedInternship[hidden] { display: none; }
+
+/* =========================================================
+   VIEW INTERNSHIP MODAL STYLING
+========================================================= */
+
+.view-internship-modal__panel {
+    width: min(840px, 100%) !important;
+}
+
+.view-internship-modal__panel .detail-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+@media (max-width: 768px) {
+    .view-internship-modal__panel .detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .view-internship-modal__panel .detail-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.view-internship-modal__panel .detail-grid > div {
+    padding: 13px 15px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 9px !important;
+}
+
+.view-internship-modal__panel .detail-grid span {
+    display: block !important;
+    margin-bottom: 5px !important;
+    color: #64748b !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+}
+
+.view-internship-modal__panel .detail-grid strong {
+    color: #0f172a !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+}
+
+.view-internship-modal__panel .form-actions {
+    justify-content: center !important;
+    gap: 14px !important;
+}
+
+/* =========================================================
+   DELETE BLOCKED / RESTRICTION MODAL (COMPACT & CENTERED)
+========================================================= */
+
+.delete-blocked-modal[hidden] {
+    display: none;
+}
+
+.delete-blocked-modal {
+    position: fixed;
+    z-index: 1360;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.delete-blocked-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+.delete-blocked-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100vh - 36px);
+    background: #ffffff;
+    border: 1px solid #fee2e2;
+    border-radius: 16px;
+    box-shadow: 0 16px 40px -8px rgba(220, 38, 38, 0.14), 0 12px 30px -8px rgba(15, 23, 42, 0.2);
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    animation: deleteBlockedModalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes deleteBlockedModalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.delete-blocked-modal__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #64748b;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.delete-blocked-modal__close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+    border-color: #cbd5e1;
+}
+
+.delete-blocked-modal__close .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.delete-blocked-modal__header {
+    padding: 20px 20px 10px;
+    text-align: center;
+    background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%);
+    border-bottom: 1px solid #f8fafc;
+}
+
+.delete-blocked-modal__icon {
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 3px solid #ffffff;
+    box-shadow: 0 4px 14px rgba(220, 38, 38, 0.18), 0 0 0 1px #fca5a5;
+    color: #dc2626;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.delete-blocked-modal__icon .material-symbols-outlined {
+    font-size: 22px;
+}
+
+.delete-blocked-modal__tag {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+    border-radius: 999px;
+    background: #fee2e2;
+    border: 1px solid #fca5a5;
+    color: #991b1b;
+    font-size: 9.5px;
+    font-weight: 800;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+}
+
+.delete-blocked-modal__header h2 {
+    margin: 0 0 4px;
+    color: #102d58;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.delete-blocked-modal__subtitle {
+    margin: 0;
+    color: #64748b;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.delete-blocked-modal__body {
+    padding: 0 18px 14px;
+}
+
+.delete-blocked-internship-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.delete-blocked-internship-info {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.delete-blocked-internship-info .icon {
+    font-size: 16px;
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+.delete-blocked-internship-info strong {
+    color: #0f172a;
+    font-size: 12.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.delete-blocked-pills {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.delete-blocked-applicant-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 999px;
+    color: #1d4ed8;
+    font-size: 10.5px;
+    font-weight: 700;
+}
+
+.delete-blocked-applicant-badge .material-symbols-outlined {
+    font-size: 12px;
+}
+
+.delete-blocked-status-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.delete-blocked-callouts {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.delete-blocked-callout {
+    display: flex;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-size: 11.5px;
+    line-height: 1.45;
+}
+
+.delete-blocked-callout--reason {
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-left: 3px solid #ef4444;
+}
+
+.delete-blocked-callout--tip {
+    background: #f0f7ff;
+    border: 1px solid #bae0fd;
+    border-left: 3px solid #0284c7;
+}
+
+.delete-blocked-callout__icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+}
+
+.delete-blocked-callout--reason .delete-blocked-callout__icon {
+    color: #dc2626;
+}
+
+.delete-blocked-callout--tip .delete-blocked-callout__icon {
+    color: #0284c7;
+}
+
+.delete-blocked-callout__icon .material-symbols-outlined {
+    font-size: 16px;
+}
+
+.delete-blocked-callout__content strong {
+    display: block;
+    margin-bottom: 2px;
+    font-size: 11.5px;
+    font-weight: 700;
+}
+
+.delete-blocked-callout--reason .delete-blocked-callout__content strong {
+    color: #991b1b;
+}
+
+.delete-blocked-callout--tip .delete-blocked-callout__content strong {
+    color: #0369a1;
+}
+
+.delete-blocked-callout__content p {
+    margin: 0;
+    color: #475569;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.delete-blocked-modal__actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 18px 16px;
+    background: #ffffff;
+    border-top: 1px solid #f1f5f9;
+}
+
+.delete-blocked-modal__actions .secondary-btn {
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 7px;
+}
+
+.delete-blocked-modal__actions .primary-btn {
+    min-height: 36px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #1d3557;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    border: none;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.delete-blocked-modal__actions .primary-btn:hover {
+    background: #10243e;
+    transform: translateY(-1px);
+}
+
+.delete-blocked-modal__actions .primary-btn .material-symbols-outlined {
+    font-size: 16px;
+}
+
+@media (max-width: 480px) {
+    .delete-blocked-modal {
+        padding: 10px;
+    }
+    .delete-blocked-modal__panel {
+        width: 100%;
+        border-radius: 14px;
+    }
+    .delete-blocked-modal__header {
+        padding: 16px 14px 8px;
+    }
+    .delete-blocked-modal__body {
+        padding: 0 14px 12px;
+    }
+    .delete-blocked-internship-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    .delete-blocked-modal__actions {
+        flex-direction: column-reverse;
+        padding: 10px 14px 14px;
+    }
+    .delete-blocked-modal__actions button {
+        width: 100%;
+    }
+}
+
+

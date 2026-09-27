@@ -64,108 +64,74 @@ include "../../../Includes/dash_header.php";
         <section class="interview-summary-grid">
 
             <!-- TODAY -->
-
             <article class="interview-summary-card today-card">
-
-                <span class="summary-label">
-                    TODAY'S SCHEDULE
-                </span>
-
-                <strong class="summary-number">
-                    08
-                </strong>
-
+                <span class="summary-label">Today's Schedule</span>
+                <strong class="summary-number">08</strong>
                 <p class="summary-note">
-
-                    <span class="summary-positive">
-                        +2
-                    </span>
-
-                    from yesterday
-
+                    <span class="summary-positive">+2</span> from yesterday
                 </p>
-
             </article>
 
+            <!-- TOTAL INTERVIEWING -->
+            <article class="interview-summary-card interviewing-card">
+                <span class="summary-label">Total Interviewing</span>
+                <strong class="summary-number" id="totalInterviewingCount">2</strong>
+                <p class="summary-note">
+                    <span class="summary-warning">Active</span> in pipeline
+                </p>
+            </article>
 
             <!-- HIRED -->
-
             <article class="interview-summary-card hired-card">
-
-                <span class="summary-label">
-                    HIRED
-                </span>
-
-                <strong class="summary-number" id="hiredInterviewCount">0</strong>
-
+                <span class="summary-label">Hired</span>
+                <strong class="summary-number" id="hiredInterviewCount">1</strong>
                 <p class="summary-note">
-                    Candidates hired after interview
+                    <span class="summary-positive">Selected</span> offered
                 </p>
-
             </article>
 
-
-            <!-- UPCOMING -->
-
-            <article class="interview-summary-card upcoming-card">
-
-                <span class="summary-label">
-                    UPCOMING THIS WEEK
-                </span>
-
-                <strong class="summary-number">
-                    32
-                </strong>
-
-                <div class="summary-progress">
-                    <span></span>
-                </div>
-
+            <!-- REJECTED / DISQUALIFIED -->
+            <article class="interview-summary-card rejected-card">
+                <span class="summary-label">Rejected</span>
+                <strong class="summary-number" id="rejectedInterviewCount">0</strong>
+                <p class="summary-note">
+                    <span class="summary-negative">Disqualified</span> candidates
+                </p>
             </article>
 
         </section>
 
 
         <!-- =====================================================
-             UPCOMING INTERVIEWS
+             STANDALONE SEARCH & FILTER TOOLBAR (MATCHING INTERNSHIPS)
         ====================================================== -->
+        <section class="interviews-toolbar">
+            <div class="interviews-search">
+                <span class="material-symbols-outlined">search</span>
+                <input
+                    type="text"
+                    id="interviewSearchInput"
+                    placeholder="Search interviews..."
+                    autocomplete="off">
+            </div>
 
+            <div class="interviews-filters">
+                <select id="interviewStatusFilter">
+                    <option value="all">All Status</option>
+                    <option value="Interviewing">Interviewing</option>
+                    <option value="Hired">Hired</option>
+                    <option value="Disqualified">Disqualified</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- =====================================================
+             UPCOMING INTERVIEWS (SEPARATE TABLE CARD)
+        ====================================================== -->
         <section class="interviews-table-card">
-
-            <div class="interviews-table-header">
-
-                <h2>
-                    Upcoming Interviews
-                </h2>
-
-                <div class="table-header-actions">
-
-                    <button
-                        type="button"
-                        class="table-icon-btn"
-                        id="filterInterviewsBtn"
-                        title="Filter">
-
-                        <span class="material-symbols-outlined">
-                            filter_list
-                        </span>
-
-                    </button>
-
-                    <button
-                        type="button"
-                        class="table-icon-btn"
-                        id="downloadInterviewsBtn"
-                        title="Download">
-
-                        <span class="material-symbols-outlined">
-                            download
-                        </span>
-
-                    </button>
-
-                </div>
-
+            <div class="interviews-table-heading">
+                <h2>Upcoming Interviews</h2>
+                <p>Manage all candidate interviews scheduled by your company.</p>
             </div>
 
 
@@ -282,17 +248,6 @@ include "../../../Includes/dash_header.php";
 
                                     <button
                                         type="button"
-                                        class="interview-action-btn schedule-row-interview-btn"
-                                        title="Schedule Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            event
-                                        </span>
-
-                                    </button>
-
-                                    <button
-                                        type="button"
                                         class="interview-action-btn view-interview-btn"
                                         title="View Interview">
 
@@ -302,17 +257,6 @@ include "../../../Includes/dash_header.php";
 
                                     </button>
 
-
-                                    <button
-                                        type="button"
-                                        class="interview-action-btn edit-interview-btn"
-                                        title="Edit Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            edit
-                                        </span>
-
-                                    </button>
 
                                 </div>
 
@@ -416,17 +360,6 @@ include "../../../Includes/dash_header.php";
 
                                     <button
                                         type="button"
-                                        class="interview-action-btn schedule-row-interview-btn"
-                                        title="Schedule Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            event
-                                        </span>
-
-                                    </button>
-
-                                    <button
-                                        type="button"
                                         class="interview-action-btn view-interview-btn"
                                         title="View Interview">
 
@@ -436,17 +369,6 @@ include "../../../Includes/dash_header.php";
 
                                     </button>
 
-
-                                    <button
-                                        type="button"
-                                        class="interview-action-btn edit-interview-btn"
-                                        title="Edit Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            edit
-                                        </span>
-
-                                    </button>
 
                                 </div>
 
@@ -550,17 +472,6 @@ include "../../../Includes/dash_header.php";
 
                                     <button
                                         type="button"
-                                        class="interview-action-btn schedule-row-interview-btn"
-                                        title="Schedule Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            event
-                                        </span>
-
-                                    </button>
-
-                                    <button
-                                        type="button"
                                         class="interview-action-btn view-interview-btn"
                                         title="View Interview">
 
@@ -571,21 +482,21 @@ include "../../../Includes/dash_header.php";
                                     </button>
 
 
-                                    <button
-                                        type="button"
-                                        class="interview-action-btn edit-interview-btn"
-                                        title="Edit Interview">
-
-                                        <span class="material-symbols-outlined">
-                                            edit
-                                        </span>
-
-                                    </button>
-
                                 </div>
 
                             </td>
 
+                        <tr id="noInterviewResultsRow" hidden>
+                            <td colspan="5" class="empty-results-cell">
+                                <div class="empty-results-content">
+                                    <span class="material-symbols-outlined">search_off</span>
+                                    <p>No interviews found matching your search and filter criteria.</p>
+                                    <button type="button" id="resetInterviewFiltersBtn" class="reset-filter-btn">
+                                        <span class="material-symbols-outlined">restart_alt</span>
+                                        Reset Filters
+                                    </button>
+                                </div>
+                            </td>
                         </tr>
 
                     </tbody>
@@ -601,8 +512,8 @@ include "../../../Includes/dash_header.php";
 
             <div class="interviews-pagination">
 
-                <p>
-                    Showing 1-3 of 42 interviews
+                <p id="interviewsCountText">
+                    Showing <span id="visibleInterviewCount">3</span> of <span id="totalInterviewCount">3</span> interviews
                 </p>
 
                 <div>
@@ -1077,39 +988,101 @@ include "../../../Includes/dash_header.php";
 
 </div>
 
-<div class="interview-modal-overlay" id="disqualifyInterviewModal">
-    <div class="interview-modal small-modal">
+<div class="interview-modal-overlay" id="interviewDecisionModal">
+    <div class="interview-modal" style="max-width: 540px;">
         <div class="interview-modal-header">
             <div>
-                <span class="modal-label">INTERVIEW OUTCOME</span>
-                <h2>Disqualify Candidate</h2>
-                <p>Select a reason before recording this interview outcome.</p>
+                <span class="modal-label" style="color: #16854a;">INTERVIEW OUTCOME DECISION</span>
+                <h2 id="decisionModalCandidate">Candidate Decision</h2>
+                <p id="decisionModalInternship">Record the final interview result for this candidate.</p>
             </div>
             <button type="button" class="modal-close-btn" data-close-modal aria-label="Close">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
-        <form id="disqualifyInterviewForm">
-            <div class="modal-form-grid">
-                <div class="form-group full-width">
-                    <label for="disqualificationReason">Disqualification Reason</label>
-                    <select id="disqualificationReason" required>
-                        <option value="">Select a reason</option>
-                        <option>Technical skills insufficient</option>
-                        <option>Interview performance</option>
-                        <option>Availability mismatch</option>
-                        <option>Not suitable for the role</option>
-                        <option>Other</option>
-                    </select>
+        <form id="interviewDecisionForm">
+            <div style="padding: 20px 24px; display: flex; flex-direction: column; gap: 16px;">
+                <!-- DECISION SELECTION CARDS -->
+                <div>
+                    <label style="font-size: 12px; font-weight: 700; color: #213a55; display: block; margin-bottom: 8px;">
+                        Select Interview Result <span style="color: #e53e3e;">*</span>
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <!-- HIRE CARD -->
+                        <label class="decision-choice-card active" id="cardHireChoice" style="border: 2px solid #16854a; background: #f0fdf4; border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <input type="radio" name="decision_choice" value="Hired" id="choiceHired" checked style="accent-color: #16854a; width: 16px; height: 16px;">
+                            <div style="display: flex; flex-direction: column;">
+                                <strong style="color: #15803d; font-size: 13.5px; display: flex; align-items: center; gap: 4px;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">how_to_reg</span> Hire
+                                </strong>
+                                <small style="color: #475569; font-size: 11px;">Offer role to student</small>
+                            </div>
+                        </label>
+
+                        <!-- DISQUALIFY CARD -->
+                        <label class="decision-choice-card" id="cardDisqualifyChoice" style="border: 2px solid #e2e8f0; background: #ffffff; border-radius: 10px; padding: 12px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <input type="radio" name="decision_choice" value="Disqualified" id="choiceDisqualified" style="accent-color: #dc2626; width: 16px; height: 16px;">
+                            <div style="display: flex; flex-direction: column;">
+                                <strong style="color: #dc2626; font-size: 13.5px; display: flex; align-items: center; gap: 4px;">
+                                    <span class="material-symbols-outlined" style="font-size: 18px;">person_off</span> Disqualify
+                                </strong>
+                                <small style="color: #64748b; font-size: 11px;">Candidate not selected</small>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-                <div class="form-group full-width" id="otherDisqualificationGroup" hidden>
-                    <label for="otherDisqualificationNote">Short note</label>
-                    <textarea id="otherDisqualificationNote" maxlength="240" placeholder="Add a short reason..."></textarea>
+
+                <!-- HIRE SECTION -->
+                <div id="hireFieldsSection" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="form-group">
+                            <label for="hireStartDate" style="color: #213a55; font-size: 12px; font-weight: 700;">Proposed Start Date</label>
+                            <input type="date" id="hireStartDate" min="<?= date('Y-m-d') ?>" style="border: 1px solid #d4dbe5; border-radius: 7px; padding: 8px 10px; font-size: 13px;">
+                        </div>
+                        <div class="form-group">
+                            <label for="hireStipend" style="color: #213a55; font-size: 12px; font-weight: 700;">Monthly Allowance / Stipend (Optional)</label>
+                            <input type="text" id="hireStipend" placeholder="e.g. LKR 45,000" style="border: 1px solid #d4dbe5; border-radius: 7px; padding: 8px 10px; font-size: 13px;">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="hireNote" style="color: #213a55; font-size: 12px; font-weight: 700;">Offer Instructions / Welcome Note (Optional)</label>
+                        <textarea id="hireNote" rows="2" placeholder="e.g. Congratulations! Please submit your university clearance documents..." style="border: 1px solid #d4dbe5; border-radius: 7px; padding: 8px 10px; font-size: 13px;"></textarea>
+                    </div>
+                </div>
+
+                <!-- DISQUALIFY SECTION -->
+                <div id="disqualifyFieldsSection" hidden style="display: none; background: #fff5f5; border: 1px solid #fed7d7; border-radius: 10px; padding: 14px; flex-direction: column; gap: 12px;">
+                    <div class="form-group">
+                        <label for="disqualificationCategory" style="color: #9b2c2c; font-size: 12px; font-weight: 700;">
+                            Primary Reason <span style="color: #e53e3e;">*</span>
+                        </label>
+                        <select id="disqualificationCategory" style="border: 1px solid #feb2b2; border-radius: 7px; padding: 8px 10px; font-size: 13px;">
+                            <option value="">Select a reason</option>
+                            <option value="Technical skills insufficient">Technical skills insufficient</option>
+                            <option value="Interview performance">Interview performance</option>
+                            <option value="Availability / Schedule mismatch">Availability / Schedule mismatch</option>
+                            <option value="Position already filled">Position already filled</option>
+                            <option value="Not suitable for role requirements">Not suitable for role requirements</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="disqualificationFeedback" style="color: #9b2c2c; font-size: 12px; font-weight: 700;">
+                            Detailed Disqualification Reason <span style="color: #e53e3e;">* (Mandatory)</span>
+                        </label>
+                        <textarea id="disqualificationFeedback" rows="3" placeholder="Provide the exact reason why candidate was disqualified..." style="border: 1px solid #feb2b2; border-radius: 7px; padding: 8px 10px; font-size: 13px;"></textarea>
+                        <small style="color: #c53030; font-size: 11px;">A specific justification must be documented when disqualifying.</small>
+                    </div>
                 </div>
             </div>
+
             <div class="modal-footer">
                 <button type="button" class="modal-cancel-btn" data-close-modal>Cancel</button>
-                <button type="submit" class="modal-primary-btn disqualify-confirm-btn">Disqualify Candidate</button>
+                <button type="submit" class="modal-primary-btn" id="btnSubmitDecision" style="background: #16854a; border-color: #16854a; color: #ffffff; display: inline-flex; align-items: center; gap: 6px;">
+                    <span class="material-symbols-outlined" style="font-size: 17px;">check_circle</span>
+                    <span id="decisionSubmitText">Confirm Hire</span>
+                </button>
             </div>
         </form>
     </div>

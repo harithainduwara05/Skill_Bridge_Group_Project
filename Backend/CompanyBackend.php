@@ -700,14 +700,14 @@ class CompanyManager
 
     }
 
-    public function updateCompanyApplicationDecision($applicationId, $companyName, $decision)
+    public function updateCompanyApplicationDecision($applicationId, $companyName, $decision, $details = [])
     {
         $decision = ucfirst(strtolower(trim((string) $decision)));
         if (!in_array($decision, ['Accepted', 'Disqualified'], true)) {
             return false;
         }
 
-        $currentSql = "SELECT ia.status
+        $currentSql = "SELECT ia.application_id, ia.Email, ia.status, i.title, i.company
                        FROM internship_applications ia
                        INNER JOIN internships i ON i.id = ia.internship_id
                        WHERE ia.application_id = ?
@@ -718,18 +718,82 @@ class CompanyManager
         $currentStmt->bind_param("is", $applicationId, $companyName);
         if (!$currentStmt->execute()) return false;
         $current = $currentStmt->get_result()->fetch_assoc();
-        if (!$current || strtolower(trim($current['status'] ?? '')) !== 'applied') return false;
+        if (!$current) return false;
 
-        $sql = "UPDATE internship_applications ia
-                INNER JOIN internships i ON i.id = ia.internship_id
-                SET ia.status = ?
-                WHERE ia.application_id = ?
-                  AND TRIM(i.company) = TRIM(?)
-                  AND LOWER(TRIM(ia.status)) = 'applied'";
-        $stmt = $this->conn->prepare($sql);
-        if (!$stmt) return false;
-        $stmt->bind_param("sis", $decision, $applicationId, $companyName);
-        return $stmt->execute() && $stmt->affected_rows === 1;
+        if ($decision === 'Accepted') {
+            $interviewDate = !empty($details['interview_date']) ? $details['interview_date'] : null;
+            $interviewTime = !empty($details['interview_time']) ? trim($details['interview_time']) : null;
+            $interviewType = !empty($details['interview_type']) ? trim($details['interview_type']) : 'Video Interview (Google Meet / Zoom)';
+            $interviewLink = !empty($details['interview_link']) ? trim($details['interview_link']) : null;
+            $interviewNotes = !empty($details['interview_notes']) ? trim($details['interview_notes']) : null;
+
+            $sql = "UPDATE internship_applications ia
+                    INNER JOIN internships i ON i.id = ia.internship_id
+                    SET ia.status = 'Accepted',
+                        ia.interview_date = ?,
+                        ia.interview_time = ?,
+                        ia.interview_type = ?,
+                        ia.interview_link = ?,
+                        ia.interview_notes = ?,
+                        ia.disqualification_reason = NULL
+                    WHERE ia.application_id = ?
+                      AND TRIM(i.company) = TRIM(?)";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+            $stmt->bind_param("sssssis", $interviewDate, $interviewTime, $interviewType, $interviewLink, $interviewNotes, $applicationId, $companyName);
+            if (!$stmt->execute()) return false;
+
+            $studentEmail = $current['Email'];
+            $internshipTitle = $current['title'];
+            $notifTitle = "Interview Scheduled: " . $internshipTitle;
+            $notifMsg = "Your application for " . $internshipTitle . " at " . $companyName . " has been accepted.";
+            if ($interviewDate) {
+                $notifMsg .= " Interview date: " . $interviewDate . ($interviewTime ? " at " . $interviewTime : "") . ".";
+            }
+            if ($interviewLink) {
+                $notifMsg .= " Location / Link: " . $interviewLink . ".";
+            }
+            $nStmt = $this->conn->prepare("INSERT INTO notifications (Email, title, message, type, status, created_at) VALUES (?, ?, ?, 'application', 'Unread', NOW())");
+            if ($nStmt) {
+                $nStmt->bind_param("sss", $studentEmail, $notifTitle, $notifMsg);
+                $nStmt->execute();
+            }
+
+            return true;
+        } else {
+            $reason = !empty($details['disqualification_reason']) ? trim($details['disqualification_reason']) : 'Not suitable for the role';
+            if (!empty($details['disqualification_notes'])) {
+                $reason .= " - " . trim($details['disqualification_notes']);
+            }
+
+            $sql = "UPDATE internship_applications ia
+                    INNER JOIN internships i ON i.id = ia.internship_id
+                    SET ia.status = 'Disqualified',
+                        ia.interview_date = NULL,
+                        ia.interview_time = NULL,
+                        ia.interview_type = NULL,
+                        ia.interview_link = NULL,
+                        ia.interview_notes = NULL,
+                        ia.disqualification_reason = ?
+                    WHERE ia.application_id = ?
+                      AND TRIM(i.company) = TRIM(?)";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+            $stmt->bind_param("sis", $reason, $applicationId, $companyName);
+            if (!$stmt->execute()) return false;
+
+            $studentEmail = $current['Email'];
+            $internshipTitle = $current['title'];
+            $notifTitle = "Application Update: " . $internshipTitle;
+            $notifMsg = "Your application for " . $internshipTitle . " at " . $companyName . " was not selected at this time.";
+            $nStmt = $this->conn->prepare("INSERT INTO notifications (Email, title, message, type, status, created_at) VALUES (?, ?, ?, 'application', 'Unread', NOW())");
+            if ($nStmt) {
+                $nStmt->bind_param("sss", $studentEmail, $notifTitle, $notifMsg);
+                $nStmt->execute();
+            }
+
+            return true;
+        }
     }
 
 
@@ -1160,91 +1224,34 @@ class CompanyManager
 
 
 
-    public function getInternshipById(
-
-        $id,
-
-        $companyName
-
-    ) {
-
-
-
-        $sql = "SELECT *
-
-
-
-                FROM internships
-
-
-
-                WHERE
-
-
-
-                    id = ?
-
-
-
-                    AND
-
-
-
-                    TRIM(company) = TRIM(?)
-
-
-
-                LIMIT 1";
-
-
-
-
-
-        $stmt =
-
-            $this->conn->prepare($sql);
-
-
-
-
-
-        $stmt->bind_param(
-
-            "is",
-
-            $id,
-
-            $companyName
-
-        );
-
-
-
-
-
+    public function getInternshipById($id, $companyName = null)
+    {
+        $id = (int) $id;
+        if (!empty($companyName)) {
+            $sql = "SELECT i.*, COUNT(ia.application_id) AS applicant_count
+                    FROM internships i
+                    LEFT JOIN internship_applications ia ON ia.internship_id = i.id
+                    WHERE i.id = ? AND TRIM(i.company) = TRIM(?)
+                    GROUP BY i.id
+                    LIMIT 1";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+            $stmt->bind_param("is", $id, $companyName);
+        } else {
+            $sql = "SELECT i.*, COUNT(ia.application_id) AS applicant_count
+                    FROM internships i
+                    LEFT JOIN internship_applications ia ON ia.internship_id = i.id
+                    WHERE i.id = ?
+                    GROUP BY i.id
+                    LIMIT 1";
+            $stmt = $this->conn->prepare($sql);
+            if (!$stmt) return false;
+            $stmt->bind_param("i", $id);
+        }
         $stmt->execute();
-
-
-
-
-
-        return
-
-            $stmt
-
-            ->get_result()
-
-            ->fetch_assoc();
-
-
-
+        $res = $stmt->get_result();
+        return $res ? $res->fetch_assoc() : null;
     }
-
-
-
-
-
-
 
     /* =========================
 
