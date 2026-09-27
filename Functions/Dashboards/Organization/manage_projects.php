@@ -229,6 +229,12 @@ function applicantCount($projectId) {
     return count($applicantEmails[(int)$projectId] ?? []);
 }
 
+// Number shown in the "Applicants" column: a project that is still "Not Assigned"
+// (no student in its team yet) always shows 0.
+function shownApplicants($project) {
+    return assignedCount($project) > 0 ? applicantCount($project['id']) : 0;
+}
+
 // Can the organization delete this project? Returns '' if yes, otherwise the reason why not.
 function deleteBlockReason($project) {
     $status = $project['db_status'] ?? ($project['status'] ?? '');
@@ -786,7 +792,7 @@ foreach ($allProjects as $ap) {
                                 <span class="category-tag"><?= htmlspecialchars($p['category']) ?></span>
                             </td>
                             <td>
-                                <?= applicantCount($p['id']) ?>
+                                <?= shownApplicants($p) ?>
                             </td>
                             <td>
                                 <?php $assignedCount = assignedCount($p); ?>
@@ -876,7 +882,7 @@ foreach ($allProjects as $ap) {
             <?php endif; ?>
             <?php foreach ($projects as $p): ?>
                 <?php
-                    $gridApplicants = applicantCount($p['id']);
+                    $gridApplicants = shownApplicants($p);
                     $gridAssigned   = assignedCount($p);
                 ?>
                 <article class="project-management-card">
@@ -998,7 +1004,7 @@ foreach ($allProjects as $ap) {
     <?php
         $projectViewData = [];
         foreach ($projects as $p) {
-            $vApplicants = applicantCount($p['id']);
+            $vApplicants = shownApplicants($p);
             $vAssigned   = assignedCount($p);
             $projectViewData[(string)$p['id']] = [
                 'id'         => $p['id'],
