@@ -30,20 +30,6 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
             <span class="nav-text">Dashboard</span>
         </a>
 
-        <a href="skills.php" class="<?= $currentPage == 'skills.php' ? 'active' : '' ?>" title="Skills">
-            <span class="icon">
-                <span class="material-symbols-outlined">psychology</span>
-            </span>
-            <span class="nav-text">Skills</span>
-        </a>
-
-        <a href="portfolio.php" class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>" title="Portfolio">
-            <span class="icon">
-                <span class="material-symbols-outlined">badge</span>
-            </span>
-            <span class="nav-text">Portfolio</span>
-        </a>
-
         <a href="projects.php" class="<?= $currentPage == 'projects.php' ? 'active' : '' ?>" title="Projects">
             <span class="icon">
                 <span class="material-symbols-outlined">folder_open</span>
@@ -88,8 +74,21 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
                     Applications
                 </span>
             </a>
-
         <?php } ?>
+        
+        <a href="skills.php" class="<?= $currentPage == 'skills.php' ? 'active' : '' ?>" title="Skills">
+            <span class="icon">
+                <span class="material-symbols-outlined">psychology</span>
+            </span>
+            <span class="nav-text">Skills</span>
+        </a>
+
+        <a href="portfolio.php" class="<?= $currentPage == 'portfolio.php' ? 'active' : '' ?>" title="Portfolio">
+            <span class="icon">
+                <span class="material-symbols-outlined">badge</span>
+            </span>
+            <span class="nav-text">Portfolio</span>
+        </a>
 
         <a href="notifications.php" class="<?= $currentPage == 'notifications.php' ? 'active' : '' ?>" title="Notifications">
             <span class="icon">

@@ -10,10 +10,34 @@
     min-height:calc(100vh - 80px);
 
 }
+/* BREADCRUMB */
 
+.breadcrumb{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:22px;
+    font-size:14px;
+    font-weight:600;
+}
 
+.breadcrumb a{
+    color:#082544;
+    text-decoration:none;
+    transition:.3s;
+}
 
+.breadcrumb a:hover{
+    color:#ff8a00;
+}
 
+.breadcrumb span{
+    color:#98a2b3;
+}
+
+.breadcrumb strong{
+    color:#667085;
+}
 /* TEAM HEADER */
 
 

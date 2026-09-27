@@ -63,7 +63,7 @@ $applications = [
 "location"=>"Austin, TX",
 "type"=>"Full-time",
 "date"=>"Nov 02, 2026",
-"status"=>"Accepted"
+"status"=>"Applied"
 ],
 
 
@@ -132,20 +132,19 @@ New Application
         </div>
 
         <div class="stat-content">
-            <span>SUBMITTED</span>
+            <span>APPLIED</span>
             <strong>24</strong>
         </div>
     </div>
 
-
     <div class="stat-card">
-        <div class="stat-icon accepted">
-            <i class="fa-solid fa-star"></i>
+        <div class="stat-icon offer">
+            <i class="fa-solid fa-circle-check"></i>
         </div>
 
         <div class="stat-content">
             <span>ACCEPTED</span>
-            <strong>08</strong>
+            <strong>01</strong>
         </div>
     </div>
 
@@ -160,19 +159,7 @@ New Application
             <strong>03</strong>
         </div>
     </div>
-
-
-    <div class="stat-card">
-        <div class="stat-icon offer">
-            <i class="fa-solid fa-circle-check"></i>
-        </div>
-
-        <div class="stat-content">
-            <span>OFFERS</span>
-            <strong>01</strong>
-        </div>
-    </div>
-
+    
 </section>
 
 
@@ -205,6 +192,10 @@ Filter by Status:
 <option>
 All Statuses
 </option>
+<option>
+Applied
+</option>
+
 <option>
 Accepted
 </option>
@@ -508,13 +499,13 @@ tomorrow at 10:00 AM PST.
 
 
 
-<button>
+<!-- <button>
 
 Prepare Now
 
 <i class="fa-regular fa-calendar"></i>
 
-</button>
+</button> -->
 
 
 </div>
