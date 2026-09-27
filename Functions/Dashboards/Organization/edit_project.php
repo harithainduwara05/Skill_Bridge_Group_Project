@@ -106,6 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     ]);
 }
 
+// Older projects store the deadline as "Oct 09, 2026" -> the date box needs "2026-10-09"
+$deadlineTs    = !empty($project['deadline']) ? strtotime($project['deadline']) : false;
+$deadlineValue = $deadlineTs ? date('Y-m-d', $deadlineTs) : '';
+
 // Extract just the leading number out of "12 Weeks" for the number input
 preg_match('/\d+/', $project['duration'] ?? '', $m);
 $durationWeeksValue = $m[0] ?? '';
@@ -151,6 +155,11 @@ include "../../../Includes/dash_header.php";
                             <option value="">Select a category</option>
                             <?php
                             $categories = ['Web Development', 'Mobile Development', 'AI / Machine Learning', 'Data Science', 'UI/UX Design', 'Cloud & DevOps', 'Cybersecurity', 'Other'];
+                            // older projects may use a category that is not in this list (e.g. "Internet of Things")
+                            // -> keep it as an option so the form can still be saved
+                            if (!empty($project['category']) && !in_array($project['category'], $categories, true)) {
+                                array_unshift($categories, $project['category']);
+                            }
                             foreach ($categories as $cat):
                             ?>
                                 <option value="<?= htmlspecialchars($cat) ?>" <?= ($project['category'] === $cat) ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
@@ -240,7 +249,7 @@ include "../../../Includes/dash_header.php";
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Application Deadline</label>
-                        <input type="date" name="deadline" class="form-input" value="<?= htmlspecialchars($project['deadline'] ?? '') ?>">
+                        <input type="date" name="deadline" class="form-input" value="<?= htmlspecialchars($deadlineValue) ?>">
                     </div>
                     <div class="form-group">
                         <label class="form-label">Project Visibility</label>

@@ -139,7 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'resol
 }
 
 $flash = null;
-if (isset($_GET['deleted'])) {
+if (isset($_GET['updated'])) {
+    $flash = ['type' => 'success', 'title' => 'Project updated', 'message' => 'Your changes were saved successfully.'];
+} elseif (isset($_GET['deleted'])) {
     $flash = ['type' => 'success', 'title' => 'Project deleted', 'message' => 'The project was deleted successfully.'];
 } elseif (isset($_GET['delete_blocked'])) {
     $flash = ['type' => 'error', 'title' => 'Can’t delete this project', 'message' => 'Only Rejected projects, or Reviewing projects with 0 applicants, can be deleted.'];
@@ -327,18 +329,9 @@ function buildPageUrl($pageNum, $statusFilter, $timeFilter) {
 }
 
 // ---- Summary stat cards (real data) ----
-// "Active Applications" = proposals still waiting for the organization's decision (pending)
-$activeApplications = 0;
-try {
-    $stmt = $conn->prepare("SELECT COUNT(*) FROM project_applications pa
-                             JOIN projects p ON pa.project_id = p.id
-                             WHERE p.organization_email = ? AND pa.status = 'pending'");
-    $stmt->bind_param("s", $organization_email);
-    $stmt->execute();
-    $activeApplications = (int)$stmt->get_result()->fetch_row()[0];
-} catch (Throwable $e) {
-    // project_applications table not created yet
-}
+// "Active Projects" = projects shown with the green Active badge
+// (saved as Active AND the team is full – same rule as the list below)
+$activeProjects = count(array_filter($allProjects, fn($p) => ($p['status'] ?? '') === 'inprogress'));
 
 // "Assigned Teams" = projects whose team is COMPLETE (all the students it needs have joined).
 // Same rule as the Active badge; Rejected and Hold projects are not counted.
@@ -688,12 +681,12 @@ foreach ($allProjects as $ap) {
         <div class="stat-card">
             <div class="stat-card-top">
                 <div class="stat-icon green">
-                    <span class="material-symbols-outlined">groups</span>
+                    <span class="material-symbols-outlined">task_alt</span>
                 </div>
             </div>
             <div class="stat-info">
-                <div class="stat-label">Active Applications</div>
-                <div class="stat-value"><?= $activeApplications ?></div>
+                <div class="stat-label">Active Projects</div>
+                <div class="stat-value"><?= (int)$activeProjects ?></div>
             </div>
         </div>
 
@@ -1607,6 +1600,12 @@ foreach ($allProjects as $ap) {
     (function () {
         const toast = document.getElementById('holdFlash');
         if (!toast) return;
+        // remove ?updated / ?deleted ... from the address bar so a refresh doesn't show it again
+        try {
+            const url = new URL(location.href);
+            ['updated', 'deleted', 'delete_blocked', 'hold_resolved', 'hold_error'].forEach(k => url.searchParams.delete(k));
+            history.replaceState(null, '', url.pathname + (url.search || '') + url.hash);
+        } catch (e) {}
         setTimeout(function () {
             toast.style.transition = 'opacity .4s ease, transform .4s ease';
             toast.style.opacity = '0';
