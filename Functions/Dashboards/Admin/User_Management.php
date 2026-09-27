@@ -353,10 +353,10 @@ $usersList = array_slice($allFilteredUsers, $offset, $perPage);
                 </p>
             </div>
             <div class="user-header-actions" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-                <button type="button" class="btn-bulk-user" id="btnBulkUpload">
+                <!--<button type="button" class="btn-bulk-user" id="btnBulkUpload">
                     <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>
                     Bulk Import Students
-                </button>
+                </button>-->
                 <button class="btn-add-user" id="btnAddUser">
                     <span class="material-symbols-outlined" style="font-size:18px;">person_add</span>
                     Add New User

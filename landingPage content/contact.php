@@ -6,9 +6,9 @@ $error_msg = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_contact'])) {
     $full_name = trim($_POST['full_name'] ?? '');
-    $email     = trim($_POST['email'] ?? '');
-    $subject   = trim($_POST['subject'] ?? '');
-    $message   = trim($_POST['message'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $subject = trim($_POST['subject'] ?? '');
+    $message = trim($_POST['message'] ?? '');
 
     if (!empty($full_name) && !empty($email) && !empty($message)) {
         // 1. Insert into contact_messages
@@ -26,8 +26,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['submit_contact'])) {
 
                 if ($adminRes && $adminRes->num_rows > 0) {
                     $notifTitle = "New Contact Inquiry: " . (!empty($subject) ? $subject : 'Website Inquiry');
-                    $notifMsg   = "From: " . $full_name . " (" . $email . ")\n\n" . $message;
-                    $notifType  = "contact_inquiry";
+                    $notifMsg = "From: " . $full_name . " (" . $email . ")\n\n" . $message;
+                    $notifType = "contact_inquiry";
                     $notifStatus = "Unread";
 
                     $notifStmt = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status, created_at) VALUES (?, ?, ?, ?, ?, NOW())");
@@ -78,7 +78,7 @@ include '../Includes/header.php';
             <div class="info-icon">📞</div>
             <div class="info-details">
                 <h4>Phone</h4>
-                <p>+94 XX XXX XXXX</p>
+                <p> +94 11 2 345678</p>
             </div>
         </div>
 
@@ -100,11 +100,13 @@ include '../Includes/header.php';
         <h2>Send Us a Message</h2>
         <?php if (!empty($success_msg)): ?>
             <div style="background: #dcfce7; color: #16a34a; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                <?php echo $success_msg; ?></div>
+                <?php echo $success_msg; ?>
+            </div>
         <?php endif; ?>
         <?php if (!empty($error_msg)): ?>
             <div style="background: #fee2e2; color: #ef4444; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                <?php echo $error_msg; ?></div>
+                <?php echo $error_msg; ?>
+            </div>
         <?php endif; ?>
         <form action="" method="POST">
             <div class="form-row">
