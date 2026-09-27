@@ -326,14 +326,25 @@
 
 .table-responsive {
     width: 100%;
-    overflow-x: auto;
+    min-width: 0;
+    overflow-x: hidden;
 }
 
 .company-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: fixed;
     text-align: left;
 }
+
+.company-table th:nth-child(1),
+.company-table td:nth-child(1) { width: 32%; }
+.company-table th:nth-child(2),
+.company-table td:nth-child(2) { width: 23%; }
+.company-table th:nth-child(3),
+.company-table td:nth-child(3) { width: 29%; }
+.company-table th:nth-child(4),
+.company-table td:nth-child(4) { width: 16%; }
 
 .company-table th {
     font-size: 11px;
@@ -341,18 +352,19 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     color: #94a3b8;
-    padding: 12px 24px;
+    padding: 12px 10px;
     background: #ffffff;
     border-bottom: 1px solid #f1f5f9;
     white-space: nowrap;
 }
 
 .company-table td {
-    padding: 14px 24px;
+    padding: 14px 10px;
     font-size: 13px;
     color: #334155;
     border-bottom: 1px solid #f8fafc;
     vertical-align: middle;
+    overflow-wrap: anywhere;
 }
 
 .company-table tr:last-child td {
@@ -367,7 +379,8 @@
 .candidate-cell {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
+    min-width: 0;
 }
 
 .candidate-avatar {
@@ -394,22 +407,26 @@
 }
 
 .candidate-name {
+    min-width: 0;
     font-weight: 600;
     color: var(--text-dark);
     font-size: 13.5px;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .company-table .univ-cell {
     color: var(--text-muted);
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 .company-table .position-cell {
     color: #1e293b;
     font-weight: 500;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 
 /* Status Pills */
@@ -423,27 +440,30 @@
     font-weight: 700;
     letter-spacing: 0.4px;
     text-transform: uppercase;
-    white-space: nowrap;
+    max-width: 100%;
+    white-space: normal;
+    text-align: center;
 }
 
-.status-pill.status-new {
+.status-pill.status-applied {
     background: #dbeafe;
     color: #1d4ed8;
 }
 
-.status-pill.status-shortlisted {
-    background: #fed7aa;
-    color: #c2410c;
-}
-
-.status-pill.status-selected {
+.status-pill.status-accepted {
     background: #dcfce7;
     color: #15803d;
 }
 
-.status-pill.status-rejected {
+.status-pill.status-disqualified {
     background: #fee2e2;
     color: #dc2626;
+}
+
+.dashboard-empty-row {
+    padding: 28px 16px;
+    color: var(--text-muted);
+    text-align: center;
 }
 
 .status-pill.status-active {

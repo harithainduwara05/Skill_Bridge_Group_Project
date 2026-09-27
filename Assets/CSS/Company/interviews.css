@@ -101,8 +101,8 @@
     background: #ad5a00;
 }
 
-.feedback-card::before {
-    background: #0b3157;
+.hired-card::before {
+    background: #18a153;
 }
 
 .upcoming-card::before {
@@ -387,10 +387,12 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-height: 28px;
     padding: 5px 12px;
     border-radius: 999px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
+    line-height: 1.2;
     white-space: nowrap;
 }
 
@@ -399,14 +401,14 @@
     color: #c45d00;
 }
 
-.interview-status.applied {
-    background: #f0f2f5;
-    color: #606977;
-}
-
 .interview-status.hired {
     background: #dff8e8;
     color: #16854a;
+}
+
+.interview-status.disqualified {
+    background: #fde8e8;
+    color: #ae3434;
 }
 
 
@@ -417,7 +419,8 @@
 .interview-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 7px;
 }
 
 .interview-action-btn {
@@ -442,6 +445,12 @@
 .interview-action-btn .material-symbols-outlined {
     font-size: 21px;
 }
+
+.mark-hired-btn { color: #16854a; }
+.disqualify-interview-btn { color: #b93838; }
+.mark-hired-btn:hover { background: #e9f8ef; }
+.disqualify-interview-btn:hover { background: #fff0f0; }
+.interview-action-btn[hidden] { display: none; }
 
 .edit-interview-btn {
     color: #ad5a00;
@@ -639,6 +648,10 @@
 .form-group input[readonly] {
     background: #f5f7fa;
 }
+
+#otherDisqualificationGroup[hidden] { display: none; }
+.disqualify-confirm-btn { background: #a92f35; border-color: #a92f35; }
+.disqualify-confirm-btn:hover { background: #8e252b; }
 
 
 /* =========================================================

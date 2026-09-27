@@ -1,498 +1,165 @@
 <?php
-
+require_once '../../../Config/db.php';
 require_once '../../../Session/Session.php';
 require_role('company');
 
-/*
-|--------------------------------------------------------------------------
-| COMPANY CANDIDATES PAGE
-|--------------------------------------------------------------------------
-| Keep the existing shared header + Company sidebar.
-| Do not create another header/search bar here.
-*/
+$user = current_user();
+$companyEmail = $user['email'] ?? $user['Email'] ?? '';
+$companyStmt = $conn->prepare('SELECT Name FROM company WHERE Email = ? LIMIT 1');
+$companyStmt->bind_param('s', $companyEmail);
+$companyStmt->execute();
+$company = $companyStmt->get_result()->fetch_assoc();
+$applicationId = (int) ($_GET['application_id'] ?? 0);
+$candidate = null;
 
-$pageTitle = 'Candidates';
+if ($company && $applicationId > 0) {
+    $applicationStmt = $conn->prepare("SELECT s.Email, s.Name, s.University, s.degree, s.year, s.bio, s.profile_image, s.github, s.linkedin, s.website,
+                                               ia.status AS application_status, ia.applied_date, i.title AS internship_title
+                                        FROM internship_applications ia
+                                        INNER JOIN internships i ON i.id = ia.internship_id
+                                        INNER JOIN student s ON s.Email = ia.Email
+                                        WHERE ia.application_id = ? AND TRIM(i.company) = TRIM(?)
+                                        LIMIT 1");
+    $applicationStmt->bind_param('is', $applicationId, $company['Name']);
+    $applicationStmt->execute();
+    $candidate = $applicationStmt->get_result()->fetch_assoc();
+}
 
+$skills = $projects = $certificates = [];
+if ($candidate) {
+    $email = $candidate['Email'];
+    $stmt = $conn->prepare('SELECT skill_name, level FROM skills WHERE Email = ? ORDER BY skill_name');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $skills = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $stmt = $conn->prepare('SELECT p.title, p.description, p.category, p.tech_stack, p.company, p.deadline, sp.role, sp.progress, sp.status FROM student_projects sp INNER JOIN projects p ON p.id = sp.project_id WHERE sp.Email = ? ORDER BY sp.student_project_id DESC');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $projects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+    $stmt = $conn->prepare('SELECT certificate_name, issuer, certificate_file, status FROM certificates WHERE Email = ? ORDER BY certificate_id DESC');
+    $stmt->bind_param('s', $email);
+    $stmt->execute();
+    $certificates = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+}
+
+$pageTitle = 'Candidate Details';
 include '../../../Includes/company_sidebar.php';
 include '../../../Includes/dash_header.php';
 ?>
-
-<link rel="stylesheet"
-      href="<?= $GLOBALS['BASE_URL'] ?>/Assets/CSS/Company/candidates.css?v=<?= time(); ?>">
+<link rel="stylesheet" href="<?= $GLOBALS['BASE_URL'] ?>/Assets/CSS/Company/candidates.css?v=<?= filemtime(__DIR__ . '/../../../Assets/CSS/Company/candidates.css') ?>">
 
 <main class="company-candidates-page">
+    <a class="back-applications-btn" href="applications.php"><span class="material-symbols-outlined" aria-hidden="true">arrow_back</span>Back to Applications</a>
 
-    <div class="candidate-layout">
-
-        <!-- =====================================================
-             LEFT SIDE
-        ====================================================== -->
-        <div class="candidate-main-column">
-
-            <!-- Candidate Profile -->
-            <section class="candidate-profile-card">
-
-                <div class="profile-accent"></div>
-
-                <div class="candidate-avatar">
-                    LH
-                    <span class="online-dot"></span>
-                </div>
-
-                <div class="candidate-info">
-                    <h1>Liam Henderson</h1>
-
-                    <h3>Stanford University</h3>
-
-                    <p class="candidate-degree">
-                        B.S. in Computer Science • Senior Year
-                    </p>
-
-                    <div class="candidate-contact">
-                        <span>
-                            <span class="material-symbols-outlined">
-                                location_on
-                            </span>
-                            Palo Alto, CA
-                        </span>
-
-                        <span>
-                            <span class="material-symbols-outlined">
-                                mail
-                            </span>
-                            l.henderson@stanford.edu
-                        </span>
+    <?php if (!$candidate): ?>
+        <section class="candidate-card candidate-not-found"><h1>Candidate details unavailable</h1><p>This application could not be found for your company.</p></section>
+    <?php else: ?>
+        <?php
+            $candidateName = trim($candidate['Name'] ?? 'Candidate');
+            $nameParts = preg_split('/\s+/', $candidateName, -1, PREG_SPLIT_NO_EMPTY);
+            $initials = strtoupper(substr($nameParts[0] ?? 'C', 0, 1) . substr($nameParts[count($nameParts) - 1] ?? '', 0, 1));
+            $academicYear = trim((string) ($candidate['year'] ?? ''));
+            $degree = trim((string) ($candidate['degree'] ?? ''));
+        ?>
+        <div class="candidate-layout">
+            <div class="candidate-main-column">
+                <section class="candidate-profile-card">
+                    <div class="profile-accent"></div>
+                    <div class="candidate-avatar"><?= htmlspecialchars($initials) ?></div>
+                    <div class="candidate-info">
+                        <h1><?= htmlspecialchars($candidateName) ?></h1>
+                        <h3><?= htmlspecialchars($candidate['University'] ?? 'University not provided') ?></h3>
+                        <p class="candidate-degree"><?= htmlspecialchars($degree ?: 'Degree not provided') ?><?= $academicYear !== '' ? ' · ' . htmlspecialchars($academicYear) : '' ?></p>
+                        <div class="candidate-contact">
+                            <span><span class="material-symbols-outlined">mail</span><?= htmlspecialchars($candidate['Email']) ?></span>
+                            <?php foreach (['github' => 'GitHub', 'linkedin' => 'LinkedIn', 'website' => 'Website'] as $field => $label): ?>
+                                <?php if (!empty($candidate[$field])): ?><a href="<?= htmlspecialchars($candidate[$field], ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($label) ?></a><?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if (!empty($candidate['bio'])): ?><p class="candidate-bio"><?= nl2br(htmlspecialchars($candidate['bio'])) ?></p><?php endif; ?>
                     </div>
-                </div>
-
-                <div class="candidate-profile-actions">
-
-                    <button
-                        type="button"
-                        class="candidate-btn candidate-btn-outline"
-                        id="downloadCvBtn"
-                    >
-                        <span class="material-symbols-outlined">
-                            download
-                        </span>
-                        Download CV
-                    </button>
-
-                    <button
-                        type="button"
-                        class="candidate-btn candidate-btn-shortlist"
-                        id="shortlistBtn"
-                    >
-                        <span class="material-symbols-outlined">
-                            star
-                        </span>
-                        <span id="shortlistText">Shortlist</span>
-                    </button>
-
-                </div>
-
-            </section>
-
-
-            <!-- Skills + Academic -->
-            <div class="candidate-overview-grid">
-
-                <!-- Skills -->
-                <section class="candidate-card skills-card">
-
-                    <div class="section-title">
-                        <span class="section-icon orange">
-                            <span class="material-symbols-outlined">
-                                bolt
-                            </span>
-                        </span>
-
-                        <h2>Skills & Expertise</h2>
-                    </div>
-
-                    <div class="skills-list">
-                        <span>React.js</span>
-                        <span>TypeScript</span>
-                        <span>Node.js</span>
-                        <span>Python</span>
-                        <span>UI/UX Design</span>
-                        <span>Cloud Computing</span>
-                        <span>Data Structures</span>
-                        <span>Git</span>
-                    </div>
-
                 </section>
 
-
-                <!-- Academic Snapshot -->
-                <section class="academic-card">
-
-                    <h2>Academic Snapshot</h2>
-
-                    <div class="academic-grid">
-
-                        <div class="academic-item">
-                            <span>Academic Year</span>
-                            <strong>4th Year</strong>
+                <div class="candidate-overview-grid">
+                    <section class="candidate-card skills-card">
+                        <div class="section-title"><span class="section-icon orange"><span class="material-symbols-outlined">bolt</span></span><h2>Skills &amp; Expertise</h2></div>
+                        <div class="skills-list">
+                            <?php foreach ($skills as $skill): ?><span><?= htmlspecialchars($skill['skill_name']) ?><?= !empty($skill['level']) ? ' · ' . htmlspecialchars($skill['level']) : '' ?></span><?php endforeach; ?>
+                            <?php if (!$skills): ?><span>No skills listed</span><?php endif; ?>
                         </div>
-
-                        <div class="academic-item">
-                            <span>Projects</span>
-                            <strong>2 Projects</strong>
+                    </section>
+                    <section class="academic-card">
+                        <h2>Academic Snapshot</h2>
+                        <div class="academic-grid">
+                            <div class="academic-item"><span>Academic Year</span><strong><?= htmlspecialchars($academicYear ?: 'Not provided') ?></strong></div>
+                            <div class="academic-item"><span>Projects</span><strong><?= count($projects) ?></strong></div>
+                            <div class="academic-item"><span>Certificates</span><strong><?= count($certificates) ?></strong></div>
+                            <div class="academic-item"><span>Degree</span><strong><?= htmlspecialchars($degree ?: 'Not provided') ?></strong></div>
                         </div>
+                    </section>
+                </div>
 
-                        <div class="academic-item">
-                            <span>Certificates</span>
-                            <strong>2 Earned</strong>
+                <section class="portfolio-section">
+                    <div class="portfolio-heading"><h2>Portfolio Projects</h2></div>
+                    <?php if ($projects): ?>
+                        <div class="portfolio-grid">
+                            <?php foreach ($projects as $project): ?>
+                                <article class="portfolio-card">
+                                    <div class="portfolio-content">
+                                        <?php if (!empty($project['category'])): ?><span class="project-category"><?= htmlspecialchars($project['category']) ?></span><?php endif; ?>
+                                        <h3><?= htmlspecialchars($project['title']) ?></h3>
+                                        <?php if (!empty($project['description'])): ?><p><?= nl2br(htmlspecialchars($project['description'])) ?></p><?php endif; ?>
+                                        <div class="project-meta">
+                                            <?php if (!empty($project['role'])): ?><span>Role: <?= htmlspecialchars($project['role']) ?></span><?php endif; ?>
+                                            <?php if ($project['progress'] !== null): ?><span>Progress: <?= (int) $project['progress'] ?>%</span><?php endif; ?>
+                                            <?php if (!empty($project['status'])): ?><span><?= htmlspecialchars($project['status']) ?></span><?php endif; ?>
+                                        </div>
+                                        <?php if (!empty($project['tech_stack'])): ?><div class="tech-stack"><?php foreach (array_slice(array_map('trim', explode(',', $project['tech_stack'])), 0, 5) as $tech): ?><span><?= htmlspecialchars($tech) ?></span><?php endforeach; ?></div><?php endif; ?>
+                                    </div>
+                                </article>
+                            <?php endforeach; ?>
                         </div>
-
-                        <div class="academic-item">
-                            <span>Degree</span>
-                            <strong>B.S. in Computer Science</strong>
-                        </div>
-
-                    </div>
-
+                    <?php else: ?><p class="candidate-empty">No projects listed.</p><?php endif; ?>
                 </section>
-
             </div>
 
-
-            <!-- Portfolio -->
-            <section class="portfolio-section">
-
-                <div class="portfolio-heading">
-                    <h2>Portfolio Projects</h2>
-
-                    <button type="button" class="view-all-btn">
-                        View All
-                    </button>
-                </div>
-
-
-                <div class="portfolio-grid">
-
-                    <!-- FinTech Project -->
-                    <article class="portfolio-card">
-
-                        <div class="portfolio-image">
-
-                            <img
-                                src="<?= $GLOBALS['BASE_URL'] ?>/Assets/Images/company/Fintech.jpg"
-                                alt="EcoSpend AI"
-                            >
-
-                            <span class="project-category">
-                                FinTech
-                            </span>
-
-                        </div>
-
-                        <div class="portfolio-content">
-
-                            <h3>EcoSpend AI</h3>
-
-                            <p>
-                                An AI-driven personal finance tracker that
-                                optimizes spending and financial decisions.
-                            </p>
-
-                            <div class="portfolio-footer">
-
-                                <div class="tech-stack">
-                                    <span>JS</span>
-                                    <span>AI</span>
-                                    <span>+2</span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="project-open-btn"
-                                    aria-label="Open EcoSpend AI"
-                                >
-                                    <span class="material-symbols-outlined">
-                                        open_in_new
-                                    </span>
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-
-
-                    <!-- Infrastructure Project -->
-                    <article class="portfolio-card">
-
-                        <div class="portfolio-image">
-
-                            <img
-                                src="<?= $GLOBALS['BASE_URL'] ?>/Assets/Images/company/infrastructure.jpg"
-                                alt="CloudGuard Analytics"
-                            >
-
-                            <span class="project-category">
-                                Infrastructure
-                            </span>
-
-                        </div>
-
-                        <div class="portfolio-content">
-
-                            <h3>CloudGuard Analytics</h3>
-
-                            <p>
-                                Distributed monitoring tool for multi-cloud
-                                environments using intelligent analytics.
-                            </p>
-
-                            <div class="portfolio-footer">
-
-                                <div class="tech-stack">
-                                    <span>AV</span>
-                                    <span>TS</span>
-                                    <span>+1</span>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    class="project-open-btn"
-                                    aria-label="Open CloudGuard Analytics"
-                                >
-                                    <span class="material-symbols-outlined">
-                                        open_in_new
-                                    </span>
-                                </button>
-
-                            </div>
-
-                        </div>
-
-                    </article>
-
-                </div>
-
-            </section>
-
-        </div>
-
-
-        <!-- =====================================================
-             RIGHT SIDE
-        ====================================================== -->
-        <aside class="candidate-side-column">
-
-            <!-- Resume -->
-            <section class="resume-card">
-
-                <div class="resume-header">
-
-                    <strong>Resume_Liam_H.pdf</strong>
-
-                    <div class="resume-actions">
-
-                        <button
-                            type="button"
-                            id="resumeZoomBtn"
-                            title="Preview Resume"
-                        >
-                            <span class="material-symbols-outlined">
-                                zoom_in
-                            </span>
+            <aside class="candidate-side-column">
+                <section class="resume-card" id="resumePreview">
+                    <div class="resume-header">
+                        <div class="resume-heading"><strong>Candidate CV Preview</strong><span class="resume-profile-note">Built from candidate profile</span></div>
+                        <button type="button" class="candidate-btn candidate-btn-outline resume-download-btn" id="downloadCvBtn">
+                            <span class="material-symbols-outlined" aria-hidden="true">download</span>Download CV
                         </button>
-
-                        <button
-                            type="button"
-                            id="resumeDownloadBtn"
-                            title="Download Resume"
-                        >
-                            <span class="material-symbols-outlined">
-                                download
-                            </span>
-                        </button>
-
                     </div>
-
-                </div>
-
-
-                <!-- Resume Preview -->
-                <div class="resume-preview" id="resumePreview">
-
-                    <div class="resume-paper">
-
-                        <h2>LIAM HENDERSON</h2>
-
-                        <p class="resume-contact">
-                            Silicon Valley, CA • (555) 0123 •
-                            l.henderson@stanford.edu
-                        </p>
-
+                    <div class="resume-preview"><div class="resume-paper">
+                        <h2><?= htmlspecialchars($candidateName) ?></h2>
+                        <p class="resume-contact"><?= htmlspecialchars($candidate['Email']) ?></p>
                         <div class="resume-divider"></div>
+                        <div class="resume-section"><h4>EDUCATION</h4><strong><?= htmlspecialchars($candidate['University'] ?? 'University not provided') ?></strong><p><?= htmlspecialchars($degree ?: 'Degree not provided') ?><?= $academicYear !== '' ? ' · ' . htmlspecialchars($academicYear) : '' ?></p></div>
+                        <?php if (!empty($candidate['bio'])): ?><div class="resume-section"><h4>PROFILE</h4><p><?= nl2br(htmlspecialchars($candidate['bio'])) ?></p></div><?php endif; ?>
+                        <div class="resume-section"><h4>SKILLS</h4><p><?= htmlspecialchars(implode(', ', array_column($skills, 'skill_name')) ?: 'No skills listed') ?></p></div>
+                        <?php if ($projects): ?><div class="resume-section"><h4>PROJECTS</h4><?php foreach ($projects as $project): ?><strong><?= htmlspecialchars($project['title']) ?></strong><?php if (!empty($project['description'])): ?><p><?= htmlspecialchars($project['description']) ?></p><?php endif; ?><?php endforeach; ?></div><?php endif; ?>
+                    </div></div>
+                </section>
 
-                        <div class="resume-section">
-                            <h4>EDUCATION</h4>
-
-                            <strong>Stanford University</strong>
-
-                            <p>
-                                B.S. in Computer Science |
-                                2021 – Present
-                            </p>
-                        </div>
-
-
-                        <div class="resume-section">
-
-                            <h4>EXPERIENCE</h4>
-
-                            <strong>
-                                Software Intern | TechGiant Inc.
-                            </strong>
-
-                            <small>
-                                June 2023 – August 2023
-                            </small>
-
-                            <p>
-                                Optimized backend latency and
-                                improved application performance.
-                            </p>
-
-                            <strong>
-                                Research Assistant | Stanford AI Lab
-                            </strong>
-
-                            <small>
-                                January 2023 – May 2023
-                            </small>
-
-                            <p>
-                                Assisted in training large language models
-                                for specialized research tasks.
-                            </p>
-
-                        </div>
-
-                        <div class="resume-document-placeholder">
-                            <span class="material-symbols-outlined">
-                                description
-                            </span>
-                        </div>
-
+                <section class="candidate-card certificates-card">
+                    <div class="section-title"><span class="section-icon orange"><span class="material-symbols-outlined">verified</span></span><h2>Certificates</h2></div>
+                    <div class="certificate-list">
+                        <?php foreach ($certificates as $certificate): ?>
+                            <div class="certificate-item"><div class="certificate-icon"><span class="material-symbols-outlined">workspace_premium</span></div><div class="certificate-info"><strong><?= htmlspecialchars($certificate['certificate_name'] ?? 'Certificate') ?></strong><span><?= htmlspecialchars($certificate['issuer'] ?? 'Issuer not provided') ?><?= !empty($certificate['status']) ? ' · ' . htmlspecialchars($certificate['status']) : '' ?></span></div>
+                                <?php if (!empty($certificate['certificate_file'])): ?><a href="<?= htmlspecialchars('../../../' . ltrim($certificate['certificate_file'], '/\\'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" aria-label="Open certificate"><span class="material-symbols-outlined">open_in_new</span></a><?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                        <?php if (!$certificates): ?><p class="candidate-empty">No certificates listed.</p><?php endif; ?>
                     </div>
-
-                </div>
-
-            </section>
-
-
-            <!-- Certificates -->
-            <section class="candidate-card certificates-card">
-
-                <div class="section-title">
-
-                    <span class="section-icon orange">
-                        <span class="material-symbols-outlined">
-                            verified
-                        </span>
-                    </span>
-
-                    <h2>Certificates</h2>
-
-                </div>
-
-
-                <div class="certificate-list">
-
-                    <div class="certificate-item">
-
-                        <div class="certificate-icon">
-                            AWS
-                        </div>
-
-                        <div class="certificate-info">
-                            <strong>AWS Certified Developer</strong>
-                            <span>Issued: March 2024</span>
-                        </div>
-
-                        <button type="button">
-                            <span class="material-symbols-outlined">
-                                open_in_new
-                            </span>
-                        </button>
-
-                    </div>
-
-
-                    <div class="certificate-item">
-
-                        <div class="certificate-icon">
-                            GD
-                        </div>
-
-                        <div class="certificate-info">
-                            <strong>Google Data Analytics</strong>
-                            <span>Issued: Dec 2023</span>
-                        </div>
-
-                        <button type="button">
-                            <span class="material-symbols-outlined">
-                                open_in_new
-                            </span>
-                        </button>
-
-                    </div>
-
-
-                    <div class="certificate-item">
-
-                        <div class="certificate-icon">
-                            MR
-                        </div>
-
-                        <div class="certificate-info">
-                            <strong>Meta React Developer</strong>
-                            <span>Issued: Aug 2023</span>
-                        </div>
-
-                        <button type="button">
-                            <span class="material-symbols-outlined">
-                                open_in_new
-                            </span>
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-        </aside>
-
-    </div>
+                </section>
+            </aside>
+        </div>
+    <?php endif; ?>
 
     <?php include '../../../Includes/company_dashboard_footer.php'; ?>
 </main>
-
-
-<!-- ==========================================
-     SIMPLE MESSAGE TOAST
-========================================== -->
-<div class="candidate-toast" id="candidateToast">
-    <span class="material-symbols-outlined" id="toastIcon">
-        check_circle
-    </span>
-
-    <span id="toastMessage">
-        Candidate shortlisted successfully.
-    </span>
-</div>
-
-
-<script src="<?= $GLOBALS['BASE_URL'] ?>/Assets/JS/Company/candidates.js?v=<?= time(); ?>"></script>
-
-<?php
-include '../../../Includes/dash_footer.php';
-?>
+<script src="<?= $GLOBALS['BASE_URL'] ?>/Assets/JS/Company/candidates.js?v=<?= filemtime(__DIR__ . '/../../../Assets/JS/Company/candidates.js') ?>"></script>
+<?php include '../../../Includes/dash_footer.php'; ?>

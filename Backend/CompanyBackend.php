@@ -359,30 +359,12 @@ class CompanyManager
 
 
                     SUM(
-
                         CASE
-
-
-
-                            WHEN LOWER(ia.status)
-
-                            IN ('shortlisted', 'shortlist')
-
-
-
+                            WHEN LOWER(TRIM(ia.status)) = 'accepted'
                             THEN 1
-
-
-
                             ELSE 0
-
-
-
                         END
-
-                    )
-
-                        AS shortlisted,
+                    ) AS accepted,
 
 
 
@@ -716,6 +698,38 @@ class CompanyManager
 
 
 
+    }
+
+    public function updateCompanyApplicationDecision($applicationId, $companyName, $decision)
+    {
+        $decision = ucfirst(strtolower(trim((string) $decision)));
+        if (!in_array($decision, ['Accepted', 'Disqualified'], true)) {
+            return false;
+        }
+
+        $currentSql = "SELECT ia.status
+                       FROM internship_applications ia
+                       INNER JOIN internships i ON i.id = ia.internship_id
+                       WHERE ia.application_id = ?
+                         AND TRIM(i.company) = TRIM(?)
+                       LIMIT 1";
+        $currentStmt = $this->conn->prepare($currentSql);
+        if (!$currentStmt) return false;
+        $currentStmt->bind_param("is", $applicationId, $companyName);
+        if (!$currentStmt->execute()) return false;
+        $current = $currentStmt->get_result()->fetch_assoc();
+        if (!$current || strtolower(trim($current['status'] ?? '')) !== 'applied') return false;
+
+        $sql = "UPDATE internship_applications ia
+                INNER JOIN internships i ON i.id = ia.internship_id
+                SET ia.status = ?
+                WHERE ia.application_id = ?
+                  AND TRIM(i.company) = TRIM(?)
+                  AND LOWER(TRIM(ia.status)) = 'applied'";
+        $stmt = $this->conn->prepare($sql);
+        if (!$stmt) return false;
+        $stmt->bind_param("sis", $decision, $applicationId, $companyName);
+        return $stmt->execute() && $stmt->affected_rows === 1;
     }
 
 
@@ -1412,7 +1426,19 @@ class CompanyManager
 
 
 
-                    TRIM(company) = TRIM(?)";
+                    TRIM(company) = TRIM(?)
+
+                    AND (
+                        LOWER(COALESCE(internships.status, '')) = 'terminated'
+                        OR (
+                            LOWER(COALESCE(internships.status, '')) <> 'suspended'
+                            AND NOT EXISTS (
+                                SELECT 1
+                                FROM internship_applications ia
+                                WHERE ia.internship_id = internships.id
+                            )
+                        )
+                    )";
 
 
 
@@ -1446,6 +1472,38 @@ class CompanyManager
 
 
 
+    }
+
+    public function setCompanyInternshipStatus($id, $companyName, $newStatus)
+    {
+        $newStatus = ucfirst(strtolower(trim((string) $newStatus)));
+        if (!in_array($newStatus, ['Active', 'Closed'], true)) {
+            return false;
+        }
+
+        $internship = $this->getInternshipById($id, $companyName);
+        if (!$internship || in_array(strtolower($internship['status'] ?? ''), ['suspended', 'terminated'], true)) {
+            return false;
+        }
+        $deadline = strtotime($internship['deadline'] ?? '');
+        if ($newStatus === 'Active' && ($deadline === false || $deadline < strtotime('today'))) {
+            return false;
+        }
+        $currentStatus = ucfirst(strtolower(trim($internship['status'] ?? '')));
+        if ($currentStatus === $newStatus) return true;
+
+        $stmt = $this->conn->prepare("UPDATE internships SET status = ? WHERE id = ? AND TRIM(company) = TRIM(?) AND LOWER(status) IN ('active', 'closed')");
+        if (!$stmt) return false;
+        $stmt->bind_param("sis", $newStatus, $id, $companyName);
+        return $stmt->execute() && $stmt->affected_rows === 1;
+    }
+
+    public function requestInternshipReactivation($id, $companyName)
+    {
+        $stmt = $this->conn->prepare("UPDATE internships SET reactivation_status = 'Requested' WHERE id = ? AND TRIM(company) = TRIM(?) AND LOWER(status) = 'suspended' AND (reactivation_status IS NULL OR reactivation_status = '')");
+        if (!$stmt) return false;
+        $stmt->bind_param("is", $id, $companyName);
+        return $stmt->execute() && $stmt->affected_rows === 1;
     }
 
 

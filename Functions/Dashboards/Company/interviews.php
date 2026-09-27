@@ -88,26 +88,18 @@ include "../../../Includes/dash_header.php";
             </article>
 
 
-            <!-- FEEDBACK -->
+            <!-- HIRED -->
 
-            <article class="interview-summary-card feedback-card">
+            <article class="interview-summary-card hired-card">
 
                 <span class="summary-label">
-                    PENDING FEEDBACK
+                    HIRED
                 </span>
 
-                <strong class="summary-number">
-                    14
-                </strong>
+                <strong class="summary-number" id="hiredInterviewCount">0</strong>
 
                 <p class="summary-note">
-
-                    <span class="material-symbols-outlined summary-clock">
-                        schedule
-                    </span>
-
-                    Due by EOD
-
+                    Candidates hired after interview
                 </p>
 
             </article>
@@ -341,7 +333,7 @@ include "../../../Includes/dash_header.php";
                             data-team="Mobile Design Squad"
                             data-date="Oct 25, 2026"
                             data-time="02:00 PM - 02:45 PM"
-                            data-status="Applied">
+                            data-status="Interviewing">
 
                             <td>
 
@@ -411,8 +403,8 @@ include "../../../Includes/dash_header.php";
 
                             <td>
 
-                                <span class="interview-status applied">
-                                    Applied
+                                <span class="interview-status interviewing">
+                                    Interviewing
                                 </span>
 
                             </td>
@@ -907,6 +899,11 @@ include "../../../Includes/dash_header.php";
 
             </div>
 
+            <div class="detail-item" id="viewDisqualificationReasonItem" hidden>
+                <span>Disqualification Reason</span>
+                <strong id="viewDisqualificationReason">-</strong>
+            </div>
+
         </div>
 
 
@@ -1034,16 +1031,16 @@ include "../../../Includes/dash_header.php";
 
                     <select id="editStatus">
 
-                        <option value="Applied">
-                            Applied
-                        </option>
-
                         <option value="Interviewing">
                             Interviewing
                         </option>
 
                         <option value="Hired">
                             Hired
+                        </option>
+
+                        <option value="Disqualified">
+                            Disqualified
                         </option>
 
                     </select>
@@ -1078,6 +1075,44 @@ include "../../../Includes/dash_header.php";
 
     </div>
 
+</div>
+
+<div class="interview-modal-overlay" id="disqualifyInterviewModal">
+    <div class="interview-modal small-modal">
+        <div class="interview-modal-header">
+            <div>
+                <span class="modal-label">INTERVIEW OUTCOME</span>
+                <h2>Disqualify Candidate</h2>
+                <p>Select a reason before recording this interview outcome.</p>
+            </div>
+            <button type="button" class="modal-close-btn" data-close-modal aria-label="Close">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <form id="disqualifyInterviewForm">
+            <div class="modal-form-grid">
+                <div class="form-group full-width">
+                    <label for="disqualificationReason">Disqualification Reason</label>
+                    <select id="disqualificationReason" required>
+                        <option value="">Select a reason</option>
+                        <option>Technical skills insufficient</option>
+                        <option>Interview performance</option>
+                        <option>Availability mismatch</option>
+                        <option>Not suitable for the role</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div class="form-group full-width" id="otherDisqualificationGroup" hidden>
+                    <label for="otherDisqualificationNote">Short note</label>
+                    <textarea id="otherDisqualificationNote" maxlength="240" placeholder="Add a short reason..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="modal-cancel-btn" data-close-modal>Cancel</button>
+                <button type="submit" class="modal-primary-btn disqualify-confirm-btn">Disqualify Candidate</button>
+            </div>
+        </form>
+    </div>
 </div>
 
 
