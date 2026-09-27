@@ -1125,6 +1125,82 @@ body.internship-modal-open {
 #companyToast.company-toast .toast-close:focus-visible { outline: 2px solid var(--toast-accent); outline-offset: 2px; }
 #companyToast.company-toast .toast-progress { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: var(--toast-accent); transform-origin: left; animation: companyToastProgress 4s linear both; }
 
+/* Reactivation request modal */
+.reactivation-request-modal[hidden] { display: none; }
+.reactivation-request-modal {
+    position: fixed;
+    z-index: 1360;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+.reactivation-request-modal__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 30, 55, 0.52);
+    backdrop-filter: blur(4px);
+}
+.reactivation-request-modal__panel {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 100%);
+    padding: 30px;
+    background: #fff;
+    border: 1px solid #dfe6f0;
+    border-radius: 16px;
+    box-shadow: 0 24px 60px rgba(10, 31, 60, 0.25);
+}
+.reactivation-request-modal__close { position: absolute; top: 16px; right: 16px; }
+.reactivation-request-modal__icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+.reactivation-request-modal__icon .material-symbols-outlined { font-size: 23px; }
+.reactivation-request-modal__panel h2 { margin: 0; color: #102d58; font-size: 21px; font-weight: 800; }
+.reactivation-request-modal__panel > p { margin: 8px 0 22px; color: #64748b; font-size: 13px; line-height: 1.5; }
+.reactivation-request-modal__form label { display: block; margin-bottom: 7px; color: #26364d; font-size: 12px; font-weight: 700; }
+.reactivation-request-modal__form textarea {
+    display: block;
+    width: 100%;
+    min-height: 104px;
+    resize: vertical;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid #d8e0eb;
+    border-radius: 9px;
+    color: #1e293b;
+    background: #fff;
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1.5;
+}
+.reactivation-request-modal__form textarea::placeholder { color: #94a3b8; }
+.reactivation-request-modal__form textarea:focus { outline: 2px solid rgba(37, 99, 235, .18); border-color: #7ea5e8; }
+.reactivation-request-modal__actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.reactivation-request-modal__actions button { min-height: 40px; padding: 0 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.reactivation-request-modal__actions .primary-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; background: #1d3557; color: #fff; border: 1px solid #1d3557; }
+.reactivation-request-modal__actions .primary-btn:hover { background: #10243e; }
+.reactivation-request-modal__actions .primary-btn:disabled { opacity: .65; cursor: wait; }
+.reactivation-request-modal__actions .primary-btn .material-symbols-outlined { font-size: 17px; }
+.reactivation-request-modal__actions .secondary-btn { background: #fff; color: #475569; border: 1px solid #d8e0eb; }
+.reactivation-request-modal__actions .secondary-btn:hover { background: #f8fafc; }
+
+@media (max-width: 480px) {
+    .reactivation-request-modal { padding: 14px; }
+    .reactivation-request-modal__panel { padding: 24px 20px; }
+    .reactivation-request-modal__actions { flex-direction: column-reverse; }
+    .reactivation-request-modal__actions button { width: 100%; }
+}
+
 @keyframes companyToastIn { from { opacity: 0; transform: translateX(24px); } }
 @keyframes companyToastOut { to { opacity: 0; transform: translateX(24px); } }
 @keyframes companyToastProgress { to { transform: scaleX(0); } }
