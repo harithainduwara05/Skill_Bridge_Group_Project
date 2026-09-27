@@ -134,7 +134,7 @@
     font-size:30px;
 }
 
-
+.stat-card:nth-child(3) { animation-delay: 0s; }
 /* FILTER */
 
 .project-toolbar{

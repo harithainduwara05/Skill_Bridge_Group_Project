@@ -23,7 +23,7 @@ SELECT *
 FROM projects
 WHERE visibility = 'Public'
 ORDER BY posted_at DESC
-";
+LIMIT 9";
 
 $result = $conn->query($query);
 
@@ -162,7 +162,6 @@ Clear Filters
 
 
 <section class="projects-grid">
-
 
 <?php
 $projectIndex = 0;
