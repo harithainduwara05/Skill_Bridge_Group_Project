@@ -514,7 +514,7 @@ $successMessages = [
     'updated' => 'Internship updated successfully',
 
     'deleted' => 'Internship deleted successfully',
-    'reactivation_requested' => 'Reactivation request submitted. Waiting for administrator approval.',
+    'reactivation_requested' => 'Your request has been sent to the administrator for review.',
     'status_updated' => 'Internship status updated.',
 
 ];
@@ -554,7 +554,7 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 
             <div class="toast-copy">
 
-                <strong>Success</strong>
+                <strong><?= ($_GET['notice'] ?? '') === 'reactivation_requested' ? 'Reactivation Request Sent' : 'Success' ?></strong>
 
                 <span><?= htmlspecialchars($successMessage) ?></span>
 
@@ -1713,7 +1713,7 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
                                     <?php if ($statusText === 'Suspended'): ?>
                                         <button type="button" class="view-reason-action" data-admin-reason="<?= htmlspecialchars($internship['admin_reason'] ?? '', ENT_QUOTES, 'UTF-8') ?>" data-reason-title="Internship Suspended" aria-label="View Admin reason" title="Admin Reason"><span class="material-symbols-outlined">info</span></button>
                                         <?php if (strtolower(trim($internship['reactivation_status'] ?? '')) !== 'requested'): ?>
-                                            <form method="POST" class="reactivation-form"><input type="hidden" name="internship_id" value="<?= (int) $internship['id'] ?>"><button type="submit" name="request_reactivation" value="1" class="request-reactivation-action" aria-label="Request Reactivation" title="Request Reactivation"><span class="material-symbols-outlined">send</span><span>Request</span></button></form>
+                                            <button type="button" class="request-reactivation-action" data-open-reactivation-modal data-internship-id="<?= (int) $internship['id'] ?>" aria-label="Request Reactivation" title="Request Reactivation"><span class="material-symbols-outlined">send</span><span>Request</span></button>
                                         <?php endif; ?>
                                     <?php elseif ($statusText === 'Terminated'): ?>
                                         <button type="button" class="view-reason-action" data-admin-reason="<?= htmlspecialchars($internship['admin_reason'] ?? '', ENT_QUOTES, 'UTF-8') ?>" data-reason-title="Internship Terminated" aria-label="View Admin reason" title="Admin Reason"><span class="material-symbols-outlined">info</span></button>
@@ -2390,6 +2390,26 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
         <h2 id="adminReasonTitle">Internship Suspended</h2>
         <p class="admin-reason-modal__reason" id="adminReasonText"></p>
         <div class="admin-reason-modal__actions"><button type="button" class="secondary-btn" data-reason-close>Close</button><button type="button" class="primary-btn" id="fixSuspendedInternship">Fix Internship</button></div>
+    </section>
+</div>
+
+<div class="reactivation-request-modal" id="reactivationRequestModal" role="dialog" aria-modal="true" aria-labelledby="reactivationRequestTitle" aria-hidden="true" hidden>
+    <div class="reactivation-request-modal__backdrop" data-reactivation-close></div>
+    <section class="reactivation-request-modal__panel" role="document">
+        <button type="button" class="internship-modal__close reactivation-request-modal__close" data-reactivation-close aria-label="Close request dialog"><span class="material-symbols-outlined" aria-hidden="true">close</span></button>
+        <div class="reactivation-request-modal__icon" aria-hidden="true"><span class="material-symbols-outlined">send</span></div>
+        <h2 id="reactivationRequestTitle">Request Reactivation</h2>
+        <p>You can add a short note for the administrator.</p>
+        <form method="POST" id="reactivationRequestForm" class="reactivation-request-modal__form">
+            <input type="hidden" name="internship_id" id="reactivationInternshipId" value="">
+            <input type="hidden" name="request_reactivation" value="1">
+            <label for="reactivationRequestNote">Optional note</label>
+            <textarea id="reactivationRequestNote" name="request_note" rows="4" maxlength="500" placeholder="Example: The internship details have been updated as requested."></textarea>
+            <div class="reactivation-request-modal__actions">
+                <button type="button" class="secondary-btn" data-reactivation-close>Cancel</button>
+                <button type="submit" class="primary-btn" id="sendReactivationRequest"><span class="material-symbols-outlined" aria-hidden="true">send</span>Send Request</button>
+            </div>
+        </form>
     </section>
 </div>
 

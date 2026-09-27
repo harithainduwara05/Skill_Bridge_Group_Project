@@ -57,6 +57,54 @@
     }
 })();
 
+/* Optional-note reactivation request dialog */
+(function () {
+    const modal = document.getElementById("reactivationRequestModal");
+    const form = document.getElementById("reactivationRequestForm");
+    const internshipId = document.getElementById("reactivationInternshipId");
+    const note = document.getElementById("reactivationRequestNote");
+    const submitButton = document.getElementById("sendReactivationRequest");
+    if (!modal || !form || !internshipId) return;
+
+    let previouslyFocused = null;
+    function openModal(button) {
+        previouslyFocused = button;
+        internshipId.value = button.dataset.internshipId || "";
+        if (note) note.value = "";
+        modal.hidden = false;
+        modal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("internship-modal-open");
+        modal.querySelector("textarea")?.focus();
+    }
+
+    function closeModal() {
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("internship-modal-open");
+        previouslyFocused?.focus();
+    }
+
+    document.querySelectorAll("[data-open-reactivation-modal]").forEach(function (button) {
+        button.addEventListener("click", function () { openModal(button); });
+    });
+    modal.querySelectorAll("[data-reactivation-close]").forEach(function (button) {
+        button.addEventListener("click", closeModal);
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) closeModal();
+    });
+    form.addEventListener("submit", function (event) {
+        if (!internshipId.value) {
+            event.preventDefault();
+            return;
+        }
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.setAttribute("aria-disabled", "true");
+        }
+    });
+})();
+
 /* Admin suspension reason and correction dialog */
 (function () {
     const modal = document.getElementById("adminReasonModal");
