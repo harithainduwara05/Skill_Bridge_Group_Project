@@ -2133,15 +2133,15 @@ include "../../../Includes/dash_header.php";
 
     <div class="footer-links">
 
-        <a href="#">
+        <a href="/Skill_Bridge_Group_Project/help_center.php">
             Help Center
         </a>
 
-        <a href="#">
+        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">
             Privacy Policy
         </a>
 
-        <a href="#">
+        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">
             Terms of Service
         </a>
 
