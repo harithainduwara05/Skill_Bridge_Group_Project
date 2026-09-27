@@ -50,13 +50,6 @@ $internshipPages = ['internships.php', 'add_internship.php', 'edit_internship.ph
                 <span class="nav-text">Applications</span>
             </a>
 
-            <a href="candidates.php" class="<?= $currentPage === 'candidates.php' ? 'active' : '' ?>" title="Candidates">
-                <span class="icon">
-                    <span class="material-symbols-outlined">folder_open</span>
-                </span>
-                <span class="nav-text">Candidates</span>
-            </a>
-
             <a href="interviews.php" class="<?= $currentPage === 'interviews.php' ? 'active' : '' ?>" title="Interviews">
                 <span class="icon">
                     <span class="material-symbols-outlined">work</span>

@@ -15,11 +15,26 @@ if (!$company) {
 $companyName = $company['Name'];
 $dashboardCounts = $companyManager->getDashboardCounts($companyName);
 $companyApplicationCount = $dashboardCounts['total_applications'];
-$recentApplications = $companyManager->getRecentApplications($companyName);
+$recentApplications = $companyManager->getRecentApplications($companyName, 50);
+$recentApplications = array_values(array_filter($recentApplications, function ($application) {
+    return !in_array(strtolower(trim($application['status'] ?? '')), ['interviewing', 'hired'], true);
+}));
+$recentApplications = array_slice($recentApplications, 0, 4);
+$recentApplications = array_map(function ($application) {
+    $rawStatus = strtolower(trim($application['status'] ?? ''));
+    if (in_array($rawStatus, ['accepted', 'shortlisted', 'shortlist', 'selected'], true)) {
+        $application['display_status'] = 'Accepted';
+    } elseif (in_array($rawStatus, ['disqualified', 'rejected'], true)) {
+        $application['display_status'] = 'Disqualified';
+    } else {
+        $application['display_status'] = 'Applied';
+    }
+    return $application;
+}, $recentApplications);
 $recentInternships = $companyManager->getRecentInternships($companyName);
 $interviewQueue = $companyManager->getInterviewQueue($companyName);
 $conversionRate = $dashboardCounts['total_applications'] > 0
-    ? round(($dashboardCounts['shortlisted'] / $dashboardCounts['total_applications']) * 100)
+    ? round(($dashboardCounts['accepted'] / $dashboardCounts['total_applications']) * 100)
     : 0;
 $hiringGoal = 20;
 $hiringProgress = min(100, round(($dashboardCounts['hired'] / $hiringGoal) * 100));
@@ -97,7 +112,7 @@ $companyImageExists = !empty($image) && file_exists(
                     <span class="stat-badge green">+2 this week</span>
                 </div>
                 <div class="stat-label">Active Internships</div>
-                <div class="stat-value">12</div>
+                <div class="stat-value"><?= $dashboardCounts['active_internships'] ?></div>
             </div>
 
             <!--Total Applications -->
@@ -109,19 +124,19 @@ $companyImageExists = !empty($image) && file_exists(
                     <span class="stat-badge amber">+42 new</span>
                 </div>
                 <div class="stat-label">Total Applications</div>
-                <div class="stat-value">356</div>
+                <div class="stat-value"><?= $dashboardCounts['total_applications'] ?></div>
             </div>
 
-            <!--Shortlisted -->
+            <!--Accepted -->
             <div class="company-stat-card accent-blue">
                 <div class="stat-top-row">
                     <div class="stat-icon-box blue">
                         <span class="material-symbols-outlined">how_to_reg</span>
                     </div>
-                    <span class="stat-meta-text">13% conversion</span>
+                    <span class="stat-meta-text"><?= $conversionRate ?>% conversion</span>
                 </div>
-                <div class="stat-label">Shortlisted</div>
-                <div class="stat-value">48</div>
+                <div class="stat-label">Accepted</div>
+                <div class="stat-value"><?= $dashboardCounts['accepted'] ?></div>
             </div>
 
             <!--Interviews -->
@@ -130,10 +145,10 @@ $companyImageExists = !empty($image) && file_exists(
                     <div class="stat-icon-box brown">
                         <span class="material-symbols-outlined">calendar_today</span>
                     </div>
-                    <span class="stat-meta-text">3 today</span>
+                    <span class="stat-meta-text">Interview pipeline</span>
                 </div>
                 <div class="stat-label">Interviews</div>
-                <div class="stat-value">15</div>
+                <div class="stat-value"><?= $dashboardCounts['interviews'] ?></div>
             </div>
         </div>
 
@@ -156,74 +171,28 @@ $companyImageExists = !empty($image) && file_exists(
                                     <th>University</th>
                                     <th>Position</th>
                                     <th>Status</th>
-                                    <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>
-                                        <div class="candidate-cell">
-                                            <img class="candidate-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" alt="Maya Sharma" onerror="this.outerHTML='<div class=\'candidate-avatar-placeholder\'>MS</div>'">
-                                            <span class="candidate-name">Maya Sharma</span>
-                                        </div>
-                                    </td>
-                                    <td class="univ-cell">Stanford University</td>
-                                    <td class="position-cell">Software Engineer</td>
-                                    <td><span class="status-pill status-new">NEW</span></td>
-                                    <td style="text-align: right;">
-                                        <button class="action-menu-btn" title="Actions" aria-label="Candidate actions">
-                                            <span class="material-symbols-outlined">more_vert</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="candidate-cell">
-                                            <img class="candidate-avatar" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80" alt="David Chen" onerror="this.outerHTML='<div class=\'candidate-avatar-placeholder\'>DC</div>'">
-                                            <span class="candidate-name">David Chen</span>
-                                        </div>
-                                    </td>
-                                    <td class="univ-cell">MIT</td>
-                                    <td class="position-cell">Data Analyst</td>
-                                    <td><span class="status-pill status-shortlisted">SHORTLISTED</span></td>
-                                    <td style="text-align: right;">
-                                        <button class="action-menu-btn" title="Actions" aria-label="Candidate actions">
-                                            <span class="material-symbols-outlined">more_vert</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="candidate-cell">
-                                            <img class="candidate-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&auto=format&fit=crop&q=80" alt="Sarah Jenkins" onerror="this.outerHTML='<div class=\'candidate-avatar-placeholder\'>SJ</div>'">
-                                            <span class="candidate-name">Sarah Jenkins</span>
-                                        </div>
-                                    </td>
-                                    <td class="univ-cell">UC Berkeley</td>
-                                    <td class="position-cell">Product Design</td>
-                                    <td><span class="status-pill status-selected">SELECTED</span></td>
-                                    <td style="text-align: right;">
-                                        <button class="action-menu-btn" title="Actions" aria-label="Candidate actions">
-                                            <span class="material-symbols-outlined">more_vert</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>
-                                        <div class="candidate-cell">
-                                            <img class="candidate-avatar" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80" alt="Leo Martinez" onerror="this.outerHTML='<div class=\'candidate-avatar-placeholder\'>LM</div>'">
-                                            <span class="candidate-name">Leo Martinez</span>
-                                        </div>
-                                    </td>
-                                    <td class="univ-cell">Georgia Tech</td>
-                                    <td class="position-cell">Backend Dev</td>
-                                    <td><span class="status-pill status-rejected">REJECTED</span></td>
-                                    <td style="text-align: right;">
-                                        <button class="action-menu-btn" title="Actions" aria-label="Candidate actions">
-                                            <span class="material-symbols-outlined">more_vert</span>
-                                        </button>
-                                    </td>
-                                </tr>
+                                <?php if (!$recentApplications): ?>
+                                    <tr><td colspan="4" class="dashboard-empty-row">No recent applications yet.</td></tr>
+                                <?php endif; ?>
+                                <?php foreach ($recentApplications as $application): ?>
+                                    <?php
+                                        $candidateName = trim($application['student_name'] ?? 'Candidate');
+                                        $nameParts = preg_split('/\s+/', $candidateName, -1, PREG_SPLIT_NO_EMPTY);
+                                        $initials = strtoupper(substr($nameParts[0] ?? 'C', 0, 1) . substr($nameParts[count($nameParts) - 1] ?? '', 0, 1));
+                                        $statusClass = strtolower($application['display_status']);
+                                        $profileImage = basename($application['profile_image'] ?? '');
+                                        $profileImagePath = __DIR__ . '/../../../Assets/Images/Student/' . $profileImage;
+                                    ?>
+                                    <tr>
+                                        <td><div class="candidate-cell"><?php if ($profileImage !== '' && is_file($profileImagePath)): ?><img class="candidate-avatar" src="../../../Assets/Images/Student/<?= rawurlencode($profileImage) ?>" alt="<?= htmlspecialchars($candidateName, ENT_QUOTES, 'UTF-8') ?>"><?php else: ?><div class="candidate-avatar-placeholder"><?= htmlspecialchars($initials) ?></div><?php endif; ?><span class="candidate-name"><?= htmlspecialchars($candidateName) ?></span></div></td>
+                                        <td class="univ-cell"><?= htmlspecialchars($application['University'] ?? '-') ?></td>
+                                        <td class="position-cell"><?= htmlspecialchars($application['title'] ?? '-') ?></td>
+                                        <td><span class="status-pill status-<?= htmlspecialchars($statusClass) ?>"><?= htmlspecialchars($application['display_status']) ?></span></td>
+                                    </tr>
+                                <?php endforeach; ?>
                             </tbody>
                         </table>
                     </div>

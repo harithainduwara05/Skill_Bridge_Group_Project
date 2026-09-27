@@ -57,6 +57,45 @@
     }
 })();
 
+/* Admin suspension reason and correction dialog */
+(function () {
+    const modal = document.getElementById("adminReasonModal");
+    if (!modal) return;
+    const reasonText = document.getElementById("adminReasonText");
+    const reasonTitle = document.getElementById("adminReasonTitle");
+    const fixButton = document.getElementById("fixSuspendedInternship");
+    let editButton = null;
+
+    document.querySelectorAll("[data-admin-reason]").forEach(function (button) {
+        button.addEventListener("click", function () {
+            editButton = button.closest(".action-buttons")?.querySelector("[data-edit-internship]") || null;
+            reasonText.textContent = button.dataset.adminReason || "No reason was provided by the administrator.";
+            reasonTitle.textContent = button.dataset.reasonTitle || "Admin Reason";
+            modal.hidden = false;
+            modal.setAttribute("aria-hidden", "false");
+            document.body.classList.add("internship-modal-open");
+            fixButton.hidden = !editButton;
+        });
+    });
+
+    function closeModal() {
+        modal.hidden = true;
+        modal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("internship-modal-open");
+    }
+
+    modal.querySelectorAll("[data-reason-close]").forEach(function (button) {
+        button.addEventListener("click", closeModal);
+    });
+    fixButton.addEventListener("click", function () {
+        if (editButton) editButton.click();
+        closeModal();
+    });
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !modal.hidden) closeModal();
+    });
+})();
+
 
 /* =========================================
    DELETE INTERNSHIP MODAL
@@ -69,6 +108,7 @@
             "confirmDeleteInternship"
         );
         const deleteForms = document.querySelectorAll(".delete-form");
+        const validationMessage = document.getElementById("deleteValidationMessage");
 
         if (
             !modal ||
@@ -85,6 +125,7 @@
 
         function openModal(form) {
             pendingDeleteForm = form;
+            if (validationMessage) validationMessage.hidden = true;
             lastFocusedElement = document.activeElement;
 
             modal.hidden = false;
@@ -114,6 +155,25 @@
         deleteForms.forEach(function (form) {
             form.addEventListener("submit", function (event) {
                 event.preventDefault();
+
+                const applicantCount = Number(form.dataset.applicantCount || 0);
+                const status = (form.dataset.status || "").toLowerCase();
+                let blockedMessage = "";
+
+                if (status === "suspended") {
+                    blockedMessage = "Suspended internships cannot be deleted while under review.";
+                } else if (applicantCount >= 1 && status !== "terminated") {
+                    blockedMessage = "This internship cannot be deleted because applications have already been submitted.";
+                }
+
+                if (blockedMessage) {
+                    if (validationMessage) {
+                        validationMessage.textContent = blockedMessage;
+                        validationMessage.hidden = false;
+                    }
+                    return;
+                }
+
                 openModal(form);
             });
         });
@@ -284,6 +344,8 @@
         const editButtons = document.querySelectorAll(
             "[data-edit-internship]"
         );
+        const statusGroup = document.getElementById("editStatusGroup");
+        const readonlyStatus = document.getElementById("edit_status_readonly");
 
         if (
             !modal ||
@@ -324,6 +386,22 @@
             }
         }
 
+        function syncEditStatusDeadline() {
+            const deadline = form.elements.deadline;
+            const status = form.elements.status;
+            if (!deadline || !status) return;
+
+            const activeOption = Array.from(status.options).find(function (option) {
+                return option.value === "Active";
+            });
+            if (!activeOption) return;
+
+            const now = new Date();
+            const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+            activeOption.disabled = !deadline.value || deadline.value < today;
+            if (activeOption.disabled && status.value === "Active") status.value = "Closed";
+        }
+
         function openModal(internship) {
             if (internship) {
 
@@ -353,7 +431,8 @@
                     "paid_status",
                     "stipend",
                     "responsibilities",
-                    "benefits"
+                    "benefits",
+                    "status"
                 ];
 
                 fields.forEach(function (name) {
@@ -362,6 +441,17 @@
                         internship[name]
                     );
                 });
+
+                const statusInput = form.elements.status;
+                const statusIsCompanyEditable = ["Active", "Closed"].includes(internship.status);
+                const statusIsSuspended = internship.status === "Suspended";
+                if (statusGroup) statusGroup.hidden = !statusIsCompanyEditable && !statusIsSuspended;
+                if (statusInput) {
+                    statusInput.hidden = !statusIsCompanyEditable;
+                    statusInput.disabled = !statusIsCompanyEditable;
+                }
+                if (readonlyStatus) readonlyStatus.hidden = !statusIsSuspended;
+                syncEditStatusDeadline();
             }
 
             lastFocusedElement =
@@ -435,6 +525,11 @@
             );
         }
 
+        if (form.elements.deadline) {
+            form.elements.deadline.addEventListener("input", syncEditStatusDeadline);
+            form.elements.deadline.addEventListener("change", syncEditStatusDeadline);
+        }
+
         modal
             .querySelectorAll(
                 "[data-edit-modal-close]"
@@ -464,6 +559,7 @@
             );
 
             syncEditStipend();
+            syncEditStatusDeadline();
         }
     }
 

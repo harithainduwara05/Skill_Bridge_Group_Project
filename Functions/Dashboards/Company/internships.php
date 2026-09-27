@@ -173,6 +173,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
 
     if (!$internshipToUpdate) {
         $updateError = 'Internship not found.';
+    } elseif (strtolower($internshipToUpdate['status'] ?? '') === 'terminated') {
+        $updateError = 'Terminated internships cannot be edited.';
     } else {
         $title = trim($_POST['title'] ?? '');
         $industry = trim($_POST['industry'] ?? '');
@@ -211,8 +213,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
             }
         }
 
+        $editStatus = ucfirst(strtolower(trim($internshipToUpdate['status'] ?? '')));
+        $editDeadlineTimestamp = strtotime($internshipToUpdate['deadline'] ?? '');
+        if ($editStatus === 'Active' && $editDeadlineTimestamp !== false && $editDeadlineTimestamp < strtotime('today')) {
+            $editStatus = 'Closed';
+        }
+
         $updateFormData = [
-            'id' => $internshipId, 'title' => $title, 'industry' => $industry,
+            'id' => $internshipId, 'status' => $editStatus, 'title' => $title, 'industry' => $industry,
             'description' => $description, 'tech_tags' => $techTags,
             'academic_year' => $academicYear, 'experience_level' => $experienceLevel,
             'vacancies' => $vacancies, 'duration' => $duration,
@@ -224,8 +232,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
         ];
 
         if ($updateError === '' && (
-            $title === '' || $industry === '' || $description === '' || $techTags === '' ||
-            $duration === '' || $deadline === '' || $vacancies < 1
+            $title === '' || $industry === '' || $duration === '' || $deadline === ''
         )) {
             $updateError = 'Please complete all required fields.';
         }
@@ -239,13 +246,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
             );
 
             if ($updated) {
+                if (isset($_POST['status']) && $_POST['status'] !== '') {
+                    $statusUpdated = $companyManager->setCompanyInternshipStatus(
+                        $internshipId,
+                        $companyName,
+                        $_POST['status']
+                    );
+                    if (!$statusUpdated) {
+                        $updateError = 'Internship details were saved, but the requested status change was not allowed.';
+                    }
+                }
+                if ($updateError !== '') {
+                    // Keep the edit dialog open to show the status validation message.
+                } else {
                 header('Location: internships.php?success=updated');
                 exit;
+                }
             }
 
             $updateError = 'Unable to update internship.';
         }
     }
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_reactivation'])) {
+    $id = (int) ($_POST['internship_id'] ?? 0);
+    $requested = $companyManager->requestInternshipReactivation($id, $companyName);
+    header('Location: internships.php?notice=' . ($requested ? 'reactivation_requested' : 'reactivation_unavailable'));
+    exit;
 }
 
 
@@ -264,6 +292,8 @@ if (
     && isset($_POST['delete_internship'])
 
 ) {
+
+    $deleted = false;
 
 
 
@@ -293,7 +323,7 @@ if (
 
 
 
-    header("Location: internships.php" . (!empty($deleted) ? "?success=deleted" : ""));
+    header("Location: internships.php" . (!empty($deleted) ? "?success=deleted" : "?notice=delete_blocked"));
 
     exit;
 
@@ -371,13 +401,11 @@ foreach ($internships as $internship) {
 
 
 
-    if (
-
-        $deadlineTimestamp !== false
-
-        && $deadlineTimestamp >= strtotime('today')
-
-    ) {
+    $recordStatus = strtolower(trim($internship['status'] ?? ''));
+    $effectiveStatus = in_array($recordStatus, ['active', 'closed', 'suspended', 'terminated'], true)
+        ? $recordStatus
+        : (($deadlineTimestamp !== false && $deadlineTimestamp >= strtotime('today')) ? 'active' : 'closed');
+    if ($effectiveStatus === 'active') {
 
 
 
@@ -486,10 +514,19 @@ $successMessages = [
     'updated' => 'Internship updated successfully',
 
     'deleted' => 'Internship deleted successfully',
+    'reactivation_requested' => 'Reactivation request submitted. Waiting for administrator approval.',
+    'status_updated' => 'Internship status updated.',
 
 ];
 
-$successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
+$successMessage = $successMessages[$_GET['notice'] ?? $_GET['success'] ?? ''] ?? '';
+$pageError = ($_GET['notice'] ?? '') === 'status_rejected'
+    ? 'This status change is not allowed. Active status requires a valid future deadline.'
+    : ((($_GET['notice'] ?? '') === 'reactivation_unavailable')
+        ? 'A reactivation request could not be submitted.'
+        : ((($_GET['notice'] ?? '') === 'delete_blocked')
+            ? 'This internship cannot be deleted because applications have already been submitted.'
+            : ''));
 
 
 
@@ -536,6 +573,8 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
         </div>
 
     <?php endif; ?>
+    <?php if ($pageError !== ''): ?><div class="internship-inline-error" role="alert"><?= htmlspecialchars($pageError) ?></div><?php endif; ?>
+    <div class="internship-inline-error" id="deleteValidationMessage" role="alert" hidden></div>
 
 
 
@@ -999,11 +1038,9 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                <option value="closed">
-
-                    Closed
-
-                </option>
+                        <option value="closed">Closed</option>
+                <option value="suspended">Suspended</option>
+                <option value="terminated">Terminated</option>
 
 
 
@@ -1281,13 +1318,12 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                        $statusText =
-
-                            $isActive
-
-                                ? 'Active'
-
-                                : 'Closed';
+                        $storedStatus = strtolower(trim($internship['status'] ?? ''));
+                        $statusText = ($storedStatus === 'active' && !$isActive)
+                            ? 'Closed'
+                            : (in_array($storedStatus, ['active', 'closed', 'suspended', 'terminated'], true)
+                                ? ucfirst($storedStatus)
+                                : ($isActive ? 'Active' : 'Closed'));
 
 
 
@@ -1554,6 +1590,9 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
                                 </span>
+                                <?php if ($statusText === 'Suspended' && strtolower(trim($internship['reactivation_status'] ?? '')) === 'requested'): ?>
+                                    <span class="reactivation-requested-badge">Reactivation Requested</span>
+                                <?php endif; ?>
 
 
 
@@ -1599,17 +1638,20 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                                    <button
+                                    <?php if ($statusText !== 'Terminated'): ?><button
 
                                         type="button"
 
                                         class="edit-action"
 
-                                        title="Edit Internship"
+                                        title="<?= $statusText === 'Suspended' ? 'Fix Internship' : 'Edit Internship' ?>"
+                                        aria-label="<?= $statusText === 'Suspended' ? 'Fix Internship' : 'Edit Internship' ?>"
+                                        data-internship-id="<?= (int) $internship['id'] ?>"
 
                                         data-edit-internship='<?= htmlspecialchars(json_encode([
 
                                             'id' => (int) $internship['id'],
+                                            'status' => $statusText,
                                             'title' => $internship['title'] ?? '',
                                             'industry' => $internship['industry'] ?? '',
                                             'description' => $internship['description'] ?? '',
@@ -1642,7 +1684,16 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                                    </button>
+                                    </button><?php endif; ?>
+
+                                    <?php if ($statusText === 'Suspended'): ?>
+                                        <button type="button" class="view-reason-action" data-admin-reason="<?= htmlspecialchars($internship['admin_reason'] ?? '', ENT_QUOTES, 'UTF-8') ?>" data-reason-title="Internship Suspended" aria-label="View Admin reason" title="Admin Reason"><span class="material-symbols-outlined">info</span></button>
+                                        <?php if (strtolower(trim($internship['reactivation_status'] ?? '')) !== 'requested'): ?>
+                                            <form method="POST" class="reactivation-form"><input type="hidden" name="internship_id" value="<?= (int) $internship['id'] ?>"><button type="submit" name="request_reactivation" value="1" class="request-reactivation-action" aria-label="Request Reactivation" title="Request Reactivation"><span class="material-symbols-outlined">send</span><span>Request</span></button></form>
+                                        <?php endif; ?>
+                                    <?php elseif ($statusText === 'Terminated'): ?>
+                                        <button type="button" class="view-reason-action" data-admin-reason="<?= htmlspecialchars($internship['admin_reason'] ?? '', ENT_QUOTES, 'UTF-8') ?>" data-reason-title="Internship Terminated" aria-label="View Admin reason" title="Admin Reason"><span class="material-symbols-outlined">info</span></button>
+                                    <?php endif; ?>
 
 
 
@@ -1654,13 +1705,17 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                                    <form
+                                    <?php if ($statusText !== 'Suspended'): ?><form
 
                                         method="POST"
 
                                         action=""
 
                                         class="delete-form"
+
+                                        data-applicant-count="<?= (int) ($internship['applicant_count'] ?? 0) ?>"
+
+                                        data-status="<?= strtolower($statusText) ?>"
 
                                     >
 
@@ -1720,7 +1775,7 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
-                                    </form>
+                                    </form><?php endif; ?>
 
 
 
@@ -1979,14 +2034,14 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
                                 <option value="Human Resources">Human Resources</option>
                                 <option value="Other">Other</option></select></div>
                     <div class="form-group"><label for="edit_cover_image">Replace Cover Image</label><input id="edit_cover_image" type="file" name="cover_image" accept=".jpg,.jpeg,.png,.webp,image/*"><small>Leave empty to keep the current image.</small></div>
-                    <div class="form-group full"><label for="edit_description">Internship Description *</label><textarea id="edit_description" name="description" rows="5" required><?= htmlspecialchars($updateFormData['description'] ?? '') ?></textarea></div>
+                    <div class="form-group full"><label for="edit_description">Internship Description</label><textarea id="edit_description" name="description" rows="5"><?= htmlspecialchars($updateFormData['description'] ?? '') ?></textarea></div>
                 </div></div>
 
                 <div class="internship-form-section"><h3>Requirements</h3><div class="form-grid">
-                    <div class="form-group full"><label for="edit_tech_tags">Required Skills / Technologies *</label><input id="edit_tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($updateFormData['tech_tags'] ?? '') ?>" required></div>
+                    <div class="form-group full"><label for="edit_tech_tags">Required Skills / Technologies</label><input id="edit_tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($updateFormData['tech_tags'] ?? '') ?>"></div>
                     <div class="form-group"><label for="edit_academic_year">Preferred Academic Year</label><select id="edit_academic_year" name="academic_year"><option value="">Any Year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div>
                     <div class="form-group"><label for="edit_experience_level">Experience Level</label><select id="edit_experience_level" name="experience_level"><option value="">Select Level</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
-                    <div class="form-group"><label for="edit_vacancies">Number of Vacancies *</label><input id="edit_vacancies" type="number" name="vacancies" min="1" max="999" value="<?= htmlspecialchars($updateFormData['vacancies'] ?? '1') ?>" required></div>
+                    <div class="form-group"><label for="edit_vacancies">Number of Vacancies</label><input id="edit_vacancies" type="number" name="vacancies" min="1" max="999" value="<?= htmlspecialchars($updateFormData['vacancies'] ?? '1') ?>"></div>
                     <div class="form-group"><label for="edit_duration">Duration *</label><input id="edit_duration" type="text" name="duration" maxlength="50" value="<?= htmlspecialchars($updateFormData['duration'] ?? '') ?>" required></div>
                 </div></div>
 
@@ -2006,6 +2061,7 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
                     <div class="form-group full"><label for="edit_supporting_document">Replace Supporting Document</label><input id="edit_supporting_document" type="file" name="supporting_document" accept=".pdf,.doc,.docx"><small>Leave empty to keep the current document.</small></div>
                 </div></div>
 
+                <div class="internship-edit-status" id="editStatusGroup" <?= in_array(ucfirst(strtolower($updateFormData['status'] ?? '')), ['Active', 'Closed', 'Suspended'], true) ? '' : 'hidden' ?>><label for="edit_status">Status</label><select id="edit_status" name="status" <?= in_array(ucfirst(strtolower($updateFormData['status'] ?? '')), ['Active', 'Closed'], true) ? '' : 'hidden disabled' ?>><option value="Active" <?= ucfirst(strtolower($updateFormData['status'] ?? '')) === 'Active' ? 'selected' : '' ?>>Active</option><option value="Closed" <?= ucfirst(strtolower($updateFormData['status'] ?? '')) === 'Closed' ? 'selected' : '' ?>>Closed</option></select><input id="edit_status_readonly" type="text" value="Suspended" readonly disabled <?= ucfirst(strtolower($updateFormData['status'] ?? '')) === 'Suspended' ? '' : 'hidden' ?>></div>
                 <div class="form-actions"><button type="button" class="secondary-btn" data-edit-modal-close>Cancel</button><button type="submit" class="primary-btn">Save Changes</button></div>
             </form>
         </div>
@@ -2087,6 +2143,15 @@ $successMessage = $successMessages[$_GET['success'] ?? ''] ?? '';
 
 
 
+
+<div class="admin-reason-modal" id="adminReasonModal" role="dialog" aria-modal="true" aria-labelledby="adminReasonTitle" aria-hidden="true" hidden>
+    <div class="admin-reason-modal__backdrop" data-reason-close></div>
+    <section class="admin-reason-modal__panel" role="document">
+        <h2 id="adminReasonTitle">Internship Suspended</h2>
+        <p class="admin-reason-modal__reason" id="adminReasonText"></p>
+        <div class="admin-reason-modal__actions"><button type="button" class="secondary-btn" data-reason-close>Close</button><button type="button" class="primary-btn" id="fixSuspendedInternship">Fix Internship</button></div>
+    </section>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
