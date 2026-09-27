@@ -7,9 +7,9 @@ $facultyMap = fetchFacultyMap($conn);   // faculties from the database for the s
 <div class="page-wrap">
 
   <div class="side-panel">
-    <div class="brand">
+    <a href="index.php" class="brand" title="Back to SkillBridge Home" style="text-decoration:none;">
       <img src="Assets/Images/logo.png" alt="SkillBridge" class="brand-logo">
-    </div>
+    </a>
     <h1>Empower Your Career Journey</h1>
     <p>Connect with organizations, collaborate on academic projects, and unlock opportunities designed for future
       talent.</p>
