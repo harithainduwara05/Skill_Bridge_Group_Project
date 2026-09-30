@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -151,8 +151,8 @@ if (isset($_GET['updated'])) {
     $flash = ['type' => 'error', 'title' => 'Could not update', 'message' => 'Please fill all required fields and try again.'];
 }
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 
 // Projects are NOT promoted automatically any more.
 // A new project starts as "Reviewing" and stays Reviewing even when the team is full;
@@ -1662,4 +1662,4 @@ foreach ($allProjects as $ap) {
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

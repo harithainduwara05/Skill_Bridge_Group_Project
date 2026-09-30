@@ -10,8 +10,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-<link rel="stylesheet" href="../../../Assets/CSS/dashboard.css?v=10">
-<link rel="stylesheet" href="../../../Assets/CSS/flash-toast.css">
+<link rel="stylesheet" href="../../Assets/CSS/dashboard.css?v=10">
+<link rel="stylesheet" href="../../Assets/CSS/flash-toast.css">
 </head>
 
 <body>
@@ -19,7 +19,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
 <aside class="sidebar">
 
     <div class="logo">
-        <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
+        <img src="../../Assets/Images/logo.png" alt="SkillBridge">
     </div>
 
     <nav>
@@ -103,7 +103,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
         <span class="btn-text">Post New Project</span>
     </a>
 
-    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
+    <button class="logout" onclick="window.location.href='../../Session/Logout.php'" title="Logout">
         <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
         <span class="btn-text">Logout</span>
     </button>

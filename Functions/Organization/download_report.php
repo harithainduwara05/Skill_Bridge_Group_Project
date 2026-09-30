@@ -8,8 +8,8 @@
 | into other tools. (A CSV can't keep column widths or colours – for a formatted
 | report use "Download Excel", download_excel.php.)
 */
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();

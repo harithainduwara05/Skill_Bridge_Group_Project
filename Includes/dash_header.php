@@ -86,25 +86,28 @@ $initial = !empty(trim($name)) ? strtoupper(mb_substr(trim($name), 0, 1)) : 'U';
 $base_url = $GLOBALS['BASE_URL'] ?? '/Skill_Bridge_Group_Project';
 
 $currentRoleFolder = ucfirst($role ?: "Student");
-$notif_file_direct = __DIR__ . '/../Functions/' . $currentRoleFolder . '/notification.php';
-$notif_file_singular = __DIR__ . '/../Functions/Dashboards/' . $currentRoleFolder . '/notification.php';
-$notif_file_plural = __DIR__ . '/../Functions/Dashboards/' . $currentRoleFolder . '/notifications.php';
+// A role's pages live in Functions/<Role>/ (e.g. Organization) or in Functions/Dashboards/<Role>/
+$roleDir = is_dir(__DIR__ . '/../Functions/' . $currentRoleFolder)
+    ? 'Functions/' . $currentRoleFolder
+    : 'Functions/Dashboards/' . $currentRoleFolder;
+$notif_file_singular = __DIR__ . '/../' . $roleDir . '/notification.php';
+$notif_file_plural = __DIR__ . '/../' . $roleDir . '/notifications.php';
 
-if (file_exists($notif_file_direct)) {
-    $notif_url = $base_url . "/Functions/" . $currentRoleFolder . "/notification.php";
-} elseif (file_exists($notif_file_singular)) {
-    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notification.php";
+if (file_exists($notif_file_singular)) {
+    $notif_url = $base_url . "/" . $roleDir . "/notification.php";
 } elseif (file_exists($notif_file_plural)) {
-    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notifications.php";
+    $notif_url = $base_url . "/" . $roleDir . "/notifications.php";
 } else {
-    $notif_url = $base_url . "/Functions/Dashboards/" . $currentRoleFolder . "/notification.php";
+    $notif_url = $base_url . "/" . $roleDir . "/notification.php";
 }
 
-$profile_file_direct = __DIR__ . '/../Functions/' . ($role ?: 'Student') . '/profile.php';
-$profile_file = __DIR__ . '/../Functions/Dashboards/' . ($role ?: 'Student') . '/profile.php';
-$profile_url = file_exists($profile_file_direct)
-    ? $base_url . "/Functions/" . ($role ?: "Student") . "/profile.php"
-    : (file_exists($profile_file) ? $base_url . "/Functions/Dashboards/" . ($role ?: "Student") . "/profile.php" : "");
+$profile_dir = is_dir(__DIR__ . '/../Functions/' . $currentRoleFolder)
+    ? 'Functions/' . $currentRoleFolder
+    : 'Functions/Dashboards/' . ($role ?: 'Student');
+$profile_file = __DIR__ . '/../' . $profile_dir . '/profile.php';
+$profile_url = file_exists($profile_file)
+    ? $base_url . "/" . $profile_dir . "/profile.php"
+    : "";
 
 // Resolve Profile Image URL with dynamic role directory check
 $image_src = null;

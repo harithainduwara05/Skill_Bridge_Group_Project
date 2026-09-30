@@ -1,14 +1,14 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <style>
@@ -314,4 +314,4 @@ include "../../../Includes/dash_header.php";
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>
