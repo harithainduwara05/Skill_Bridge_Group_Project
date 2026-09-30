@@ -9,6 +9,12 @@ $user = current_user();
 require_once __DIR__ . "/../../Backend/Admin/dashboard.php";
 
 include "../../Includes/admin_sidebar.php";
+?>
+
+<!-- Admin Dashboard Stylesheet -->
+<link rel="stylesheet" href="../../Assets/CSS/Admin/dashboard.css?v=<?php echo time(); ?>">
+
+<?php
 include "../../Includes/dash_header.php";
 ?>
 

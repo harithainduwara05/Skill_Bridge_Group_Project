@@ -498,3 +498,41 @@
     color: #94a3b8;
     font-size: 12px;
 }
+
+/* University Logo & Typography */
+.university-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    color: #fff;
+    flex-shrink: 0;
+    letter-spacing: -0.3px;
+}
+
+.university-logo.mit { background: #1e293b; }
+.university-logo.stn { background: #7c2d12; }
+.university-logo.oxf { background: #1e3a5f; }
+
+.university-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.university-name {
+    font-weight: 600;
+    color: #111827;
+    font-size: 13px;
+}
+
+.university-faculty {
+    font-size: 11px;
+    color: #9ca3af;
+    margin-top: 2px;
+}
+
