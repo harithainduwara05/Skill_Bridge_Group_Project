@@ -1,0 +1,110 @@
+/* ============================================
+   Organization – shared styles
+   Used by more than one Organization page (buttons, form fields, chip input).
+   Linked on every Organization page from Includes/org_sidebar.php.
+   Loaded after Assets/CSS/dashboard.css.
+   ============================================ */
+
+.btn-solid {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #1e3a5f;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-solid:hover { background: #16304d; }
+.form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a2e;
+    transition: all 0.2s ease;
+}
+.form-textarea:focus {
+    outline: none;
+    border-color: #93c5fd;
+    background: #fff;
+}
+
+.form-textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
+
+.form-select {
+    width: 100%;
+    padding: 10px 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a2e;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    cursor: pointer;
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: #93c5fd;
+    background-color: #fff;
+}
+
+/* Keyword / skill chip input */
+.chip-input-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 8px 10px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    min-height: 44px;
+}
+
+.chip-input-box:focus-within {
+    border-color: #93c5fd;
+    background: #fff;
+}
+
+.chip .chip-remove {
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: #60a5fa;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.chip .chip-remove:hover { color: #1e40af; }
+
+.chip-input-box input {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    color: #1a1a2e;
+    padding: 4px 2px;
+}

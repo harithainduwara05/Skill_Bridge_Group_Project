@@ -1,0 +1,286 @@
+/* ============================================
+   Organization – Manage Projects page
+   Used by Functions/Organization/manage_projects.php (toolbar, list/grid view, pagination).
+   Loaded after Assets/CSS/dashboard.css.
+   ============================================ */
+
+/* ============================================
+   PROJECT MANAGEMENT PAGE (manage_projects.php)
+   ============================================ */
+
+.page-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 0 28px 16px;
+}
+
+.toolbar-filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.toolbar-filters .filter-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #9ca3af;
+    margin-right: 2px;
+}
+
+.select-filter {
+    appearance: none;
+    -webkit-appearance: none;
+    padding: 7px 30px 7px 12px;
+    background: #f9fafb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b7280' stroke-width='1.5' fill='none' fill-rule='evenodd' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 12px center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+}
+
+.select-filter:hover { background-color: #f3f4f6; border-color: #d1d5db; }
+.select-filter:focus { outline: none; border-color: #1e3a5f; }
+
+.toolbar-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.toolbar-meta .results-count {
+    font-size: 12px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.view-toggle-group {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.view-toggle-group button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    background: #fff;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.view-toggle-group button:first-child { border-right: 1px solid #e5e7eb; }
+
+.view-toggle-group button .material-symbols-outlined { font-size: 17px; }
+
+.view-toggle-group button.active {
+    background: #1e3a5f;
+    color: #fff;
+}
+
+/* Category tags */
+.category-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+
+.category-tag.devops { background: #dbeafe; color: #1d4ed8; }
+.category-tag.aiml { background: #dcfce7; color: #15803d; }
+.category-tag.frontend { background: #ede9fe; color: #7c3aed; }
+.category-tag.backend { background: #1f2937; color: #f3f4f6; }
+.category-tag.security { background: #fee2e2; color: #dc2626; }
+.category-tag.design { background: #fce7f3; color: #be185d; }
+
+/* Project title cell */
+.project-title-cell .project-title { font-weight: 600; color: #111827; font-size: 13px; }
+.project-title-cell .project-meta { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+/* Assigned team cell */
+.team-cell {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.team-cell .team-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #1e3a5f;
+    flex-shrink: 0;
+}
+
+.team-cell.pending { color: #b45309; font-size: 12px; font-style: italic; }
+.team-cell.pending .team-dot { background: #f59e0b; }
+
+/* Row action icons */
+.row-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.row-actions .action-btn.danger:hover { background: #fee2e2; color: #dc2626; }
+
+.pagination-link {
+    font-size: 12px;
+    font-weight: 600;
+    color: #374151;
+    text-decoration: none;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.pagination-link:hover { background: #f3f4f6; }
+
+.page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* ============================================
+   ORGANIZATION PROJECT MANAGEMENT GRID VIEW
+   ============================================ */
+.projects-grid-view[hidden],
+.project-list-view[hidden] {
+    display: none !important;
+}
+
+.projects-management-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.project-management-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, .04);
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+
+.project-management-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 7px 18px rgba(15, 23, 42, .08);
+    border-color: #dbe3ee;
+}
+
+.project-management-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.project-management-card-top .category-tag {
+    background: #f1f5f9;
+    color: #475569;
+    max-width: 62%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.project-management-card h3 {
+    margin: 0;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.35;
+}
+
+.project-management-date {
+    margin-top: 4px;
+    color: #9ca3af;
+    font-size: 11px;
+}
+
+.project-management-details {
+    display: grid;
+    gap: 10px;
+    margin: 18px 0;
+    padding: 14px 0;
+    border-top: 1px solid #f1f5f9;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.project-management-details > div {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.project-management-details .material-symbols-outlined {
+    font-size: 18px;
+    color: #94a3b8;
+}
+
+.project-management-details strong {
+    color: #334155;
+}
+
+.project-management-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 4px;
+}
+
+.project-management-actions .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    color: #94a3b8;
+    text-decoration: none;
+}
+
+.project-management-actions .action-btn:hover {
+    background: #f3f4f6;
+    color: #334155;
+}
+
+.project-management-actions .action-btn.danger:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.grid-pagination {
+    margin-top: 16px;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+@media (max-width: 800px) {
+    .projects-management-grid {
+        grid-template-columns: 1fr;
+    }
+}

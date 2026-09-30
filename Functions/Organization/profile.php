@@ -135,6 +135,7 @@ foreach ($projectRows as [$status, $assigned]) {
     }
 }
 
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/profile.css">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 

@@ -143,7 +143,7 @@ $neededTeams = 3 - count($teamProgressRows);
 if ($neededTeams > 0) {
     $teamProgressRows = array_merge($teamProgressRows, array_slice($fakeTeamPool, 0, $neededTeams));
 }
-
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/dashboard.css">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 

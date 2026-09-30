@@ -1,0 +1,26 @@
+/* ============================================
+   Organization – Profile & Settings page
+   Used by Functions/Organization/profile.php (and settings.php, which loads it).
+   Loaded after Assets/CSS/dashboard.css.
+   ============================================ */
+
+.profile-col { display: flex; flex-direction: column; gap: 16px; }
+
+.avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+    gap: 10px;
+}
+
+.upload-link {
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.upload-link:hover { text-decoration: underline; }
