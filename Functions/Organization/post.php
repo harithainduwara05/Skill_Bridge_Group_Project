@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -22,7 +22,7 @@ function saveProjectDocuments(mysqli $conn, int $projectId): int
         return 0;
     }
 
-    $uploadDir = __DIR__ . '/../../../Assets/Uploads/project_docs/';
+    $uploadDir = __DIR__ . '/../../Assets/Uploads/project_docs/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0775, true);
     }
@@ -123,8 +123,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -366,6 +366,6 @@ include "../../../Includes/dash_header.php";
     </div>
 </footer>
 
-<script src="../../../Assets/JS/post-project.js?v=<?= filemtime(__DIR__ . '/../../../Assets/JS/post-project.js') ?>"></script>
+<script src="../../Assets/JS/post-project.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/post-project.js') ?>"></script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
             $safeEmail = preg_replace('/[^a-zA-Z0-9]/', '_', $organization_email);
             $fileName = $safeEmail . '_' . time() . '.' . $ext;
-            $destDir  = __DIR__ . '/../../../Assets/Uploads/org_logos/';
+            $destDir  = __DIR__ . '/../../Assets/Uploads/org_logos/';
             $destPath = $destDir . $fileName;
 
             if (move_uploaded_file($_FILES['logo']['tmp_name'], $destPath)) {
@@ -89,8 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($removeLogo) {
                 // delete the old image file too (only inside the org_logos folder)
                 if (!empty($oldLogoFile)) {
-                    $logoDir  = realpath(__DIR__ . '/../../../Assets/Uploads/org_logos');
-                    $logoFile = realpath(__DIR__ . '/../../../' . $oldLogoFile);
+                    $logoDir  = realpath(__DIR__ . '/../../Assets/Uploads/org_logos');
+                    $logoFile = realpath(__DIR__ . '/../../' . $oldLogoFile);
                     if ($logoDir && $logoFile && strpos($logoFile, $logoDir) === 0 && is_file($logoFile)) {
                         @unlink($logoFile);
                     }
@@ -135,8 +135,8 @@ foreach ($projectRows as [$status, $assigned]) {
     }
 }
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -228,7 +228,7 @@ include "../../../Includes/dash_header.php";
                 </style>
                 <div class="avatar-wrap">
                     <div class="avatar-circle logo-circle">
-                        <img src="<?= !empty($org['logo']) ? '../../../' . htmlspecialchars($org['logo']) : '../../../Assets/Images/logo.png' ?>" alt="" id="logoPreview" class="<?= empty($org['logo']) ? 'is-default' : '' ?>" onerror="this.onerror=null;this.classList.add('is-default');this.src='../../../Assets/Images/logo.png';">
+                        <img src="<?= !empty($org['logo']) ? '../../' . htmlspecialchars($org['logo']) : '../../Assets/Images/logo.png' ?>" alt="" id="logoPreview" class="<?= empty($org['logo']) ? 'is-default' : '' ?>" onerror="this.onerror=null;this.classList.add('is-default');this.src='../../Assets/Images/logo.png';">
                     </div>
                     <label for="logoInput" class="upload-link" style="cursor:pointer;">Upload New Logo</label>
                     <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').submit();">
@@ -406,4 +406,4 @@ include "../../../Includes/dash_header.php";
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

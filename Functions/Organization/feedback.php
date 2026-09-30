@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -235,8 +235,8 @@ function fbStars($rating, $size = 20) {
     return $html;
 }
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <style>
@@ -1142,4 +1142,4 @@ document.body.appendChild(document.getElementById('fbModal'));
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

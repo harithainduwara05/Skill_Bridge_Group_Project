@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -50,8 +50,8 @@ $pillClass = ['On Track' => 'ok', 'Completed' => 'done', 'Behind Schedule' => 'l
               'Pending' => 'wait', 'Active' => 'ok', 'Reviewing' => 'wait', 'Open' => 'wait', 'Hold' => 'late',
               'Draft' => 'done', 'In Progress' => 'wait', 'Not started' => 'done'];
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <style>
@@ -806,4 +806,4 @@ document.getElementById('rpPdfBtn').addEventListener('click', function () {
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

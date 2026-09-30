@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 
@@ -248,7 +248,7 @@ foreach ($proposals as &$prop) {
         'degree'     => $stu['degree'] ?? '',
         'year'       => $stu['year'] ?? '',
         'bio'        => $stu['bio'] ?? '',
-        'image'      => !empty($stu['profile_image']) ? '../../../Assets/Images/Student/' . $stu['profile_image'] : '',
+        'image'      => !empty($stu['profile_image']) ? '../../Assets/Images/Student/' . $stu['profile_image'] : '',
         'github'     => $stu['github'] ?? '',
         'linkedin'   => $stu['linkedin'] ?? '',
         'website'    => $stu['website'] ?? '',
@@ -406,8 +406,8 @@ function prInitials($name)
     return $out;
 }
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <style>
@@ -3678,4 +3678,4 @@ applyFilters();
 </script>
 
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

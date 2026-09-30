@@ -26,7 +26,7 @@ switch ($userRole) {
         $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Dashboards/Student/dashboard.php';
         break;
     case 'organization':
-        $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Dashboards/Organization/dashboard.php';
+        $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Organization/dashboard.php';
         break;
     case 'company':
         $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Dashboards/Company/dashboard.php';

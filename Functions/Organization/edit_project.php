@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role('organization');
 $user = current_user();
@@ -114,8 +114,8 @@ $deadlineValue = $deadlineTs ? date('Y-m-d', $deadlineTs) : '';
 preg_match('/\d+/', $project['duration'] ?? '', $m);
 $durationWeeksValue = $m[0] ?? '';
 
-include "../../../Includes/org_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/org_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -365,4 +365,4 @@ include "../../../Includes/dash_header.php";
     });
 </script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>
