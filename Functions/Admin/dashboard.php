@@ -1,37 +1,15 @@
 <?php
-include "../../../Config/db.php";
-include "../../../Session/session.php";
+include "../../Config/db.php";
+include "../../Session/session.php";
 
 require_login();
 require_role('admin');
 $user = current_user();
 
+require_once __DIR__ . "/../../Backend/Admin/dashboard.php";
 
-require_once "AdminBackend.php";
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'dismiss') {
-    $adminDB->dismissComplaint(intval($_POST['complaint_id']));
-    echo "<script>window.location.href = 'dashboard.php';</script>";
-    exit();
-}
-
-
-include "../../../Includes/admin_sidebar.php";
-include "../../../Includes/dash_header.php";
-
-
-$adminEmail = $user['email'] ?? $user['Email'] ?? '';
-$adminProfile = (!empty($adminEmail) && isset($adminDB)) ? $adminDB->getAdminProfile($adminEmail) : null;
-$adminName = (!empty($user['username']) && $user['username'] !== 'User')
-    ? $user['username']
-    : ((!empty($name) && $name !== 'User')
-        ? $name
-        : ($adminProfile['name'] ?? 'Admin'));
-
-if (isset($_SESSION['user']) && (empty($_SESSION['user']['username']) || $_SESSION['user']['username'] === 'User') && $adminName !== 'Admin') {
-    $_SESSION['user']['username'] = $adminName;
-    $user['username'] = $adminName;
-}
+include "../../Includes/admin_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
@@ -300,4 +278,4 @@ if (isset($_SESSION['user']) && (empty($_SESSION['user']['username']) || $_SESSI
         <a href="#">Terms of Service</a>
     </div>
 </footer>
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

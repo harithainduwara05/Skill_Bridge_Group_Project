@@ -4,7 +4,7 @@
  * Pure PHP SMTP socket-based email sender (No external libraries/APIs used)
  */
 
-require_once __DIR__ . '/../../../Config/env_loader.php';
+require_once __DIR__ . '/../../Config/env_loader.php';
 
 if (!function_exists('admin_smtp_read')) {
     function admin_smtp_read($socket) {
@@ -113,14 +113,6 @@ if (!function_exists('send_raw_smtp_email')) {
 
 /**
  * Sends newly created account credentials to a user using SkillBridge email template.
- *
- * @param string $toEmail User's email address
- * @param string $userName User's display name
- * @param string $plainPassword Plaintext password generated/assigned by Admin
- * @param string|null $username Optional username (defaults to email if null)
- * @param string|null $subject Optional email subject
- * @return bool True on success
- * @throws Exception On SMTP error
  */
 function send_user_credentials_email($toEmail, $userName, $plainPassword, $username = null, $subject = null) {
     if (empty($username)) {
@@ -147,12 +139,6 @@ function send_user_credentials_email($toEmail, $userName, $plainPassword, $usern
 /**
  * Sends an activation invitation email instructing the user to set their password via OTP.
  * Zero-knowledge password security (no passwords sent in plaintext).
- *
- * @param string $toEmail User's email address
- * @param string $userName User's display name
- * @param string|null $subject Optional email subject
- * @return bool True on success
- * @throws Exception On SMTP error
  */
 function send_user_activation_email($toEmail, $userName, $subject = null) {
     if (empty($subject)) {

@@ -1,117 +1,18 @@
 <?php
-require_once "../../../Config/db.php";
-require_once "../../../Session/Session.php";
+require_once "../../Config/db.php";
+require_once "../../Session/Session.php";
 
 require_login();
 require_role('admin');
 
-$user = current_user();
-$adminEmail = $user['Email'] ?? $user['email'] ?? '';
+require_once __DIR__ . "/../../Backend/Admin/notification.php";
 
-require_once "AdminBackend.php";
-
-$flash = null;
-
-// ============================================
-// HANDLE POST ACTIONS
-// ============================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    $notifId = intval($_POST['notification_id'] ?? 0);
-
-    // 1. Mark Single Notification as Read
-    if ($action === 'mark_read' && $notifId > 0) {
-        $stmt = $conn->prepare("UPDATE notifications SET status = 'Read' WHERE notification_id = ? AND Email = ?");
-        if ($stmt) {
-            $stmt->bind_param("is", $notifId, $adminEmail);
-            if ($stmt->execute()) {
-                $flash = ['type' => 'success', 'message' => 'Notification marked as read.'];
-            }
-            $stmt->close();
-        }
-    }
-
-    // 2. Mark All as Read
-    elseif ($action === 'mark_all_read') {
-        $stmt = $conn->prepare("UPDATE notifications SET status = 'Read' WHERE Email = ? AND status = 'Unread'");
-        if ($stmt) {
-            $stmt->bind_param("s", $adminEmail);
-            if ($stmt->execute()) {
-                $flash = ['type' => 'success', 'message' => 'All notifications marked as read.'];
-            }
-            $stmt->close();
-        }
-    }
-
-    // 3. Delete Notification
-    elseif ($action === 'delete' && $notifId > 0) {
-        $stmt = $conn->prepare("DELETE FROM notifications WHERE notification_id = ? AND Email = ?");
-        if ($stmt) {
-            $stmt->bind_param("is", $notifId, $adminEmail);
-            if ($stmt->execute()) {
-                $flash = ['type' => 'success', 'message' => 'Notification removed.'];
-            }
-            $stmt->close();
-        }
-    }
-}
-
-// ============================================
-// STATS & COUNTS
-// ============================================
-$totalCount = 0;
-$unreadCount = 0;
-$inquiryCount = 0;
-
-$countStmt = $conn->prepare("
-    SELECT 
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'Unread' THEN 1 ELSE 0 END) as unread,
-        SUM(CASE WHEN type = 'contact_inquiry' THEN 1 ELSE 0 END) as inquiries
-    FROM notifications 
-    WHERE Email = ?
-");
-if ($countStmt) {
-    $countStmt->bind_param("s", $adminEmail);
-    $countStmt->execute();
-    $res = $countStmt->get_result()->fetch_assoc();
-    $totalCount = intval($res['total'] ?? 0);
-    $unreadCount = intval($res['unread'] ?? 0);
-    $inquiryCount = intval($res['inquiries'] ?? 0);
-    $countStmt->close();
-}
-
-// ============================================
-// FILTERING
-// ============================================
-$filterTab = $_GET['tab'] ?? 'all';
-$query = "SELECT * FROM notifications WHERE Email = ?";
-$params = [$adminEmail];
-$types = "s";
-
-if ($filterTab === 'unread') {
-    $query .= " AND status = 'Unread'";
-} elseif ($filterTab === 'inquiries') {
-    $query .= " AND type = 'contact_inquiry'";
-}
-
-$query .= " ORDER BY notification_id DESC";
-
-$notifList = [];
-$stmt = $conn->prepare($query);
-if ($stmt) {
-    $stmt->bind_param($types, ...$params);
-    $stmt->execute();
-    $notifList = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-}
-
-include "../../../Includes/admin_sidebar.php";
+include "../../Includes/admin_sidebar.php";
 ?>
-<link rel="stylesheet" href="../../../Assets/CSS/Admin/notification.css?v=<?php echo time(); ?>">
-<link rel="stylesheet" href="../../../Assets/CSS/flash-toast.css">
+<link rel="stylesheet" href="../../Assets/CSS/Admin/notification.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../Assets/CSS/flash-toast.css">
 <?php
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
@@ -353,4 +254,4 @@ document.addEventListener('keydown', function(e) {
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

@@ -1,70 +1,29 @@
 <?php
-/**
- * ==============================================================================
- * SkillBridge - Complaint Management Dashboard (Admin)
- * Review, investigate, filter, and resolve complaints submitted by students,
- * mentors, university representatives, and partner organizations.
- * ==============================================================================
- */
 
-include "../../../Config/db.php";
-include "../../../Session/session.php";
+include "../../Config/db.php";
+include "../../Session/session.php";
 
 require_login();
 require_role('admin');
 $user = current_user();
 
-require_once "AdminBackend.php";
-
-// Handle AJAX Status & Resolution Updates
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'update_complaint_status') {
-    header('Content-Type: application/json');
-    $complaintId = intval($_POST['complaint_id'] ?? 0);
-    $newStatus = trim($_POST['status'] ?? 'PENDING');
-    $notes = trim($_POST['notes'] ?? '');
-
-    if ($complaintId <= 0) {
-        echo json_encode(['success' => false, 'message' => 'Invalid Complaint ID']);
-        exit();
-    }
-
-    // Dismissal Reason is mandatory when dismissing a complaint
-    if ($newStatus === 'DISMISSED' && (empty($notes) || mb_strlen($notes) < 5)) {
-        echo json_encode(['success' => false, 'message' => 'A dismissal reason is mandatory. Please provide an explanation before dismissing this complaint.']);
-        exit();
-    }
-
-    $updated = $adminDB->updateComplaintStatus($complaintId, $newStatus, $notes);
-    if ($updated) {
-        $stats = $adminDB->getComplaintStats();
-        echo json_encode(['success' => true, 'message' => 'Status updated successfully', 'stats' => $stats]);
-    } else {
-        echo json_encode(['success' => false, 'message' => 'Failed to update database record']);
-    }
-    exit();
-}
-
-// Fetch Complaint Statistics and All Complaint Records
-$stats = $adminDB->getComplaintStats();
-$complaints = $adminDB->getAllComplaintsDetailed();
+require_once __DIR__ . "/../../Backend/Admin/complain.php";
 
 // Include Sidebar and Header
-include "../../../Includes/admin_sidebar.php";
+include "../../Includes/admin_sidebar.php";
 ?>
 
 <!-- Complaint Management Stylesheet -->
-<link rel="stylesheet" href="../../../Assets/CSS/Admin/complain.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../Assets/CSS/Admin/complain.css?v=<?php echo time(); ?>">
 
 <?php
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
     <div class="cm-container">
 
-        <!-- ==================================================================
-             1. Page Header (Title & Subtitle)
-             ================================================================== -->
+        <!--  Page Header (Title & Subtitle)-->
         <div class="cm-header-row">
             <div class="cm-header-info">
                 <h1>Complaint Management</h1>
@@ -72,9 +31,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             2. KPI Statistics Cards (Row of 3 Cards matching design)
-             ================================================================== -->
+        <!--  KPI Statistics Cards (Row of 3 Cards matching design)-->
         <div class="cm-stats-grid">
             
             <!-- Card 1: Total Complaints -->
@@ -133,9 +90,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             3. Filter & Search Toolbar
-             ================================================================== -->
+        <!--  Filter & Search Toolbar -->
         <div class="cm-toolbar-card">
             <div class="cm-toolbar-row">
                 
@@ -199,9 +154,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             4. Complaints Data Table Card
-             ================================================================== -->
+        <!--  Complaints Data Table Card-->
         <div class="cm-table-card">
             <div class="cm-table-responsive">
                 <table class="cm-table">
@@ -348,14 +301,8 @@ include "../../../Includes/dash_header.php";
                 </table>
             </div>
 
-            <?php 
-                $pageSize = 6;
-                $totalComplaintsCount = count($complaints);
-                $totalPages = max(1, ceil($totalComplaintsCount / $pageSize));
-            ?>
-            <!-- ==============================================================
-                 5. Pagination Footer Bar (Strictly 6 complaints per page)
-                 ============================================================== -->
+
+            <!-- Pagination Footer Bar (Strictly 6 complaints per page)-->
             <div class="cm-pagination-bar">
                 <div class="cm-pagination-info" id="cmPaginationInfo">
                     Showing <?= $totalComplaintsCount > 0 ? '1' : '0' ?> to <?= min($totalComplaintsCount, $pageSize) ?> of <?= $totalComplaintsCount ?> results
@@ -374,9 +321,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </main>
 
-<!-- ==========================================================================
-     6. Complaint Detail & Resolution Modal
-     ========================================================================== -->
+<!-- Complaint Detail & Resolution Modal-->
 <div class="cm-modal-backdrop" id="cmDetailModal">
     <div class="cm-modal-dialog">
         <form id="cmDetailForm" class="cm-modal-form">
@@ -480,9 +425,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     7. Toast Notification Alert (Custom Feedback, ZERO alerts)
-     ========================================================================== -->
+<!-- Toast Notification Alert (Custom Feedback, ZERO alerts  -->
 <div class="cm-toast" id="cmToast">
     <span class="material-symbols-outlined">check_circle</span>
     <span id="cmToastMessage">Operation successful!</span>
@@ -499,6 +442,6 @@ include "../../../Includes/dash_header.php";
 </footer>
 
 <!-- Complaint Management Script -->
-<script src="../../../Assets/JS/Admin/complain.js?v=<?php echo time(); ?>"></script>
+<script src="../../Assets/JS/Admin/complain.js?v=<?php echo time(); ?>"></script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

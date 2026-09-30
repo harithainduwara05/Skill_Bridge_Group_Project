@@ -680,7 +680,7 @@ class AdminDB
     {
         $prof = $this->getAdminProfile($email);
         if ($prof && !empty($prof['profile_image'])) {
-            $path = __DIR__ . '/../../../Assets/Images/Admin/' . $prof['profile_image'];
+            $path = __DIR__ . '/../../Assets/Images/Admin/' . $prof['profile_image'];
             if (file_exists($path)) {
                 @unlink($path);
             }
@@ -706,24 +706,85 @@ class AdminDB
         }
         return ['success' => false, 'message' => 'Failed to update password in database.'];
     }
+
+    // ==========================================
+    // NOTIFICATION OPERATIONS
+    // ==========================================
+    public function markNotificationAsRead($notifId, $adminEmail)
+    {
+        return $this->runAction("UPDATE notifications SET status = 'Read' WHERE notification_id = ? AND Email = ?", "is", $notifId, $adminEmail);
+    }
+
+    public function markAllNotificationsAsRead($adminEmail)
+    {
+        return $this->runAction("UPDATE notifications SET status = 'Read' WHERE Email = ? AND status = 'Unread'", "s", $adminEmail);
+    }
+
+    public function deleteNotification($notifId, $adminEmail)
+    {
+        return $this->runAction("DELETE FROM notifications WHERE notification_id = ? AND Email = ?", "is", $notifId, $adminEmail);
+    }
+
+    public function getNotificationCounts($adminEmail)
+    {
+        $sql = "
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'Unread' THEN 1 ELSE 0 END) as unread,
+                SUM(CASE WHEN type = 'contact_inquiry' THEN 1 ELSE 0 END) as inquiries
+            FROM notifications 
+            WHERE Email = ?
+        ";
+        $res = $this->runQuery($sql, "s", $adminEmail);
+        if ($res && $row = $res->fetch_assoc()) {
+            return [
+                'total' => intval($row['total'] ?? 0),
+                'unread' => intval($row['unread'] ?? 0),
+                'inquiries' => intval($row['inquiries'] ?? 0)
+            ];
+        }
+        return ['total' => 0, 'unread' => 0, 'inquiries' => 0];
+    }
+
+    public function getFilteredNotifications($adminEmail, $filterTab = 'all')
+    {
+        $query = "SELECT * FROM notifications WHERE Email = ?";
+        $params = [$adminEmail];
+        $types = "s";
+
+        if ($filterTab === 'unread') {
+            $query .= " AND status = 'Unread'";
+        } elseif ($filterTab === 'inquiries') {
+            $query .= " AND type = 'contact_inquiry'";
+        }
+
+        $query .= " ORDER BY notification_id DESC";
+        $res = $this->runQuery($query, $types, ...$params);
+        return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    // ==========================================
+    // INSTITUTION & FACULTY LOOKUPS
+    // ==========================================
+    public function getUniversityFacultiesList()
+    {
+        $sql = "SELECT DISTINCT University, faculty, emailEx, Status FROM universityemails WHERE Status != 'De-Active' ORDER BY University ASC, faculty ASC";
+        $res = $this->runQuery($sql);
+        return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
+    }
+
+    public function getAuthorizedDomain($university, $faculty)
+    {
+        $sql = "SELECT LOWER(emailEx) AS domain FROM universityemails WHERE University = ? AND faculty = ? AND Status = 'Active' LIMIT 1";
+        $res = $this->runQuery($sql, "ss", $university, $faculty);
+        if ($res && $row = $res->fetch_assoc()) {
+            return ltrim(trim($row['domain']), '@');
+        }
+        return null;
+    }
 }
 
-$adminDB = new AdminDB($conn);
-//get total users
-$totalUsers = $adminDB->getCount("user");
-//get total university
-$totUni = $adminDB->getCount("universityemails");
-//get total ongoing projects
-$tot_Ongoin_projects = $adminDB->getOngoingProjectCount();
-//available internships
-$tot_internship = $adminDB->getAvailableInternshipCount();
-//all users
-$allusers = $adminDB->getUsers();
-//get urgent complaints (high risk, limit 3)
-$complains = $adminDB->getUrgentComplaints(3);
-//popular universities
-$popularUni = $adminDB->getPopularUni();
-//active student projects
-$totalAcPro = $adminDB->getActiveProjectCount();
-
+if (isset($conn) && (!isset($adminDB) || !($adminDB instanceof AdminDB))) {
+    $adminDB = new AdminDB($conn);
+}
 ?>

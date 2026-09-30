@@ -20,7 +20,7 @@ $userRole = strtolower($currentUser['role'] ?? 'guest');
 $dashboardUrl = '/Skill_Bridge_Group_Project/index.php';
 switch ($userRole) {
     case 'admin':
-        $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Dashboards/Admin/dashboard.php';
+        $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Admin/dashboard.php';
         break;
     case 'student':
         $dashboardUrl = '/Skill_Bridge_Group_Project/Functions/Dashboards/Student/dashboard.php';

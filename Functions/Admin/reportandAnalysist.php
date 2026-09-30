@@ -1,36 +1,28 @@
 <?php
-/**
- * ==============================================================================
- * SkillBridge - Reports & Performance Analytics Dashboard (Admin)
- * Holistic ecosystem analytics across student placements, partner universities,
- * employer engagement, in-demand technical skills, and platform health.
- * FRONTEND WITH REALISTIC DUMMY DATA (ZERO BACKEND CALLS).
- * ==============================================================================
- */
 
-include "../../../Config/db.php";
-include "../../../Session/session.php";
+include "../../Config/db.php";
+include "../../Session/session.php";
 
 require_login();
 require_role('admin');
 $user = current_user();
 
-include "../../../Includes/admin_sidebar.php";
+require_once __DIR__ . "/../../Backend/Admin/reportandAnalysist.php";
+
+include "../../Includes/admin_sidebar.php";
 ?>
 
 <!-- Custom Reports & Analytics Stylesheet -->
-<link rel="stylesheet" href="../../../Assets/CSS/Admin/reports_analytics.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../Assets/CSS/Admin/reports_analytics.css?v=<?php echo time(); ?>">
 
 <?php
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
     <div class="ra-container">
 
-        <!-- ==================================================================
-             1. Page Header (Title, Subtitle, Period Pills & Export Actions)
-             ================================================================== -->
+        <!--  Page Header (Title, Subtitle, Period Pills & Export Actions)-->
         <div class="ra-header-row">
             <div class="ra-header-info">
                 <h1>
@@ -63,9 +55,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             2. Executive KPI Summary Cards (4 Cards Grid)
-             ================================================================== -->
+        <!--  Executive KPI Summary Cards (4 Cards Grid)-->
         <div class="ra-kpi-grid">
             
             <!-- Card 1: Total Placed Students -->
@@ -138,9 +128,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             3. Domain Filter Navigation Tabs
-             ================================================================== -->
+        <!--  Domain Filter Navigation Tabs-->
         <div class="ra-tabs-bar">
             <button type="button" class="ra-tab-btn active" data-tab="all">
                 <span class="material-symbols-outlined">dashboard</span>
@@ -164,9 +152,7 @@ include "../../../Includes/dash_header.php";
             </button>
         </div>
 
-        <!-- ==================================================================
-             4. Visual Analytics Charts Grid - Row 1
-             ================================================================== -->
+        <!--  Visual Analytics Charts Grid - Row 1-->
         <div class="ra-charts-grid-row" id="secChartsMain">
             
             <!-- Chart 1: Hiring Velocity & Applications (Native SVG Area & Line Chart) -->
@@ -319,9 +305,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             5. Visual Analytics Charts Grid - Row 2
-             ================================================================== -->
+        <!--  Visual Analytics Charts Grid - Row 2-->
         <div class="ra-charts-grid-equal" id="secChartsSkills">
             
             <!-- Skill Demand Progress Bars -->
@@ -441,9 +425,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             6. Deep-Dive Table 1: Top Performing Partner Universities
-             ================================================================== -->
+        <!--  Deep-Dive Table 1: Top Performing Partner Universities-->
         <div class="ra-table-card" id="secTableUnis">
             <div class="ra-table-header">
                 <div>
@@ -562,9 +544,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             7. Deep-Dive Table 2: Top Recruiting Industry Partners
-             ================================================================== -->
+        <!--  Deep-Dive Table 2: Top Recruiting Industry Partners-->
         <div class="ra-table-card" id="secTableCompanies">
             <div class="ra-table-header">
                 <div>
@@ -683,9 +663,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </main>
 
-<!-- ==========================================================================
-     8. Export Report Custom Modal (Mockup with format & scope options)
-     ========================================================================== -->
+<!--  Export Report Custom Modal (Mockup with format & scope options)-->
 <div class="ra-modal-backdrop" id="raExportModal">
     <div class="ra-modal-dialog">
         <div class="ra-modal-header">
@@ -759,9 +737,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     9. Toast Notification Alert
-     ========================================================================== -->
+<!--  Toast Notification Alert-->
 <div class="ra-toast" id="raToast">
     <span class="material-symbols-outlined">check_circle</span>
     <span id="raToastMessage">Report generated successfully!</span>
@@ -778,6 +754,6 @@ include "../../../Includes/dash_header.php";
 </footer>
 
 <!-- Pure Native Vanilla JS Reports & Analytics Script (Zero External Libraries) -->
-<script src="../../../Assets/JS/Admin/reports_analytics.js?v=<?php echo time(); ?>"></script>
+<script src="../../Assets/JS/Admin/reports_analytics.js?v=<?php echo time(); ?>"></script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

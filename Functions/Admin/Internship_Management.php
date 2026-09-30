@@ -1,37 +1,28 @@
 <?php
-/**
- * ==============================================================================
- * SkillBridge - Internship Management Dashboard (Admin)
- * Provides comprehensive oversight of internship opportunities, company postings,
- * skill requirements, application trends, and approval analytics.
- * ==============================================================================
- */
 
-include "../../../Config/db.php";
-require_once "../../../Session/Session.php";
+include "../../Config/db.php";
+require_once "../../Session/Session.php";
 
 require_login();
 require_role('admin');
 $user = current_user();
 
-require_once "AdminBackend.php";
+require_once __DIR__ . "/../../Backend/Admin/Internship_Management.php";
 
-include "../../../Includes/admin_sidebar.php";
+include "../../Includes/admin_sidebar.php";
 ?>
 
 <!-- Internship Management Custom Stylesheet -->
-<link rel="stylesheet" href="../../../Assets/CSS/Admin/internship_management.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../Assets/CSS/Admin/internship_management.css?v=<?php echo time(); ?>">
 
 <?php
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
     <div class="im-container">
 
-        <!-- ==================================================================
-             1. Page Header (Title, Subtitle & Add Action)
-             ================================================================== -->
+        <!--  Page Header (Title, Subtitle & Add Action)-->
         <div class="im-header-row">
             <div class="im-header-info">
                 <h1>Internship Management</h1>
@@ -39,9 +30,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             2. KPI Summary Cards (4 Cards Grid)
-             ================================================================== -->
+        <!--  KPI Summary Cards (4 Cards Grid)-->
         <div class="im-stats-grid">
 
             <!-- Card 1: Total Internships -->
@@ -111,9 +100,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             3. Filter & Search Toolbar Card
-             ================================================================== -->
+        <!--  Filter & Search Toolbar Card -->
         <div class="im-toolbar-card">
             <div class="im-toolbar-controls">
                 
@@ -167,9 +154,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             4. Internships Data Table Card
-             ================================================================== -->
+        <!--  Internships Data Table Card -->
         <div class="im-table-card">
             <div class="im-table-responsive">
                 <table class="im-table">
@@ -525,9 +510,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </main>
 
-<!-- ==========================================================================
-     6. Add Internship Modal
-     ========================================================================== -->
+<!--  Add Internship Modal -->
 <div class="im-modal-backdrop" id="imAddModal">
     <div class="im-modal-dialog">
         <div class="im-modal-header">
@@ -575,9 +558,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     7. Internship Details Modal
-     ========================================================================== -->
+<!--  Internship Details Modal -->
 <div class="im-modal-backdrop" id="imDetailsModal">
     <div class="im-modal-dialog">
         <div class="im-modal-header">
@@ -680,9 +661,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     8. Suspend Internship & Notify Company Modal
-     ========================================================================== -->
+<!--  Suspend Internship & Notify Company Modal -->
 <div class="im-modal-backdrop" id="imSuspendModal">
     <div class="im-modal-dialog" style="max-width: 560px;">
         <div class="im-modal-header im-suspend-header">
@@ -769,9 +748,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     9. Review Suspended Internship & Resolution Modal
-     ========================================================================== -->
+<!--  Review Suspended Internship & Resolution Modal -->
 <div class="im-modal-backdrop" id="imReviewSuspensionModal">
     <div class="im-modal-dialog" style="max-width: 600px;">
         <div class="im-modal-header" style="border-bottom: 1px solid #fde68a; background-color: #fffbeb;">
@@ -867,9 +844,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     8. Toast Notification Alert
-     ========================================================================== -->
+<!--  Toast Notification Alert -->
 <div class="im-toast" id="imToast">
     <span class="material-symbols-outlined">check_circle</span>
     <span id="imToastMessage">Operation successful!</span>
@@ -886,6 +861,6 @@ include "../../../Includes/dash_header.php";
 </footer>
 
 <!-- Internship Management Dedicated Script -->
-<script src="../../../Assets/JS/Admin/internship_management.js?v=<?php echo time(); ?>"></script>
+<script src="../../Assets/JS/Admin/internship_management.js?v=<?php echo time(); ?>"></script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

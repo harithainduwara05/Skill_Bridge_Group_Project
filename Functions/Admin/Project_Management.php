@@ -1,45 +1,34 @@
 <?php
-/**
- * ==============================================================================
- * SkillBridge - Project Management Dashboard (Admin)
- * Displays project KPI metrics, search, filterable projects table,
- * team member information, status indicators, and project addition modal.
- * ==============================================================================
- */
 
-include "../../../Config/db.php";
-require_once "../../../Session/Session.php";
+include "../../Config/db.php";
+require_once "../../Session/Session.php";
 
 require_login();
 require_role('admin');
 $user = current_user();
 
-require_once "AdminBackend.php";
+require_once __DIR__ . "/../../Backend/Admin/Project_Management.php";
 
-include "../../../Includes/admin_sidebar.php";
+include "../../Includes/admin_sidebar.php";
 ?>
 
 <!-- Project Management Custom Stylesheet -->
-<link rel="stylesheet" href="../../../Assets/CSS/Admin/project_management.css?v=<?php echo time(); ?>">
+<link rel="stylesheet" href="../../Assets/CSS/Admin/project_management.css?v=<?php echo time(); ?>">
 
 <?php
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <main class="content">
     <div class="pm-container">
 
-        <!-- ==================================================================
-             1. Page Header (Title & Subtitle)
-             ================================================================== -->
+        <!--  Page Header (Title & Subtitle)-->
         <div class="pm-header">
             <h1>Project Management</h1>
             <p>Monitor, review, and manage all student projects across the SkillBridge ecosystem.</p>
         </div>
 
-        <!-- ==================================================================
-             2. KPI Statistics Cards (Row of 4 Cards)
-             ================================================================== -->
+        <!--  KPI Statistics Cards (Row of 4 Cards)-->
         <div class="pm-stats-grid">
             
             <!-- Card 1: Total Projects -->
@@ -108,9 +97,7 @@ include "../../../Includes/dash_header.php";
 
         </div>
 
-        <!-- ==================================================================
-             3. Filter Toolbar Card
-             ================================================================== -->
+        <!--  Filter Toolbar Card-->
         <div class="pm-toolbar-card">
             <div class="pm-toolbar-row">
                 <div class="pm-filters-left">
@@ -152,9 +139,7 @@ include "../../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!-- ==================================================================
-             4. Projects Data Table Card
-             ================================================================== -->
+        <!--  Projects Data Table Card-->
         <div class="pm-table-card">
             <div class="pm-table-responsive">
                 <table class="pm-table">
@@ -417,9 +402,7 @@ include "../../../Includes/dash_header.php";
                 </table>
             </div>
 
-            <!-- ==============================================================
-                 5. Pagination & Table Footer
-                 ============================================================== -->
+            <!--  Pagination & Table Footer-->
             <div class="pm-pagination-bar">
                 <div class="pm-pagination-info" id="pmPaginationInfo">
                     Showing 1 to 3 of 2,105 results
@@ -440,9 +423,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </main>
 
-<!-- ==========================================================================
-     6. Add Project Modal
-     ========================================================================== -->
+<!--  Add Project Modal-->
 <div class="pm-modal-backdrop" id="pmAddModal">
     <div class="pm-modal-dialog">
         <div class="pm-modal-header">
@@ -495,9 +476,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     7. Project Details Modal
-     ========================================================================== -->
+<!--  Project Details Modal-->
 <div class="pm-modal-backdrop" id="pmDetailsModal">
     <div class="pm-modal-dialog">
         <div class="pm-modal-header">
@@ -566,9 +545,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     8. Place Project on Hold Modal
-     ========================================================================== -->
+<!--  Place Project on Hold Modal-->
 <div class="pm-modal-backdrop" id="pmHoldModal">
     <div class="pm-modal-dialog" style="max-width: 520px;">
         <div class="pm-modal-header" style="border-bottom: 1px solid #fef3c7; background-color: #fffbeb;">
@@ -618,9 +595,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     9. Review Hold & Resolution Modal (Multi-step: Review -> Final Reject Reason)
-     ========================================================================== -->
+<!--  Review Hold & Resolution Modal (Multi-step: Review -> Final Reject Reason)-->
 <div class="pm-modal-backdrop" id="pmReviewHoldModal">
     <div class="pm-modal-dialog" style="max-width: 620px;">
         <div class="pm-modal-header" style="border-bottom: 1px solid #e2e8f0; background-color: #f8fafc;">
@@ -761,9 +736,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     10. Reject Project Reason Modal (Permanent & Irreversible)
-     ========================================================================== -->
+<!--  Reject Project Reason Modal (Permanent & Irreversible) -->
 <div class="pm-modal-backdrop" id="pmRejectModal">
     <div class="pm-modal-dialog" style="max-width: 520px;">
         <div class="pm-modal-header" style="border-bottom: 1px solid #fee2e2; background-color: #fff5f5;">
@@ -798,9 +771,7 @@ include "../../../Includes/dash_header.php";
     </div>
 </div>
 
-<!-- ==========================================================================
-     8. Toast Notification Alert
-     ========================================================================== -->
+<!--  Toast Notification Alert -->
 <div class="pm-toast" id="pmToast">
     <span class="material-symbols-outlined">check_circle</span>
     <span id="pmToastMessage">Operation successful!</span>
@@ -817,6 +788,6 @@ include "../../../Includes/dash_header.php";
 </footer>
 
 <!-- Project Management Dedicated Script -->
-<script src="../../../Assets/JS/Admin/project_management.js?v=<?php echo time(); ?>"></script>
+<script src="../../Assets/JS/Admin/project_management.js?v=<?php echo time(); ?>"></script>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

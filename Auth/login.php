@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
 
                     switch ($user['role']) {
                         case 'admin':
-                            header('Location:../Functions/Dashboards/Admin/dashboard.php');
+                            header('Location:../Functions/Admin/dashboard.php');
                             exit();
                         case 'organization':
                             header('Location:../Functions/Dashboards/Organization/dashboard.php');
