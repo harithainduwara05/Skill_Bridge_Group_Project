@@ -218,15 +218,8 @@ include "../../Includes/dash_header.php";
         <div class="profile-col">
 
             <div class="card">
-                <style>
-                    /* Same size/look as the Admin profile photo: 120px circle, white border, soft shadow,
-                       and the uploaded image fills the whole circle. */
-                    .avatar-circle.logo-circle { width: 120px; height: 120px; box-sizing: border-box; background: #f8fafc;
-                                                 border: 4px solid #ffffff; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); }
-                    .avatar-circle.logo-circle img { width: 100%; height: 100%; object-fit: cover; }
-                    /* the default SkillBridge placeholder (no logo uploaded) is shown whole, not cropped */
-                    .avatar-circle.logo-circle img.is-default { width: 70%; height: 70%; object-fit: contain; }
-                </style>
+                
+
                 <div class="avatar-wrap">
                     <div class="avatar-circle logo-circle">
                         <img src="<?= !empty($org['logo']) ? '../../' . htmlspecialchars($org['logo']) : '../../Assets/Images/logo.png' ?>" alt="" id="logoPreview" class="<?= empty($org['logo']) ? 'is-default' : '' ?>" onerror="this.onerror=null;this.classList.add('is-default');this.src='../../Assets/Images/logo.png';">
@@ -325,28 +318,7 @@ include "../../Includes/dash_header.php";
 
 <?php if (!empty($org['logo'])): ?>
 <!-- Remove Logo confirmation dialog -->
-<style>
-    .rl-overlay { position: fixed; inset: 0; z-index: 9999; display: none; align-items: center; justify-content: center;
-                  padding: 16px; background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(2px); }
-    .rl-overlay.show { display: flex; }
-    .rl-card { width: 100%; max-width: 400px; background: #fff; border-radius: 16px; padding: 28px 24px 22px; text-align: center;
-               box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25); animation: rlPop 0.18s ease-out; }
-    @keyframes rlPop { from { opacity: 0; transform: scale(0.94) translateY(6px); } to { opacity: 1; transform: none; } }
-    .rl-icon { width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 50%; background: #fee2e2; color: #dc2626;
-               display: flex; align-items: center; justify-content: center; }
-    .rl-icon .material-symbols-outlined { font-size: 28px; }
-    .rl-title { margin: 0 0 8px; font-size: 18px; font-weight: 700; color: #0f172a; }
-    .rl-text { margin: 0 0 22px; font-size: 14px; line-height: 1.55; color: #64748b; }
-    .rl-actions { display: flex; gap: 10px; }
-    .rl-btn { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 16px;
-              border: none; border-radius: 10px; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
-              transition: background 0.15s ease; }
-    .rl-btn .material-symbols-outlined { font-size: 18px; }
-    .rl-cancel { background: #f1f5f9; color: #334155; }
-    .rl-cancel:hover { background: #e2e8f0; }
-    .rl-confirm { background: #dc2626; color: #fff; }
-    .rl-confirm:hover { background: #b91c1c; }
-</style>
+
 
 <div class="rl-overlay" id="removeLogoModal" onclick="closeRemoveLogoModal()">
     <div class="rl-card" role="dialog" aria-modal="true" aria-labelledby="rlTitle" onclick="event.stopPropagation()">
