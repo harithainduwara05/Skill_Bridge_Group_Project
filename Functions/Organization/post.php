@@ -122,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 }
-
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/project_form.css">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 

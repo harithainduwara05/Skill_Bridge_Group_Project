@@ -151,6 +151,7 @@ if (isset($_GET['updated'])) {
     $flash = ['type' => 'error', 'title' => 'Could not update', 'message' => 'Please fill all required fields and try again.'];
 }
 
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/manage_projects.css">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 

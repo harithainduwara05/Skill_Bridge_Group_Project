@@ -1,0 +1,135 @@
+/* ============================================
+   Organization – Dashboard page
+   Used by Functions/Organization/dashboard.php (CTA banner text, team progress mini cards).
+   Loaded after Assets/CSS/dashboard.css.
+   ============================================ */
+
+.btn-link {
+    color: #2563eb;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.btn-link:hover {
+    color: #1d4ed8;
+    text-decoration: underline;
+}
+
+.cta-text { position: relative; z-index: 1; max-width: 560px; }
+.cta-text h3 { color: #fff; font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.cta-text p { color: #cbd5e1; font-size: 14px; line-height: 1.5; margin-bottom: 16px; }
+.cta-text .btn-sm.primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+    background: #bfdbfe;
+    color: #1e3a5f;
+}
+
+.cta-text .btn-sm.primary:hover {
+    background: #93c5fd;
+}
+
+.cta-text .btn-sm.primary:hover {
+    background: #93c5fd;
+}
+
+/* ============================================
+   NEW: TEAM PROGRESS MINI CARDS (Organization dashboard)
+   ============================================ */
+
+.progress-bar.wide {
+    flex: 1;
+    height: 7px;
+}
+
+.mini-team-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mini-team-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.mini-team-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.mini-team-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-team-lead {
+    font-size: 11.5px;
+    color: #6b7280;
+}
+
+.mini-team-badge {
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.mini-team-badge.on-track {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.mini-team-badge.completed {
+    background: #dbeafe;
+    color: #2563eb;
+}
+
+.mini-team-badge.behind {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.progress-bar-fill.on-track {
+    background: #3b82f6;
+}
+
+.progress-bar-fill.completed {
+    background: #16a34a;
+}
+
+.progress-bar-fill.behind {
+    background: #dc2626;
+}
+
+.mini-team-deadline {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.mini-team-deadline.overdue {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.demo-project-label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-style: italic;
+}
