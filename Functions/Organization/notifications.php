@@ -7,96 +7,13 @@ require_role('organization');
 $user = current_user();
 $organization_email = $user['email'];
 
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/notifications.css">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 ?>
 
-<style>
-/* Notification Center – same layout as the student page, organization colours.
-   Scoped to this page only – no shared CSS files touched. */
-.nc-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
-.nc-head h1 { margin: 0; font-size: 24px; font-weight: 800; color: #0f2a4a; letter-spacing: -.3px; }
-.nc-head p { margin: 4px 0 0; font-size: 13.5px; color: #64748b; }
-.nc-head-actions { display: flex; gap: 12px; flex-wrap: wrap; }
-.nc-head-btn { display: inline-flex; align-items: center; gap: 8px; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
-    padding: 7px 14px; font-size: 12.5px; font-weight: 600; color: #0f2a4a; cursor: pointer; font-family: inherit;
-    box-shadow: 0 1px 3px rgba(15, 42, 74, .06); transition: background .15s ease, border-color .15s ease; }
-.nc-head-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-.nc-head-btn .material-symbols-outlined { font-size: 16px; }
-.nc-head-btn:disabled { opacity: .5; cursor: default; }
 
-.nc-tabs { display: flex; gap: 6px; background: #e9eef5; border-radius: 10px; padding: 4px; margin-bottom: 20px; }
-.nc-tab { border: none; background: transparent; padding: 7px 18px; border-radius: 7px; font-size: 13px; font-weight: 600;
-    color: #475569; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 8px; }
-.nc-tab:hover { color: #0f2a4a; }
-.nc-tab.active { background: #fff; color: #0f2a4a; box-shadow: 0 1px 4px rgba(15, 42, 74, .10); }
-.nc-tab { min-width: 84px; justify-content: center; }
-.nc-side { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-.nc-arch { width: 28px; height: 28px; border-radius: 7px; border: none; background: transparent; color: #94a3b8; cursor: pointer;
-    display: inline-flex; align-items: center; justify-content: center; transition: background .15s ease, color .15s ease; }
-.nc-arch:hover { background: #f1f5f9; color: #0f2a4a; }
-.nc-arch .material-symbols-outlined { font-size: 18px; }
-.nc-card.archived { opacity: .85; }
 
-.nc-list { display: flex; flex-direction: column; gap: 12px; }
-.nc-card { position: relative; display: flex; gap: 14px; background: #fff; border-radius: 12px; padding: 16px 18px;
-    border-left: 3px solid var(--nc-accent, #1e3a5f); box-shadow: 0 1px 6px rgba(15, 42, 74, .07); transition: box-shadow .15s ease; }
-.nc-card:hover { box-shadow: 0 4px 16px rgba(15, 42, 74, .10); }
-.nc-card.unread { cursor: pointer; }
-
-.nc-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    background: var(--nc-soft, #e8eef6); color: var(--nc-accent, #1e3a5f); }
-.nc-icon .material-symbols-outlined { font-size: 20px; font-variation-settings: 'FILL' 1; }
-
-/* accent colour per notification type */
-.nc-navy  { --nc-accent: #1e3a5f; --nc-soft: #e8eef6; }
-.nc-red   { --nc-accent: #dc2626; --nc-soft: #fee2e2; }
-.nc-blue  { --nc-accent: #2563eb; --nc-soft: #dbeafe; }
-.nc-amber { --nc-accent: #d97706; --nc-soft: #fef3c7; }
-.nc-green { --nc-accent: #16a34a; --nc-soft: #dcfce7; }
-.nc-gray  { --nc-accent: #64748b; --nc-soft: #f1f5f9; }
-
-.nc-body { flex: 1; min-width: 0; }
-.nc-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
-.nc-title { font-size: 14px; font-weight: 700; color: #0f172a; display: flex; align-items: center; gap: 8px; }
-.nc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--nc-accent, #1e3a5f); flex-shrink: 0; }
-.nc-time { font-size: 12px; color: #64748b; white-space: nowrap; }
-.nc-msg { font-size: 13px; line-height: 1.5; color: #4b5563; margin: 4px 0 0; }
-.nc-msg strong { color: #1e293b; }
-.nc-card.read .nc-title { color: #334155; }
-
-.nc-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.nc-tag { font-size: 10px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
-    background: #eef2f7; color: #1e3a5f; }
-.nc-tag.hot { background: #fff1e6; color: #ea580c; }
-
-.nc-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
-.nc-btn { display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600;
-    text-decoration: none; border: 1px solid transparent; font-family: inherit; cursor: pointer; transition: background .15s ease; }
-.nc-btn.primary { background: #1e3a5f; color: #fff; }
-.nc-btn.primary:hover { background: #14335c; }
-.nc-btn.outline { background: #fff; color: #1f2937; border-color: #d1d5db; font-weight: 400; }
-.nc-btn.outline:hover { background: #f8fafc; }
-.nc-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: #1e3a5f; text-decoration: none; }
-.nc-link:hover { text-decoration: underline; }
-.nc-link .material-symbols-outlined { font-size: 14px; }
-
-.nc-more { margin-top: 12px; border: 2px dashed #d5dde8; border-radius: 12px; padding: 18px 20px; text-align: center; }
-.nc-more button { background: none; border: none; font-size: 13.5px; font-weight: 700; color: #1e3a5f; cursor: pointer;
-    display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
-.nc-more button:hover { text-decoration: underline; }
-.nc-more span.nc-end { font-size: 13px; color: #64748b; display: inline-flex; align-items: center; gap: 8px; }
-.nc-more span.nc-end .material-symbols-outlined { font-size: 20px; color: #64748b; }
-
-.nc-empty { text-align: center; padding: 44px 20px; color: #94a3b8; background: #fff; border-radius: 14px; box-shadow: 0 1px 6px rgba(15, 42, 74, .07); }
-.nc-empty .material-symbols-outlined { font-size: 36px; color: #cbd5e1; display: block; margin-bottom: 10px; }
-.nc-empty div { font-size: 14px; font-weight: 600; color: #64748b; }
-
-@media (max-width: 640px) {
-    .nc-card { padding: 18px; gap: 14px; }
-    .nc-top { flex-direction: column; gap: 4px; }
-}
-</style>
 
 <main class="content">
 
