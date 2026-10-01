@@ -133,3 +133,55 @@
     font-size: 11px;
     font-style: italic;
 }
+
+
+/* ============================================
+   Moved from the <style> block in dashboard.php
+   ============================================ */
+
+/* Project status colours: Active = green, Rejected = red, On Hold = yellow
+   (kept here so the shared dashboard.css used by other modules is not changed) */
+.badge-status.inprogress { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+.badge-status.inprogress::before { content: '●'; font-size: 8px; }
+.badge-status.rejected { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+.badge-status.rejected::before { content: '●'; font-size: 8px; }
+.badge-status.completed { background: #f3f4f6; color: #6b7280; }
+.badge-status.completed::before { content: '●'; font-size: 8px; }
+.badge-status.hold { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
+.badge-status.hold::before { content: '●'; font-size: 8px; }
+
+/* Stat cards + Recent Project Posts/Team Progress + CTA banner
+   all share the same left/right edges (28px side gutter). */
+.org-main-row {
+    display: flex;
+    gap: 14px;
+    align-items: stretch;
+    flex-wrap: wrap;
+    padding: 0 28px;
+    margin-bottom: 16px;
+    box-sizing: border-box;
+}
+.org-main-row > .card { margin-bottom: 0; }
+.stats-grid { box-sizing: border-box; }
+
+@media (max-width: 1200px) {
+    .org-main-row { padding: 0 20px; }
+    .full-width-section { padding: 0 20px 16px; }
+}
+@media (max-width: 768px) {
+    .org-main-row { padding: 0 16px; }
+    .full-width-section { padding: 0 16px 16px; }
+}
+
+/* "Welcome back, <organization name>" – same style as the student dashboard */
+.dashboard-header .welcome-heading {
+    font-size: 30px;
+    font-weight: 800;
+    color: #0f2a4a;
+    letter-spacing: -0.01em;
+}
+.dashboard-header .welcome-sub {
+    font-size: 16px;
+    color: #1f2937;
+    margin-top: 2px;
+}
