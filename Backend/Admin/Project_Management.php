@@ -1,12 +1,16 @@
 <?php
 require_once __DIR__ . '/loader.php';
 
-$dashboardDB = new DashboardManagement($conn);
-$adminDB = $dashboardDB;
+// Object Initialization
+$projectManagement = new ProjectManagement($conn);
+$adminDB           = $projectManagement;
 
-// Get Cards details from projects table
-$totalProject     = $dashboardDB->getCount('projects');
-$activeProject    = $dashboardDB->getCountWhere('projects', 'status', 'inprogress') + $dashboardDB->getCountWhere('projects', 'status', 'Active');
-$reviewingProject = $dashboardDB->getCountWhere('projects', 'status', 'reviewing') + $dashboardDB->getCountWhere('projects', 'status', 'Rewiewing');
-$completeProject  = $dashboardDB->getCountWhere('projects', 'status', 'completed') + $dashboardDB->getCountWhere('projects', 'status', 'Complete');
-?>
+// Card Statistics
+$activeProjects    = $projectManagement->getActiveProjectCount();
+$totalProjects     = $projectManagement->getCount('projects');
+$reviewingProjects = $projectManagement->getCountWhere('Project','status','reviewing');
+$completedProjects = $projectManagement->getCountWhere('Project','status','completed');
+
+// Fetch Data for Projects Table and Filters
+$projectsList      = $projectManagement->getAllProjects();
+$categoriesList    = $projectManagement->getDistinctCategories();

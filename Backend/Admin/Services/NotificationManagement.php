@@ -61,4 +61,3 @@ class NotificationManagement extends AdminDB
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 }
-?>

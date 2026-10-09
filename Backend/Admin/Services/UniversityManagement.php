@@ -99,4 +99,3 @@ class UniversityManagement extends AdminDB
         return null;
     }
 }
-?>

@@ -253,4 +253,3 @@ class UserManagement extends AdminDB
         ];
     }
 }
-?>

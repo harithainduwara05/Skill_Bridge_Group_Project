@@ -20,6 +20,7 @@ function initProjectManagement() {
     const orgFilter = document.getElementById('pmOrgFilter');
     const tableBody = document.getElementById('pmTableBody');
     const paginationInfo = document.getElementById('pmPaginationInfo');
+    const paginationControls = document.getElementById('pmPaginationControls') || document.querySelector('.pm-pagination-controls');
     const addProjectBtn = document.getElementById('pmBtnAddProject');
     const addProjectModal = document.getElementById('pmAddModal');
     const addProjectForm = document.getElementById('pmAddProjectForm');
@@ -33,18 +34,29 @@ function initProjectManagement() {
     const toastMessage = document.getElementById('pmToastMessage');
 
     // --------------------------------------------------------------------------
-    // Filter & Search Engine
+    // Pagination State & Configuration (Strictly 5 items per section/page)
     // --------------------------------------------------------------------------
-    function applyFilters() {
+    const PAGE_SIZE = 5;
+    let currentPage = 1;
+    let matchedRows = [];
+
+    // --------------------------------------------------------------------------
+    // Filter & Search Engine with 5-Items-Per-Page Pagination
+    // --------------------------------------------------------------------------
+    function applyFilters(resetPage = true) {
         if (!tableBody) return;
+
+        if (resetPage) {
+            currentPage = 1;
+        }
 
         const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const selectedStatus = statusFilter ? statusFilter.value.toLowerCase() : 'all';
         const selectedType = typeFilter ? typeFilter.value.toLowerCase() : 'all';
         const selectedOrg = orgFilter ? orgFilter.value.toLowerCase() : 'all';
 
-        const rows = tableBody.querySelectorAll('tr.pm-data-row');
-        let visibleCount = 0;
+        const rows = Array.from(tableBody.querySelectorAll('tr.pm-data-row'));
+        matchedRows = [];
 
         rows.forEach(row => {
             const projectId = (row.getAttribute('data-id') || '').toLowerCase();
@@ -62,11 +74,19 @@ function initProjectManagement() {
                 projectOrg.includes(searchTerm) ||
                 projectSkills.includes(searchTerm);
 
-            // Match status (supports 'completed' and legacy 'close')
-            const matchesStatus = (selectedStatus === 'all') || 
-                (projectStatus === selectedStatus) ||
-                (selectedStatus === 'completed' && (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete')) ||
-                (selectedStatus === 'close' && (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete'));
+            // Match status (supports active, inprogress, hold, review, completed, close)
+            let matchesStatus = (selectedStatus === 'all');
+            if (!matchesStatus) {
+                if (selectedStatus === 'active') {
+                    matchesStatus = (projectStatus === 'active' || projectStatus === 'inprogress');
+                } else if (selectedStatus === 'completed' || selectedStatus === 'close') {
+                    matchesStatus = (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete');
+                } else if (selectedStatus === 'review' || selectedStatus === 'reviewing') {
+                    matchesStatus = (projectStatus === 'review' || projectStatus === 'reviewing' || projectStatus === 'rewiewing');
+                } else {
+                    matchesStatus = (projectStatus === selectedStatus);
+                }
+            }
 
             // Match type/category
             const matchesType = (selectedType === 'all') || (projectCategory.includes(selectedType));
@@ -75,21 +95,118 @@ function initProjectManagement() {
             const matchesOrg = (selectedOrg === 'all') || (projectOrg.includes(selectedOrg));
 
             if (matchesSearch && matchesStatus && matchesType && matchesOrg) {
-                row.style.display = '';
-                visibleCount++;
-            } else {
-                row.style.display = 'none';
+                matchedRows.push(row);
             }
         });
 
+        renderPagination();
+    }
+
+    function renderPagination() {
+        if (!tableBody) return;
+
+        const totalCount = matchedRows.length;
+        const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+        if (currentPage < 1) {
+            currentPage = 1;
+        }
+
+        // Hide all rows first
+        const allRows = tableBody.querySelectorAll('tr.pm-data-row');
+        allRows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        // Display only rows for the current page (strictly 5 items max)
+        const startIndex = (currentPage - 1) * PAGE_SIZE;
+        const endIndex = Math.min(startIndex + PAGE_SIZE, totalCount);
+
+        for (let i = startIndex; i < endIndex; i++) {
+            if (matchedRows[i]) {
+                matchedRows[i].style.display = '';
+            }
+        }
+
         // Update pagination summary label
         if (paginationInfo) {
-            paginationInfo.textContent = `Showing 1 to ${visibleCount} of ${rows.length} results`;
+            if (totalCount === 0) {
+                paginationInfo.textContent = 'Showing 0 of 0 results';
+            } else {
+                paginationInfo.textContent = `Showing ${startIndex + 1} to ${endIndex} of ${totalCount} results`;
+            }
+        }
+
+        // Render dynamic pagination buttons
+        if (paginationControls) {
+            let controlsHtml = '';
+
+            // Previous Button
+            controlsHtml += `<button type="button" class="pm-page-btn" id="pmPagePrev" ${currentPage === 1 ? 'disabled' : ''}>Previous</button>`;
+
+            // Page numbers
+            if (totalPages <= 7) {
+                for (let p = 1; p <= totalPages; p++) {
+                    controlsHtml += `<button type="button" class="pm-page-btn pm-page-number ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+                }
+            } else {
+                controlsHtml += `<button type="button" class="pm-page-btn pm-page-number ${1 === currentPage ? 'active' : ''}" data-page="1">1</button>`;
+                if (currentPage > 3) {
+                    controlsHtml += `<span class="pm-page-ellipsis" style="color: #94a3b8; padding: 0 4px;">...</span>`;
+                }
+
+                const startP = Math.max(2, currentPage - 1);
+                const endP = Math.min(totalPages - 1, currentPage + 1);
+                for (let p = startP; p <= endP; p++) {
+                    controlsHtml += `<button type="button" class="pm-page-btn pm-page-number ${p === currentPage ? 'active' : ''}" data-page="${p}">${p}</button>`;
+                }
+
+                if (currentPage < totalPages - 2) {
+                    controlsHtml += `<span class="pm-page-ellipsis" style="color: #94a3b8; padding: 0 4px;">...</span>`;
+                }
+                controlsHtml += `<button type="button" class="pm-page-btn pm-page-number ${totalPages === currentPage ? 'active' : ''}" data-page="${totalPages}">${totalPages}</button>`;
+            }
+
+            // Next Button
+            controlsHtml += `<button type="button" class="pm-page-btn" id="pmPageNext" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>`;
+
+            paginationControls.innerHTML = controlsHtml;
+
+            // Attach click listeners to controls
+            const prevBtn = document.getElementById('pmPagePrev');
+            if (prevBtn && currentPage > 1) {
+                prevBtn.addEventListener('click', () => {
+                    currentPage--;
+                    renderPagination();
+                });
+            }
+
+            const nextBtn = document.getElementById('pmPageNext');
+            if (nextBtn && currentPage < totalPages) {
+                nextBtn.addEventListener('click', () => {
+                    currentPage++;
+                    renderPagination();
+                });
+            }
+
+            const pageButtons = paginationControls.querySelectorAll('.pm-page-number');
+            pageButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const targetPage = parseInt(btn.getAttribute('data-page'), 10);
+                    if (!isNaN(targetPage) && targetPage !== currentPage) {
+                        currentPage = targetPage;
+                        renderPagination();
+                    }
+                });
+            });
         }
 
         // Toggle empty state row if no results
         let emptyRow = document.getElementById('pmEmptyStateRow');
-        if (visibleCount === 0) {
+        if (totalCount === 0) {
             if (!emptyRow) {
                 emptyRow = document.createElement('tr');
                 emptyRow.id = 'pmEmptyStateRow';
@@ -111,16 +228,16 @@ function initProjectManagement() {
 
     // Attach search and filter event listeners
     if (searchInput) {
-        searchInput.addEventListener('input', applyFilters);
+        searchInput.addEventListener('input', () => applyFilters(true));
     }
     if (statusFilter) {
-        statusFilter.addEventListener('change', applyFilters);
+        statusFilter.addEventListener('change', () => applyFilters(true));
     }
     if (typeFilter) {
-        typeFilter.addEventListener('change', applyFilters);
+        typeFilter.addEventListener('change', () => applyFilters(true));
     }
     if (orgFilter) {
-        orgFilter.addEventListener('change', applyFilters);
+        orgFilter.addEventListener('change', () => applyFilters(true));
     }
 
     // --------------------------------------------------------------------------
@@ -931,16 +1048,9 @@ function initProjectManagement() {
     }
 
     // --------------------------------------------------------------------------
-    // Pagination Interaction
+    // Initial Page Load - Initialize Real 5-per-page Pagination
     // --------------------------------------------------------------------------
-    const pageButtons = document.querySelectorAll('.pm-page-number');
-    pageButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            pageButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            showToast(`Navigated to page ${btn.textContent.trim()}`);
-        });
-    });
+    applyFilters(true);
 
     // Utility string escaper
     function escapeHtml(text) {

@@ -1,9 +1,6 @@
 <?php
 
-include "../../Config/db.php";
 require_once "../../Session/Session.php";
-require_once "../../Backend/Admin/Project_Management.php";
-
 require_login();
 require_role('admin');
 $user = current_user();
@@ -44,7 +41,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Total Projects</div>
-                    <div class="pm-stat-value"><?php echo $totalProject  ?></div>
+                    <div class="pm-stat-value"><?php echo $totalProjects  ?></div>
                 </div>
             </div>
 
@@ -60,7 +57,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Active Projects</div>
-                    <div class="pm-stat-value"><?php echo $activeProject; ?></div>
+                    <div class="pm-stat-value"><?php echo $activeProjects; ?></div>
                 </div>
             </div>
 
@@ -76,7 +73,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Reviewing</div>
-                    <div class="pm-stat-value"><?php echo $reviewingProject ?></div>
+                    <div class="pm-stat-value"><?php echo $reviewingProjects ?></div>
                 </div>
             </div>
 
@@ -92,7 +89,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Completed Projects</div>
-                    <div class="pm-stat-value"><?php echo $completeProject ?></div>
+                    <div class="pm-stat-value"><?php echo $completedProjects ?></div>
                 </div>
             </div>
 
@@ -126,12 +123,18 @@ include "../../Includes/dash_header.php";
                     <div class="pm-select-wrap">
                         <select id="pmTypeFilter" class="pm-select" aria-label="Filter by Project Type">
                             <option value="all">Project Type</option>
-                            <option value="education">Education Technology</option>
-                            <option value="health">HealthTech</option>
-                            <option value="fintech">FinTech</option>
-                            <option value="logistics">Logistics & AI</option>
-                            <option value="iot">IoT & Sensors</option>
-                            <option value="cybersecurity">Cybersecurity</option>
+                            <?php if (!empty($categoriesList)): ?>
+                                <?php foreach ($categoriesList as $cat): ?>
+                                    <option value="<?= htmlspecialchars(strtolower($cat)) ?>"><?= htmlspecialchars($cat) ?></option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="education">Education Technology</option>
+                                <option value="health">HealthTech</option>
+                                <option value="fintech">FinTech</option>
+                                <option value="logistics">Logistics & AI</option>
+                                <option value="iot">IoT & Sensors</option>
+                                <option value="cybersecurity">Cybersecurity</option>
+                            <?php endif; ?>
                         </select>
                         <span class="material-symbols-outlined select-chevron">expand_more</span>
                     </div>
@@ -158,246 +161,128 @@ include "../../Includes/dash_header.php";
                     </thead>
                     <tbody id="pmTableBody">
                         
-                        <!-- Row 1: AI-Based Learning Platform (Active) -->
-                        <tr class="pm-data-row" 
-                            data-id="#PR001" 
-                            data-title="AI-Based Learning Platform" 
-                            data-category="Education Technology" 
-                            data-org="UCSC" 
-                            data-status="Active" 
-                            data-skills="Python ML React">
-                            <td class="pm-project-id">#PR001</td>
-                            <td>
-                                <div class="pm-project-meta">
-                                    <span class="pm-title-main">AI-Based Learning Platform</span>
-                                    <span class="pm-title-category">Education Technology</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-org-wrapper">
-                                    <span class="pm-org-avatar org-ucsc">U</span>
-                                    <span class="pm-org-name">UCSC</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-skills-list">
-                                    <span class="pm-skill-pill">Python</span>
-                                    <span class="pm-skill-pill">ML</span>
-                                    <span class="pm-skill-pill">React</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-team-count">
-                                    <span class="material-symbols-outlined">group</span>
-                                    <span>4 Members</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="pm-status-pill status-active">Active</span>
-                            </td>
-                            <td class="pm-created-date">12 June 2026</td>
-                            <td class="pm-actions-cell">
-                                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR001')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('#PR001')">
-                                    <span class="material-symbols-outlined">pause_circle</span>
-                                </button>
-                            </td>
-                        </tr>
+                        <?php if (!empty($projectsList)): ?>
+                            <?php foreach ($projectsList as $proj): 
+                                $idNum = (int)$proj['id'];
+                                $projId = '#PR' . str_pad($idNum, 3, '0', STR_PAD_LEFT);
+                                $title = htmlspecialchars($proj['title'] ?? 'Untitled Project');
+                                $category = htmlspecialchars($proj['category'] ?? 'General');
+                                $org = htmlspecialchars($proj['company'] ?? 'N/A');
+                                
+                                $rawStatus = trim($proj['status'] ?? 'Active');
+                                $sLower = strtolower($rawStatus);
+                                if (in_array($sLower, ['inprogress', 'active'])) {
+                                    $status = 'Active';
+                                } elseif (in_array($sLower, ['completed', 'complete', 'close'])) {
+                                    $status = 'Completed';
+                                } elseif (in_array($sLower, ['reviewing', 'review', 'rewiewing'])) {
+                                    $status = 'Review';
+                                } elseif ($sLower === 'hold') {
+                                    $status = 'Hold';
+                                } elseif ($sLower === 'rejected') {
+                                    $status = 'Rejected';
+                                } else {
+                                    $status = ucfirst($sLower);
+                                }
 
-                        <!-- Row 2: Healthcare Management System (On Hold with Grace Period) -->
-                        <tr class="pm-data-row" 
-                            data-id="#PR002" 
-                            data-title="Healthcare Management System" 
-                            data-category="HealthTech" 
-                            data-org="ABC Institute" 
-                            data-status="Hold" 
-                            data-hold-reason="Complaint regarding student eligibility and milestone discrepancy. Awaiting formal explanation."
-                            data-hold-days="5"
-                            data-team-response="We have revised the system architecture diagram (v2.1) and clarified student roles in accordance with university guidelines. Please review the updated milestones."
-                            data-skills="PHP MySQL">
-                            <td class="pm-project-id">#PR002</td>
-                            <td>
-                                <div class="pm-project-meta">
-                                    <span class="pm-title-main">Healthcare Management System</span>
-                                    <span class="pm-title-category">HealthTech</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-org-wrapper">
-                                    <span class="pm-org-avatar org-abc">A</span>
-                                    <span class="pm-org-name">ABC Institute</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-skills-list">
-                                    <span class="pm-skill-pill">PHP</span>
-                                    <span class="pm-skill-pill">MySQL</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-team-count">
-                                    <span class="material-symbols-outlined">group</span>
-                                    <span>5 Members</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="pm-status-pill status-hold" title="On Hold: 5 days left in grace period">
-                                    <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (5d left)
-                                </span>
-                            </td>
-                            <td class="pm-created-date">18 June 2026</td>
-                            <td class="pm-actions-cell">
-                                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR002')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="pm-btn-icon pm-btn-icon-reactivate" title="Review Hold & Decide Status" onclick="openReviewHoldModal('#PR002')">
-                                    <span class="material-symbols-outlined">check_circle</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 3: Mobile Banking Application (Completed) -->
-                        <tr class="pm-data-row" 
-                            data-id="#PR003" 
-                            data-title="Mobile Banking Application" 
-                            data-category="FinTech" 
-                            data-org="Tech Solutions" 
-                            data-status="Completed" 
-                            data-skills="Flutter Firebase">
-                            <td class="pm-project-id">#PR003</td>
-                            <td>
-                                <div class="pm-project-meta">
-                                    <span class="pm-title-main">Mobile Banking Application</span>
-                                    <span class="pm-title-category">FinTech</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-org-wrapper">
-                                    <span class="pm-org-avatar org-tech">T</span>
-                                    <span class="pm-org-name">Tech Solutions</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-skills-list">
-                                    <span class="pm-skill-pill">Flutter</span>
-                                    <span class="pm-skill-pill">Firebase</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-team-count">
-                                    <span class="material-symbols-outlined">group</span>
-                                    <span>3 Members</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="pm-status-pill status-completed">Completed</span>
-                            </td>
-                            <td class="pm-created-date">25 June 2026</td>
-                            <td class="pm-actions-cell">
-                                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR003')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 4: Smart Logistics Engine (Active) -->
-                        <tr class="pm-data-row" 
-                            data-id="#PR004" 
-                            data-title="Smart Logistics Engine" 
-                            data-category="Logistics & AI" 
-                            data-org="ABC Institute" 
-                            data-status="Active" 
-                            data-skills="Java SpringBoot Docker">
-                            <td class="pm-project-id">#PR004</td>
-                            <td>
-                                <div class="pm-project-meta">
-                                    <span class="pm-title-main">Smart Logistics Tracking Engine</span>
-                                    <span class="pm-title-category">Logistics & AI</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-org-wrapper">
-                                    <span class="pm-org-avatar org-abc">A</span>
-                                    <span class="pm-org-name">ABC Institute</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-skills-list">
-                                    <span class="pm-skill-pill">Java</span>
-                                    <span class="pm-skill-pill">SpringBoot</span>
-                                    <span class="pm-skill-pill">Docker</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-team-count">
-                                    <span class="material-symbols-outlined">group</span>
-                                    <span>5 Members</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="pm-status-pill status-active">Active</span>
-                            </td>
-                            <td class="pm-created-date">02 July 2026</td>
-                            <td class="pm-actions-cell">
-                                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR004')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('#PR004')">
-                                    <span class="material-symbols-outlined">pause_circle</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 5: IoT Soil & Crop Quality Monitor (Permanently Rejected) -->
-                        <tr class="pm-data-row" 
-                            data-id="#PR005" 
-                            data-title="IoT Soil & Crop Quality Monitor" 
-                            data-category="IoT & Sensors" 
-                            data-org="SLIIT" 
-                            data-status="Rejected" 
-                            data-reject-reason="Failure to provide intellectual property clearance after the 7-day hold grace period expired."
-                            data-skills="Python Arduino MQTT">
-                            <td class="pm-project-id">#PR005</td>
-                            <td>
-                                <div class="pm-project-meta">
-                                    <span class="pm-title-main">IoT Soil & Crop Quality Monitor</span>
-                                    <span class="pm-title-category">IoT & Sensors</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-org-wrapper">
-                                    <span class="pm-org-avatar org-sliit">S</span>
-                                    <span class="pm-org-name">SLIIT</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-skills-list">
-                                    <span class="pm-skill-pill">Python</span>
-                                    <span class="pm-skill-pill">Arduino</span>
-                                    <span class="pm-skill-pill">MQTT</span>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="pm-team-count">
-                                    <span class="material-symbols-outlined">group</span>
-                                    <span>3 Members</span>
-                                </div>
-                            </td>
-                            <td>
-                                <span class="pm-status-pill status-rejected">Rejected</span>
-                            </td>
-                            <td class="pm-created-date">10 July 2026</td>
-                            <td class="pm-actions-cell">
-                                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('#PR005')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button class="pm-btn-icon" title="Permanently Rejected (Cannot be reactivated)" disabled style="color: #cbd5e1; cursor: not-allowed;">
-                                    <span class="material-symbols-outlined">lock</span>
-                                </button>
-                            </td>
-                        </tr>
+                                $skillsStr = trim($proj['tech_stack'] ?? '');
+                                $skillsArr = !empty($skillsStr) ? array_filter(array_map('trim', explode(',', $skillsStr))) : ['General'];
+                                $skillsAttr = htmlspecialchars(implode(' ', $skillsArr));
+                                $members = (int)($proj['members'] ?? 1);
+                                $createdDate = !empty($proj['posted_at']) ? date('d F Y', strtotime($proj['posted_at'])) : date('d F Y');
+                                
+                                $holdReason = htmlspecialchars($proj['hold_reason'] ?? '');
+                                $holdResponse = htmlspecialchars($proj['hold_response'] ?? '');
+                                $orgInitial = !empty($org) ? strtoupper(substr($org, 0, 1)) : 'U';
+                                
+                                $orgLower = strtolower($org);
+                                $orgClass = 'org-default';
+                                if (strpos($orgLower, 'ucsc') !== false) {
+                                    $orgClass = 'org-ucsc';
+                                } elseif (strpos($orgLower, 'abc') !== false) {
+                                    $orgClass = 'org-abc';
+                                } elseif (strpos($orgLower, 'tech') !== false) {
+                                    $orgClass = 'org-tech';
+                                } elseif (strpos($orgLower, 'sliit') !== false) {
+                                    $orgClass = 'org-sliit';
+                                }
+                            ?>
+                            <tr class="pm-data-row" 
+                                data-id="<?= $projId ?>" 
+                                data-title="<?= $title ?>" 
+                                data-category="<?= $category ?>" 
+                                data-org="<?= $org ?>" 
+                                data-status="<?= $status ?>" 
+                                data-skills="<?= $skillsAttr ?>"
+                                data-hold-reason="<?= $holdReason ?>"
+                                data-hold-days="5"
+                                data-team-response="<?= $holdResponse ?>"
+                                data-reject-reason="">
+                                <td class="pm-project-id"><?= $projId ?></td>
+                                <td>
+                                    <div class="pm-project-meta">
+                                        <span class="pm-title-main"><?= $title ?></span>
+                                        <span class="pm-title-category"><?= $category ?></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="pm-org-wrapper">
+                                        <span class="pm-org-avatar <?= $orgClass ?>"><?= $orgInitial ?></span>
+                                        <span class="pm-org-name"><?= $org ?></span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="pm-skills-list">
+                                        <?php foreach (array_slice($skillsArr, 0, 3) as $sk): ?>
+                                            <span class="pm-skill-pill"><?= htmlspecialchars($sk) ?></span>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="pm-team-count">
+                                        <span class="material-symbols-outlined">group</span>
+                                        <span><?= $members ?> Members</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php if ($status === 'Active'): ?>
+                                        <span class="pm-status-pill status-active">Active</span>
+                                    <?php elseif ($status === 'Hold'): ?>
+                                        <span class="pm-status-pill status-hold" title="On Hold: 5 days left in grace period">
+                                            <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (5d left)
+                                        </span>
+                                    <?php elseif ($status === 'Completed'): ?>
+                                        <span class="pm-status-pill status-completed">Completed</span>
+                                    <?php elseif ($status === 'Review'): ?>
+                                        <span class="pm-status-pill status-review">Review</span>
+                                    <?php elseif ($status === 'Rejected'): ?>
+                                        <span class="pm-status-pill status-rejected">Rejected</span>
+                                    <?php else: ?>
+                                        <span class="pm-status-pill status-active"><?= htmlspecialchars($status) ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="pm-created-date"><?= $createdDate ?></td>
+                                <td class="pm-actions-cell">
+                                    <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('<?= $projId ?>')">
+                                        <span class="material-symbols-outlined">visibility</span>
+                                    </button>
+                                    <?php if ($status === 'Active' || $status === 'Review'): ?>
+                                        <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('<?= $projId ?>')">
+                                            <span class="material-symbols-outlined">pause_circle</span>
+                                        </button>
+                                    <?php elseif ($status === 'Hold'): ?>
+                                        <button class="pm-btn-icon pm-btn-icon-reactivate" title="Review Hold & Decide Status" onclick="openReviewHoldModal('<?= $projId ?>')">
+                                            <span class="material-symbols-outlined">check_circle</span>
+                                        </button>
+                                    <?php elseif ($status === 'Rejected'): ?>
+                                        <button class="pm-btn-icon" title="Permanently Rejected (Cannot be reactivated)" disabled style="color: #cbd5e1; cursor: not-allowed;">
+                                            <span class="material-symbols-outlined">lock</span>
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
 
                     </tbody>
                 </table>
@@ -406,16 +291,10 @@ include "../../Includes/dash_header.php";
             <!--  Pagination & Table Footer-->
             <div class="pm-pagination-bar">
                 <div class="pm-pagination-info" id="pmPaginationInfo">
-                    Showing 1 to 3 of 2,105 results
+                    Showing 1 to <?= min(5, count($projectsList ?? [])) ?> of <?= count($projectsList ?? []) ?> results
                 </div>
-                <div class="pm-pagination-controls">
-                    <button type="button" class="pm-page-btn" id="pmPagePrev">Previous</button>
-                    <button type="button" class="pm-page-btn pm-page-number active">1</button>
-                    <button type="button" class="pm-page-btn pm-page-number">2</button>
-                    <button type="button" class="pm-page-btn pm-page-number">3</button>
-                    <span class="pm-page-ellipsis">...</span>
-                    <button type="button" class="pm-page-btn pm-page-number">24</button>
-                    <button type="button" class="pm-page-btn" id="pmPageNext">Next</button>
+                <div class="pm-pagination-controls" id="pmPaginationControls">
+                    <!-- Populated dynamically by project_management.js (5 items per page) -->
                 </div>
             </div>
 

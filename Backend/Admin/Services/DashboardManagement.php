@@ -23,4 +23,3 @@ class DashboardManagement extends AdminDB
         return $this->runCount("SELECT COUNT(*) FROM student_projects WHERE status = 'Active'");
     }
 }
-?>

@@ -16,6 +16,7 @@ require_once __DIR__ . '/Services/UniversityManagement.php';
 require_once __DIR__ . '/Services/UserManagement.php';
 require_once __DIR__ . '/Services/AdminProfileManagement.php';
 require_once __DIR__ . '/Services/NotificationManagement.php';
+require_once __DIR__ . '/Services/ProjectManagement.php';
 
 // Global base instance initialization if $conn is available
 if (isset($conn) && (!isset($adminDB) || !($adminDB instanceof AdminDB))) {

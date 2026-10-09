@@ -1,8 +1,4 @@
 <?php
-/**
- * SkillBridge - Complaint Management Backend Controller
- * Handles status/resolution updates, AJAX dispatch, complaints aggregation, and pagination stats
- */
 
 require_once __DIR__ . '/loader.php';
 
