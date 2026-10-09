@@ -1,8 +1,4 @@
 <?php
-/**
- * SkillBridge - Admin User Credentials Email Dispatcher
- * Pure PHP SMTP socket-based email sender (No external libraries/APIs used)
- */
 
 require_once __DIR__ . '/../../Config/env_loader.php';
 

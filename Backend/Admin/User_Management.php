@@ -1,16 +1,10 @@
 <?php
-/**
- * SkillBridge - User Management Backend Controller
- * Handles user CRUD, bulk upload, activation email dispatch, filters, and pagination
- */
-
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+require_once __DIR__ . '/loader.php';
 require_once __DIR__ . '/sendUserEmail.php';
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
+$userDB = new UserManagement($conn);
+$uniDB  = new UniversityManagement($conn);
+$adminDB = $userDB;
 
 // Download Sample CSV for Bulk Student Import (Must run before any HTML output)
 if (isset($_GET['action']) && $_GET['action'] === 'download_sample_csv') {
@@ -32,7 +26,7 @@ $flash = null;
 // Fetch Universities and Faculties from database (universityemails)
 $dbUniversities = [];
 $activeInstitutions = []; // University => [ Faculty => domain, ... ]
-$uniRows = $adminDB->getUniversityFacultiesList();
+$uniRows = $uniDB->getUniversityFacultiesList();
 
 foreach ($uniRows as $row) {
     $uName = trim($row['University'] ?? '');
@@ -56,44 +50,37 @@ foreach ($uniRows as $row) {
     }
 }
 
-// HANDLE POST ACTIONS
+// HANDLE USER ACTIONS (Add, Edit, Delete, Toggle Status, Bulk Upload)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // 1. ADD NEW USER (Passwordless Zero-Knowledge Flow)
+    // 1. ADD USER
     if ($action === 'add') {
-        $name     = trim($_POST['name'] ?? '');
-        $email    = trim($_POST['email'] ?? '');
-        $role     = trim($_POST['role'] ?? 'student');
-        $status   = trim($_POST['status'] ?? 'Active');
-        $orgName  = trim($_POST['organization_name'] ?? '');
-        $contact  = trim($_POST['contact_number'] ?? '');
-        $degree   = trim($_POST['degree'] ?? '');
-        $year     = trim($_POST['academic_year'] ?? '');
+        $name          = trim($_POST['name'] ?? '');
+        $email         = trim($_POST['email'] ?? '');
+        $role          = trim($_POST['role'] ?? '');
+        $status        = trim($_POST['status'] ?? 'Active');
+        $orgName       = trim($_POST['organization_name'] ?? '');
+        $contact       = trim($_POST['contact_number'] ?? '');
+        $degree        = trim($_POST['degree'] ?? '');
+        $year          = trim($_POST['year'] ?? '');
 
-        // For Student, determine University and Faculty from combobox inputs
-        if ($role === 'student') {
-            $uniVal = trim($_POST['university_name'] ?? '');
-            $facVal = trim($_POST['faculty_name'] ?? '');
-
-            if (!empty($facVal)) {
-                $orgName = !empty($uniVal) ? ($uniVal . ' - ' . $facVal) : $facVal;
-            } else {
-                $orgName = $uniVal;
-            }
+        // If organization or company selected, fallback name appropriately
+        if (($role === 'company' || $role === 'organization') && empty($orgName)) {
+            $orgName = $name;
         }
 
         if (empty($name) || empty($email) || empty($role)) {
             $flash = ['type' => 'error', 'message' => 'Name, Email, and Role are required fields.'];
         } elseif ($role === 'student' && empty($orgName)) {
             $flash = ['type' => 'error', 'message' => 'Please select or enter a University for the student.'];
-        } elseif ($adminDB->userExists($email)) {
+        } elseif ($userDB->userExists($email)) {
             $flash = ['type' => 'error', 'message' => 'A user with this email address already exists!'];
         } else {
             try {
                 // Generate a secure unactivated placeholder hash so no one can log in until activated
                 $unactivatedPassword = bin2hex(random_bytes(16));
-                $ok = $adminDB->addUser($email, $unactivatedPassword, $role, $name, $status, $orgName, $contact, $degree, $year);
+                $ok = $userDB->addUser($email, $unactivatedPassword, $role, $name, $status, $orgName, $contact, $degree, $year);
                 if ($ok) {
                     $emailMsg = '';
                     try {
@@ -129,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($ext !== 'csv') {
                 $flash = ['type' => 'error', 'message' => 'Only CSV files (.csv) are allowed.'];
             } else {
-                $targetDomain = $adminDB->getAuthorizedDomain($selectedUni, $selectedFac);
+                $targetDomain = $uniDB->getAuthorizedDomain($selectedUni, $selectedFac);
 
                 if (!$targetDomain) {
                     $flash = ['type' => 'error', 'message' => "The selected faculty '{$selectedFac}' under '{$selectedUni}' is not currently active in the system."];
@@ -144,41 +131,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             rewind($handle);
                         }
 
+                        // Read header row
                         $headers = fgetcsv($handle);
-                        if (!$headers) {
+                        if ($headers === false) {
                             $flash = ['type' => 'error', 'message' => 'The uploaded CSV file is empty.'];
+                            fclose($handle);
                         } else {
-                            // Map headers case-insensitively
-                            $colMap = [];
-                            foreach ($headers as $idx => $h) {
-                                $cleanH = strtolower(trim($h));
-                                $cleanH = str_replace([' ', '_', '-'], '', $cleanH);
-                                if (strpos($cleanH, 'name') !== false && !isset($colMap['name'])) $colMap['name'] = $idx;
-                                elseif (strpos($cleanH, 'email') !== false && !isset($colMap['email'])) $colMap['email'] = $idx;
-                                elseif (strpos($cleanH, 'deg') !== false && !isset($colMap['degree'])) $colMap['degree'] = $idx;
-                                elseif (strpos($cleanH, 'year') !== false && !isset($colMap['year'])) $colMap['year'] = $idx;
+                            // Normalize header names to lowercase trimmed
+                            $normHeaders = array_map(function($h) {
+                                return strtolower(trim($h));
+                            }, $headers);
+
+                            $nameIdx   = array_search('name', $normHeaders);
+                            $emailIdx  = array_search('email', $normHeaders);
+                            $degreeIdx = array_search('degree', $normHeaders);
+                            $yearIdx   = array_search('academic_year', $normHeaders);
+                            if ($yearIdx === false) {
+                                $yearIdx = array_search('year', $normHeaders);
                             }
 
-                            if (!isset($colMap['email']) || !isset($colMap['name'])) {
-                                $flash = ['type' => 'error', 'message' => 'CSV must contain at least "Name" and "Email" columns.'];
+                            if ($nameIdx === false || $emailIdx === false) {
+                                $flash = ['type' => 'error', 'message' => 'Invalid CSV format: Required columns "Name" and "Email" were not found in the header row.'];
+                                fclose($handle);
                             } else {
                                 $importedCount = 0;
-                                $skippedCount  = 0;
-                                $invalidCount  = 0;
+                                $skippedCount = 0;
                                 $domainMismatchCount = 0;
+                                $invalidCount = 0;
                                 $finalOrg = $selectedUni . ' - ' . $selectedFac;
 
                                 while (($row = fgetcsv($handle)) !== false) {
-                                    if (empty(array_filter($row))) continue;
+                                    // Skip completely blank rows
+                                    if (empty(array_filter($row))) {
+                                        continue;
+                                    }
 
-                                    $stuName = trim($row[$colMap['name']] ?? '');
-                                    $stuEmail = trim($row[$colMap['email']] ?? '');
-                                    $stuDeg  = isset($colMap['degree']) ? trim($row[$colMap['degree']] ?? '') : 'General';
-                                    if (empty($stuDeg)) $stuDeg = 'General';
-                                    $stuYear = isset($colMap['year']) ? trim($row[$colMap['year']] ?? '') : date('Y');
+                                    $stuName  = trim($row[$nameIdx] ?? '');
+                                    $stuEmail = trim($row[$emailIdx] ?? '');
+                                    $stuDeg   = ($degreeIdx !== false && isset($row[$degreeIdx])) ? trim($row[$degreeIdx]) : 'General';
+                                    $stuYear  = ($yearIdx !== false && isset($row[$yearIdx])) ? trim($row[$yearIdx]) : date('Y');
+
+                                    if (empty($stuDeg))  $stuDeg  = 'General';
                                     if (empty($stuYear)) $stuYear = date('Y');
 
-                                    if (!filter_var($stuEmail, FILTER_VALIDATE_EMAIL) || empty($stuName)) {
+                                    // Basic validation
+                                    if (empty($stuName) || empty($stuEmail) || !filter_var($stuEmail, FILTER_VALIDATE_EMAIL)) {
                                         $invalidCount++;
                                         continue;
                                     }
@@ -193,7 +190,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         continue;
                                     }
 
-                                    if ($adminDB->userExists($stuEmail)) {
+                                    if ($userDB->userExists($stuEmail)) {
                                         $skippedCount++;
                                         continue;
                                     }
@@ -202,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     $unactivatedPassword = bin2hex(random_bytes(16));
 
                                     // Direct database insert (no bulk email dispatch)
-                                    $ok = $adminDB->addUser($stuEmail, $unactivatedPassword, 'student', $stuName, 'Active', $finalOrg, '', $stuDeg, $stuYear);
+                                    $ok = $userDB->addUser($stuEmail, $unactivatedPassword, 'student', $stuName, 'Active', $finalOrg, '', $stuDeg, $stuYear);
                                     if ($ok) {
                                         $importedCount++;
                                     }
@@ -244,7 +241,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $status = 'Active';
             }
             try {
-                $adminDB->updateUser($email, $name, $role, $status, $orgName, $contact);
+                $userDB->updateUser($email, $name, $role, $status, $orgName, $contact);
                 $flash = ['type' => 'success', 'message' => 'User updated successfully!'];
             } catch (Exception $e) {
                 $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -260,7 +257,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $flash = ['type' => 'error', 'message' => 'You cannot deactivate your own admin account!'];
         } elseif (!empty($email)) {
             try {
-                $adminDB->updateUserStatus($email, $newStatus);
+                $userDB->updateUserStatus($email, $newStatus);
                 $flash = ['type' => 'success', 'message' => 'User status updated to ' . htmlspecialchars($newStatus) . '!'];
             } catch (Exception $e) {
                 $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -275,7 +272,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $flash = ['type' => 'error', 'message' => 'You cannot delete your own admin account!'];
         } elseif (!empty($emailToDelete)) {
             try {
-                $adminDB->deleteUser($emailToDelete);
+                $userDB->deleteUser($emailToDelete);
                 $flash = ['type' => 'success', 'message' => 'User account and data deleted successfully!'];
             } catch (Exception $e) {
                 $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -285,21 +282,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // FILTERS, STATS & PAGINATION
-$stats = $adminDB->getUserManagementStats();
+$stats = $userDB->getUserManagementStats();
 
 $selectedRole   = $_GET['role'] ?? 'all';
 $selectedStatus = $_GET['status'] ?? 'all';
 $searchQuery    = trim($_GET['search'] ?? '');
 
-$allFilteredUsers = $adminDB->getAllUsersDetailed($selectedRole, $selectedStatus, $searchQuery);
+$allFilteredUsers = $userDB->getAllUsersDetailed($selectedRole, $selectedStatus, $searchQuery);
 $totalRecords = count($allFilteredUsers);
 
 // Pagination (Only 5 users per page)
 $perPage = 5;
 $currentPageNum = max(1, intval($_GET['page'] ?? 1));
 $totalPages = ceil($totalRecords / $perPage);
-if ($currentPageNum > $totalPages && $totalPages > 0) {
-    $currentPageNum = $totalPages;
-}
 $offset = ($currentPageNum - 1) * $perPage;
 $usersList = array_slice($allFilteredUsers, $offset, $perPage);
+$paginatedUsers = $usersList;
+?>

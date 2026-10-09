@@ -4,12 +4,10 @@
  * Handles status/resolution updates, AJAX dispatch, complaints aggregation, and pagination stats
  */
 
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+require_once __DIR__ . '/loader.php';
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
+$complaintDB = new ComplaintManagement($conn);
+$adminDB = $complaintDB; // Reference alias for child class
 
 // Handle AJAX Status & Resolution Updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'update_complaint_status') {
@@ -29,9 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
         exit();
     }
 
-    $updated = $adminDB->updateComplaintStatus($complaintId, $newStatus, $notes);
+    $updated = $complaintDB->updateComplaintStatus($complaintId, $newStatus, $notes);
     if ($updated) {
-        $stats = $adminDB->getComplaintStats();
+        $stats = $complaintDB->getComplaintStats();
         echo json_encode(['success' => true, 'message' => 'Status updated successfully', 'stats' => $stats]);
     } else {
         echo json_encode(['success' => false, 'message' => 'Failed to update database record']);
@@ -40,10 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_P
 }
 
 // Fetch Complaint Statistics and All Complaint Records
-$stats = $adminDB->getComplaintStats();
-$complaints = $adminDB->getAllComplaintsDetailed();
+$stats = $complaintDB->getComplaintStats();
+$complaints = $complaintDB->getAllComplaintsDetailed();
 
 // Pagination setup
 $pageSize = 6;
 $totalComplaintsCount = count($complaints);
 $totalPages = max(1, ceil($totalComplaintsCount / $pageSize));
+?>

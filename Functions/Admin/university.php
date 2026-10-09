@@ -171,7 +171,7 @@ include "../../Includes/dash_header.php";
                                     </td>
                                     <td><span class="univ-domain-badge">@<?= htmlspecialchars($row['emailEx']) ?></span></td>
                                     <td><?= htmlspecialchars($row['Location'] ?? '—') ?></td>
-                                    <?php $stuCount = $adminDB->getStudentCountByDomain($row['emailEx']); ?>
+                                    <?php $stuCount = $uniDB->getStudentCountByDomain($row['emailEx']); ?>
                                     <td><?= $stuCount ?></td>
                                     <td><span
                                             class="badge-status <?= $badgeCls ?>"><?= htmlspecialchars($row['Status'] ?? '') ?></span>

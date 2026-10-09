@@ -1,15 +1,9 @@
 <?php
-/**
- * SkillBridge - University Registry Backend Controller
- * Handles CRUD actions, validation, stats calculation, and pagination for university.php
- */
 
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+require_once __DIR__ . '/loader.php';
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
+$uniDB = new UniversityManagement($conn);
+$adminDB = $uniDB;
 
 $flash = null;
 
@@ -24,10 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $location = trim($_POST['location'] ?? '');
         $status = trim($_POST['status'] ?? '');
         try {
-            if ($adminDB->domainExists($domain)) {
+            if ($uniDB->domainExists($domain)) {
                 $flash = ['type' => 'error', 'message' => 'Email Domain already exists'];
             } elseif (!empty($university) && !empty($faculty) && !empty($domain) && !empty($location) && !empty($status)) {
-                $adminDB->addUniversity($university, $faculty, $domain, $status, $location);
+                $uniDB->addUniversity($university, $faculty, $domain, $status, $location);
                 $flash = ['type' => 'success', 'message' => 'University added successfully'];
             } else {
                 $flash = ['type' => 'error', 'message' => 'All fields are required'];
@@ -43,11 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $location = trim($_POST['location'] ?? '');
         $status = trim($_POST['status'] ?? '');
         try {
-            $existingUni = $adminDB->getUniversityByDomain($origDomain);
+            $existingUni = $uniDB->getUniversityByDomain($origDomain);
             if ($existingUni && strcasecmp($existingUni['Status'] ?? '', 'Inactive') === 0) {
                 $flash = ['type' => 'error', 'message' => 'This university is currently Inactive and its status or details cannot be modified.'];
             } else {
-                $adminDB->updateUniversity($university, $faculty, $domain, $status, $location, $origDomain);
+                $uniDB->updateUniversity($university, $faculty, $domain, $status, $location, $origDomain);
                 $flash = ['type' => 'success', 'message' => 'University updated successfully'];
             }
         } catch (mysqli_sql_exception $e) {
@@ -55,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($action === 'delete') {
         $domainToDelete = trim($_POST['delete_domain'] ?? '');
-        $stuCount = $adminDB->getStudentCountByDomain($domainToDelete);
+        $stuCount = $uniDB->getStudentCountByDomain($domainToDelete);
         if ($stuCount > 0) {
             $flash = [
                 'type' => 'error',
@@ -63,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         } else {
             try {
-                $adminDB->deleteUniversity($domainToDelete);
+                $uniDB->deleteUniversity($domainToDelete);
                 $flash = ['type' => 'success', 'message' => 'University deleted successfully'];
             } catch (mysqli_sql_exception $e) {
                 $flash = ['type' => 'error', 'message' => 'Error: ' . $e->getMessage()];
@@ -73,16 +67,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // KPI Statistics
-$totUni          = $adminDB->getCount("universityemails");
-$activeDomains   = $adminDB->getCountWhere("universityemails", "status", "Active");
-$holdDomains     = $adminDB->getCountWhere("universityemails", "status", "Hold");
-$totalStudents   = $adminDB->getCount("student");
+$totUni          = $uniDB->getCount("universityemails");
+$activeDomains   = $uniDB->getCountWhere("universityemails", "status", "Active");
+$holdDomains     = $uniDB->getCountWhere("universityemails", "status", "Hold");
+$totalStudents   = $uniDB->getCount("student");
 
 // Filter, Search, and Pagination
 $selectedStatus = $_GET['status'] ?? 'all';
 $searchQuery = trim($_GET['search'] ?? '');
 
-$uniResult = $adminDB->getAllUniversities($selectedStatus, $searchQuery);
+$uniResult = $uniDB->getAllUniversities($selectedStatus, $searchQuery);
 $allUniversities = [];
 if ($uniResult) {
     while ($r = $uniResult->fetch_assoc()) {
@@ -97,3 +91,4 @@ $totalPages = ceil($totFilteredUni / $recordsPerPage);
 $currentPage = isset($_GET['page']) ? max(1, min(max(1, $totalPages), (int) $_GET['page'])) : 1;
 $offset = ($currentPage - 1) * $recordsPerPage;
 $pageUniversities = array_slice($allUniversities, $offset, $recordsPerPage);
+?>

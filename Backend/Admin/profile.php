@@ -1,15 +1,9 @@
 <?php
-/**
- * SkillBridge - Admin Profile Backend Controller
- * Handles profile updates, photo uploads/removals, password changes, and display data preparation
- */
 
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+require_once __DIR__ . '/loader.php';
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
+$profileDB = new AdminProfileManagement($conn);
+$adminDB = $profileDB;
 
 $loggedInUser = current_user();
 $email = strtolower($loggedInUser['Email'] ?? $loggedInUser['email'] ?? '');
@@ -50,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     // Delete old photo if exists
-                    $currentProfile = $adminDB->getAdminProfile($email);
+                    $currentProfile = $profileDB->getAdminProfile($email);
                     if (!empty($currentProfile['profile_image'])) {
                         $oldPath = $targetDir . $currentProfile['profile_image'];
                         if (file_exists($oldPath)) {
@@ -70,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (!$flash) {
-                $updated = $adminDB->updateAdminProfile($email, $name, $contactNumber, $uploadedFileName);
+                $updated = $profileDB->updateAdminProfile($email, $name, $contactNumber, $uploadedFileName);
                 if ($updated) {
                     $_SESSION['user']['username'] = $name;
                     $flash = ['type' => 'success', 'title' => 'Profile Updated', 'message' => 'Your profile information has been saved successfully.'];
@@ -83,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // 2. Remove Profile Photo
     elseif ($action === 'remove_photo') {
-        $removed = $adminDB->removeAdminProfileImage($email);
+        $removed = $profileDB->removeAdminProfileImage($email);
         if ($removed) {
             $flash = ['type' => 'success', 'title' => 'Photo Removed', 'message' => 'Your profile photo has been removed.'];
         } else {
@@ -104,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($newPass !== $confPass) {
             $flash = ['type' => 'error', 'title' => 'Password Mismatch', 'message' => 'New password and confirmation do not match.'];
         } else {
-            $res = $adminDB->changeAdminPassword($email, $currPass, $newPass);
+            $res = $profileDB->changeAdminPassword($email, $currPass, $newPass);
             if ($res['success']) {
                 $flash = ['type' => 'success', 'title' => 'Security Updated', 'message' => $res['message']];
             } else {
@@ -115,7 +109,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Fetch Admin Profile
-$profile = $adminDB->getAdminProfile($email);
+$profile = $profileDB->getAdminProfile($email);
 $adminName = $profile['name'] ?? ($loggedInUser['username'] ?? 'Admin');
 $adminPhoto = $profile['profile_image'] ?? null;
 $adminContact = $profile['contact_number'] ?? '';
@@ -127,3 +121,4 @@ $photoUrl = null;
 if (!empty($adminPhoto) && file_exists(__DIR__ . '/../../Assets/Images/Admin/' . $adminPhoto)) {
     $photoUrl = ($GLOBALS['BASE_URL'] ?? '') . '/Assets/Images/Admin/' . htmlspecialchars($adminPhoto);
 }
+?>

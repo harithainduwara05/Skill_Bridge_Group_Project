@@ -214,7 +214,7 @@ include "../../Includes/dash_header.php";
 
             </div>
             <a href="complain.php" class="see-all-link">See all
-                (<?php echo $adminDB->getUndismissedComplaintCount(); ?>) complaints</a>
+                (<?php echo $complaintDB->getUndismissedComplaintCount(); ?>) complaints</a>
         </div>
 
     </div>

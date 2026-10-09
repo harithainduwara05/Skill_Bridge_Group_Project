@@ -2,6 +2,7 @@
 
 include "../../Config/db.php";
 require_once "../../Session/Session.php";
+require_once "../../Backend/Admin/Project_Management.php";
 
 require_login();
 require_role('admin');
@@ -43,7 +44,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Total Projects</div>
-                    <div class="pm-stat-value">2,105</div>
+                    <div class="pm-stat-value"><?php echo $totalProject  ?></div>
                 </div>
             </div>
 
@@ -59,7 +60,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Active Projects</div>
-                    <div class="pm-stat-value">1,540</div>
+                    <div class="pm-stat-value"><?php echo $activeProject; ?></div>
                 </div>
             </div>
 
@@ -75,7 +76,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Reviewing</div>
-                    <div class="pm-stat-value">86</div>
+                    <div class="pm-stat-value"><?php echo $reviewingProject ?></div>
                 </div>
             </div>
 
@@ -91,7 +92,7 @@ include "../../Includes/dash_header.php";
                 </div>
                 <div class="pm-stat-details">
                     <div class="pm-stat-label">Completed Projects</div>
-                    <div class="pm-stat-value">479</div>
+                    <div class="pm-stat-value"><?php echo $completeProject ?></div>
                 </div>
             </div>
 

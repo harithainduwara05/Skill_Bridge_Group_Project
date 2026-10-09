@@ -1,14 +1,9 @@
 <?php
-/**
- * SkillBridge - Internship Management Backend Controller
- * Handles internship queries, filters, status toggles, and aggregates
- */
 
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+require_once __DIR__ . '/loader.php';
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
+$dashboardDB = new DashboardManagement($conn);
+$adminDB = $dashboardDB;
 
 // Any future backend queries, approvals, or stat updates for internships can be handled here
+?>

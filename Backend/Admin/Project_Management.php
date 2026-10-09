@@ -1,14 +1,12 @@
 <?php
-/**
- * SkillBridge - Project Management Backend Controller
- * Handles project queries, filters, approvals, and metrics
- */
+require_once __DIR__ . '/loader.php';
 
-require_once __DIR__ . '/../../Config/db.php';
-require_once __DIR__ . '/AdminBackend.php';
+$dashboardDB = new DashboardManagement($conn);
+$adminDB = $dashboardDB;
 
-if (!isset($adminDB) || !($adminDB instanceof AdminDB)) {
-    $adminDB = new AdminDB($conn);
-}
-
-// Any future backend queries, approvals, or stat updates for projects can be handled here
+// Get Cards details from projects table
+$totalProject     = $dashboardDB->getCount('projects');
+$activeProject    = $dashboardDB->getCountWhere('projects', 'status', 'inprogress') + $dashboardDB->getCountWhere('projects', 'status', 'Active');
+$reviewingProject = $dashboardDB->getCountWhere('projects', 'status', 'reviewing') + $dashboardDB->getCountWhere('projects', 'status', 'Rewiewing');
+$completeProject  = $dashboardDB->getCountWhere('projects', 'status', 'completed') + $dashboardDB->getCountWhere('projects', 'status', 'Complete');
+?>
