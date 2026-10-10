@@ -17,24 +17,8 @@ include "../../Includes/dash_header.php";
 
 <main class="content">
 
-    <!-- Flash Toast Notification -->
-    <?php if (!empty($flash)): ?>
-    <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="flashToast">
-        <div class="flash-icon-wrap">
-            <span class="material-symbols-outlined">
-                <?= $flash['type'] === 'success' ? 'check_circle' : 'error' ?>
-            </span>
-        </div>
-        <div class="flash-content">
-            <div class="flash-title"><?= htmlspecialchars($flash['title'] ?? 'Notification') ?></div>
-            <div class="flash-msg"><?= htmlspecialchars($flash['message']) ?></div>
-        </div>
-        <button class="flash-close" onclick="closeToast()" type="button" aria-label="Close notification">
-            <span class="material-symbols-outlined">close</span>
-        </button>
-        <div class="flash-progress"></div>
-    </div>
-    <?php endif; ?>
+    <!-- Flash Toast Component -->
+    <?php include __DIR__ . "/Components/FlashToast.php"; ?>
 
     <div class="admin-profile-container">
 
@@ -359,19 +343,6 @@ include "../../Includes/dash_header.php";
     });
     confPass.addEventListener('input', checkPassMatch);
 
-    // Flash Toast Dismissal
-    function closeToast() {
-        const toast = document.getElementById('flashToast');
-        if (toast) {
-            toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
-            setTimeout(() => { toast.remove(); }, 300);
-        }
-    }
-
-    const activeToast = document.getElementById('flashToast');
-    if (activeToast) {
-        setTimeout(closeToast, 4000);
-    }
 </script>
 
 <?php include "../../Includes/dash_footer.php"; ?>

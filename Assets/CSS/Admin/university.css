@@ -34,32 +34,7 @@
     display: grid; grid-template-columns: repeat(4, 1fr);
     gap: 16px; padding: 0 28px 20px;
 }
-.univ-stat-card {
-    background: #fff; border: 1px solid #e5e7eb; border-radius: 14px;
-    padding: 18px 20px; display: flex; align-items: center; gap: 16px;
-    transition: all .3s ease; animation: fadeInUp .4s ease both;
-}
-.univ-stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.07); }
-.univ-stat-card:nth-child(1) { animation-delay: .05s; }
-.univ-stat-card:nth-child(2) { animation-delay: .10s; }
-.univ-stat-card:nth-child(3) { animation-delay: .15s; }
-.univ-stat-card:nth-child(4) { animation-delay: .20s; }
 
-.univ-stat-icon-wrap {
-    width: 46px; height: 46px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-}
-.univ-stat-icon-wrap .material-symbols-outlined { font-size: 22px; }
-.univ-stat-icon-wrap.grey   { background: #f3f4f6; color: #6b7280; }
-.univ-stat-icon-wrap.green  { background: #dcfce7; color: #16a34a; }
-.univ-stat-icon-wrap.orange { background: #ffedd5; color: #ea580c; }
-.univ-stat-icon-wrap.blue   { background: #dbeafe; color: #2563eb; }
-
-.univ-stat-label {
-    font-size: 10px; font-weight: 700; color: #9ca3af;
-    letter-spacing: .6px; text-transform: uppercase; margin-bottom: 4px;
-}
-.univ-stat-value { font-size: 28px; font-weight: 800; color: #111827; line-height: 1.1; }
 
 /* ── Table toolbar ── */
 .univ-table-actions { display: flex; align-items: center; gap: 10px; }
@@ -314,30 +289,7 @@
     .univ-search-box { width: 160px; }
 }
 
-/* ── Flash Toast Notification ── */
-.flash-toast {
-    position: fixed; top: 20px; right: 24px; z-index: 9999;
-    display: flex; align-items: center; gap: 10px;
-    padding: 14px 18px; border-radius: 12px; min-width: 280px; max-width: 400px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.12);
-    font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif;
-    animation: toastSlideIn .3s ease both;
-}
-@keyframes toastSlideIn {
-    from { transform: translateX(120%); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
-}
-.flash-toast.flash-error   { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; }
-.flash-toast.flash-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #16a34a; }
-
-.flash-icon { font-size: 20px; flex-shrink: 0; }
-.flash-msg  { flex: 1; line-height: 1.4; }
-.flash-close {
-    background: none; border: none; cursor: pointer; padding: 2px;
-    color: inherit; opacity: .6; display: flex; align-items: center;
-    border-radius: 4px; transition: opacity .2s;
-}
-.flash-close:hover { opacity: 1; }
+/* Flash Toast Notification handled globally via index.css / flash-toast.css */
 
 /* ── Searchable Combobox Dropdown ── */
 .univ-combobox {

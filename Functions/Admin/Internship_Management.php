@@ -30,73 +30,19 @@ include "../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!--  KPI Summary Cards (4 Cards Grid)-->
+        <!--  InternshipManagement cars-->
         <div class="im-stats-grid">
 
-            <!-- Card 1: Total Internships -->
-            <div class="im-stat-card">
-                <div class="im-stat-card-top">
-                    <div class="im-stat-icon icon-navy">
-                        <span class="material-symbols-outlined">work</span>
-                    </div>
-                    <span class="im-stat-badge badge-green">
-                        +12%
-                    </span>
-                </div>
-                <div class="im-stat-details">
-                    <div class="im-stat-label">Total Internships</div>
-                    <div class="im-stat-value">432</div>
-                </div>
-            </div>
-
-            <!-- Card 2: Active Internships -->
-            <div class="im-stat-card">
-                <div class="im-stat-card-top">
-                    <div class="im-stat-icon icon-green">
-                        <span class="material-symbols-outlined">check_circle</span>
-                    </div>
-                    <span class="im-stat-badge badge-green">
-                        86% Cap
-                    </span>
-                </div>
-                <div class="im-stat-details">
-                    <div class="im-stat-label">Active Internships</div>
-                    <div class="im-stat-value">286</div>
-                </div>
-            </div>
-
-            <!-- Card 3: Suspended Posts -->
-            <!-- Card 3: Suspended Posts -->
-            <div class="im-stat-card">
-                <div class="im-stat-card-top">
-                    <div class="im-stat-icon icon-orange">
-                        <span class="material-symbols-outlined">pause_circle</span>
-                    </div>
-                    <span class="im-stat-badge badge-orange">
-                        Review Needed
-                    </span>
-                </div>
-                <div class="im-stat-details">
-                    <div class="im-stat-label">Suspended Posts</div>
-                    <div class="im-stat-value" id="kpiSuspendedCount">14</div>
-                </div>
-            </div>
-
-            <!-- Card 4: Total Applications -->
-            <div class="im-stat-card">
-                <div class="im-stat-card-top">
-                    <div class="im-stat-icon icon-blue">
-                        <span class="material-symbols-outlined">group</span>
-                    </div>
-                    <span class="im-stat-badge badge-blue">
-                        Avg. 6.5/Job
-                    </span>
-                </div>
-                <div class="im-stat-details">
-                    <div class="im-stat-label">Total Applications</div>
-                    <div class="im-stat-value" id="kpiTotalApps">2,850</div>
-                </div>
-            </div>
+            <?php
+                $CardDetails = [
+                    "cardIcons"  => ["work", "check_circle", "pause_circle", "group"],
+                    "iconColors" => ["navy", "green", "orange", "blue"],
+                    "cardLabels" => ["Total Internships", "Active Internships", "Suspended Posts", "Total Applications"],
+                    "cardValues" => ["432", "286", "14", "2,850"],
+                    "valueIds"   => ["", "", "kpiSuspendedCount", "kpiTotalApps"]
+                ];
+                include __DIR__ . "/Components/Card.php";
+            ?>
 
         </div>
 
@@ -157,20 +103,11 @@ include "../../Includes/dash_header.php";
         <!--  Internships Data Table Card -->
         <div class="im-table-card">
             <div class="im-table-responsive">
-                <table class="im-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>POSITION</th>
-                            <th>COMPANY</th>
-                            <th>INDUSTRY</th>
-                            <th>REQUIRED SKILLS</th>
-                            <th>APPLICATIONS</th>
-                            <th>DEADLINE</th>
-                            <th>STATUS</th>
-                            <th class="im-actions-header">ACTIONS</th>
-                        </tr>
-                    </thead>
+                <table class="data-table im-table">
+                    <?php 
+                        $TableColumns = ["ID", "POSITION", "COMPANY", "INDUSTRY", "REQUIRED SKILLS", "APPLICATIONS", "DEADLINE", "STATUS", "ACTIONS"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody id="imTableBody">
 
                         <!-- Row 1: Software Engineer Intern -->

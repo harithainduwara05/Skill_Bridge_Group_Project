@@ -31,64 +31,22 @@ include "../../Includes/dash_header.php";
             </div>
         </div>
 
-        <!--  KPI Statistics Cards (Row of 3 Cards matching design)-->
+        <!--  Complain Cards-->
         <div class="cm-stats-grid">
             
-            <!-- Card 1: Total Complaints -->
-            <div class="cm-stat-card">
-                <div class="cm-stat-card-top">
-                    <div class="cm-stat-icon icon-analytics">
-                        <span class="material-symbols-outlined">analytics</span>
-                    </div>
-                    <span class="cm-stat-trend trend-amber">
-                        +12% from last week
-                    </span>
-                </div>
-                <div class="cm-stat-details">
-                    <div class="cm-stat-label">Total Complaints</div>
-                    <div class="cm-stat-value" id="cmKpiTotal">
-                        <?= number_format($stats['total']) ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2: Pending Resolution -->
-            <div class="cm-stat-card">
-                <div class="cm-stat-card-top">
-                    <div class="cm-stat-icon icon-pending">
-                        <span class="material-symbols-outlined">pending_actions</span>
-                    </div>
-                    <span class="cm-stat-trend trend-orange">
-                        <?= $stats['pending'] > 0 ? 'Requires attention' : 'All resolved' ?>
-                    </span>
-                </div>
-                <div class="cm-stat-details">
-                    <div class="cm-stat-label">Pending Resolution</div>
-                    <div class="cm-stat-value" id="cmKpiPending">
-                        <?= number_format($stats['pending']) ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3: Average Response Time -->
-            <div class="cm-stat-card">
-                <div class="cm-stat-card-top">
-                    <div class="cm-stat-icon icon-timer">
-                        <span class="material-symbols-outlined">timer</span>
-                    </div>
-                    <span class="cm-stat-trend trend-blue">
-                        Live resolution avg
-                    </span>
-                </div>
-                <div class="cm-stat-details">
-                    <div class="cm-stat-label">Average Response Time</div>
-                    <div class="cm-stat-value" id="cmKpiAvgTime">
-                        <?= htmlspecialchars($stats['avg_response_time']) ?>
-                    </div>
-                </div>
-            </div>
+            <?php
+                $CardDetails = [
+                    "cardIcons"  => ["analytics", "pending_actions", "timer"],
+                    "iconColors" => ["grey", "amber", "blue"],
+                    "cardLabels" => ["Total Complaints", "Pending Resolution", "Average Response Time"],
+                    "cardValues" => [number_format($stats['total']), number_format($stats['pending']), $stats['avg_response_time']],
+                    "valueIds"   => ["cmKpiTotal", "cmKpiPending", "cmKpiAvgTime"]
+                ];
+                include __DIR__ . "/Components/Card.php";
+            ?>
 
         </div>
+        <!-- EndHere -->
 
         <!--  Filter & Search Toolbar -->
         <div class="cm-toolbar-card">
@@ -157,18 +115,11 @@ include "../../Includes/dash_header.php";
         <!--  Complaints Data Table Card-->
         <div class="cm-table-card">
             <div class="cm-table-responsive">
-                <table class="cm-table">
-                    <thead>
-                        <tr>
-                            <th>Complaint ID</th>
-                            <th>Submitted By</th>
-                            <th>Category</th>
-                            <th>Description</th>
-                            <th>Priority</th>
-                            <th>Status</th>
-                            <th style="text-align: right;">Actions</th>
-                        </tr>
-                    </thead>
+                <table class="data-table cm-table">
+                    <?php 
+                        $TableColumns = ["Complaint ID", "Submitted By", "Category", "Description", "Priority", "Status", "Actions"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody id="cmTableBody">
                         <?php if (!empty($complaints)): ?>
                             <?php foreach ($complaints as $idx => $cmp): 
@@ -430,6 +381,7 @@ include "../../Includes/dash_header.php";
     <span class="material-symbols-outlined">check_circle</span>
     <span id="cmToastMessage">Operation successful!</span>
 </div>
+
 
 <!-- Page Footer -->
 <footer class="footer">

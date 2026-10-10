@@ -26,72 +26,18 @@ include "../../Includes/dash_header.php";
             <p>Monitor, review, and manage all student projects across the SkillBridge ecosystem.</p>
         </div>
 
-        <!--  KPI Statistics Cards (Row of 4 Cards)-->
+        <!--  Project Management Cards-->
         <div class="pm-stats-grid">
-            
-            <!-- Card 1: Total Projects -->
-            <div class="pm-stat-card">
-                <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-navy">
-                        <span class="material-symbols-outlined">folder_open</span>
-                    </div>
-                    <span class="pm-stat-trend trend-green">
-                        <span class="material-symbols-outlined" style="font-size:14px;">trending_up</span> 12%
-                    </span>
-                </div>
-                <div class="pm-stat-details">
-                    <div class="pm-stat-label">Total Projects</div>
-                    <div class="pm-stat-value"><?php echo $totalProjects  ?></div>
-                </div>
-            </div>
 
-            <!-- Card 2: Active Projects -->
-            <div class="pm-stat-card">
-                <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-green">
-                        <span class="material-symbols-outlined">bolt</span>
-                    </div>
-                    <span class="pm-stat-trend trend-green">
-                        <span class="material-symbols-outlined" style="font-size:14px;">trending_up</span> 8%
-                    </span>
-                </div>
-                <div class="pm-stat-details">
-                    <div class="pm-stat-label">Active Projects</div>
-                    <div class="pm-stat-value"><?php echo $activeProjects; ?></div>
-                </div>
-            </div>
-
-            <!-- Card 3: Reviewing -->
-            <div class="pm-stat-card">
-                <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-blue">
-                        <span class="material-symbols-outlined">rate_review</span>
-                    </div>
-                    <span class="pm-stat-trend badge-review">
-                        Reviewing
-                    </span>
-                </div>
-                <div class="pm-stat-details">
-                    <div class="pm-stat-label">Reviewing</div>
-                    <div class="pm-stat-value"><?php echo $reviewingProjects ?></div>
-                </div>
-            </div>
-
-            <!-- Card 4: Completed Projects -->
-            <div class="pm-stat-card">
-                <div class="pm-stat-card-top">
-                    <div class="pm-stat-icon icon-gray">
-                        <span class="material-symbols-outlined">task_alt</span>
-                    </div>
-                    <span class="pm-stat-trend trend-gray">
-                        <span class="material-symbols-outlined" style="font-size:14px;">trending_up</span> 24%
-                    </span>
-                </div>
-                <div class="pm-stat-details">
-                    <div class="pm-stat-label">Completed Projects</div>
-                    <div class="pm-stat-value"><?php echo $completedProjects ?></div>
-                </div>
-            </div>
+            <?php
+                $CardDetails = [
+                    "cardIcons"  => ["folder_open", "bolt", "rate_review", "task_alt"],
+                    "iconColors" => ["navy", "green", "blue", "grey"],
+                    "cardLabels" => ["Total Projects", "Active Projects", "Reviewing", "Completed Projects"],
+                    "cardValues" => [$totalProjects, $activeProjects, $reviewingProjects, $completedProjects]
+                ];
+                include __DIR__ . "/Components/Card.php";
+            ?>
 
         </div>
 
@@ -146,19 +92,11 @@ include "../../Includes/dash_header.php";
         <!--  Projects Data Table Card-->
         <div class="pm-table-card">
             <div class="pm-table-responsive">
-                <table class="pm-table">
-                    <thead>
-                        <tr>
-                            <th>PROJECT ID</th>
-                            <th>PROJECT TITLE</th>
-                            <th>ORGANIZATION</th>
-                            <th>REQUIRED SKILLS</th>
-                            <th>TEAM MEMBERS</th>
-                            <th>STATUS</th>
-                            <th>CREATED DATE</th>
-                            <th class="pm-actions-cell">ACTIONS</th>
-                        </tr>
-                    </thead>
+                <table class="data-table pm-table">
+                    <?php 
+                        $TableColumns = ["PROJECT ID", "PROJECT TITLE", "ORGANIZATION", "REQUIRED SKILLS", "TEAM MEMBERS", "STATUS", "CREATED DATE", "ACTIONS"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody id="pmTableBody">
                         
                         <?php if (!empty($projectsList)): ?>

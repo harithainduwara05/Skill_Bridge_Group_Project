@@ -97,112 +97,7 @@
     margin-bottom: 24px;
 }
 
-.im-stat-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 18px;
-    padding: 22px 24px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.im-stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
-    border-color: #cbd5e1;
-}
-
-.im-stat-card-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 18px;
-}
-
-/* Stat Icons */
-.im-stat-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.im-stat-icon .material-symbols-outlined {
-    font-size: 22px;
-}
-
-.im-stat-icon.icon-navy {
-    background-color: #f1f5f9;
-    color: #1e293b;
-}
-
-.im-stat-icon.icon-green {
-    background-color: #ecfdf5;
-    color: #059669;
-}
-
-.im-stat-icon.icon-orange {
-    background-color: #fff7ed;
-    color: #ea580c;
-}
-
-.im-stat-icon.icon-blue {
-    background-color: #eff6ff;
-    color: #2563eb;
-}
-
-/* Stat Trend / Notification Pills */
-.im-stat-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 3px;
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: 9999px;
-    line-height: 1.2;
-}
-
-.im-stat-badge.badge-green {
-    background-color: #dcfce7;
-    color: #15803d;
-}
-
-.im-stat-badge.badge-orange {
-    background-color: #ffedd5;
-    color: #c2410c;
-}
-
-.im-stat-badge.badge-blue {
-    background-color: #eff6ff;
-    color: #2563eb;
-}
-
-/* Stat Text Info */
-.im-stat-details .im-stat-label {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #64748b;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    margin-bottom: 6px;
-    font-family: 'Inter', sans-serif;
-}
-
-.im-stat-details .im-stat-value {
-    font-size: 30px;
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1.1;
-    letter-spacing: -0.5px;
-    font-family: 'Inter', sans-serif;
-}
+/* (KPI Cards rendered via common stat-card in index.css) */
 
 /* ==========================================================================
    3. Search & Filter Toolbar Card
@@ -355,49 +250,7 @@
     -webkit-overflow-scrolling: touch;
 }
 
-.im-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    font-family: 'Inter', sans-serif;
-}
-
-/* Table Header */
-.im-table thead tr {
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #ffffff;
-}
-
-.im-table th {
-    padding: 18px 20px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #475569;
-    letter-spacing: 0.6px;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-
-/* Table Body */
-.im-table tbody tr {
-    border-bottom: 1px solid #f1f5f9;
-    transition: background-color 0.15s ease;
-}
-
-.im-table tbody tr:hover {
-    background-color: #f8fafc;
-}
-
-.im-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.im-table td {
-    padding: 18px 20px;
-    font-size: 13.5px;
-    color: #334155;
-    vertical-align: middle;
-}
+/* Table base rules handled globally via index.css (.data-table, .im-table) */
 
 /* ID Column */
 .im-internship-id {
@@ -1214,36 +1067,7 @@ textarea.im-form-control {
     box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
 }
 
-/* Toast Alert */
-.im-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: #0f172a;
-    color: #ffffff;
-    padding: 14px 20px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    z-index: 3000;
-    font-size: 13.5px;
-    font-weight: 500;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.im-toast.show {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.im-toast .material-symbols-outlined {
-    font-size: 20px;
-    color: #22c55e;
-}
+/* Toast Alert handled globally via index.css */
 
 /* ==========================================================================
    7. Responsive Breakpoints

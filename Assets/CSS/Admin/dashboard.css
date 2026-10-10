@@ -69,82 +69,7 @@
     padding: 14px 28px;
 }
 
-.stat-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 16px;
-    border: 1px solid #e5e7eb;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-    animation: fadeInUp 0.4s ease both;
-}
-
-.stat-card:nth-child(1) { animation-delay: 0.05s; }
-.stat-card:nth-child(2) { animation-delay: 0.10s; }
-.stat-card:nth-child(3) { animation-delay: 0.15s; }
-.stat-card:nth-child(4) { animation-delay: 0.20s; }
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07);
-}
-
-.stat-card-top {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 16px;
-}
-
-.stat-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.stat-icon.blue   { background: #dbeafe; color: #2563eb; }
-.stat-icon.orange { background: #fed7aa; color: #ea580c; }
-.stat-icon.slate  { background: #e2e8f0; color: #475569; }
-.stat-icon.navy   { background: #dbeafe; color: #1e40af; }
-
-.stat-icon .material-symbols-outlined {
-    font-size: 20px;
-    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
-}
-
-.stat-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 12px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 20px;
-}
-
-.stat-trend.up   { color: #16a34a; background: #dcfce7; }
-.stat-trend.down { color: #dc2626; background: #fee2e2; }
-
-.stat-info .stat-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 4px;
-}
-
-.stat-info .stat-value {
-    font-size: 24px;
-    font-weight: 800;
-    color: #111827;
-    line-height: 1.1;
-}
+/* (KPI Cards rendered via common stat-card in index.css) */
 
 /* ============================================
    GRID LAYOUTS & DASHBOARD CARDS
@@ -217,40 +142,7 @@
 
 /* ============================================
    DATA TABLE STYLES & RECENT REGISTRATIONS
-   ============================================ */
-.data-table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-}
-
-.data-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 600;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    padding: 10px 14px;
-    border-bottom: 1px solid #f3f4f6;
-    background: #fafafa;
-}
-
-.data-table td {
-    padding: 12px 14px;
-    font-size: 13px;
-    color: #374151;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: middle;
-}
-
-.data-table tr:last-child td {
-    border-bottom: none;
-}
-
-.data-table tr:hover td {
-    background: #fafafa;
-}
+/* (Table styles handled globally via index.css .data-table) */
 
 /* User information snippet in table */
 .user-info {

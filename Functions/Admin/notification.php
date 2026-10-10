@@ -17,21 +17,8 @@ include "../../Includes/dash_header.php";
 
 <main class="content">
 
-    <!-- Flash Toast Notification -->
-    <?php if (!empty($flash)): ?>
-    <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="flashToast" style="position:fixed; top:20px; right:20px; z-index:9999; background:#ffffff; border-left:4px solid <?= $flash['type'] === 'success' ? '#10b981' : '#ef4444' ?>; box-shadow:0 4px 14px rgba(0,0,0,0.1); border-radius:8px; padding:12px 18px; display:flex; align-items:center; gap:10px;">
-        <span class="material-symbols-outlined" style="color:<?= $flash['type'] === 'success' ? '#10b981' : '#ef4444' ?>;">
-            <?= $flash['type'] === 'success' ? 'check_circle' : 'error' ?>
-        </span>
-        <span style="font-size:13.5px; font-weight:600; color:#1e293b;"><?= htmlspecialchars($flash['message']) ?></span>
-    </div>
-    <script>
-        setTimeout(function() {
-            var t = document.getElementById('flashToast');
-            if (t) t.remove();
-        }, 3500);
-    </script>
-    <?php endif; ?>
+    <!-- Flash Notification Component -->
+    <?php include __DIR__ . "/Components/FlashToast.php"; ?>
 
     <div class="notif-container">
 
@@ -60,37 +47,17 @@ include "../../Includes/dash_header.php";
             <?php endif; ?>
         </div>
 
-        <!-- Stats Overview Cards -->
+        <!-- Notification  Cards -->
         <div class="notif-stats-grid">
-            <div class="notif-stat-card">
-                <div class="notif-stat-icon blue">
-                    <span class="material-symbols-outlined">notifications</span>
-                </div>
-                <div class="notif-stat-data">
-                    <h3><?= number_format($totalCount) ?></h3>
-                    <span>Total Notifications</span>
-                </div>
-            </div>
-
-            <div class="notif-stat-card">
-                <div class="notif-stat-icon amber">
-                    <span class="material-symbols-outlined">mark_email_unread</span>
-                </div>
-                <div class="notif-stat-data">
-                    <h3><?= number_format($unreadCount) ?></h3>
-                    <span>Unread Notifications</span>
-                </div>
-            </div>
-
-            <div class="notif-stat-card">
-                <div class="notif-stat-icon purple">
-                    <span class="material-symbols-outlined">contact_support</span>
-                </div>
-                <div class="notif-stat-data">
-                    <h3><?= number_format($inquiryCount) ?></h3>
-                    <span>Contact Inquiries</span>
-                </div>
-            </div>
+            <?php
+                $CardDetails = [
+                    "cardIcons"  => ["notifications", "mark_email_unread", "contact_support"],
+                    "iconColors" => ["blue", "amber", "purple"],
+                    "cardLabels" => ["Total Notifications", "Unread Notifications", "Contact Inquiries"],
+                    "cardValues" => [number_format($totalCount), number_format($unreadCount), number_format($inquiryCount)]
+                ];
+                include __DIR__ . "/Components/Card.php";
+            ?>
         </div>
 
         <!-- Filter Tabs -->

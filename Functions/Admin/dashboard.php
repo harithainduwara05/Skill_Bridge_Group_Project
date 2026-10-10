@@ -38,64 +38,18 @@ include "../../Includes/dash_header.php";
     </div>
 
 
-    <!-- Stats Cards -->
+    <!-- DashBord Stats Cards -->
     <div class="stats-grid">
 
-        <!-- Total Users -->
-        <div class="stat-card">
-            <div class="stat-card-top">
-                <div class="stat-icon blue">
-                    <span class="material-symbols-outlined">group</span>
-                </div>
-                <!--<span class="stat-trend up">↑ +12%</span>-->
-            </div>
-            <div class="stat-info">
-                <div class="stat-label">Total Users</div>
-                <div class="stat-value"><?php echo htmlspecialchars($totalUsers) ?></div>
-            </div>
-        </div>
-
-        <!-- Active Universities -->
-        <div class="stat-card">
-            <div class="stat-card-top">
-                <div class="stat-icon orange">
-                    <span class="material-symbols-outlined">school</span>
-                </div>
-                <!--<span class="stat-trend up">↑ +5%</span>-->
-            </div>
-            <div class="stat-info">
-                <div class="stat-label">Active Universities</div>
-                <div class="stat-value"><?php echo $totUni ?></div>
-            </div>
-        </div>
-
-        <!-- Ongoing Projects -->
-        <div class="stat-card">
-            <div class="stat-card-top">
-                <div class="stat-icon slate">
-                    <span class="material-symbols-outlined">cases</span>
-                </div>
-                <!--<span class="stat-trend down">↓ -2%</span>-->
-            </div>
-            <div class="stat-info">
-                <div class="stat-label">Ongoing Projects</div>
-                <div class="stat-value"><?php echo $tot_Ongoin_projects ?></div>
-            </div>
-        </div>
-
-        <!-- Total Internships -->
-        <div class="stat-card">
-            <div class="stat-card-top">
-                <div class="stat-icon navy">
-                    <span class="material-symbols-outlined">description</span>
-                </div>
-                <!--<span class="stat-trend up">↑ +24%</span>-->
-            </div>
-            <div class="stat-info">
-                <div class="stat-label">Total Internships</div>
-                <div class="stat-value"><?php echo $tot_internship ?></div>
-            </div>
-        </div>
+        <?php
+            $CardDetails = [
+                "cardIcons"  => ["group", "school", "cases", "description"],
+                "iconColors" => ["blue", "orange", "slate", "navy"],
+                "cardLabels" => ["Total Users", "Active Universities", "Ongoing Projects", "Total Internships"],
+                "cardValues" => [$totalUsers, $totUni, $tot_Ongoin_projects, $tot_internship]
+            ];
+            include __DIR__ . "/Components/Card.php";
+        ?>
 
     </div>
     <!-- Recent Registrations + Urgent Complaints -->
@@ -109,14 +63,10 @@ include "../../Includes/dash_header.php";
             </div>
             <div class="card-body" style="padding:0;">
                 <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Organization</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
+                    <?php 
+                        $TableColumns = ["User", "Role", "Organization", "Status"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody>
                         <?php
                         $limit = (count($allusers) < 5) ? count($allusers) : 5;
@@ -229,16 +179,10 @@ include "../../Includes/dash_header.php";
             </div>
             <div class="card-body" style="padding:0;">
                 <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>University Name</th>
-                            <th>Students</th>
-                            <th>Active Projects</th>
-                            <th>Completion Rate</th>
-                            <th>Status</th>
-                            <!-- <th>Actions</th> -->
-                        </tr>
-                    </thead>
+                    <?php 
+                        $TableColumns = ["University Name", "Students", "Active Projects", "Completion Rate", "Status"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody>
                         <?php
                         $limit = (count($popularUni) < 3) ? count($popularUni) : 3;

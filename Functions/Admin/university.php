@@ -15,18 +15,8 @@ include "../../Includes/dash_header.php";
 
 <main class="content">
 
-    <!-- Flash Notification -->
-    <?php if (!empty($flash)): ?>
-        <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="flashToast">
-            <span class="material-symbols-outlined flash-icon">
-                <?= $flash['type'] === 'error' ? 'error' : 'check_circle' ?>
-            </span>
-            <span class="flash-msg"><?= htmlspecialchars($flash['message']) ?></span>
-            <button class="flash-close" onclick="this.parentElement.remove()">
-                <span class="material-symbols-outlined" style="font-size:16px;">close</span>
-            </button>
-        </div>
-    <?php endif; ?>
+    <!-- Flash Notification Component -->
+    <?php include __DIR__ . "/Components/FlashToast.php"; ?>
 
     <!-- Page Header -->
     <div class="univ-page-header">
@@ -48,52 +38,18 @@ include "../../Includes/dash_header.php";
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- UniversityManagement Cards -->
     <div class="univ-stats-grid">
 
-        <div class="univ-stat-card">
-            <div class="univ-stat-icon-wrap grey">
-                <span class="material-symbols-outlined">school</span>
-            </div>
-            <div class="univ-stat-info">
-                <div class="univ-stat-label">TOTAL INSTITUTIONS</div>
-                <div class="univ-stat-value"><?php echo htmlspecialchars($totUni); ?></div>
-            </div>
-        </div>
-
-        <div class="univ-stat-card">
-            <div class="univ-stat-icon-wrap green">
-                <span class="material-symbols-outlined">check_circle</span>
-            </div>
-            <div class="univ-stat-info">
-                <div class="univ-stat-label">ACTIVE DOMAINS</div>
-                <div class="univ-stat-value">
-                    <?php echo htmlspecialchars($activeDomains); ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="univ-stat-card">
-            <div class="univ-stat-icon-wrap orange">
-                <span class="material-symbols-outlined">schedule</span>
-            </div>
-            <div class="univ-stat-info">
-                <div class="univ-stat-label">ON HOLD</div>
-                <div class="univ-stat-value">
-                    <?php echo htmlspecialchars($holdDomains); ?>
-                </div>
-            </div>
-        </div>
-
-        <div class="univ-stat-card">
-            <div class="univ-stat-icon-wrap blue">
-                <span class="material-symbols-outlined">people</span>
-            </div>
-            <div class="univ-stat-info">
-                <div class="univ-stat-label">TOTAL STUDENTS</div>
-                <div class="univ-stat-value"><?php echo htmlspecialchars($totalStudents); ?></div>
-            </div>
-        </div>
+        <?php
+            $CardDetails = [
+                "cardIcons"  => ["school", "check_circle", "schedule", "people"],
+                "iconColors" => ["grey", "green", "orange", "blue"],
+                "cardLabels" => ["TOTAL INSTITUTIONS", "ACTIVE DOMAINS", "ON HOLD", "TOTAL STUDENTS"],
+                "cardValues" => [$totUni, $activeDomains, $holdDomains, $totalStudents]
+            ];
+            include __DIR__ . "/Components/Card.php";
+        ?>
 
     </div>
 
@@ -129,17 +85,10 @@ include "../../Includes/dash_header.php";
 
             <div class="card-body" style="padding:0; overflow-x: auto;">
                 <table class="data-table" id="univTable">
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>UNIVERSITY NAME</th>
-                            <th>EMAIL DOMAIN</th>
-                            <th>LOCATION</th>
-                            <th>STUDENTS</th>
-                            <th>STATUS</th>
-                            <th>ACTIONS</th>
-                        </tr>
-                    </thead>
+                    <?php 
+                        $TableColumns = ["", "UNIVERSITY NAME", "EMAIL DOMAIN", "LOCATION", "STUDENTS", "STATUS", "ACTIONS"];
+                        include __DIR__ . "/Components/TableHeder.php";
+                    ?>
                     <tbody>
                         <?php if (empty($pageUniversities)): ?>
                             <tr>

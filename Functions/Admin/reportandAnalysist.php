@@ -58,75 +58,22 @@ include "../../Includes/dash_header.php";
         <!--  Executive KPI Summary Cards (4 Cards Grid)-->
         <div class="ra-kpi-grid">
             
-            <!-- Card 1: Total Placed Students -->
-            <div class="ra-kpi-card kpi-blue">
-                <div class="ra-kpi-top">
-                    <div class="ra-kpi-icon icon-blue">
-                        <span class="material-symbols-outlined">school</span>
-                    </div>
-                    <span class="ra-kpi-trend trend-up" id="raKpiPlacedTrend">
-                        <span class="material-symbols-outlined">trending_up</span> +18.4% vs last mo
-                    </span>
-                </div>
-                <div class="ra-kpi-label">Placed Students</div>
-                <div class="ra-kpi-value" id="raKpiPlaced">1,428</div>
-                <div class="ra-kpi-subtext" id="raKpiPlacedSub">
-                    <span class="material-symbols-outlined">verified</span> 89.2% Placement Rate
-                </div>
-            </div>
-
-            <!-- Card 2: Industry Partners & Drives -->
-            <div class="ra-kpi-card kpi-indigo">
-                <div class="ra-kpi-top">
-                    <div class="ra-kpi-icon icon-indigo">
-                        <span class="material-symbols-outlined">apartment</span>
-                    </div>
-                    <span class="ra-kpi-trend trend-up" id="raKpiCompanyTrend">
-                        <span class="material-symbols-outlined">trending_up</span> +14 New this month
-                    </span>
-                </div>
-                <div class="ra-kpi-label">Active Industry Partners</div>
-                <div class="ra-kpi-value" id="raKpiCompanies">168 Companies</div>
-                <div class="ra-kpi-subtext" id="raKpiCompanySub">
-                    <span class="material-symbols-outlined">work</span> 432 Active Drives
-                </div>
-            </div>
-
-            <!-- Card 3: Student Projects Completed -->
-            <div class="ra-kpi-card kpi-green">
-                <div class="ra-kpi-top">
-                    <div class="ra-kpi-icon icon-green">
-                        <span class="material-symbols-outlined">task_alt</span>
-                    </div>
-                    <span class="ra-kpi-trend trend-up" id="raKpiProjectTrend">
-                        <span class="material-symbols-outlined">task_alt</span> 94.6% Completed
-                    </span>
-                </div>
-                <div class="ra-kpi-label">Industry Projects</div>
-                <div class="ra-kpi-value" id="raKpiProjects">842 Projects</div>
-                <div class="ra-kpi-subtext" id="raKpiProjectSub">
-                    <span class="material-symbols-outlined">pending_actions</span> 124 In Supervisor Review
-                </div>
-            </div>
-
-            <!-- Card 4: Platform Grievance Resolution -->
-            <div class="ra-kpi-card kpi-amber">
-                <div class="ra-kpi-top">
-                    <div class="ra-kpi-icon icon-amber">
-                        <span class="material-symbols-outlined">verified_user</span>
-                    </div>
-                    <span class="ra-kpi-trend trend-neutral" id="raKpiResolutionTrend">
-                        <span class="material-symbols-outlined">timer</span> 2.4h Avg Response
-                    </span>
-                </div>
-                <div class="ra-kpi-label">Grievance Resolution</div>
-                <div class="ra-kpi-value" id="raKpiResolution">98.1% Resolved</div>
-                <div class="ra-kpi-subtext" id="raKpiResolutionSub">
-                    <span class="material-symbols-outlined">report_problem</span> 3 Open in Queue
-                </div>
-            </div>
+            <?php
+                $CardDetails = [
+                    "cardIcons"    => ["school", "apartment", "task_alt", "verified_user"],
+                    "iconColors"   => ["blue", "purple", "green", "amber"],
+                    "cardLabels"   => ["Placed Students", "Active Industry Partners", "Industry Projects", "Grievance Resolution"],
+                    "cardValues"   => ["1,428", "168 Companies", "842 Projects", "98.1% Resolved"],
+                    "valueIds"     => ["raKpiPlaced", "raKpiCompanies", "raKpiProjects", "raKpiResolution"],
+                    "subtexts"     => ["89.2% Placement Rate", "432 Active Drives", "124 In Supervisor Review", "3 Open in Queue"],
+                    "subtextIcons" => ["verified", "work", "pending_actions", "report_problem"],
+                    "subtextIds"   => ["raKpiPlacedSub", "raKpiCompanySub", "raKpiProjectSub", "raKpiResolutionSub"]
+                ];
+                include __DIR__ . "/Components/Card.php";
+            ?>
 
         </div>
+        <!-- EndHere -->
 
         <!--  Domain Filter Navigation Tabs-->
         <div class="ra-tabs-bar">
