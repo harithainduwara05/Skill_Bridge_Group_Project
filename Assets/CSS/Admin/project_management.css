@@ -65,11 +65,12 @@
    ========================================================================== */
 .pm-toolbar-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 10px 16px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 0;
+    padding: 12px 18px;
+    margin-bottom: 0;
+    box-shadow: none;
 }
 
 .pm-toolbar-row {

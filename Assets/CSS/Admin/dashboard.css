@@ -142,7 +142,16 @@
 
 /* ============================================
    DATA TABLE STYLES & RECENT REGISTRATIONS
-/* (Table styles handled globally via index.css .data-table) */
+   ============================================ */
+.two-col-grid .data-table {
+    min-width: 0;
+    width: 100%;
+}
+
+.two-col-grid .data-table th,
+.two-col-grid .data-table td {
+    padding: 10px 12px;
+}
 
 /* User information snippet in table */
 .user-info {

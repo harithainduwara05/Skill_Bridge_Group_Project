@@ -1,17 +1,10 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-
-include "../../Config/db.php";
-include "../../Session/session.php";
-
-require_login();
-require_role('admin');
-$user = current_user();
-
-require_once __DIR__ . "/../../Backend/Admin/complain.php";
-
-// Include Sidebar and Header
-include "../../Includes/admin_sidebar.php";
+$backendPage = "complain.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
 
 <!-- Complaint Management Stylesheet -->
 <link rel="stylesheet" href="../../Assets/CSS/Admin/complain.css?v=<?php echo time(); ?>">
@@ -48,224 +41,83 @@ include "../../Includes/dash_header.php";
         </div>
         <!-- EndHere -->
 
-        <!--  Filter & Search Toolbar -->
-        <div class="cm-toolbar-card">
-            <div class="cm-toolbar-row">
-                
-                <div class="cm-filters-group">
-                    
-                    <!-- Search Input -->
-                    <div class="cm-search-wrap">
-                        <span class="material-symbols-outlined">search</span>
-                        <input type="text" id="cmSearchInput" class="cm-search-input" 
-                               placeholder="Search projects, organizations, users, complaints..." 
-                               autocomplete="off">
-                    </div>
-
-                    <!-- Status Filter -->
-                    <div class="cm-filter-item">
-                        <div class="cm-select-wrap">
-                            <select id="cmStatusFilter" class="cm-select">
-                                <option value="all">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="in_progress">In Progress</option>
-                                <option value="resolved">Resolved</option>
-                                <option value="dismissed">Dismissed</option>
-                            </select>
-                            <span class="material-symbols-outlined select-chevron">expand_more</span>
-                        </div>
-                    </div>
-
-                    <!-- Priority Level -->
-                    <div class="cm-filter-item">
-                        <div class="cm-select-wrap">
-                            <select id="cmPriorityFilter" class="cm-select">
-                                <option value="all">All Priorities</option>
-                                <option value="urgent">Urgent</option>
-                                <option value="high">High</option>
-                                <option value="medium">Medium</option>
-                                <option value="low">Low</option>
-                            </select>
-                            <span class="material-symbols-outlined select-chevron">expand_more</span>
-                        </div>
-                    </div>
-
-                    <!-- Category -->
-                    <div class="cm-filter-item">
-                        <div class="cm-select-wrap">
-                            <select id="cmCategoryFilter" class="cm-select">
-                                <option value="all">All Categories</option>
-                                <option value="Technical">Technical</option>
-                                <option value="Organization">Organization</option>
-                                <option value="Academic">Academic</option>
-                                <option value="Project & Milestones">Project & Milestones</option>
-                                <option value="User Conduct">User Conduct</option>
-                            </select>
-                            <span class="material-symbols-outlined select-chevron">expand_more</span>
-                        </div>
-                    </div>
-
-                </div>
-
-
-
-            </div>
-        </div>
-
-        <!--  Complaints Data Table Card-->
+        <!-- Unified Complaints Data Table Card (Toolbar + Table + Pagination) -->
         <div class="cm-table-card">
-            <div class="cm-table-responsive">
-                <table class="data-table cm-table">
-                    <?php 
-                        $TableColumns = ["Complaint ID", "Submitted By", "Category", "Description", "Priority", "Status", "Actions"];
-                        include __DIR__ . "/Components/TableHeder.php";
-                    ?>
-                    <tbody id="cmTableBody">
-                        <?php if (!empty($complaints)): ?>
-                            <?php foreach ($complaints as $idx => $cmp): 
-                                // Real Complaint ID padded to 4 digits: #CMP-0001
-                                $displayId = '#CMP-' . str_pad($cmp['id'], 4, '0', STR_PAD_LEFT);
-                                $priorityLower = strtolower($cmp['priority'] ?? 'medium');
-                                $statusRaw = strtoupper($cmp['status'] ?? 'PENDING');
-                                
-                                // Normalizing status display
-                                if ($statusRaw === 'IN_REVIEW' || $statusRaw === 'IN PROGRESS') {
-                                    $statusClass = 'progress';
-                                    $statusLabel = 'IN PROGRESS';
-                                } elseif ($statusRaw === 'RESOLVED') {
-                                    $statusClass = 'resolved';
-                                    $statusLabel = 'RESOLVED';
-                                } elseif ($statusRaw === 'DISMISSED') {
-                                    $statusClass = 'dismissed';
-                                    $statusLabel = 'DISMISSED';
-                                } else {
-                                    $statusClass = 'pending';
-                                    $statusLabel = 'PENDING';
-                                }
 
-                                // Role formatting
-                                $roleDisplay = ucfirst($cmp['role'] ?? 'Student');
-                                if (stripos($cmp['organization_name'] ?? '', 'University') !== false) {
-                                    $roleDisplay = 'University Rep';
-                                } elseif ($cmp['role'] === 'company' || $cmp['role'] === 'organization') {
-                                    $roleDisplay = 'Organization HR';
-                                } elseif ($cmp['role'] === 'mentor') {
-                                    $roleDisplay = 'Mentor';
-                                }
+            <!-- Filter & Search Toolbar -->
+            <div class="cm-toolbar-card">
+                <div class="cm-toolbar-row">
+                    
+                    <div class="cm-filters-group">
+                        
+                        <!-- Search Input -->
+                        <div class="cm-search-wrap">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="text" id="cmSearchInput" class="cm-search-input" 
+                                   placeholder="Search projects, organizations, users, complaints..." 
+                                   autocomplete="off">
+                        </div>
 
-                                // Avatar initials
-                                $userName = $cmp['user_name'] ?? 'Community Member';
-                                $nameWords = explode(' ', trim($userName));
-                                $initials = count($nameWords) >= 2 
-                                    ? strtoupper(substr($nameWords[0], 0, 1) . substr($nameWords[1], 0, 1))
-                                    : strtoupper(substr($userName, 0, 2));
+                        <!-- Status Filter -->
+                        <div class="cm-filter-item">
+                            <div class="cm-select-wrap">
+                                <select id="cmStatusFilter" class="cm-select">
+                                    <option value="all">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="dismissed">Dismissed</option>
+                                </select>
+                                <span class="material-symbols-outlined select-chevron">expand_more</span>
+                            </div>
+                        </div>
 
-                                // Avatar color theme
-                                $avatarClass = 'av-student';
-                                if (stripos($roleDisplay, 'University') !== false) $avatarClass = 'av-uni';
-                                elseif (stripos($roleDisplay, 'Mentor') !== false) $avatarClass = 'av-mentor';
-                                elseif (stripos($roleDisplay, 'HR') !== false || stripos($roleDisplay, 'Org') !== false) $avatarClass = 'av-hr';
-                                elseif (stripos($roleDisplay, 'Company') !== false) $avatarClass = 'av-company';
+                        <!-- Priority Level -->
+                        <div class="cm-filter-item">
+                            <div class="cm-select-wrap">
+                                <select id="cmPriorityFilter" class="cm-select">
+                                    <option value="all">All Priorities</option>
+                                    <option value="urgent">Urgent</option>
+                                    <option value="high">High</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="low">Low</option>
+                                </select>
+                                <span class="material-symbols-outlined select-chevron">expand_more</span>
+                            </div>
+                        </div>
 
-                                $categoryDisplay = htmlspecialchars($cmp['category'] ?? 'Technical');
-                                $descExcerpt = htmlspecialchars($cmp['title'] . ' - ' . $cmp['discription']);
-                            ?>
-                            <tr class="cm-data-row"
-                                style="<?= $idx >= 6 ? 'display: none;' : '' ?>"
-                                data-id="<?= $cmp['id'] ?>"
-                                data-display-id="<?= $displayId ?>"
-                                data-user-name="<?= htmlspecialchars($userName) ?>"
-                                data-user-email="<?= htmlspecialchars($cmp['email']) ?>"
-                                data-user-role="<?= htmlspecialchars($roleDisplay) ?>"
-                                data-org="<?= htmlspecialchars($cmp['organization_name'] ?? 'SkillBridge') ?>"
-                                data-category="<?= $categoryDisplay ?>"
-                                data-title="<?= htmlspecialchars($cmp['title']) ?>"
-                                data-desc="<?= htmlspecialchars($cmp['discription']) ?>"
-                                data-priority="<?= $priorityLower ?>"
-                                data-status="<?= strtolower($statusClass) ?>"
-                                data-notes="<?= htmlspecialchars($cmp['resolution_notes'] ?? '') ?>"
-                                data-created-at="<?= htmlspecialchars($cmp['create_at']) ?>">
-                                
-                                <!-- ID -->
-                                <td>
-                                    <span class="cm-complaint-id"><?= $displayId ?></span>
-                                </td>
+                        <!-- Category -->
+                        <div class="cm-filter-item">
+                            <div class="cm-select-wrap">
+                                <select id="cmCategoryFilter" class="cm-select">
+                                    <option value="all">All Categories</option>
+                                    <option value="Technical">Technical</option>
+                                    <option value="Organization">Organization</option>
+                                    <option value="Academic">Academic</option>
+                                    <option value="Project & Milestones">Project & Milestones</option>
+                                    <option value="User Conduct">User Conduct</option>
+                                </select>
+                                <span class="material-symbols-outlined select-chevron">expand_more</span>
+                            </div>
+                        </div>
 
-                                <!-- User -->
-                                <td>
-                                    <div class="cm-user-cell">
-                                        <div class="cm-user-avatar <?= $avatarClass ?>"><?= $initials ?></div>
-                                        <div class="cm-user-meta">
-                                            <span class="cm-user-name"><?= htmlspecialchars($userName) ?></span>
-                                            <span class="cm-user-role"><?= htmlspecialchars($roleDisplay) ?></span>
-                                        </div>
-                                    </div>
-                                </td>
+                    </div>
 
-                                <!-- Category -->
-                                <td>
-                                    <span class="cm-category-cell"><?= $categoryDisplay ?></span>
-                                </td>
-
-                                <!-- Description -->
-                                <td>
-                                    <div class="cm-desc-cell" title="<?= $descExcerpt ?>">
-                                        <?= $descExcerpt ?>
-                                    </div>
-                                </td>
-
-                                <!-- Priority -->
-                                <td>
-                                    <span class="cm-priority-pill priority-<?= $priorityLower ?>">
-                                        <?= strtoupper($priorityLower) ?>
-                                    </span>
-                                </td>
-
-                                <!-- Status -->
-                                <td>
-                                    <span class="cm-status-pill status-<?= $statusClass ?>">
-                                        <?= $statusLabel ?>
-                                    </span>
-                                </td>
-
-                                <!-- Actions -->
-                                <td>
-                                    <div class="cm-actions-cell">
-                                        <button type="button" class="cm-btn-icon cm-btn-view" data-action="view" title="View & Investigate Details">
-                                            <span class="material-symbols-outlined" style="font-size: 19px;">visibility</span>
-                                        </button>
-                                    </div>
-                                </td>
-
-                            </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr id="cmEmptyStateRow">
-                                <td colspan="7" style="text-align: center; padding: 48px 20px; color: #64748b;">
-                                    <span class="material-symbols-outlined" style="font-size: 40px; color: #94a3b8; display: block; margin-bottom: 8px;">report_off</span>
-                                    <strong style="font-size: 15px; color: #1e293b; display: block; margin-bottom: 4px;">No complaints recorded</strong>
-                                    <span style="font-size: 13px;">All platform systems and student activities are running smoothly without open grievances.</span>
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-
-
-            <!-- Pagination Footer Bar (Strictly 6 complaints per page)-->
-            <div class="cm-pagination-bar">
-                <div class="cm-pagination-info" id="cmPaginationInfo">
-                    Showing <?= $totalComplaintsCount > 0 ? '1' : '0' ?> to <?= min($totalComplaintsCount, $pageSize) ?> of <?= $totalComplaintsCount ?> results
-                </div>
-                <div class="cm-pagination-controls" id="cmPaginationControls">
-                    <button type="button" class="cm-page-btn" id="cmBtnPrev" disabled>Previous</button>
-                    <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                        <button type="button" class="cm-page-btn cm-page-number <?= $p === 1 ? 'active' : '' ?>" data-page="<?= $p ?>"><?= $p ?></button>
-                    <?php endfor; ?>
-                    <button type="button" class="cm-page-btn" id="cmBtnNext" <?= $totalPages <= 1 ? 'disabled' : '' ?>>Next</button>
                 </div>
             </div>
+
+            <?php require_once __DIR__ . '/Components/complainTable.php'; ?>
+
+            <!-- Reusable Pagination Component -->
+            <?php 
+                $totalRecords         = $totalComplaintsCount;
+                $perPage              = $pageSize;
+                $entityLabel          = 'results';
+                $paginationInfoId     = 'cmPaginationInfo';
+                $paginationControlsId = 'cmPaginationControls';
+                $alwaysShow           = true;
+                include __DIR__ . '/Components/Pagination.php';
+            ?>
 
         </div>
 

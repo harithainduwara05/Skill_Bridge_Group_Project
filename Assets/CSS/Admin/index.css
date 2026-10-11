@@ -342,6 +342,7 @@
 /* ── 8. Reusable Pagination Bar ───────────────────────────────────────────── */
 .pagination-bar,
 .pm-pagination-bar,
+.pagination-bar,
 .im-pagination-bar,
 .cm-pagination-bar,
 .user-pagination,
@@ -397,15 +398,16 @@
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    text-decoration: none;
     transition: all 0.15s ease;
 }
 
-.page-btn:hover:not(:disabled),
-.pm-page-btn:hover:not(:disabled),
-.im-page-btn:hover:not(:disabled),
-.cm-page-btn:hover:not(:disabled),
-.user-page-btn:hover:not(:disabled),
-.univ-page-btn:hover:not(:disabled) {
+.page-btn:hover:not(:disabled):not(.disabled):not(.active),
+.pm-page-btn:hover:not(:disabled):not(.disabled):not(.active),
+.im-page-btn:hover:not(:disabled):not(.disabled):not(.active),
+.cm-page-btn:hover:not(:disabled):not(.disabled):not(.active),
+.user-page-btn:hover:not(:disabled):not(.disabled):not(.active),
+.univ-page-btn:hover:not(:disabled):not(.disabled):not(.active) {
     background: #f8fafc;
     border-color: #cbd5e1;
     color: #0f172a;
@@ -423,13 +425,47 @@
 }
 
 .page-btn:disabled,
+.page-btn.disabled,
 .pm-page-btn:disabled,
+.pm-page-btn.disabled,
 .im-page-btn:disabled,
+.im-page-btn.disabled,
 .cm-page-btn:disabled,
+.cm-page-btn.disabled,
 .user-page-btn:disabled,
-.univ-page-btn:disabled {
-    opacity: 0.4;
+.user-page-btn.disabled,
+.univ-page-btn:disabled,
+.univ-page-btn.disabled {
+    color: #cbd5e1;
+    background: #ffffff;
+    border-color: #e2e8f0;
     cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.6;
+}
+
+.page-ellipsis,
+.im-page-ellipsis,
+.pm-page-ellipsis,
+.cm-page-ellipsis {
+    color: #94a3b8;
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 600;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+}
+
+/* ── Unified Integrated Filter Toolbar inside Table Card ────────────────── */
+.im-table-card .im-toolbar-card,
+.pm-table-card .pm-toolbar-card,
+.cm-table-card .cm-toolbar-card {
+    border: none !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    border-radius: 0 !important;
+    margin-bottom: 0 !important;
+    box-shadow: none !important;
 }
 
 /* ── 9. Reusable Filter Toolbar, Search & Select Inputs ───────────────────── */

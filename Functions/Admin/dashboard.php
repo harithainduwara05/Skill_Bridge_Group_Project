@@ -1,15 +1,10 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-include "../../Config/db.php";
-include "../../Session/session.php";
-
-require_login();
-require_role('admin');
-$user = current_user();
-
-require_once __DIR__ . "/../../Backend/Admin/dashboard.php";
-
-include "../../Includes/admin_sidebar.php";
+$backendPage = "dashboard.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
 
 <!-- Admin Dashboard Stylesheet -->
 <link rel="stylesheet" href="../../Assets/CSS/Admin/dashboard.css?v=<?php echo time(); ?>">
@@ -61,7 +56,7 @@ include "../../Includes/dash_header.php";
                 <h3>Recent Registrations</h3>
                 <a href="User_Management.php" class="btn-outline">View All Users</a>
             </div>
-            <div class="card-body" style="padding:0;">
+            <div class="card-body" style="padding:0; overflow-x: auto;">
                 <table class="data-table">
                     <?php 
                         $TableColumns = ["User", "Role", "Organization", "Status"];
@@ -177,7 +172,7 @@ include "../../Includes/dash_header.php";
                 <h3>Top Performing Universities</h3>
                 <a href="university.php" class="btn-outline">View All Universities</a>
             </div>
-            <div class="card-body" style="padding:0;">
+            <div class="card-body" style="padding:0; overflow-x: auto;">
                 <table class="data-table">
                     <?php 
                         $TableColumns = ["University Name", "Students", "Active Projects", "Completion Rate", "Status"];

@@ -1,14 +1,11 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-require_once "../../Config/db.php";
-require_once "../../Session/Session.php";
-
-require_login();
-require_role('admin');
-
-require_once __DIR__ . "/../../Backend/Admin/notification.php";
-
-include "../../Includes/admin_sidebar.php";
+$backendPage = "notification.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
+
 <link rel="stylesheet" href="../../Assets/CSS/Admin/notification.css?v=<?php echo time(); ?>">
 <link rel="stylesheet" href="../../Assets/CSS/flash-toast.css">
 <?php

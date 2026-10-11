@@ -1,13 +1,11 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-require_once "../../Config/db.php";
-require_once "../../Session/Session.php";
-require_login();
-require_role('admin');
-
-require_once __DIR__ . "/../../Backend/Admin/university.php";
-
-include "../../Includes/admin_sidebar.php";
+$backendPage = "university.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
+
 <link rel="stylesheet" href="../../Assets/CSS/Admin/university.css">
 <?php
 include "../../Includes/dash_header.php";
@@ -161,39 +159,11 @@ include "../../Includes/dash_header.php";
                 </table>
             </div>
 
-            <!-- Pagination (Shows only if more than 5 universities exist) -->
-            <?php if ($totalPages > 1): ?>
-                <div class="univ-pagination">
-                    <div class="univ-pagination-info">
-                        Showing <?= $offset + 1 ?>–<?= min($offset + $recordsPerPage, $totFilteredUni) ?> of
-                        <?= $totFilteredUni ?> universities
-                    </div>
-                    <div class="univ-pagination-controls">
-                        <?php if ($currentPage <= 1): ?>
-                            <span class="univ-page-btn disabled">Previous</span>
-                        <?php else: ?>
-                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage - 1 ?>"
-                                class="univ-page-btn" style="text-decoration:none; color:inherit;">Previous</a>
-                        <?php endif; ?>
-
-                        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
-                            <?php if ($p == $currentPage): ?>
-                                <span class="univ-page-btn univ-page-active"><?= $p ?></span>
-                            <?php else: ?>
-                                <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $p ?>"
-                                    class="univ-page-btn" style="text-decoration:none; color:inherit;"><?= $p ?></a>
-                            <?php endif; ?>
-                        <?php endfor; ?>
-
-                        <?php if ($currentPage >= $totalPages): ?>
-                            <span class="univ-page-btn disabled">Next</span>
-                        <?php else: ?>
-                            <a href="?status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>&page=<?= $currentPage + 1 ?>"
-                                class="univ-page-btn" style="text-decoration:none; color:inherit;">Next</a>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            <?php endif; ?>
+            <!-- Reusable Pagination Component -->
+            <?php 
+                $entityLabel = 'universities';
+                include __DIR__ . "/Components/Pagination.php";
+            ?>
 
         </div>
     </div>

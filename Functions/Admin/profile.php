@@ -1,14 +1,11 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-require_once "../../Config/db.php";
-require_once "../../Session/Session.php";
-
-require_login();
-require_role('admin');
-
-require_once __DIR__ . "/../../Backend/Admin/profile.php";
-
-include "../../Includes/admin_sidebar.php";
+$backendPage = "profile.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
+
 <link rel="stylesheet" href="../../Assets/CSS/Admin/profile.css">
 <link rel="stylesheet" href="../../Assets/CSS/Admin/usermanagement.css">
 <?php

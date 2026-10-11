@@ -54,11 +54,12 @@
    -------------------------------------------------------------------------- */
 .cm-toolbar-card {
     background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 14px;
-    padding: 12px 18px;
-    margin-bottom: 20px;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    border: none;
+    border-bottom: 1px solid #e2e8f0;
+    border-radius: 0;
+    padding: 14px 20px;
+    margin-bottom: 0;
+    box-shadow: none;
 }
 
 .cm-toolbar-row {

@@ -1,16 +1,10 @@
+<!--Initialize Admin Environment: Auth Guard, 
+Backend Controller & Sidebar-->
 <?php
-
-include "../../Config/db.php";
-include "../../Session/session.php";
-
-require_login();
-require_role('admin');
-$user = current_user();
-
-require_once __DIR__ . "/../../Backend/Admin/reportandAnalysist.php";
-
-include "../../Includes/admin_sidebar.php";
+$backendPage = "reportandAnalysist.php";
+require_once __DIR__ . "/Components/AdminInit.php";
 ?>
+<!--End Here -->
 
 <!-- Custom Reports & Analytics Stylesheet -->
 <link rel="stylesheet" href="../../Assets/CSS/Admin/reports_analytics.css?v=<?php echo time(); ?>">
