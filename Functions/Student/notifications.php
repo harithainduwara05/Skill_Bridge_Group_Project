@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 
 require_role("student");
 
@@ -23,12 +23,12 @@ $pageTitle="Notifications | SkillBridge";
 
 
 $extra_css='
-<link rel="stylesheet" href="../../../Assets/CSS/Student/notifications.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/notifications.css">
 ';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -370,7 +370,7 @@ You have no older notifications from this week.
 
 
 
-<script src="../../../Assets/JS/Student/notifications.js"></script>
+<script src="../../Assets/JS/Student/notifications.js"></script>
 
 
 <footer class="footer">

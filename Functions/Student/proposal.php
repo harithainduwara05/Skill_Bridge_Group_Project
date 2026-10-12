@@ -1,6 +1,6 @@
 <?php
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -32,12 +32,12 @@ if(!$project){
 $pageTitle = "Submit Proposal | SkillBridge";
 
 $extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet" href="../../../Assets/CSS/Student/proposal.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/proposal.css">
 ';
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 
@@ -433,5 +433,5 @@ By submitting, you agree to our Student Professional Standards.
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>

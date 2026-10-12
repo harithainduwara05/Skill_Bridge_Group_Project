@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -10,13 +10,13 @@ $user = current_user();
 $pageTitle = "Portfolio | SkillBridge";
 
 $extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet" href="../../../Assets/CSS/Student/portfolio.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/portfolio.css">
 ';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -225,7 +225,7 @@ All Projects
 
 <div class="project-image">
 
-<img src="../../../Assets/Images/UI/portfolio/project1.jpeg">
+<img src="../../Assets/Images/UI/portfolio/project1.jpeg">
 
 </div>
 
@@ -313,7 +313,7 @@ title="Delete Project">
 
 <div class="project-image">
 
-<img src="../../../Assets/Images/UI/portfolio/project2.jpeg">
+<img src="../../Assets/Images/UI/portfolio/project2.jpeg">
 
 </div>
 
@@ -476,9 +476,9 @@ Licenses & Certifications
 <div class="certificate-image">
 
 <img 
-src="../../../Assets/Images/UI/certificates/certificate1.png"
+src="../../Assets/Images/UI/certificates/certificate1.png"
 onclick="viewCertificateFile(
-'../../../Assets/Images/UI/certificates/certificate1.png'
+'../../Assets/Images/UI/certificates/certificate1.png'
 )"
 >
 </div>
@@ -561,9 +561,9 @@ title="Delete Certificate">
 
 
 <img 
-src="../../../Assets/Images/UI/certificates/certificate2.jpeg"
+src="../../Assets/Images/UI/certificates/certificate2.jpeg"
 onclick="viewCertificateFile(
-'../../../Assets/Images/UI/certificates/certificate2.jpeg'
+'../../Assets/Images/UI/certificates/certificate2.jpeg'
 )"
 >
 
@@ -990,4 +990,4 @@ image.src=file;
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -28,16 +28,16 @@ $pageTitle="Submit Application | SkillBridge";
 
 $extra_css='
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/submit_application.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/submit_application.css">
 
 ';
 
 
-include "../../../Includes/student_sidebar.php";
+include "../../Includes/student_sidebar.php";
 
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -485,5 +485,5 @@ By submitting this application, you agree to SkillBridge professional standards.
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>

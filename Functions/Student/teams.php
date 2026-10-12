@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 
 require_role("student");
 
@@ -21,12 +21,12 @@ $pageTitle="My Teams | SkillBridge";
 
 
 $extra_css='
-<link rel="stylesheet" href="../../../Assets/CSS/Student/teams.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/teams.css">
 ';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -343,7 +343,7 @@ Predictive Analytics Dashboard
 <div class="leader">
 
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <div>
@@ -374,11 +374,11 @@ Team Leader
 
 <div>
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <span>
@@ -556,7 +556,7 @@ Smart City Mobility App
 <div class="leader">
 
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <div>
@@ -586,9 +586,9 @@ Team Leader
 
 <div>
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <span>
@@ -761,7 +761,7 @@ Healthcare Monitoring Portal
 <div class="leader">
 
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <div>
@@ -792,7 +792,7 @@ Team Leader
 
 <div>
 
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 
 <span>
@@ -933,7 +933,7 @@ Workspace
 </main>
 
 
-<script src="../../../Assets/JS/Student/teams.js"></script>
+<script src="../../Assets/JS/Student/teams.js"></script>
 
 
 <footer class="footer">
@@ -945,4 +945,4 @@ Workspace
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

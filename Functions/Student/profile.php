@@ -3,8 +3,8 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_once __DIR__ . "/profile_completion.php";
 require_once __DIR__ . "/check_student_access.php";
@@ -151,7 +151,7 @@ if(isset($_POST['save_changes'])){
     if(isset($_POST['remove_profile_image']) 
         && $_POST['remove_profile_image'] == "1"){
 
-        $folder = __DIR__ ."/../../../Assets/Images/Student/";
+        $folder = __DIR__ ."/../../Assets/Images/Student/";
         if(
             !empty($oldImage) 
             &&
@@ -168,7 +168,7 @@ if(isset($_POST['save_changes'])){
         &&
         $_FILES['profile_image']['error']==0
     ){
-        $folder = __DIR__ ."/../../../Assets/Images/Student/";
+        $folder = __DIR__ ."/../../Assets/Images/Student/";
 
         if(!is_dir($folder)){
             mkdir(
@@ -291,8 +291,8 @@ $completion = calculateProfileCompletion($student,$skill_count,$certificate_coun
 ?>
 
 <?php
-    include "../../../Includes/student_sidebar.php";
-    include "../../../Includes/dash_header.php";
+    include "../../Includes/student_sidebar.php";
+    include "../../Includes/dash_header.php";
 ?>
 
 <!DOCTYPE html>
@@ -300,7 +300,7 @@ $completion = calculateProfileCompletion($student,$skill_count,$certificate_coun
 
 <head>
     <title>My Profile</title>
-    <link rel="stylesheet"href="../../../Assets/CSS/Student/settings.css">
+    <link rel="stylesheet"href="../../Assets/CSS/Student/settings.css">
     <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -335,10 +335,10 @@ $completion = calculateProfileCompletion($student,$skill_count,$certificate_coun
         <img id="profilePreview"
         src="<?php
         if(!empty($student['profile_image'])){
-            echo "../../../Assets/Images/Student/" . $student['profile_image'];
+            echo "../../Assets/Images/Student/" . $student['profile_image'];
         }
         else{
-            echo "../../../Assets/Images/Student/profile.webp";
+            echo "../../Assets/Images/Student/profile.webp";
         }
         ?>">
 
@@ -693,5 +693,5 @@ function removeProfileImage(){
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>

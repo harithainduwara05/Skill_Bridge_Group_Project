@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 require_once __DIR__ . "/profile_completion.php";
 require_once __DIR__ . "/check_student_access.php";
 
@@ -61,12 +61,12 @@ $completion = calculateProfileCompletion(
 
 $pageTitle = "Student Dashboard | SkillBridge";
 $extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 ';
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <div class="container">
@@ -139,7 +139,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
 <div class="profile-buttons">
     <a href="settings.php"class="btn">Complete Profile</a>
-    <a href="../../../Functions/Dashboards/Student/cv_builder.php" class="outline">
+    <a href="./cv_builder.php" class="outline">
     View Public CV</a>
 </div>
 
@@ -152,7 +152,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 <div class="card">
 
 <h1>
-    <span class="ico"><img src="../../../Assets/Images/Icons/skills.png"></span>
+    <span class="ico"><img src="../../Assets/Images/Icons/skills.png"></span>
     <?php echo $student['skills']; ?>
 </h1>
 
@@ -161,7 +161,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
 <div class="card">
     <h1>
-        <span class="ico"><img src="../../../Assets/Images/Icons/certificates.png"></span>
+        <span class="ico"><img src="../../Assets/Images/Icons/certificates.png"></span>
         <?php echo $student['certificates']; ?>
     </h1>
     <p>Certificates</p>
@@ -169,7 +169,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
 <div class="card">
     <h1>
-        <span class="ico"><img src="../../../Assets/Images/Icons/projects.svg"></span>
+        <span class="ico"><img src="../../Assets/Images/Icons/projects.svg"></span>
         <?php echo $student['projects']; ?>
     </h1>
     <p>Projects Done</p>
@@ -282,7 +282,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 ?>
 
 <div class="update-icon <?php echo $iconClass; ?>">
-    <img src="../../../Assets/Images/Icons/<?php echo $icon; ?>">
+    <img src="../../Assets/Images/Icons/<?php echo $icon; ?>">
 </div>
 
 <div class="update-content">
@@ -431,4 +431,4 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>
