@@ -16,6 +16,7 @@ include "../../Includes/dash_header.php";
 
     <!-- Flash Notification Component -->
     <?php include __DIR__ . "/Components/FlashToast.php"; ?>
+    <!--End Here-->
 
     <div class="notif-container">
 
@@ -27,22 +28,8 @@ include "../../Includes/dash_header.php";
         </div>
 
         <!-- Header Row -->
-        <div class="notif-header-row">
-            <div class="notif-title-wrap">
-                <h1>Admin Notifications</h1>
-                <p>Manage and monitor inquiries, system alerts, and platform messages.</p>
-            </div>
-
-            <?php if ($unreadCount > 0): ?>
-            <form method="POST" action="" style="margin:0;">
-                <input type="hidden" name="action" value="mark_all_read">
-                <button type="submit" class="btn-mark-all">
-                    <span class="material-symbols-outlined" style="font-size:18px;">done_all</span>
-                    Mark All as Read
-                </button>
-            </form>
-            <?php endif; ?>
-        </div>
+        <?php require_once __DIR__.'/Components/NotificationHeder.php';?>
+        <!--End Here-->
 
         <!-- Notification  Cards -->
         <div class="notif-stats-grid">
@@ -56,158 +43,25 @@ include "../../Includes/dash_header.php";
                 include __DIR__ . "/Components/Card.php";
             ?>
         </div>
+        <!--End Here-->
 
         <!-- Filter Tabs -->
-        <div class="notif-filter-tabs">
-            <a href="?tab=all" class="notif-tab <?= $filterTab === 'all' ? 'active' : '' ?>">
-                All
-                <span class="notif-tab-badge"><?= $totalCount ?></span>
-            </a>
-            <a href="?tab=unread" class="notif-tab <?= $filterTab === 'unread' ? 'active' : '' ?>">
-                Unread
-                <span class="notif-tab-badge"><?= $unreadCount ?></span>
-            </a>
-            <a href="?tab=inquiries" class="notif-tab <?= $filterTab === 'inquiries' ? 'active' : '' ?>">
-                Contact Inquiries
-                <span class="notif-tab-badge"><?= $inquiryCount ?></span>
-            </a>
-        </div>
+        <?php require_once __DIR__.'/Components/NotificationFilter.php'?>
+        <!--End Here-->
 
         <!-- Notifications List -->
-        <?php if (empty($notifList)): ?>
-            <div class="notif-empty-state">
-                <span class="material-symbols-outlined">notifications_off</span>
-                <h3>No Notifications Found</h3>
-                <p>You have no notifications under this category at the moment.</p>
-            </div>
-        <?php else: ?>
-            <div class="notif-list">
-                <?php foreach ($notifList as $item): 
-                    $isUnread = ($item['status'] === 'Unread');
-                    $isContact = ($item['type'] === 'contact_inquiry');
-                    $formattedTime = date('M d, Y • h:i A', strtotime($item['created_at']));
-                ?>
-                    <div class="notif-item-card <?= $isUnread ? 'unread' : '' ?>">
-                        <div class="notif-item-icon <?= $isContact ? 'inquiry' : ($item['type'] === 'admin' ? 'admin' : 'system') ?>">
-                            <span class="material-symbols-outlined">
-                                <?= $isContact ? 'mail' : ($item['type'] === 'admin' ? 'security' : 'info') ?>
-                            </span>
-                        </div>
-
-                        <div class="notif-item-content">
-                            <div class="notif-item-header">
-                                <h4><?= htmlspecialchars($item['title'] ?? 'Notification') ?></h4>
-                                <div class="notif-tag-wrap">
-                                    <?php if ($isContact): ?>
-                                        <span class="badge-tag inquiry">Contact Inquiry</span>
-                                    <?php else: ?>
-                                        <span class="badge-tag admin"><?= htmlspecialchars(ucfirst($item['type'] ?? 'System')) ?></span>
-                                    <?php endif; ?>
-
-                                    <span class="badge-tag <?= $isUnread ? 'unread' : 'read' ?>">
-                                        <?= htmlspecialchars($item['status']) ?>
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div class="notif-item-time">
-                                <span class="material-symbols-outlined" style="font-size:14px;">schedule</span>
-                                <?= htmlspecialchars($formattedTime) ?>
-                            </div>
-
-                            <div class="notif-item-body"><?= htmlspecialchars($item['message'] ?? '') ?></div>
-
-                            <div class="notif-item-actions">
-                                <?php if ($isUnread): ?>
-                                <form method="POST" action="" style="margin:0;">
-                                    <input type="hidden" name="action" value="mark_read">
-                                    <input type="hidden" name="notification_id" value="<?= $item['notification_id'] ?>">
-                                    <button type="submit" class="btn-item-action">
-                                        <span class="material-symbols-outlined" style="font-size:15px;">check</span>
-                                        Mark as Read
-                                    </button>
-                                </form>
-                                <?php endif; ?>
-
-                                <button type="button" class="btn-item-action delete" onclick="openDeleteModal(<?= $item['notification_id'] ?>, <?= htmlspecialchars(json_encode($item['title'] ?? 'Notification'), ENT_QUOTES, 'UTF-8') ?>)">
-                                    <span class="material-symbols-outlined" style="font-size:15px;">delete</span>
-                                    Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-
+        <?php require_once __DIR__.'/Components/NotificationList.php'?>
+        <!--End Here-->
     </div>
 
 </main>
 
 <!-- MODAL: DELETE CONFIRMATION POPUP -->
-<div class="notif-modal-overlay" id="deleteNotifModal" onclick="closeDeleteModal(event)">
-    <div class="notif-modal-card" onclick="event.stopPropagation()">
-        <div class="notif-modal-header">
-            <h3 style="color:#dc2626; display:flex; align-items:center; gap:8px;">
-                <span class="material-symbols-outlined" style="font-size:22px; color:#dc2626;">delete</span>
-                Delete Notification
-            </h3>
-            <button type="button" class="notif-modal-close" onclick="closeDeleteModal()" aria-label="Close">
-                <span class="material-symbols-outlined">close</span>
-            </button>
-        </div>
-        <form method="POST" action="">
-            <input type="hidden" name="action" value="delete">
-            <input type="hidden" name="notification_id" id="deleteNotifId">
+<?php require_once __DIR__.'/Components/NotificationDeleteComPopUp.php'?>
+<!--End Here-->
 
-            <div class="notif-modal-body">
-                <div style="display:flex; gap:16px; align-items:flex-start;">
-                    <div class="notif-modal-warning-icon">
-                        <span class="material-symbols-outlined">warning</span>
-                    </div>
-                    <div>
-                        <p style="font-size: 14.5px; font-weight:600; color:#0f172a; margin:0 0 6px 0;">
-                            Are you sure you want to delete this notification?
-                        </p>
-                        <p style="font-size: 13px; color:#64748b; margin:0; line-height:1.5;">
-                            Item: <strong id="deleteNotifTitle" style="color:#0f172a;"></strong><br>
-                            This action cannot be undone. The notification will be permanently removed.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="notif-modal-footer">
-                <button type="button" class="btn-modal-secondary" onclick="closeDeleteModal()">Cancel</button>
-                <button type="submit" class="btn-modal-danger">
-                    <span class="material-symbols-outlined" style="font-size:16px;">delete</span>
-                    Delete Notification
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-function openDeleteModal(notifId, notifTitle) {
-    document.getElementById('deleteNotifId').value = notifId;
-    document.getElementById('deleteNotifTitle').textContent = notifTitle;
-    document.getElementById('deleteNotifModal').classList.add('active');
-}
-
-function closeDeleteModal(event) {
-    if (!event || event.target.id === 'deleteNotifModal' || event.type === 'click') {
-        const modal = document.getElementById('deleteNotifModal');
-        if (modal) modal.classList.remove('active');
-    }
-}
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeDeleteModal();
-    }
-});
-</script>
+<!-- Notification Dedicated Script -->
+<script src="../../Assets/JS/Admin/notification.js?v=<?php echo time(); ?>"></script>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
