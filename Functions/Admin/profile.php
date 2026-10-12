@@ -2,7 +2,7 @@
 Backend Controller & Sidebar-->
 <?php
 $backendPage = "profile.php";
-require_once __DIR__ . "/Components/AdminInit.php";
+require_once __DIR__ . "/Components/Common/AdminInit.php";
 ?>
 <!--End Here -->
 
@@ -15,331 +15,37 @@ include "../../Includes/dash_header.php";
 <main class="content">
 
     <!-- Flash Toast Component -->
-    <?php include __DIR__ . "/Components/FlashToast.php"; ?>
+    <?php include __DIR__ . "/Components/Common/FlashToast.php"; ?>
+    <!--End Here-->
 
     <div class="admin-profile-container">
 
-        <!-- Breadcrumb & Header -->
-        <div class="profile-breadcrumb">
-            <a href="dashboard.php">Admin</a>
-            <span class="material-symbols-outlined" style="font-size:14px;">chevron_right</span>
-            <span>Profile & Settings</span>
-        </div>
-
-        <div class="profile-title-row">
-            <h1 class="profile-title">Admin Profile & Settings</h1>
-            <p class="profile-subtitle">Manage your personal administrator account details, profile picture, and security credentials.</p>
-        </div>
+        <!-- Page Header -->
+        <?php
+            $HeaderDetails = [
+                "title"      => "Admin Profile & Settings",
+                "subtitle"   => "Manage your personal administrator account details, profile picture, and security credentials.",
+                "breadcrumb" => "Profile & Settings"
+            ];
+            include __DIR__ . "/Components/Common/PageHeader.php";
+        ?>
+        <!--End Here-->
 
         <div class="profile-grid">
-
             <!-- Left Column: Profile Card -->
-            <div class="profile-card">
-                <div class="profile-card-header">
-                    <h3>
-                        <span class="material-symbols-outlined">badge</span>
-                        Profile Overview
-                    </h3>
-                </div>
-                <div class="profile-card-body">
-                    <form method="POST" action="" enctype="multipart/form-data" id="photoUploadForm">
-                        <input type="hidden" name="action" value="update_profile">
-                        <input type="hidden" name="name" value="<?= htmlspecialchars($adminName) ?>">
-                        <input type="hidden" name="contact_number" value="<?= htmlspecialchars($adminContact) ?>">
-                        
-                        <div class="profile-avatar-section">
-                            <div class="avatar-uploader-wrapper">
-                                <?php if (!empty($photoUrl)): ?>
-                                    <img src="<?= $photoUrl ?>?v=<?= time() ?>" alt="<?= htmlspecialchars($adminName) ?>" class="profile-photo-preview" id="avatarPreview">
-                                <?php else: ?>
-                                    <div class="profile-photo-initial" id="avatarInitial">
-                                        <?= htmlspecialchars($initial) ?>
-                                    </div>
-                                    <img src="" alt="Preview" class="profile-photo-preview" id="avatarPreview" style="display:none;">
-                                <?php endif; ?>
-
-                                <!-- Camera Button -->
-                                <label for="profilePhotoInput" class="avatar-upload-btn" title="Upload New Profile Photo">
-                                    <span class="material-symbols-outlined">photo_camera</span>
-                                </label>
-                                <input type="file" name="profile_image" id="profilePhotoInput" accept="image/png, image/jpeg, image/jpg, image/webp" style="display:none;" onchange="handlePhotoSelect(this)">
-                            </div>
-
-                            <h2 class="profile-card-name"><?= htmlspecialchars($adminName) ?></h2>
-                            <p class="profile-card-email"><?= htmlspecialchars($email) ?></p>
-                            
-                            <span class="profile-role-badge">
-                                <span class="material-symbols-outlined" style="font-size:14px;">admin_panel_settings</span>
-                                <?= htmlspecialchars($adminRole) ?>
-                            </span>
-
-                            <?php if (!empty($adminPhoto)): ?>
-                                <form method="POST" action="" style="margin-top:8px;">
-                                    <input type="hidden" name="action" value="remove_photo">
-                                    <button type="submit" class="avatar-remove-btn" onclick="return confirm('Are you sure you want to remove your profile photo?')">
-                                        <span class="material-symbols-outlined" style="font-size:14px;">delete</span>
-                                        Remove Photo
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                        </div>
-                    </form>
-
-                    <!-- Account Info List -->
-                    <div class="profile-meta-list">
-                        <div class="profile-meta-item">
-                            <span class="profile-meta-label">
-                                <span class="material-symbols-outlined">security</span>
-                                Access Level
-                            </span>
-                            <span class="profile-meta-value" style="color:#10b981;">Full Admin</span>
-                        </div>
-                        <div class="profile-meta-item">
-                            <span class="profile-meta-label">
-                                <span class="material-symbols-outlined">verified</span>
-                                Account Status
-                            </span>
-                            <span class="badge-status-pill active" style="font-size:11px; padding:2px 8px;">Active</span>
-                        </div>
-                        <div class="profile-meta-item">
-                            <span class="profile-meta-label">
-                                <span class="material-symbols-outlined">calendar_today</span>
-                                Member Since
-                            </span>
-                            <span class="profile-meta-value"><?= htmlspecialchars($adminCreated) ?></span>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
+            <?php require_once __DIR__ . '/Components/Profile/ProfileLeftProfileCard.php'; ?>
+            <!--End Here-->
 
             <!--Right Column: Edit Details & Password -->
-            <div>
-
-                <!-- Card 1: Personal Details -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <h3>
-                            <span class="material-symbols-outlined">manage_accounts</span>
-                            Personal Information
-                        </h3>
-                    </div>
-                    <div class="profile-card-body">
-                        <form method="POST" action="" enctype="multipart/form-data" id="personalInfoForm">
-                            <input type="hidden" name="action" value="update_profile">
-
-                            <div class="profile-form-row">
-                                <div class="profile-form-group">
-                                    <label>Full Name *</label>
-                                    <input type="text" name="name" value="<?= htmlspecialchars($adminName) ?>" required placeholder="Administrator Name">
-                                </div>
-                                <div class="profile-form-group">
-                                    <label>Email Address (Primary)</label>
-                                    <input type="email" value="<?= htmlspecialchars($email) ?>" disabled readonly title="Email cannot be changed directly">
-                                </div>
-                            </div>
-
-                            <div class="profile-form-group">
-                                <label>Contact Number (Optional)</label>
-                                <input type="text" name="contact_number" value="<?= htmlspecialchars($adminContact) ?>" placeholder="e.g. +94 77 123 4567">
-                            </div>
-
-                            <div style="display:flex; justify-content:flex-end; margin-top:10px;">
-                                <button type="submit" class="btn-save-profile">
-                                    <span class="material-symbols-outlined" style="font-size:18px;">save</span>
-                                    Save Profile
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Card 2: Security & Change Password -->
-                <div class="profile-card">
-                    <div class="profile-card-header">
-                        <h3>
-                            <span class="material-symbols-outlined">lock_reset</span>
-                            Security & Password
-                        </h3>
-                    </div>
-                    <div class="profile-card-body">
-                        <form method="POST" action="" id="passwordForm">
-                            <input type="hidden" name="action" value="change_password">
-
-                            <div class="profile-form-group">
-                                <label>Current Password *</label>
-                                <div class="password-input-wrap">
-                                    <input type="password" name="current_password" id="currPass" required placeholder="Enter current password">
-                                    <button type="button" class="password-toggle-btn" onclick="togglePassVisibility('currPass', this)">
-                                        <span class="material-symbols-outlined">visibility</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="profile-form-row">
-                                <div class="profile-form-group">
-                                    <label>New Password *</label>
-                                    <div class="password-input-wrap">
-                                        <input type="password" name="new_password" id="newPass" required placeholder="Min 8 chars with uppercase, lowercase & numbers" minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least 8 characters, including uppercase, lowercase, and numbers">
-                                         <button type="button" class="password-toggle-btn" onmousedown="event.preventDefault();" onclick="togglePassVisibility('newPass', this)">
-                                            <span class="material-symbols-outlined">visibility</span>
-                                        </button>
-                                    </div>
-                                    <!-- Password Requirements (Smooth downward accordion list, appears on focus) -->
-                                    <div class="password-requirements" id="adminPassRequirements">
-                                        <div class="req-item" id="adminReqLength">
-                                            <span class="req-icon">✕</span>
-                                            <span>At least 8 characters</span>
-                                        </div>
-                                        <div class="req-item" id="adminReqUpper">
-                                            <span class="req-icon">✕</span>
-                                            <span>At least 1 uppercase (A-Z)</span>
-                                        </div>
-                                        <div class="req-item" id="adminReqLower">
-                                            <span class="req-icon">✕</span>
-                                            <span>At least 1 lowercase (a-z)</span>
-                                        </div>
-                                        <div class="req-item" id="adminReqNum">
-                                            <span class="req-icon">✕</span>
-                                            <span>At least 1 number (0-9)</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="profile-form-group">
-                                    <label>Confirm New Password *</label>
-                                    <div class="password-input-wrap">
-                                        <input type="password" name="confirm_password" id="confPass" required placeholder="Re-type new password" minlength="8">
-                                        <button type="button" class="password-toggle-btn" onmousedown="event.preventDefault();" onclick="togglePassVisibility('confPass', this)">
-                                            <span class="material-symbols-outlined">visibility</span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div id="passMatchMsg" style="font-size:12.5px; margin-bottom:14px; display:none;"></div>
-
-                            <div style="display:flex; justify-content:flex-end;">
-                                <button type="submit" class="btn-update-password">
-                                    <span class="material-symbols-outlined" style="font-size:18px;">key</span>
-                                    Update Password
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-            </div>
-
+            <?php require_once __DIR__ . '/Components/Profile/ProfileRightColum.php'; ?>
+            <!--End Here-->
         </div>
 
     </div>
 
 </main>
 
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-    </div>
-</footer>
-
-<script>
-    // Live Profile Photo Preview and Immediate Submit
-    function handlePhotoSelect(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const preview = document.getElementById('avatarPreview');
-                const initial = document.getElementById('avatarInitial');
-                if (preview) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                }
-                if (initial) {
-                    initial.style.display = 'none';
-                }
-                // Auto submit form to upload photo immediately
-                document.getElementById('photoUploadForm').submit();
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
-    // Toggle Password Visibility
-    function togglePassVisibility(inputId, btn) {
-        const input = document.getElementById(inputId);
-        const icon = btn.querySelector('.material-symbols-outlined');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.innerText = 'visibility_off';
-        } else {
-            input.type = 'password';
-            icon.innerText = 'visibility';
-        }
-    }
-
-    // Password Match & Live Requirements Validation
-    const newPass = document.getElementById('newPass');
-    const confPass = document.getElementById('confPass');
-    const passMsg = document.getElementById('passMatchMsg');
-    const reqBox = document.getElementById('adminPassRequirements');
-
-    function updateReqItem(elemId, isValid) {
-        const item = document.getElementById(elemId);
-        if (!item) return;
-        const icon = item.querySelector('.req-icon');
-        if (isValid) {
-            item.classList.add('valid');
-            if (icon) icon.innerText = '✓';
-        } else {
-            item.classList.remove('valid');
-            if (icon) icon.innerText = '✕';
-        }
-    }
-
-    function checkPasswordRequirements() {
-        const val = newPass.value;
-        updateReqItem('adminReqLength', val.length >= 8);
-        updateReqItem('adminReqUpper', /[A-Z]/.test(val));
-        updateReqItem('adminReqLower', /[a-z]/.test(val));
-        updateReqItem('adminReqNum', /\d/.test(val));
-    }
-
-    function checkPassMatch() {
-        if (!confPass.value) {
-            passMsg.style.display = 'none';
-            return;
-        }
-        passMsg.style.display = 'block';
-        if (newPass.value === confPass.value) {
-            passMsg.style.color = '#10b981';
-            passMsg.innerText = '✓ Passwords match';
-        } else {
-            passMsg.style.color = '#ef4444';
-            passMsg.innerText = '✗ Passwords do not match';
-        }
-    }
-
-    // Smooth accordion slide down when New Password field is focused
-    newPass.addEventListener('focus', function() {
-        reqBox.classList.add('show');
-        checkPasswordRequirements();
-    });
-
-    // Smooth accordion slide up when clicking away or blur
-    newPass.addEventListener('blur', function() {
-        reqBox.classList.remove('show');
-    });
-
-    // Live update while typing
-    newPass.addEventListener('input', function() {
-        checkPasswordRequirements();
-        checkPassMatch();
-    });
-    confPass.addEventListener('input', checkPassMatch);
-
-</script>
+<!-- Admin Profile Dedicated Script -->
+<script src="../../Assets/JS/Admin/Profile.js?v=<?php echo time(); ?>"></script>
 
 <?php include "../../Includes/dash_footer.php"; ?>

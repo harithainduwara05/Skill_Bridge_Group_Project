@@ -3,7 +3,7 @@
     <table class="data-table cm-table">
         <?php 
             $TableColumns = ["Complaint ID", "Submitted By", "Category", "Description", "Priority", "Status", "Actions"];
-            include __DIR__ . "/TableHeder.php";
+            include dirname(__DIR__) . "/Common/TableHeder.php";
         ?>
         <tbody id="cmTableBody">
             <?php if (!empty($complaints)): ?>

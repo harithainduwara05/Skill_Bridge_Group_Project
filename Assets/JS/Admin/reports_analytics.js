@@ -1,11 +1,3 @@
-/**
- * ==============================================================================
- * SkillBridge - Reports & Performance Analytics Dashboard Logic (Admin)
- * Handles client-side interactive charts, period toggling, domain tab filtering,
- * export modal configuration, and custom toast notifications.
- * STRICTLY FRONTEND WITH REALISTIC DUMMY DATA (ZERO BACKEND CALLS).
- * ==============================================================================
- */
 
 document.addEventListener('DOMContentLoaded', () => {
     initReportsAnalytics();

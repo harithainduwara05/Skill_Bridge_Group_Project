@@ -626,4 +626,100 @@
     color: #38bdf8;
 }
 
+/* ── 11. Reusable Page Header & Breadcrumb ────────────────────────────────── */
+.admin-page-header,
+.user-page-header,
+.univ-page-header,
+.pm-header,
+.im-header-row,
+.cm-header-row {
+    margin-bottom: 24px;
+}
+
+/* Standalone header spacing when not wrapped in a page container (.im-container, .pm-container, etc.) */
+.content > .admin-page-header,
+.admin-page-header.user-page-header,
+.admin-page-header.univ-page-header {
+    padding: 24px 28px 0;
+    box-sizing: border-box;
+}
+
+.admin-breadcrumb,
+.user-breadcrumb,
+.univ-breadcrumb,
+.notif-breadcrumb,
+.profile-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12.5px;
+    color: #94a3b8;
+    margin-bottom: 10px;
+}
+
+.admin-breadcrumb a,
+.user-breadcrumb a,
+.univ-breadcrumb a,
+.notif-breadcrumb a,
+.profile-breadcrumb a {
+    color: #64748b;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.admin-breadcrumb a:hover,
+.user-breadcrumb a:hover,
+.univ-breadcrumb a:hover,
+.notif-breadcrumb a:hover,
+.profile-breadcrumb a:hover {
+    color: #0f172a;
+}
+
+.admin-title-row,
+.user-title-row,
+.univ-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding-bottom: 6px;
+}
+
+.admin-title,
+.user-title,
+.univ-title,
+.pm-header h1,
+.im-header-row h1,
+.cm-header-row h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px 0;
+}
+
+.admin-subtitle,
+.user-subtitle,
+.univ-subtitle,
+.pm-header p,
+.im-header-row p,
+.cm-header-row p {
+    font-size: 13.5px;
+    color: #64748b;
+    margin: 0;
+    font-weight: 400;
+    max-width: 580px;
+    line-height: 1.5;
+}
+
+.admin-header-actions,
+.user-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+
 

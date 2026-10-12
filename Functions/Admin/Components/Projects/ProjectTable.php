@@ -2,7 +2,7 @@
     <table class="data-table pm-table">
         <?php 
             $TableColumns = ["PROJECT ID", "PROJECT TITLE", "ORGANIZATION", "REQUIRED SKILLS", "TEAM MEMBERS", "STATUS", "CREATED DATE", "ACTIONS"];
-            include __DIR__ . "/TableHeder.php";
+            include dirname(__DIR__) . "/Common/TableHeder.php";
         ?>
         <tbody id="pmTableBody">
             

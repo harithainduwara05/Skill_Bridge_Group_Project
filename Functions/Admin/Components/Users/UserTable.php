@@ -2,7 +2,7 @@
     <table class="data-table">
             <?php 
                 $TableColumns = ["User", "Role", "Affiliation / Organization", "Status", "Joined Date", "Actions"];
-                include __DIR__ . "/TableHeder.php";
+                include dirname(__DIR__) . "/Common/TableHeder.php";
             ?>
         <tbody>
             <?php if (empty($usersList)): ?>

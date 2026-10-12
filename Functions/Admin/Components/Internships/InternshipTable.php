@@ -2,7 +2,7 @@
     <table class="data-table im-table">
                     <?php 
                         $TableColumns = ["ID", "POSITION", "COMPANY", "INDUSTRY", "REQUIRED SKILLS", "APPLICATIONS", "DEADLINE", "STATUS", "ACTIONS"];
-                        include __DIR__ . "/TableHeder.php";
+                        include dirname(__DIR__) . "/Common/TableHeder.php";
                     ?>
                     <tbody id="imTableBody">
 

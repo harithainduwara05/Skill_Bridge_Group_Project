@@ -29,6 +29,7 @@ if (isset($conn) && $conn instanceof mysqli) {
         rel="stylesheet">
     <link rel="stylesheet" href="../../Assets/CSS/dashboard.css">
     <link rel="stylesheet" href="../../Assets/CSS/Admin/index.css">
+    <script src="../../Assets/JS/Admin/admin_core.js"></script>
 </head>
 
 <body>

@@ -11,7 +11,7 @@
  *   require_once __DIR__ . '/Components/AdminInit.php';
  */
 
-require_once __DIR__ . "/../../../Session/Session.php";
+require_once __DIR__ . "/../../../../Session/Session.php";
 require_login();
 require_role('admin');
 $user = current_user();
@@ -23,11 +23,11 @@ if (!empty($targetBackend)) {
     if (substr($targetBackend, -4) !== '.php') {
         $targetBackend .= '.php';
     }
-    $backendFilePath = __DIR__ . "/../../../Backend/Admin/" . $targetBackend;
+    $backendFilePath = __DIR__ . "/../../../../Backend/Admin/" . $targetBackend;
     if (file_exists($backendFilePath)) {
         require_once $backendFilePath;
     }
 }
 
-include __DIR__ . "/../../../Includes/admin_sidebar.php";
+include __DIR__ . "/../../../../Includes/admin_sidebar.php";
 ?>

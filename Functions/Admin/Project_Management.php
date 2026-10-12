@@ -2,7 +2,7 @@
 Backend Controller & Sidebar-->
 <?php
 $backendPage = "Project_Management.php";
-require_once __DIR__ . "/Components/AdminInit.php";
+require_once __DIR__ . "/Components/Common/AdminInit.php";
 ?>
 <!--End Here -->
 
@@ -17,10 +17,15 @@ include "../../Includes/dash_header.php";
     <div class="pm-container">
 
         <!--  Page Header (Title & Subtitle)-->
-        <div class="pm-header">
-            <h1>Project Management</h1>
-            <p>Monitor, review, and manage all student projects across the SkillBridge ecosystem.</p>
-        </div>
+        <?php
+            $HeaderDetails = [
+                "title"      => "Project Management",
+                "subtitle"   => "Monitor, review, and manage all student projects across the SkillBridge ecosystem.",
+                "breadcrumb" => "Project Management"
+            ];
+            include __DIR__ . "/Components/Common/PageHeader.php";
+        ?>
+        <!-- EndHere -->
 
         <!--  Project Management Cards-->
         <div class="pm-stats-grid">
@@ -32,7 +37,7 @@ include "../../Includes/dash_header.php";
                     "cardLabels" => ["Total Projects", "Active Projects", "Reviewing", "Completed Projects"],
                     "cardValues" => [$totalProjects, $activeProjects, $reviewingProjects, $completedProjects]
                 ];
-                include __DIR__ . "/Components/Card.php";
+                include __DIR__ . "/Components/Common/Card.php";
             ?>
             <!--End Here -->
 
@@ -42,10 +47,10 @@ include "../../Includes/dash_header.php";
         <div class="pm-table-card">
 
             <!-- Filter Toolbar -->
-            <?php require_once __DIR__ . '/Components/ProjectFilterBar.php'; ?>
+            <?php require_once __DIR__ . '/Components/Projects/ProjectFilterBar.php'; ?>
             <!--End Here -->
 
-            <?php require_once __DIR__ . '/Components/ProjectTable.php'; ?>
+            <?php require_once __DIR__ . '/Components/Projects/ProjectTable.php'; ?>
             <!--End Here -->
 
             <!-- Reusable Pagination Component -->
@@ -56,7 +61,7 @@ include "../../Includes/dash_header.php";
                 $paginationInfoId     = 'pmPaginationInfo';
                 $paginationControlsId = 'pmPaginationControls';
                 $alwaysShow           = true;
-                include __DIR__ . '/Components/Pagination.php';
+                include __DIR__ . '/Components/Common/Pagination.php';
             ?>
             <!--End Here -->
 
@@ -66,23 +71,23 @@ include "../../Includes/dash_header.php";
 </main>
 
 <!--  Add Project Modal-->
-<?php require_once __DIR__ . '/Components/AddProject.php'; ?>
+<?php require_once __DIR__ . '/Components/Projects/AddProject.php'; ?>
 <!--End Here -->
 
 <!--  Project Details Modal-->
-<?php require_once __DIR__ . '/Components/ProjectDetails.php'; ?>
+<?php require_once __DIR__ . '/Components/Projects/ProjectDetails.php'; ?>
 <!--End Here -->
 
 <!--  Place Project on Hold Modal -->
-<?php require_once __DIR__ . '/Components/PlaceProjectOnHoldModal.php'; ?>
+<?php require_once __DIR__ . '/Components/Projects/PlaceProjectOnHoldModal.php'; ?>
 <!-- End Here -->
 
 <!--  Review Hold & Resolution Modal (Multi-step: Review -> Final Reject Reason) -->
-<?php require_once __DIR__ . '/Components/ReviewHoldModal.php'; ?>
+<?php require_once __DIR__ . '/Components/Projects/ReviewHoldModal.php'; ?>
 <!-- End Here -->
 
 <!--  Reject Project Reason Modal (Permanent & Irreversible) -->
-<?php require_once __DIR__ . '/Components/RejectProjectReasonModal.php'; ?>
+<?php require_once __DIR__ . '/Components/Projects/RejectProjectReasonModal.php'; ?>
 <!-- End Here -->
 
 <!--  Toast Notification Alert -->
@@ -90,16 +95,6 @@ include "../../Includes/dash_header.php";
     <span class="material-symbols-outlined">check_circle</span>
     <span id="pmToastMessage">Operation successful!</span>
 </div>
-
-<!-- Page Footer -->
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="#">Privacy Policy</a>
-        <a href="#">Terms of Service</a>
-    </div>
-</footer>
 
 <!-- Project Management Dedicated Script -->
 <script src="../../Assets/JS/Admin/project_management.js?v=<?php echo time(); ?>"></script>

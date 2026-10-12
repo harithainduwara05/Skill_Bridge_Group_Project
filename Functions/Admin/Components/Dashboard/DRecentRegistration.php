@@ -7,7 +7,7 @@
         <table class="data-table">
             <?php 
                 $TableColumns = ["User", "Role", "Organization", "Status"];
-                include __DIR__ . "/TableHeder.php";
+                include dirname(__DIR__) . "/Common/TableHeder.php";
             ?>
             <tbody>
                 <?php
