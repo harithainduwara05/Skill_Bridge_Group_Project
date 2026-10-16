@@ -15,18 +15,26 @@ include "../../Includes/dash_header.php";
 <main class="content">
     <div class="im-container">
 
+        <!-- Flash Notification Component -->
+        <?php include __DIR__ . "/Components/Common/FlashToast.php"; ?>
+
         <!--  Page Header (Title & Subtitle)-->
         <?php
             $HeaderDetails = [
-                "title"      => "Internship Management",
-                "subtitle"   => "Monitor, review, and manage internship opportunities provided by companies across all sectors.",
-                "breadcrumb" => "Internship Management"
+                "title"       => "Internship Management",
+                "subtitle"    => "Monitor, review, and manage internship opportunities provided by companies across all sectors.",
+                "breadcrumb"  => "Internship Management",
+                //"btnText"     => "Add Internship",
+                //"btnId"       => "imBtnAddInternship",
+                //"btnIcon"     => "add",
+               // "btnClass"    => "im-btn-primary",
+                "headerClass" => "im-header"
             ];
             include __DIR__ . "/Components/Common/PageHeader.php";
         ?>
         <!-- EndHere -->
 
-        <!--  InternshipManagement cars-->
+        <!--  InternshipManagement cards-->
         <div class="im-stats-grid">
 
             <?php
@@ -34,8 +42,13 @@ include "../../Includes/dash_header.php";
                     "cardIcons"  => ["work", "check_circle", "pause_circle", "group"],
                     "iconColors" => ["navy", "green", "orange", "blue"],
                     "cardLabels" => ["Total Internships", "Active Internships", "Suspended Posts", "Total Applications"],
-                    "cardValues" => ["432", "286", "14", "2,850"],
-                    "valueIds"   => ["", "", "kpiSuspendedCount", "kpiTotalApps"]
+                    "cardValues" => [
+                        number_format($totalInternships ?? 0), 
+                        number_format($activeInternships ?? 0), 
+                        number_format($suspendedInternships ?? 0), 
+                        number_format($totalApplications ?? 0)
+                    ],
+                    "valueIds"   => ["kpiTotalInternships", "kpiActiveInternships", "kpiSuspendedCount", "kpiTotalApps"]
                 ];
                 include __DIR__ . "/Components/Common/Card.php";
             ?>
@@ -53,10 +66,13 @@ include "../../Includes/dash_header.php";
             <?php require_once __DIR__ . '/Components/Internships/InternshipTable.php'; ?>
             <!-- Reusable Pagination Component -->
             <?php 
-                $totalRecords   = 432;
-                $perPage        = 10;
-                $currentPageNum = (int)($_GET['page'] ?? 1);
-                $entityLabel    = 'entries';
+                $totalRecords         = count($internshipsList ?? []);
+                $perPage              = 6;
+                $currentPageNum       = (int)($_GET['page'] ?? 1);
+                $entityLabel          = 'results';
+                $paginationInfoId     = 'imPaginationInfo';
+                $paginationControlsId = 'imPaginationControls';
+                $alwaysShow           = true;
                 include __DIR__ . '/Components/Common/Pagination.php';
             ?>
             <!--End Here-->
@@ -66,8 +82,8 @@ include "../../Includes/dash_header.php";
     </div>
 </main>
 
-<!--  Add Internship Modal -->
-<?php require_once __DIR__ . '/Components/Internships/AddInternshpModal.php'; ?>
+<!--  Add Internship Modal (Disabled for Admin) -->
+<?php // require_once __DIR__ . '/Components/Internships/AddInternshpModal.php'; ?>
 <!--End Here-->
 
 <!--  Internship Details Modal -->

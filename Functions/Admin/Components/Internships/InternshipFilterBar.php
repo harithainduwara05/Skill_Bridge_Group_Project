@@ -24,12 +24,18 @@
         <div class="im-select-wrap">
             <span class="material-symbols-outlined im-select-icon">domain</span>
             <select id="imIndustryFilter" class="im-select" aria-label="Filter by Industry">
-                <option value="all" selected>Industry</option>
-                <option value="software development">Software Development</option>
-                <option value="artificial intelligence">Artificial Intelligence</option>
-                <option value="mobile development">Mobile Development</option>
-                <option value="cloud computing">Cloud Computing</option>
-                <option value="cybersecurity">Cybersecurity</option>
+                <option value="all" selected>Industry: All</option>
+                <?php if (!empty($industriesList)): ?>
+                    <?php foreach ($industriesList as $ind): ?>
+                        <option value="<?= htmlspecialchars(strtolower($ind)) ?>"><?= htmlspecialchars($ind) ?></option>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <option value="software development">Software Development</option>
+                    <option value="artificial intelligence">Artificial Intelligence</option>
+                    <option value="mobile development">Mobile Development</option>
+                    <option value="cloud computing">Cloud Computing</option>
+                    <option value="cybersecurity">Cybersecurity</option>
+                <?php endif; ?>
             </select>
             <span class="material-symbols-outlined im-select-chevron">expand_more</span>
         </div>

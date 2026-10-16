@@ -16,8 +16,6 @@ function initInternshipManagement() {
     const paginationControls = document.getElementById('imPaginationControls') || document.querySelector('.im-pagination-controls');
 
     // Modals
-    const addModal              = document.getElementById('imAddModal');
-    const addForm               = document.getElementById('imAddInternshipForm');
     const detailsModal          = document.getElementById('imDetailsModal');
     const suspendModal          = document.getElementById('imSuspendModal');
     const suspendForm           = document.getElementById('imSuspendForm');
@@ -124,87 +122,13 @@ function initInternshipManagement() {
     // --------------------------------------------------------------------------
     // Modal Bindings via AdminCore
     // --------------------------------------------------------------------------
-    AdminCore.modal.bind(addModal, { trigger: 'imBtnAddInternship', form: addForm });
     AdminCore.modal.bind(detailsModal);
     AdminCore.modal.bind(suspendModal, { form: suspendForm });
     AdminCore.modal.bind(reviewSuspensionModal);
 
-    window.openAddInternshipModal      = () => AdminCore.modal.open(addModal);
-    window.closeAddInternshipModal     = () => AdminCore.modal.close(addModal, addForm);
     window.closeInternshipDetailsModal = () => AdminCore.modal.close(detailsModal);
     window.closeSuspendModal           = () => AdminCore.modal.close(suspendModal, suspendForm);
     window.closeReviewSuspensionModal  = () => AdminCore.modal.close(reviewSuspensionModal);
-
-    // --------------------------------------------------------------------------
-    // Add Internship Form Submission
-    // --------------------------------------------------------------------------
-    if (addForm) {
-        addForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const position  = document.getElementById('imInputPosition').value.trim();
-            const company   = document.getElementById('imInputCompany').value.trim();
-            const industry  = document.getElementById('imInputIndustry').value.trim();
-            const mode      = document.getElementById('imInputMode').value.trim();
-            const skillsStr = document.getElementById('imInputSkills').value.trim();
-            const deadline  = document.getElementById('imInputDeadline').value.trim() || '30 Oct 2026';
-
-            if (!position || !company) {
-                AdminCore.toast('Please enter position title and company.', 'warning');
-                return;
-            }
-
-            const newId = `#INT${Math.floor(100 + Math.random() * 900)}`;
-            const skills = skillsStr ? skillsStr.split(',').map(s => s.trim()).filter(Boolean) : ['General'];
-            const skillsStack = skills.map(sk => `<span class="im-skill-tag">${AdminCore.escapeHtml(sk)}</span>`).join('');
-
-            let indClass = '';
-            if (industry.toLowerCase().includes('ai')) indClass = 'ai';
-            else if (industry.toLowerCase().includes('mobile')) indClass = 'mobile';
-
-            const newRow = document.createElement('tr');
-            newRow.className = 'im-data-row';
-            newRow.setAttribute('data-id', newId);
-            newRow.setAttribute('data-position', position);
-            newRow.setAttribute('data-company', company);
-            newRow.setAttribute('data-industry', industry);
-            newRow.setAttribute('data-skills', skills.join(' '));
-            newRow.setAttribute('data-status', 'Active');
-            newRow.setAttribute('data-duration', mode);
-
-            newRow.innerHTML = `
-                <td class="im-internship-id">${newId}</td>
-                <td>
-                    <div class="im-position-meta">
-                        <span class="im-position-title">${AdminCore.escapeHtml(position)}</span>
-                        <span class="im-position-type">${AdminCore.escapeHtml(mode || 'Full-time • Remote')}</span>
-                    </div>
-                </td>
-                <td class="im-company-name">${AdminCore.escapeHtml(company)}</td>
-                <td><span class="im-industry-badge ${indClass}">${AdminCore.escapeHtml(industry || 'Technology')}</span></td>
-                <td><div class="im-skills-stack">${skillsStack}</div></td>
-                <td class="im-applications-count">0</td>
-                <td class="im-deadline-date">${AdminCore.escapeHtml(deadline)}</td>
-                <td class="im-status-cell">
-                    <span class="im-status-badge status-active"><span class="im-status-dot"></span> Active</span>
-                </td>
-                <td class="im-actions-cell">
-                    <button class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${newId}')">
-                        <span class="material-symbols-outlined">visibility</span>
-                    </button>
-                    <button class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('${newId}')">
-                        <span class="material-symbols-outlined">block</span>
-                    </button>
-                </td>
-            `;
-
-            if (tableBody) tableBody.insertBefore(newRow, tableBody.firstChild);
-
-            AdminCore.modal.close(addModal, addForm);
-            AdminCore.toast(`Internship "${position}" added successfully!`);
-            applyFilters(true);
-        });
-    }
 
     // --------------------------------------------------------------------------
     // Suspend Internship Modal & Moderation Logic
@@ -256,47 +180,44 @@ function initInternshipManagement() {
                 return;
             }
 
-            const row = document.querySelector(`tr[data-id="${targetId}"]`);
-            if (row) {
-                const company = row.getAttribute('data-company') || 'Company';
-                row.setAttribute('data-status', 'Suspended');
-                row.setAttribute('data-reason', `${category}: ${reason}`);
-
-                const statusCell = row.querySelector('.im-status-cell');
-                if (statusCell) {
-                    statusCell.innerHTML = `
-                        <span class="im-status-badge status-suspended">
-                            <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
-                        </span>
-                    `;
-                }
-
-                const actionsCell = row.querySelector('.im-actions-cell');
-                if (actionsCell) {
-                    actionsCell.innerHTML = `
-                        <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${targetId}')">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
-                        <button type="button" class="im-btn-action im-btn-action-reactivate" title="Review Suspension & Decide" onclick="openReviewSuspensionModal('${targetId}')">
-                            <span class="material-symbols-outlined">check_circle</span>
-                        </button>
-                    `;
-                }
-
-                if (detailsModal && detailsModal.classList.contains('show')) {
-                    window.viewInternshipDetails(targetId);
-                }
-
-                const kpiSuspended = document.getElementById('kpiSuspendedCount');
-                if (kpiSuspended) {
-                    const current = parseInt(kpiSuspended.textContent.replace(/,/g, ''), 10) || 0;
-                    kpiSuspended.textContent = current + 1;
-                }
-
-                AdminCore.modal.close(suspendModal, suspendForm);
-                AdminCore.toast(`Listing ${targetId} suspended! Notification dispatched to ${company}.`);
-                applyFilters(false);
+            const btnSubmit = suspendForm.querySelector('button[type="submit"]');
+            const origText = btnSubmit ? btnSubmit.innerHTML : '';
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = 'Suspending...';
             }
+
+            const formData = new FormData();
+            formData.append('ajax_action', 'suspend_internship');
+            formData.append('id', targetId);
+            formData.append('category', category);
+            formData.append('reason', reason);
+
+            fetch('Internship_Management.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origText;
+                }
+                if (data.success) {
+                    AdminCore.modal.close(suspendModal, suspendForm);
+                    AdminCore.toast(data.message || `Listing ${targetId} suspended!`);
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    AdminCore.toast(data.message || 'Failed to suspend internship.', 'error');
+                }
+            })
+            .catch(err => {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origText;
+                }
+                AdminCore.toast('An unexpected error occurred.', 'error');
+            });
         });
     }
 
@@ -304,41 +225,26 @@ function initInternshipManagement() {
     // Reactivate Internship
     // --------------------------------------------------------------------------
     window.reactivateInternship = function(internshipId) {
-        const row = document.querySelector(`tr[data-id="${internshipId}"]`);
-        if (!row) return;
+        const formData = new FormData();
+        formData.append('ajax_action', 'reactivate_internship');
+        formData.append('id', internshipId);
 
-        row.setAttribute('data-status', 'Active');
-        row.setAttribute('data-reason', '');
-
-        const statusCell = row.querySelector('.im-status-cell');
-        if (statusCell) {
-            statusCell.innerHTML = `<span class="im-status-badge status-active"><span class="im-status-dot"></span> Active</span>`;
-        }
-
-        const actionsCell = row.querySelector('.im-actions-cell');
-        if (actionsCell) {
-            actionsCell.innerHTML = `
-                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${internshipId}')">
-                    <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('${internshipId}')">
-                    <span class="material-symbols-outlined">block</span>
-                </button>
-            `;
-        }
-
-        if (detailsModal && detailsModal.classList.contains('show')) {
-            window.viewInternshipDetails(internshipId);
-        }
-
-        const kpiSuspended = document.getElementById('kpiSuspendedCount');
-        if (kpiSuspended) {
-            const current = parseInt(kpiSuspended.textContent.replace(/,/g, ''), 10) || 0;
-            if (current > 0) kpiSuspended.textContent = current - 1;
-        }
-
-        AdminCore.toast(`Listing ${internshipId} reactivated! Visibility restored for students.`);
-        applyFilters(false);
+        fetch('Internship_Management.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                AdminCore.toast(data.message || `Listing ${internshipId} reactivated!`);
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                AdminCore.toast(data.message || 'Failed to reactivate internship.', 'error');
+            }
+        })
+        .catch(err => {
+            AdminCore.toast('An unexpected error occurred.', 'error');
+        });
     };
 
     // --------------------------------------------------------------------------
@@ -388,46 +294,37 @@ function initInternshipManagement() {
         const targetId = revTargetId ? revTargetId.value : '';
         if (!targetId) return;
 
-        const row = document.querySelector(`tr[data-id="${targetId}"]`);
-        if (!row) return;
-
-        row.setAttribute('data-status', 'Terminated');
-        row.setAttribute('data-terminate-reason', 'Terminated by Admin due to unsatisfactory resolution.');
-
-        const statusCell = row.querySelector('.im-status-cell');
-        if (statusCell) {
-            statusCell.innerHTML = `
-                <span class="im-status-badge status-terminated">
-                    <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Terminated
-                </span>
-            `;
+        if (!confirm(`Are you sure you want to permanently terminate listing ${targetId}? This action cannot be undone.`)) {
+            return;
         }
 
-        const actionsCell = row.querySelector('.im-actions-cell');
-        if (actionsCell) {
-            actionsCell.innerHTML = `
-                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('${targetId}')">
-                    <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button type="button" class="im-btn-action" disabled title="Permanently Terminated" style="color: #cbd5e1; cursor: not-allowed;">
-                    <span class="material-symbols-outlined">lock</span>
-                </button>
-            `;
-        }
+        const btn = document.getElementById('imBtnExecuteTerminate');
+        if (btn) btn.disabled = true;
 
-        if (detailsModal && detailsModal.classList.contains('show')) {
-            window.viewInternshipDetails(targetId);
-        }
+        const formData = new FormData();
+        formData.append('ajax_action', 'terminate_internship');
+        formData.append('id', targetId);
+        formData.append('reason', 'Terminated by Admin due to policy violation or unaddressed complaints.');
 
-        const kpiSuspended = document.getElementById('kpiSuspendedCount');
-        if (kpiSuspended) {
-            const current = parseInt(kpiSuspended.textContent.replace(/,/g, ''), 10) || 0;
-            if (current > 0) kpiSuspended.textContent = current - 1;
-        }
-
-        AdminCore.modal.close(reviewSuspensionModal);
-        AdminCore.toast(`Listing ${targetId} permanently terminated.`);
-        applyFilters(false);
+        fetch('Internship_Management.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (btn) btn.disabled = false;
+            if (data.success) {
+                AdminCore.modal.close(reviewSuspensionModal);
+                AdminCore.toast(data.message || `Listing ${targetId} permanently terminated.`);
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                AdminCore.toast(data.message || 'Failed to terminate internship.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn) btn.disabled = false;
+            AdminCore.toast('An unexpected error occurred.', 'error');
+        });
     };
 
     // --------------------------------------------------------------------------

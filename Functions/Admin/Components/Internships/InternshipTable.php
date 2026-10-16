@@ -5,319 +5,166 @@
                         include dirname(__DIR__) . "/Common/TableHeder.php";
                     ?>
                     <tbody id="imTableBody">
+                    <?php if (!empty($internshipsList)): ?>
+                        <?php foreach ($internshipsList as $item): 
+                            $idNum = (int)$item['id'];
+                            $formattedId = '#INT' . str_pad($idNum, 3, '0', STR_PAD_LEFT);
+                            $title = htmlspecialchars($item['title'] ?? 'Untitled Internship');
+                            $company = htmlspecialchars($item['company'] ?? 'N/A');
+                            $industry = htmlspecialchars($item['industry'] ?? 'Technology');
 
-                        <!-- Row 1: Software Engineer Intern -->
+                            // Work Mode & Duration
+                            $workMode = trim($item['work_mode'] ?? '');
+                            $duration = trim($item['duration'] ?? '');
+                            if (!empty($workMode) && !empty($duration)) {
+                                if (stripos($workMode, $duration) !== false) {
+                                    $modeDisplay = $workMode;
+                                } else {
+                                    $modeDisplay = $duration . ' • ' . $workMode;
+                                }
+                            } elseif (!empty($workMode)) {
+                                $modeDisplay = $workMode;
+                            } elseif (!empty($duration)) {
+                                $modeDisplay = $duration;
+                            } else {
+                                $modeDisplay = 'Full-time • Remote';
+                            }
+                            $modeDisplay = htmlspecialchars($modeDisplay);
+
+                            // Required Skills
+                            $skillsStr = trim($item['tech_tags'] ?? '');
+                            if (!empty($skillsStr)) {
+                                if (strpos($skillsStr, ',') !== false) {
+                                    $skillsArr = array_filter(array_map('trim', explode(',', $skillsStr)));
+                                } else {
+                                    $skillsArr = array_filter(array_map('trim', preg_split('/\s+/', $skillsStr)));
+                                }
+                            } else {
+                                $skillsArr = ['General'];
+                            }
+                            $skillsAttr = htmlspecialchars(implode(' ', $skillsArr));
+
+                            // Applications & Deadline
+                            $appsCount = (int)($item['applications_count'] ?? 0);
+                            $rawDeadline = trim($item['deadline'] ?? '');
+                            if (!empty($rawDeadline)) {
+                                $time = strtotime($rawDeadline);
+                                $deadlineFormatted = $time ? date('d M Y', $time) : htmlspecialchars($rawDeadline);
+                            } else {
+                                $deadlineFormatted = 'Not Specified';
+                            }
+
+                            // Status Normalization
+                            $rawStatus = trim($item['status'] ?? 'Active');
+                            $sLower = strtolower($rawStatus);
+                            if (in_array($sLower, ['active', 'open', 'approved'])) {
+                                $status = 'Active';
+                            } elseif (in_array($sLower, ['suspended', 'hold', 'paused'])) {
+                                $status = 'Suspended';
+                            } elseif (in_array($sLower, ['terminated', 'cancelled', 'rejected'])) {
+                                $status = 'Terminated';
+                            } elseif (in_array($sLower, ['closed', 'completed', 'ended'])) {
+                                $status = 'Closed';
+                            } else {
+                                $status = ucfirst($sLower);
+                            }
+
+                            $adminReason = htmlspecialchars($item['admin_reason'] ?? '');
+                            $companyAction = htmlspecialchars($item['reactivation_status'] ?? '');
+                            $terminateReason = ($status === 'Terminated') ? $adminReason : '';
+
+                            // Industry styling class
+                            $indLower = strtolower($industry);
+                            $indClass = '';
+                            if (strpos($indLower, 'ai') !== false || strpos($indLower, 'artificial') !== false) {
+                                $indClass = 'ai';
+                            } elseif (strpos($indLower, 'mobile') !== false) {
+                                $indClass = 'mobile';
+                            }
+                        ?>
                         <tr class="im-data-row"
-                            data-id="#INT001"
-                            data-position="Software Engineer Intern"
-                            data-company="Tech Solutions"
-                            data-industry="Software Development"
-                            data-skills="Java React SQL"
-                            data-status="Active"
-                            data-duration="Full-time • Remote"
-                            data-reason="">
-                            <td class="im-internship-id">#INT001</td>
+                            data-id="<?= $formattedId ?>"
+                            data-position="<?= $title ?>"
+                            data-company="<?= $company ?>"
+                            data-industry="<?= $industry ?>"
+                            data-skills="<?= $skillsAttr ?>"
+                            data-status="<?= $status ?>"
+                            data-duration="<?= $modeDisplay ?>"
+                            data-reason="<?= $adminReason ?>"
+                            data-company-action="<?= $companyAction ?>"
+                            data-terminate-reason="<?= $terminateReason ?>">
+                            <td class="im-internship-id"><?= $formattedId ?></td>
                             <td>
                                 <div class="im-position-meta">
-                                    <span class="im-position-title">Software Engineer Intern</span>
-                                    <span class="im-position-type">Full-time • Remote</span>
+                                    <span class="im-position-title"><?= $title ?></span>
+                                    <span class="im-position-type"><?= $modeDisplay ?></span>
                                 </div>
                             </td>
-                            <td class="im-company-name">Tech Solutions</td>
+                            <td class="im-company-name"><?= $company ?></td>
                             <td>
-                                <span class="im-industry-badge">Software Development</span>
+                                <span class="im-industry-badge <?= $indClass ?>"><?= $industry ?></span>
                             </td>
                             <td>
                                 <div class="im-skills-stack">
-                                    <span class="im-skill-tag">Java</span>
-                                    <span class="im-skill-tag">React</span>
-                                    <span class="im-skill-tag">SQL</span>
+                                    <?php foreach (array_slice($skillsArr, 0, 3) as $sk): ?>
+                                        <span class="im-skill-tag"><?= htmlspecialchars($sk) ?></span>
+                                    <?php endforeach; ?>
                                 </div>
                             </td>
-                            <td class="im-applications-count">120</td>
-                            <td class="im-deadline-date">30 Aug 2026</td>
+                            <td class="im-applications-count"><?= $appsCount ?></td>
+                            <td class="im-deadline-date"><?= $deadlineFormatted ?></td>
                             <td class="im-status-cell">
-                                <span class="im-status-badge status-active">
-                                    <span class="im-status-dot"></span> Active
-                                </span>
+                                <?php if ($status === 'Active'): ?>
+                                    <span class="im-status-badge status-active">
+                                        <span class="im-status-dot"></span> Active
+                                    </span>
+                                <?php elseif ($status === 'Suspended'): ?>
+                                    <span class="im-status-badge status-suspended">
+                                        <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
+                                    </span>
+                                <?php elseif ($status === 'Terminated'): ?>
+                                    <span class="im-status-badge status-terminated">
+                                        <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Terminated
+                                    </span>
+                                <?php else: ?>
+                                    <span class="im-status-badge status-closed">
+                                        <span class="im-status-dot"></span> <?= htmlspecialchars($status) ?>
+                                    </span>
+                                <?php endif; ?>
                             </td>
                             <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT001')">
+                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('<?= $formattedId ?>')">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
-                                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('#INT001')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
+                                <?php if ($status === 'Suspended'): ?>
+                                    <button type="button" class="im-btn-action im-btn-action-reactivate" title="Review Suspension & Decide" onclick="openReviewSuspensionModal('<?= $formattedId ?>')">
+                                        <span class="material-symbols-outlined">check_circle</span>
+                                    </button>
+                                <?php elseif ($status === 'Terminated' || $status === 'Closed'): ?>
+                                    <button type="button" class="im-btn-action" disabled title="<?= $status === 'Terminated' ? 'Permanently Terminated (Cannot be modified)' : 'Listing Closed' ?>" style="color: #cbd5e1; cursor: not-allowed;">
+                                        <span class="material-symbols-outlined">lock</span>
+                                    </button>
+                                <?php else: ?>
+                                    <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('<?= $formattedId ?>')">
+                                        <span class="material-symbols-outlined">block</span>
+                                    </button>
+                                <?php endif; ?>
                             </td>
                         </tr>
-
-                        <!-- Row 2: AI Research Intern -->
-                        <tr class="im-data-row"
-                            data-id="#INT002"
-                            data-position="AI Research Intern"
-                            data-company="Innovate Labs"
-                            data-industry="Artificial Intelligence"
-                            data-skills="Python ML"
-                            data-status="Active"
-                            data-duration="Part-time • On-site"
-                            data-reason="">
-                            <td class="im-internship-id">#INT002</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">AI Research Intern</span>
-                                    <span class="im-position-type">Part-time • On-site</span>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="9">
+                                <div class="empty-state-card" style="text-align: center; padding: 40px 20px;">
+                                    <div class="empty-state-icon" style="margin-bottom: 12px; color: #94a3b8;">
+                                        <span class="material-symbols-outlined" style="font-size: 48px;">work_off</span>
+                                    </div>
+                                    <h4 class="empty-state-title" style="margin: 0 0 6px; color: #334155; font-size: 16px;">No internships found</h4>
+                                    <p class="empty-state-text" style="margin: 0; color: #64748b; font-size: 13px;">No internship listings currently exist in the database.</p>
                                 </div>
-                            </td>
-                            <td class="im-company-name">Innovate Labs</td>
-                            <td>
-                                <span class="im-industry-badge ai">Artificial Intelligence</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">Python</span>
-                                    <span class="im-skill-tag">ML</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">85</td>
-                            <td class="im-deadline-date">15 Sep 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-active">
-                                    <span class="im-status-dot"></span> Active
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT002')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('#INT002')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
                             </td>
                         </tr>
-
-                        <!-- Row 3: Mobile Developer Intern -->
-                        <tr class="im-data-row"
-                            data-id="#INT003"
-                            data-position="Mobile Developer Intern"
-                            data-company="AppWorks"
-                            data-industry="Mobile Development"
-                            data-skills="Flutter Firebase"
-                            data-status="Active"
-                            data-duration="Contract • Hybrid"
-                            data-reason="">
-                            <td class="im-internship-id">#INT003</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">Mobile Developer Intern</span>
-                                    <span class="im-position-type">Contract • Hybrid</span>
-                                </div>
-                            </td>
-                            <td class="im-company-name">AppWorks</td>
-                            <td>
-                                <span class="im-industry-badge mobile">Mobile Development</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">Flutter</span>
-                                    <span class="im-skill-tag">Firebase</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">64</td>
-                            <td class="im-deadline-date">10 Sep 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-active">
-                                    <span class="im-status-dot"></span> Active
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT003')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('#INT003')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 4: Cloud Infrastructure Intern -->
-                        <tr class="im-data-row"
-                            data-id="#INT004"
-                            data-position="Cloud DevOps Intern"
-                            data-company="CloudScale Ltd"
-                            data-industry="Software Development"
-                            data-skills="AWS Docker Kubernetes"
-                            data-status="Active"
-                            data-duration="Full-time • Hybrid"
-                            data-reason="">
-                            <td class="im-internship-id">#INT004</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">Cloud DevOps Intern</span>
-                                    <span class="im-position-type">Full-time • Hybrid</span>
-                                </div>
-                            </td>
-                            <td class="im-company-name">CloudScale Ltd</td>
-                            <td>
-                                <span class="im-industry-badge">Software Development</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">AWS</span>
-                                    <span class="im-skill-tag">Docker</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">92</td>
-                            <td class="im-deadline-date">22 Sep 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-active">
-                                    <span class="im-status-dot"></span> Active
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT004')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('#INT004')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 5: Cybersecurity Analyst Intern -->
-                        <tr class="im-data-row"
-                            data-id="#INT005"
-                            data-position="Cybersecurity Analyst Intern"
-                            data-company="SecureNet Labs"
-                            data-industry="Cybersecurity"
-                            data-skills="Network Linux Wireshark"
-                            data-status="Active"
-                            data-duration="Full-time • On-site"
-                            data-reason="">
-                            <td class="im-internship-id">#INT005</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">Cybersecurity Analyst Intern</span>
-                                    <span class="im-position-type">Full-time • On-site</span>
-                                </div>
-                            </td>
-                            <td class="im-company-name">SecureNet Labs</td>
-                            <td>
-                                <span class="im-industry-badge">Cybersecurity</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">Network</span>
-                                    <span class="im-skill-tag">Linux</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">47</td>
-                            <td class="im-deadline-date">28 Sep 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-active">
-                                    <span class="im-status-dot"></span> Active
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT005')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action im-btn-action-suspend" title="Suspend Post" onclick="openSuspendModal('#INT005')">
-                                    <span class="material-symbols-outlined">block</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 6: Data Analytics Intern (Suspended) -->
-                        <tr class="im-data-row"
-                            data-id="#INT006"
-                            data-position="Data Analytics Intern"
-                            data-company="Apex Data Corp"
-                            data-industry="Software Development"
-                            data-skills="Python PowerBI SQL"
-                            data-status="Suspended"
-                            data-duration="Part-time • Hybrid"
-                            data-reason="Reported for deceptive stipend information and policy non-compliance."
-                            data-company-action="We have revised the official internship agreement, clearly specified the LKR 50,000 monthly allowance, and agreed to adhere strictly to the platform's fair recruitment guidelines.">
-                            <td class="im-internship-id">#INT006</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">Data Analytics Intern</span>
-                                    <span class="im-position-type">Part-time • Hybrid</span>
-                                </div>
-                            </td>
-                            <td class="im-company-name">Apex Data Corp</td>
-                            <td>
-                                <span class="im-industry-badge">Software Development</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">Python</span>
-                                    <span class="im-skill-tag">PowerBI</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">38</td>
-                            <td class="im-deadline-date">05 Sep 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-suspended">
-                                    <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT006')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action im-btn-action-reactivate" title="Review Suspension & Decide" onclick="openReviewSuspensionModal('#INT006')">
-                                    <span class="material-symbols-outlined">check_circle</span>
-                                </button>
-                            </td>
-                        </tr>
-
-                        <!-- Row 7: Cloud Security Specialist (Terminated) -->
-                        <tr class="im-data-row"
-                            data-id="#INT007"
-                            data-position="Cloud Security Specialist"
-                            data-company="ShadowSys Global"
-                            data-industry="Cybersecurity"
-                            data-skills="AWS Security SOC"
-                            data-status="Terminated"
-                            data-duration="Full-time • Remote"
-                            data-reason="Unresolved complaint regarding fraudulent company credentials and refusal to provide business registration."
-                            data-company-action=""
-                            data-terminate-reason="Failed to provide verified business registration within the given deadline. Opportunity permanently terminated by Administration.">
-                            <td class="im-internship-id">#INT007</td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title">Cloud Security Specialist</span>
-                                    <span class="im-position-type">Full-time • Remote</span>
-                                </div>
-                            </td>
-                            <td class="im-company-name">ShadowSys Global</td>
-                            <td>
-                                <span class="im-industry-badge">Cybersecurity</span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <span class="im-skill-tag">AWS</span>
-                                    <span class="im-skill-tag">Security</span>
-                                </div>
-                            </td>
-                            <td class="im-applications-count">19</td>
-                            <td class="im-deadline-date">12 Aug 2026</td>
-                            <td class="im-status-cell">
-                                <span class="im-status-badge status-terminated">
-                                    <span class="material-symbols-outlined" style="font-size: 13px;">cancel</span> Terminated
-                                </span>
-                            </td>
-                            <td class="im-actions-cell">
-                                <button type="button" class="im-btn-action" title="View Details" onclick="viewInternshipDetails('#INT007')">
-                                    <span class="material-symbols-outlined">visibility</span>
-                                </button>
-                                <button type="button" class="im-btn-action" disabled title="Permanently Terminated (Cannot be modified)" style="color: #cbd5e1; cursor: not-allowed;">
-                                    <span class="material-symbols-outlined">lock</span>
-                                </button>
-                            </td>
-                        </tr>
-
+                    <?php endif; ?>
                     </tbody>
                 </table>
             </div>
