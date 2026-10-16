@@ -38,7 +38,14 @@
                     
                     $holdReason = htmlspecialchars($proj['hold_reason'] ?? '');
                     $holdResponse = htmlspecialchars($proj['hold_response'] ?? '');
+                    $rejectReason = ($status === 'Rejected') ? $holdReason : '';
                     $orgInitial = !empty($org) ? strtoupper(substr($org, 0, 1)) : 'U';
+                    
+                    $holdDaysLeft = 7;
+                    if (!empty($proj['held_at'])) {
+                        $diffDays = floor((time() - strtotime($proj['held_at'])) / 86400);
+                        $holdDaysLeft = max(0, 7 - (int)$diffDays);
+                    }
                     
                     $orgLower = strtolower($org);
                     $orgClass = 'org-default';
@@ -60,9 +67,9 @@
                     data-status="<?= $status ?>" 
                     data-skills="<?= $skillsAttr ?>"
                     data-hold-reason="<?= $holdReason ?>"
-                    data-hold-days="5"
+                    data-hold-days="<?= $holdDaysLeft ?>"
                     data-team-response="<?= $holdResponse ?>"
-                    data-reject-reason="">
+                    data-reject-reason="<?= $rejectReason ?>">
                     <td class="pm-project-id"><?= $projId ?></td>
                     <td>
                         <div class="pm-project-meta">
@@ -93,8 +100,8 @@
                         <?php if ($status === 'Active'): ?>
                             <span class="pm-status-pill status-active">Active</span>
                         <?php elseif ($status === 'Hold'): ?>
-                            <span class="pm-status-pill status-hold" title="On Hold: 5 days left in grace period">
-                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (5d left)
+                            <span class="pm-status-pill status-hold" title="On Hold: <?= $holdDaysLeft ?> days left in grace period">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (<?= $holdDaysLeft ?>d left)
                             </span>
                         <?php elseif ($status === 'Completed'): ?>
                             <span class="pm-status-pill status-completed">Completed</span>

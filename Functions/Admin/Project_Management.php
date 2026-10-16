@@ -16,12 +16,20 @@ include "../../Includes/dash_header.php";
 <main class="content">
     <div class="pm-container">
 
+        <!-- Flash Notification Component -->
+        <?php include __DIR__ . "/Components/Common/FlashToast.php"; ?>
+
         <!--  Page Header (Title & Subtitle)-->
         <?php
             $HeaderDetails = [
-                "title"      => "Project Management",
-                "subtitle"   => "Monitor, review, and manage all student projects across the SkillBridge ecosystem.",
-                "breadcrumb" => "Project Management"
+                "title"       => "Project Management",
+                "subtitle"    => "Monitor, review, and manage all student projects across the SkillBridge ecosystem.",
+                "breadcrumb"  => "Project Management",
+                //"btnText"     => "Add Project",
+                //"btnId"       => "pmBtnAddProject",
+                //"btnIcon"     => "add",
+                //"btnClass"    => "pm-btn-primary",
+                "headerClass" => "pm-header"
             ];
             include __DIR__ . "/Components/Common/PageHeader.php";
         ?>
@@ -70,8 +78,8 @@ include "../../Includes/dash_header.php";
     </div>
 </main>
 
-<!--  Add Project Modal-->
-<?php require_once __DIR__ . '/Components/Projects/AddProject.php'; ?>
+<!--  Add Project Modal (Disabled for Admin) -->
+<?php // require_once __DIR__ . '/Components/Projects/AddProject.php'; ?>
 <!--End Here -->
 
 <!--  Project Details Modal-->

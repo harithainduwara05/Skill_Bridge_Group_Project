@@ -17,8 +17,6 @@ function initProjectManagement() {
     const paginationControls = document.getElementById('pmPaginationControls') || document.querySelector('.pm-pagination-controls');
 
     // Modals & Forms
-    const addProjectModal = document.getElementById('pmAddModal');
-    const addProjectForm  = document.getElementById('pmAddProjectForm');
     const detailsModal    = document.getElementById('pmDetailsModal');
     const holdModal       = document.getElementById('pmHoldModal');
     const holdForm        = document.getElementById('pmHoldProjectForm');
@@ -113,108 +111,15 @@ function initProjectManagement() {
     // --------------------------------------------------------------------------
     // Modal Bindings via AdminCore
     // --------------------------------------------------------------------------
-    AdminCore.modal.bind(addProjectModal, { trigger: 'pmBtnAddProject', form: addProjectForm });
     AdminCore.modal.bind(detailsModal);
     AdminCore.modal.bind(holdModal, { form: holdForm });
     AdminCore.modal.bind(reviewHoldModal);
     AdminCore.modal.bind(rejectModal, { form: rejectForm });
 
-    window.openAddProjectModal   = () => AdminCore.modal.open(addProjectModal);
-    window.closeAddProjectModal  = () => AdminCore.modal.close(addProjectModal, addProjectForm);
     window.closeProjectDetailsModal = () => AdminCore.modal.close(detailsModal);
     window.closeHoldModal        = () => AdminCore.modal.close(holdModal, holdForm);
     window.closeReviewHoldModal  = () => AdminCore.modal.close(reviewHoldModal);
     window.closeRejectReasonModal= () => AdminCore.modal.close(rejectModal, rejectForm);
-
-    // --------------------------------------------------------------------------
-    // Add Project Form Submission
-    // --------------------------------------------------------------------------
-    if (addProjectForm) {
-        addProjectForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-
-            const title     = document.getElementById('pmInputTitle').value.trim();
-            const category  = document.getElementById('pmInputCategory').value.trim();
-            const org       = document.getElementById('pmInputOrg').value.trim();
-            const skillsStr = document.getElementById('pmInputSkills').value.trim();
-            const status    = document.getElementById('pmInputStatus').value;
-
-            if (!title || !org) {
-                AdminCore.toast('Please fill in required fields (Title and Organization).', 'warning');
-                return;
-            }
-
-            const newId = `#PR0${Math.floor(100 + Math.random() * 900)}`;
-            const skills = skillsStr ? skillsStr.split(',').map(s => s.trim()).filter(Boolean) : ['General'];
-            const skillsPills = skills.map(s => `<span class="pm-skill-pill">${AdminCore.escapeHtml(s)}</span>`).join('');
-
-            const orgInitial = org.charAt(0).toUpperCase();
-            let orgClass = 'org-default';
-            if (org.toLowerCase().includes('ucsc')) orgClass = 'org-ucsc';
-            else if (org.toLowerCase().includes('abc')) orgClass = 'org-abc';
-            else if (org.toLowerCase().includes('tech')) orgClass = 'org-tech';
-            else if (org.toLowerCase().includes('sliit')) orgClass = 'org-sliit';
-
-            let statusPill = `<span class="pm-status-pill status-active">Active</span>`;
-            if (status === 'Hold') {
-                statusPill = `<span class="pm-status-pill status-hold"><span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (7d left)</span>`;
-            } else if (status === 'Completed' || status === 'Close' || status === 'Complete') {
-                statusPill = `<span class="pm-status-pill status-completed">Completed</span>`;
-            } else if (status === 'Review') {
-                statusPill = `<span class="pm-status-pill status-review">Review</span>`;
-            } else if (status === 'Rejected') {
-                statusPill = `<span class="pm-status-pill status-rejected">Rejected</span>`;
-            }
-
-            const today = new Date();
-            const dateStr = today.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-
-            const newRow = document.createElement('tr');
-            newRow.className = 'pm-data-row';
-            newRow.setAttribute('data-id', newId);
-            newRow.setAttribute('data-title', title);
-            newRow.setAttribute('data-category', category);
-            newRow.setAttribute('data-org', org);
-            newRow.setAttribute('data-status', status);
-            newRow.setAttribute('data-skills', skills.join(' '));
-
-            let actionsCellContent = `
-                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('${newId}')">
-                    <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('${newId}')">
-                    <span class="material-symbols-outlined">pause_circle</span>
-                </button>
-            `;
-
-            newRow.innerHTML = `
-                <td class="pm-project-id">${newId}</td>
-                <td>
-                    <div class="pm-project-meta">
-                        <span class="pm-title-main">${AdminCore.escapeHtml(title)}</span>
-                        <span class="pm-title-category">${AdminCore.escapeHtml(category || 'Technology')}</span>
-                    </div>
-                </td>
-                <td>
-                    <div class="pm-org-wrapper">
-                        <span class="pm-org-avatar ${orgClass}">${orgInitial}</span>
-                        <span class="pm-org-name">${AdminCore.escapeHtml(org)}</span>
-                    </div>
-                </td>
-                <td><div class="pm-skills-list">${skillsPills}</div></td>
-                <td><div class="pm-team-count"><span class="material-symbols-outlined">group</span><span>4 Members</span></div></td>
-                <td>${statusPill}</td>
-                <td class="pm-created-date">${dateStr}</td>
-                <td class="pm-actions-cell">${actionsCellContent}</td>
-            `;
-
-            if (tableBody) tableBody.insertBefore(newRow, tableBody.firstChild);
-
-            AdminCore.modal.close(addProjectModal, addProjectForm);
-            AdminCore.toast(`Project "${title}" added successfully!`);
-            applyFilters(true);
-        });
-    }
 
     // --------------------------------------------------------------------------
     // Project Details Modal View
@@ -366,7 +271,7 @@ function initProjectManagement() {
     if (holdForm) {
         holdForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const id     = document.getElementById('pmHoldProjectId').textContent;
+            const id     = document.getElementById('pmHoldProjectId').textContent.trim();
             const reason = document.getElementById('pmHoldReason').value.trim();
             const days   = document.getElementById('pmHoldGracePeriod').value || '7';
 
@@ -376,44 +281,45 @@ function initProjectManagement() {
                 return;
             }
 
-            const row = document.querySelector(`tr[data-id="${id}"]`);
-            if (row) {
-                row.setAttribute('data-status', 'Hold');
-                row.setAttribute('data-hold-reason', reason);
-                row.setAttribute('data-hold-days', days);
-                row.setAttribute('data-team-response', 'The team has been formally notified and the grace period timer is active. Awaiting team explanation/clarification.');
-
-                const statusCell = row.cells[5];
-                if (statusCell) {
-                    statusCell.innerHTML = `
-                        <span class="pm-status-pill status-hold" title="On Hold: ${days} days left in grace period">
-                            <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (${days}d left)
-                        </span>
-                    `;
-                }
-
-                const actionsCell = row.querySelector('.pm-actions-cell');
-                if (actionsCell) {
-                    actionsCell.innerHTML = `
-                        <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('${id}')">
-                            <span class="material-symbols-outlined">visibility</span>
-                        </button>
-                        <button class="pm-btn-icon pm-btn-icon-reactivate" title="Review Hold & Decide Status" onclick="openReviewHoldModal('${id}')">
-                            <span class="material-symbols-outlined">check_circle</span>
-                        </button>
-                    `;
-                }
-
-                if (detailsModal && detailsModal.classList.contains('show')) {
-                    if (document.getElementById('pmDetailId')?.textContent === id) {
-                        window.viewProjectDetails(id);
-                    }
-                }
-
-                AdminCore.modal.close(holdModal, holdForm);
-                AdminCore.toast(`Project ${id} placed on Hold for ${days} days. Grace period active.`);
-                applyFilters(false);
+            const btnSubmit = holdForm.querySelector('button[type="submit"]');
+            const origText = btnSubmit ? btnSubmit.innerHTML : '';
+            if (btnSubmit) {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = 'Placing on Hold...';
             }
+
+            const formData = new FormData();
+            formData.append('ajax_action', 'place_on_hold');
+            formData.append('project_id', id);
+            formData.append('hold_reason', reason);
+            formData.append('grace_period', days);
+
+            fetch('Project_Management.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origText;
+                }
+                if (data.success) {
+                    AdminCore.modal.close(holdModal, holdForm);
+                    AdminCore.toast(data.message || `Project ${id} placed on Hold for ${days} days.`);
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    AdminCore.toast(data.message || 'Failed to place on hold.', 'error');
+                }
+            })
+            .catch(err => {
+                if (btnSubmit) {
+                    btnSubmit.disabled = false;
+                    btnSubmit.innerHTML = origText;
+                }
+                console.error(err);
+                AdminCore.toast('An unexpected error occurred.', 'error');
+            });
         });
     }
 
@@ -511,44 +417,34 @@ function initProjectManagement() {
 
     window.confirmReactivateFromReview = function() {
         const id = document.getElementById('pmReviewProjectId')?.textContent.trim();
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (!row) return;
+        if (!id) return;
 
-        row.setAttribute('data-status', 'Active');
-        row.removeAttribute('data-hold-reason');
-        row.removeAttribute('data-hold-days');
-        row.removeAttribute('data-team-response');
+        const formData = new FormData();
+        formData.append('ajax_action', 'reactivate_project');
+        formData.append('project_id', id);
 
-        if (row.cells[5]) row.cells[5].innerHTML = `<span class="pm-status-pill status-active">Active</span>`;
-
-        const actionsCell = row.querySelector('.pm-actions-cell');
-        if (actionsCell) {
-            actionsCell.innerHTML = `
-                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('${id}')">
-                    <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('${id}')">
-                    <span class="material-symbols-outlined">pause_circle</span>
-                </button>
-            `;
-        }
-
-        if (detailsModal && detailsModal.classList.contains('show')) {
-            if (document.getElementById('pmDetailId')?.textContent === id) {
-                window.viewProjectDetails(id);
+        fetch('Project_Management.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                AdminCore.modal.close(reviewHoldModal);
+                AdminCore.toast(data.message || `Project ${id} has been reactivated to Active status!`);
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                AdminCore.toast(data.message || 'Failed to reactivate project.', 'error');
             }
-        }
-
-        AdminCore.modal.close(reviewHoldModal);
-        AdminCore.toast(`Project ${id} has been reactivated to Active status!`);
-        applyFilters(false);
+        })
+        .catch(err => {
+            console.error(err);
+            AdminCore.toast('An unexpected error occurred.', 'error');
+        });
     };
 
     window.executePermanentRejection = function() {
         const id = (document.getElementById('pmReviewStep2ProjectId') || document.getElementById('pmReviewProjectId'))?.textContent.trim();
-        const row = document.querySelector(`tr[data-id="${id}"]`);
-        if (!row) return;
-
         const category = document.getElementById('pmFinalRejectCategory')?.value || 'General Grounds';
         const reason   = document.getElementById('pmFinalRejectReason')?.value.trim() || '';
 
@@ -559,37 +455,68 @@ function initProjectManagement() {
             return;
         }
 
-        const fullReason = `[${category}] ${reason}`;
-        row.setAttribute('data-status', 'Rejected');
-        row.setAttribute('data-reject-reason', fullReason);
-        row.removeAttribute('data-hold-reason');
-        row.removeAttribute('data-hold-days');
-        row.removeAttribute('data-team-response');
+        const formData = new FormData();
+        formData.append('ajax_action', 'reject_project');
+        formData.append('project_id', id);
+        formData.append('category', category);
+        formData.append('reason', reason);
 
-        if (row.cells[5]) row.cells[5].innerHTML = `<span class="pm-status-pill status-rejected">Rejected</span>`;
-
-        const actionsCell = row.querySelector('.pm-actions-cell');
-        if (actionsCell) {
-            actionsCell.innerHTML = `
-                <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('${id}')">
-                    <span class="material-symbols-outlined">visibility</span>
-                </button>
-                <button class="pm-btn-icon" title="Permanently Rejected" disabled style="color: #cbd5e1; cursor: not-allowed;">
-                    <span class="material-symbols-outlined">lock</span>
-                </button>
-            `;
-        }
-
-        if (detailsModal && detailsModal.classList.contains('show')) {
-            if (document.getElementById('pmDetailId')?.textContent === id) {
-                window.viewProjectDetails(id);
+        fetch('Project_Management.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                AdminCore.modal.close(reviewHoldModal);
+                AdminCore.toast(data.message || `Project ${id} has been permanently rejected.`);
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                AdminCore.toast(data.message || 'Failed to reject project.', 'error');
             }
-        }
-
-        AdminCore.modal.close(reviewHoldModal);
-        AdminCore.toast(`Project ${id} has been permanently rejected.`);
-        applyFilters(false);
+        })
+        .catch(err => {
+            console.error(err);
+            AdminCore.toast('An unexpected error occurred.', 'error');
+        });
     };
+
+    if (rejectForm) {
+        rejectForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const id = document.getElementById('pmRejectProjectId')?.textContent.trim();
+            const reason = document.getElementById('pmRejectReason')?.value.trim() || '';
+
+            if (!reason) {
+                AdminCore.toast('Please specify the rejection reason.', 'warning');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('ajax_action', 'reject_project');
+            formData.append('project_id', id);
+            formData.append('reason', reason);
+
+            fetch('Project_Management.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    AdminCore.modal.close(rejectModal, rejectForm);
+                    AdminCore.toast(data.message || `Project ${id} has been permanently rejected.`);
+                    setTimeout(() => window.location.reload(), 600);
+                } else {
+                    AdminCore.toast(data.message || 'Failed to reject project.', 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                AdminCore.toast('An unexpected error occurred.', 'error');
+            });
+        });
+    }
 
     window.reactivateProject = function(projectId) {
         window.openReviewHoldModal(projectId);
