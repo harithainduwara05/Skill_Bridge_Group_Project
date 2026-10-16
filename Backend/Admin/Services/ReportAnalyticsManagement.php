@@ -8,271 +8,224 @@ require_once __DIR__ . '/AdminDB.php';
 
 class ReportAnalyticsManagement extends AdminDB
 {
-    public function getPlacedStudentsCount()
+    public function getPlacedStudentsCount(): int
     {
         return (int) $this->runCount("SELECT COUNT(*) FROM internship_applications WHERE LOWER(status) = 'accepted'");
     }
 
-    public function getActiveDriveCount()
+    public function getActiveDriveCount(): int
     {
         return (int) $this->runCount("SELECT COUNT(*) FROM internships WHERE LOWER(status) = 'active'");
     }
 
-    public function getSupervisorReviewProjectCount()
+    public function getSupervisorReviewProjectCount(): int
     {
         return (int) $this->runCount("SELECT COUNT(*) FROM projects WHERE LOWER(status) = 'reviewing'");
     }
 
-    public function getResolvedComplaintsCount()
+    public function getResolvedComplaintsCount(): int
     {
         return (int) $this->runCount("SELECT COUNT(*) FROM complain WHERE LOWER(status) IN ('resolved', 'dismissed')");
     }
 
-    public function getOpenComplaintsCount()
+    public function getOpenComplaintsCount(): int
     {
         return (int) $this->runCount("SELECT COUNT(*) FROM complain WHERE LOWER(status) NOT IN ('resolved', 'dismissed')");
     }
 
-    public function getUniversityBenchmarks()
+    public function getUniversityBenchmarks(): array
     {
-        $unisRes = $this->runQuery("SELECT * FROM universityemails");
-        $unis = $unisRes ? $unisRes->fetch_all(MYSQLI_ASSOC) : [];
-        $benchmarks = [];
+        $sql = "SELECT u.University, u.Location, u.faculty,
+                    COUNT(DISTINCT s.Email) AS student_count,
+                    (SELECT COUNT(*) FROM projects p WHERE u.emailEx != '' AND p.organization_email LIKE CONCAT('%', u.emailEx, '%')) AS project_count,
+                    COUNT(DISTINCT CASE WHEN LOWER(ia.status) = 'accepted' THEN ia.application_id END) AS placed_count
+                FROM universityemails u
+                LEFT JOIN student s ON LOWER(s.University) LIKE CONCAT('%', LOWER(SUBSTRING_INDEX(u.University, ' ', 3)), '%')
+                LEFT JOIN internship_applications ia ON s.Email = ia.Email
+                GROUP BY u.University, u.Location, u.faculty, u.emailEx
+                ORDER BY student_count DESC";
 
-        foreach ($unis as $u) {
-            $uName = $u['University'];
-            $uDomain = $u['emailEx'] ?? '';
+        $res = $this->runQuery($sql);
+        $rows = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
 
-            $stCount = (int) $this->runCount(
-                "SELECT COUNT(*) FROM student WHERE LOWER(University) LIKE CONCAT('%', LOWER(SUBSTRING_INDEX(?, ' ', 3)), '%')",
-                "s",
-                $uName
-            );
-
-            $projCount = 0;
-            if (!empty($uDomain)) {
-                $projCount = (int) $this->runCount(
-                    "SELECT COUNT(*) FROM projects WHERE organization_email LIKE CONCAT('%', ?, '%')",
-                    "s",
-                    $uDomain
-                );
-            }
-
-            $placedCount = (int) $this->runCount("
-                SELECT COUNT(DISTINCT ia.application_id) 
-                FROM internship_applications ia
-                INNER JOIN student s ON ia.Email = s.Email
-                WHERE LOWER(s.University) LIKE CONCAT('%', LOWER(SUBSTRING_INDEX(?, ' ', 3)), '%')
-                AND LOWER(ia.status) = 'accepted'
-            ", "s", $uName);
-
-            $rate = ($stCount > 0) ? round(($placedCount / $stCount) * 100, 1) : 0;
-
-            $benchmarks[] = [
-                'University'     => $uName,
-                'Location'       => $u['Location'] ?? 'N/A',
-                'faculty'        => $u['faculty'] ?? '',
-                'student_count'  => $stCount,
-                'project_count'  => $projCount,
-                'placed_count'   => $placedCount,
-                'placement_rate' => $rate
+        return array_map(function($r) {
+            $st = (int)$r['student_count'];
+            $pl = (int)$r['placed_count'];
+            return [
+                'University'     => $r['University'],
+                'Location'       => $r['Location'] ?? 'N/A',
+                'faculty'        => $r['faculty'] ?? '',
+                'student_count'  => $st,
+                'project_count'  => (int)$r['project_count'],
+                'placed_count'   => $pl,
+                'placement_rate' => ($st > 0) ? round(($pl / $st) * 100, 1) : 0
             ];
-        }
-
-        usort($benchmarks, fn($a, $b) => $b['student_count'] <=> $a['student_count']);
-        return $benchmarks;
+        }, $rows);
     }
 
-    public function getCompanyBenchmarks()
+    public function getCompanyBenchmarks(): array
     {
         $sql = "SELECT c.Name, c.companytype, c.location, 
-                COUNT(DISTINCT i.id) AS vacancies_count, 
-                COUNT(ia.application_id) AS applications_count, 
-                COALESCE(SUM(CASE WHEN LOWER(ia.status) = 'accepted' THEN 1 ELSE 0 END), 0) AS hired_count 
+                    COUNT(DISTINCT i.id) AS vacancies_count, 
+                    COUNT(ia.application_id) AS applications_count, 
+                    COALESCE(SUM(CASE WHEN LOWER(ia.status) = 'accepted' THEN 1 ELSE 0 END), 0) AS hired_count 
                 FROM company c 
                 LEFT JOIN internships i ON TRIM(LOWER(c.Name)) = TRIM(LOWER(i.company)) 
                 LEFT JOIN internship_applications ia ON i.id = ia.internship_id 
                 GROUP BY c.Email, c.Name, c.companytype, c.location 
                 ORDER BY vacancies_count DESC";
+
         $res = $this->runQuery($sql);
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    public function getComplaintsLog($limit = 100)
+    public function getComplaintsLog(int $limit = 100): array
     {
-        $sql = "SELECT id, email, category, title, status, create_at FROM complain ORDER BY id DESC LIMIT ?";
-        $res = $this->runQuery($sql, "i", $limit);
+        $res = $this->runQuery("SELECT id, email, category, title, status, create_at FROM complain ORDER BY id DESC LIMIT ?", "i", $limit);
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
-    public function getHiringVelocityData()
+    public function getHiringVelocityData(): array
     {
-        $sql = "SELECT 
-                    DATE_FORMAT(applied_date, '%b %Y') as m_label,
-                    COUNT(*) as apps,
-                    SUM(CASE WHEN LOWER(status) = 'accepted' THEN 1 ELSE 0 END) as hired
-                FROM internship_applications
-                WHERE applied_date IS NOT NULL
-                GROUP BY DATE_FORMAT(applied_date, '%Y-%m')
-                ORDER BY MIN(applied_date) ASC";
+        $sql = "SELECT DATE_FORMAT(applied_date, '%b %Y') AS m_label, COUNT(*) AS apps,
+                       SUM(CASE WHEN LOWER(status) = 'accepted' THEN 1 ELSE 0 END) AS hired
+                FROM internship_applications WHERE applied_date IS NOT NULL
+                GROUP BY DATE_FORMAT(applied_date, '%Y-%m') ORDER BY MIN(applied_date) ASC";
+
         $res = $this->runQuery($sql);
         $data = $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-        if (empty($data)) {
-            $data = [['m_label' => date('M Y'), 'apps' => 0, 'hired' => 0]];
-        }
-        return $data;
+        return !empty($data) ? $data : [['m_label' => date('M Y'), 'apps' => 0, 'hired' => 0]];
     }
 
-    public function getStudentEnrolmentDistribution()
+    public function getStudentEnrolmentDistribution(): array
     {
-        $totalStudents = (int) $this->runCount("SELECT COUNT(*) FROM student");
-        $unisRes = $this->runQuery("SELECT * FROM universityemails");
-        $unis = $unisRes ? $unisRes->fetch_all(MYSQLI_ASSOC) : [];
-
-        $donutSegments = [];
-        $circumference = 440;
-        $offset = 0;
+        $unis = $this->getUniversityBenchmarks();
+        $totalStudents = array_sum(array_column($unis, 'student_count'));
         $palette = ['#2563eb', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981', '#64748b'];
-        $idx = 0;
+        $offset = 0;
 
-        foreach ($unis as $u) {
-            $uName = $u['University'];
-            $count = (int) $this->runCount(
-                "SELECT COUNT(*) FROM student WHERE LOWER(University) LIKE CONCAT('%', LOWER(SUBSTRING_INDEX(?, ' ', 3)), '%')",
-                "s",
-                $uName
-            );
-
-            $pct = ($totalStudents > 0) ? round(($count / $totalStudents) * 100, 1) : 0;
-            $dash = round(($pct / 100) * $circumference, 1);
-
-            $donutSegments[] = [
-                'name'    => $uName,
-                'faculty' => $u['faculty'] ?? '',
-                'count'   => $count,
+        $segments = array_map(function($u, $idx) use ($totalStudents, &$offset, $palette) {
+            $pct = ($totalStudents > 0) ? round(($u['student_count'] / $totalStudents) * 100, 1) : 0;
+            $dash = round(($pct / 100) * 440, 1);
+            $seg = [
+                'name'    => $u['University'],
+                'faculty' => $u['faculty'],
+                'count'   => $u['student_count'],
                 'pct'     => $pct,
                 'dash'    => $dash,
                 'offset'  => -$offset,
-                'color'   => $palette[$idx % count($palette)]
+                'color'   => $palette[$idx % 6]
             ];
             $offset += $dash;
-            $idx++;
-        }
+            return $seg;
+        }, $unis, array_keys($unis));
 
-        usort($donutSegments, fn($a, $b) => $b['count'] <=> $a['count']);
-
-        return [
-            'total_students' => $totalStudents,
-            'segments'       => $donutSegments
-        ];
+        return ['total_students' => $totalStudents, 'segments' => $segments];
     }
 
-    public function getTopInDemandSkills($limit = 5)
+    public function getTopInDemandSkills(int $limit = 5): array
     {
-        $sql = "SELECT tech_tags as tags FROM internships WHERE tech_tags IS NOT NULL UNION ALL SELECT tech_stack as tags FROM projects WHERE tech_stack IS NOT NULL";
-        $res = $this->runQuery($sql);
-        $totalPosts = (int) $this->runCount("SELECT (SELECT COUNT(*) FROM internships) + (SELECT COUNT(*) FROM projects) as total");
-        $skillCounts = [];
+        $res = $this->runQuery("SELECT tech_tags AS tags FROM internships WHERE tech_tags IS NOT NULL UNION ALL SELECT tech_stack AS tags FROM projects WHERE tech_stack IS NOT NULL");
+        $totalPosts = (int) $this->runCount("SELECT (SELECT COUNT(*) FROM internships) + (SELECT COUNT(*) FROM projects)");
+        $allTags = [];
 
         if ($res) {
-            while ($row = $res->fetch_assoc()) {
-                $tags = preg_split('/[,•|\/]/', $row['tags']);
-                foreach ($tags as $t) {
+            while ($r = $res->fetch_assoc()) {
+                foreach (preg_split('/[,•|\/]/', $r['tags']) as $t) {
                     $t = trim($t);
-                    if (!empty($t) && !is_numeric($t) && strlen($t) > 1) {
-                        $skillCounts[$t] = ($skillCounts[$t] ?? 0) + 1;
+                    if ($t !== '' && !is_numeric($t) && strlen($t) > 1) {
+                        $allTags[] = $t;
                     }
                 }
             }
         }
 
-        arsort($skillCounts);
+        $counts = array_count_values($allTags);
+        arsort($counts);
+        $palette = ['fill-blue', 'fill-indigo', 'fill-green', 'fill-amber', 'fill-purple'];
         $top = [];
-        $skillColors = ['fill-blue', 'fill-indigo', 'fill-green', 'fill-amber', 'fill-purple'];
-        $sIdx = 0;
+        $i = 0;
 
-        foreach (array_slice($skillCounts, 0, $limit, true) as $skillName => $freq) {
-            $pct = ($totalPosts > 0) ? min(100, round(($freq / $totalPosts) * 100)) : 0;
+        foreach (array_slice($counts, 0, $limit, true) as $name => $freq) {
             $top[] = [
-                'name'  => $skillName,
+                'name'  => $name,
                 'freq'  => $freq,
-                'pct'   => $pct,
-                'color' => $skillColors[$sIdx % count($skillColors)]
+                'pct'   => ($totalPosts > 0) ? min(100, round(($freq / $totalPosts) * 100)) : 0,
+                'color' => $palette[$i++ % 5]
             ];
-            $sIdx++;
         }
-
         return $top;
     }
 
-    public function getRecruitmentFunnelData()
+    public function getRecruitmentFunnelData(): array
     {
-        $totalApps     = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications");
-        $reviewApps    = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications WHERE LOWER(status) IN ('under review', 'accepted')");
-        $interviewApps = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications WHERE interview_date IS NOT NULL OR LOWER(status) IN ('under review', 'accepted')");
-        $hiredApps     = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications WHERE LOWER(status) = 'accepted'");
+        $res = $this->runQuery("SELECT COUNT(*) AS total,
+                    SUM(CASE WHEN LOWER(status) IN ('under review', 'accepted') THEN 1 ELSE 0 END) AS review_apps,
+                    SUM(CASE WHEN interview_date IS NOT NULL OR LOWER(status) IN ('under review', 'accepted') THEN 1 ELSE 0 END) AS interview_apps,
+                    SUM(CASE WHEN LOWER(status) = 'accepted' THEN 1 ELSE 0 END) AS hired_apps
+                FROM internship_applications");
 
-        $step1Pct = 100;
-        $step2Pct = ($totalApps > 0) ? round(($reviewApps / $totalApps) * 100, 1) : 0;
-        $step3Pct = ($totalApps > 0) ? round(($interviewApps / $totalApps) * 100, 1) : 0;
-        $step4Pct = ($totalApps > 0) ? round(($hiredApps / $totalApps) * 100, 1) : 0;
+        $row = $res ? $res->fetch_assoc() : [];
+        $t = (int)($row['total'] ?? 0);
+        $calcPct = fn($val) => ($t > 0) ? round(($val / $t) * 100, 1) : 0;
 
         return [
-            ['step' => 'Step 1', 'label' => 'Applications',   'val' => $totalApps,     'pct' => $step1Pct . '% Volume'],
-            ['step' => 'Step 2', 'label' => 'Under Review',   'val' => $reviewApps,    'pct' => $step2Pct . '% Screen'],
-            ['step' => 'Step 3', 'label' => 'Interviews',     'val' => $interviewApps, 'pct' => $step3Pct . '% Shortlisted'],
-            ['step' => 'Step 4', 'label' => 'Placed / Hired', 'val' => $hiredApps,     'pct' => $step4Pct . '% Conversion']
+            ['step' => 'Step 1', 'label' => 'Applications',   'val' => $t,                                  'pct' => '100% Volume'],
+            ['step' => 'Step 2', 'label' => 'Under Review',   'val' => (int)($row['review_apps'] ?? 0),    'pct' => $calcPct($row['review_apps'] ?? 0) . '% Screen'],
+            ['step' => 'Step 3', 'label' => 'Interviews',     'val' => (int)($row['interview_apps'] ?? 0), 'pct' => $calcPct($row['interview_apps'] ?? 0) . '% Shortlisted'],
+            ['step' => 'Step 4', 'label' => 'Placed / Hired', 'val' => (int)($row['hired_apps'] ?? 0),     'pct' => $calcPct($row['hired_apps'] ?? 0) . '% Conversion']
         ];
     }
 
-    public function getPeriodDataBreakdown()
+    public function getPeriodDataBreakdown(): array
     {
-        return [
-            '30d'     => $this->calculatePeriodMetrics("DATE_SUB(NOW(), INTERVAL 30 DAY)"),
-            'quarter' => $this->calculatePeriodMetrics("DATE_SUB(NOW(), INTERVAL 90 DAY)"),
-            'ytd'     => $this->calculatePeriodMetrics("DATE_FORMAT(NOW(), '%Y-01-01')"),
-            'all'     => $this->calculatePeriodMetrics(null)
-        ];
-    }
-
-    protected function calculatePeriodMetrics($intervalSql = null)
-    {
-        $whereApp  = $intervalSql ? "WHERE applied_date >= $intervalSql" : "";
-        $whereProj = $intervalSql ? "WHERE posted_at >= $intervalSql" : "";
-        $whereComp = $intervalSql ? "WHERE create_at >= $intervalSql" : "";
-
-        $placed    = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications $whereApp " . ($whereApp ? "AND" : "WHERE") . " LOWER(status) = 'accepted'");
-        $totalApps = (int) $this->runCount("SELECT COUNT(*) FROM internship_applications $whereApp");
-        $pRate     = ($totalApps > 0) ? round(($placed / $totalApps) * 100, 1) : 0;
-
-        $companies = (int) $this->runCount("SELECT COUNT(*) FROM company");
-        $drives    = (int) $this->runCount("SELECT COUNT(*) FROM internships WHERE LOWER(status) = 'active'");
-
-        $projects   = (int) $this->runCount("SELECT COUNT(*) FROM projects $whereProj");
-        $projReview = (int) $this->runCount("SELECT COUNT(*) FROM projects $whereProj " . ($whereProj ? "AND" : "WHERE") . " LOWER(status) = 'reviewing'");
-
-        $complaints     = (int) $this->runCount("SELECT COUNT(*) FROM complain $whereComp");
-        $resComplaints  = (int) $this->runCount("SELECT COUNT(*) FROM complain $whereComp " . ($whereComp ? "AND" : "WHERE") . " LOWER(status) IN ('resolved', 'dismissed')");
-        $openComplaints = (int) $this->runCount("SELECT COUNT(*) FROM complain $whereComp " . ($whereComp ? "AND" : "WHERE") . " LOWER(status) NOT IN ('resolved', 'dismissed')");
-        $rRate          = ($complaints > 0) ? round(($resComplaints / $complaints) * 100, 1) : 100;
-
+        $comps = number_format($this->getCount('company')) . ' Companies';
+        $drives = number_format($this->getActiveDriveCount()) . ' Active Drives';
         $velocity = $this->getHiringVelocityData();
-        $labels   = array_column($velocity, 'm_label');
-        $appsArr  = array_map('intval', array_column($velocity, 'apps'));
+        $labels = array_column($velocity, 'm_label');
+        $appsArr = array_map('intval', array_column($velocity, 'apps'));
         $hiredArr = array_map('intval', array_column($velocity, 'hired'));
 
+        $calc = function($intervalSql) use ($comps, $drives, $labels, $appsArr, $hiredArr) {
+            $wApp  = $intervalSql ? "WHERE applied_date >= $intervalSql" : "";
+            $wProj = $intervalSql ? "WHERE posted_at >= $intervalSql" : "";
+            $wComp = $intervalSql ? "WHERE create_at >= $intervalSql" : "";
+
+            $appRes = $this->runQuery("SELECT COUNT(*) AS total, SUM(CASE WHEN LOWER(status) = 'accepted' THEN 1 ELSE 0 END) AS placed FROM internship_applications $wApp");
+            $appRow = $appRes ? $appRes->fetch_assoc() : [];
+            $placed = (int)($appRow['placed'] ?? 0);
+            $totalApps = (int)($appRow['total'] ?? 0);
+            $pRate = ($totalApps > 0) ? round(($placed / $totalApps) * 100, 1) : 0;
+
+            $projRes = $this->runQuery("SELECT COUNT(*) AS total, SUM(CASE WHEN LOWER(status) = 'reviewing' THEN 1 ELSE 0 END) AS in_review FROM projects $wProj");
+            $projRow = $projRes ? $projRes->fetch_assoc() : [];
+
+            $compRes = $this->runQuery("SELECT COUNT(*) AS total, SUM(CASE WHEN LOWER(status) IN ('resolved', 'dismissed') THEN 1 ELSE 0 END) AS resolved FROM complain $wComp");
+            $compRow = $compRes ? $compRes->fetch_assoc() : [];
+            $totComp = (int)($compRow['total'] ?? 0);
+            $resComp = (int)($compRow['resolved'] ?? 0);
+            $rRate = ($totComp > 0) ? round(($resComp / $totComp) * 100, 1) : 100;
+
+            return [
+                'placedStudents' => number_format($placed),
+                'placementRate'  => $pRate . '% Placement Rate',
+                'companies'      => $comps,
+                'drives'         => $drives,
+                'projects'       => number_format((int)($projRow['total'] ?? 0)) . ' Projects',
+                'projectReview'  => number_format((int)($projRow['in_review'] ?? 0)) . ' In Supervisor Review',
+                'resolution'     => $rRate . '% Resolved',
+                'complaintOpen'  => number_format($totComp - $resComp) . ' Open in Queue',
+                'monthlyLabels'  => $labels,
+                'applications'   => $appsArr,
+                'hired'          => $hiredArr
+            ];
+        };
+
         return [
-            'placedStudents' => number_format($placed),
-            'placementRate'  => $pRate . '% Placement Rate',
-            'companies'      => number_format($companies) . ' Companies',
-            'drives'         => number_format($drives) . ' Active Drives',
-            'projects'       => number_format($projects) . ' Projects',
-            'projectReview'  => number_format($projReview) . ' In Supervisor Review',
-            'resolution'     => $rRate . '% Resolved',
-            'complaintOpen'  => number_format($openComplaints) . ' Open in Queue',
-            'monthlyLabels'  => $labels,
-            'applications'   => $appsArr,
-            'hired'          => $hiredArr
+            '30d'     => $calc("DATE_SUB(NOW(), INTERVAL 30 DAY)"),
+            'quarter' => $calc("DATE_SUB(NOW(), INTERVAL 90 DAY)"),
+            'ytd'     => $calc("DATE_FORMAT(NOW(), '%Y-01-01')"),
+            'all'     => $calc(null)
         ];
     }
 }
