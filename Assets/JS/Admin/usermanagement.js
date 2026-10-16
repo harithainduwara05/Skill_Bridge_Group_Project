@@ -1,5 +1,3 @@
-
-
 // Modal Aliases via AdminCore
 window.openModal  = (id) => AdminCore.modal.open(id);
 window.closeModal = (id) => AdminCore.modal.close(id);
