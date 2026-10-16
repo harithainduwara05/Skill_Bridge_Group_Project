@@ -394,17 +394,38 @@ function initReportsAnalytics() {
         }
     });
 
+    // Initialize 30d with real database rendered values
+    const initPlacedEl = document.getElementById('raKpiPlaced');
+    if (initPlacedEl && initPlacedEl.textContent.trim()) {
+        periodData['30d'].placedStudents = initPlacedEl.textContent.trim();
+    }
+    const initCompEl = document.getElementById('raKpiCompanies');
+    if (initCompEl && initCompEl.textContent.trim()) {
+        periodData['30d'].companies = initCompEl.textContent.trim();
+    }
+    const initProjEl = document.getElementById('raKpiProjects');
+    if (initProjEl && initProjEl.textContent.trim()) {
+        periodData['30d'].projects = initProjEl.textContent.trim();
+    }
+    const initResEl = document.getElementById('raKpiResolution');
+    if (initResEl && initResEl.textContent.trim()) {
+        periodData['30d'].resolution = initResEl.textContent.trim();
+    }
+
     formatCards.forEach(card => {
         card.addEventListener('click', () => {
             formatCards.forEach(c => c.classList.remove('active'));
             card.classList.add('active');
-            selectedFormat = card.getAttribute('data-format') || 'PDF';
+            selectedFormat = card.getAttribute('data-format') || 'CSV';
         });
     });
 
     if (btnGenerateReport) {
         btnGenerateReport.addEventListener('click', () => {
             const scopeSelect = document.getElementById('raReportScope');
+            const timeframeSelect = document.getElementById('raReportTimeframe');
+            const scopeVal = scopeSelect ? scopeSelect.value : 'executive';
+            const timeframeVal = timeframeSelect ? timeframeSelect.value : '30d';
             const scopeName = scopeSelect ? scopeSelect.options[scopeSelect.selectedIndex].text : 'Executive Summary';
 
             const origContent = btnGenerateReport.innerHTML;
@@ -415,8 +436,11 @@ function initReportsAnalytics() {
                 btnGenerateReport.disabled = false;
                 btnGenerateReport.innerHTML = origContent;
                 closeExportModal();
-                showToast(`${scopeName} (${selectedFormat}) exported & downloaded successfully!`, 'download_done', '#22c55e');
-            }, 1200);
+                showToast(`${scopeName} exported & downloaded successfully!`, 'download_done', '#22c55e');
+
+                // Trigger native backend CSV export stream
+                window.location.href = `reportandAnalysist.php?action=export_report&scope=${encodeURIComponent(scopeVal)}&timeframe=${encodeURIComponent(timeframeVal)}&format=${encodeURIComponent(selectedFormat)}`;
+            }, 600);
         });
     }
 

@@ -27,9 +27,19 @@ include "../../Includes/dash_header.php";
                     "cardIcons"    => ["school", "apartment", "task_alt", "verified_user"],
                     "iconColors"   => ["blue", "purple", "green", "amber"],
                     "cardLabels"   => ["Placed Students", "Active Industry Partners", "Industry Projects", "Grievance Resolution"],
-                    "cardValues"   => ["1,428", "168 Companies", "842 Projects", "98.1% Resolved"],
+                    "cardValues"   => [
+                        number_format($placedStudentsCount ?? 0), 
+                        number_format($activeCompaniesCount ?? 0) . " Companies", 
+                        number_format($totalProjectsCount ?? 0) . " Projects", 
+                        ($resolutionRate ?? 100) . "% Resolved"
+                    ],
                     "valueIds"     => ["raKpiPlaced", "raKpiCompanies", "raKpiProjects", "raKpiResolution"],
-                    "subtexts"     => ["89.2% Placement Rate", "432 Active Drives", "124 In Supervisor Review", "3 Open in Queue"],
+                    "subtexts"     => [
+                        ($placementRate ?? 0) . "% Placement Rate", 
+                        number_format($activeDrivesCount ?? 0) . " Active Drives", 
+                        number_format($reviewProjectsCount ?? 0) . " In Supervisor Review", 
+                        number_format($openComplaintsCount ?? 0) . " Open in Queue"
+                    ],
                     "subtextIcons" => ["verified", "work", "pending_actions", "report_problem"],
                     "subtextIds"   => ["raKpiPlacedSub", "raKpiCompanySub", "raKpiProjectSub", "raKpiResolutionSub"]
                 ];
