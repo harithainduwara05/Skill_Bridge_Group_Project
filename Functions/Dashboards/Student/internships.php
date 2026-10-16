@@ -37,6 +37,7 @@ include "../../../Includes/dash_header.php";
 $internships = [
 
 [
+"id" => 1,
 "title"=>"Junior Frontend Developer",
 "company"=>"Nexus Cloud Systems",
 "location"=>"San Francisco (Hybrid)",
@@ -54,6 +55,7 @@ $internships = [
 
 
 [
+"id" => 2,
 "title"=>"Product Design Intern",
 "company"=>"Prism Creative Agency",
 "location"=>"Fully Remote",
@@ -72,6 +74,7 @@ $internships = [
 
 
 [
+"id" => 3,
 "title"=>"Data Science Analyst Intern",
 "company"=>"Quantum Ledger",
 "location"=>"New York, NY",
@@ -89,6 +92,7 @@ $internships = [
 
 
 [
+"id" => 4,
 "title"=>"Financial Risk Analyst",
 "company"=>"Horizon Finance",
 "location"=>"Charlotte, NC",
@@ -446,7 +450,7 @@ Deadline
 
 <a 
 
-href="view_internship.php?id=<?= $internship['id']; ?>"
+href="view_internship.php?id=<?= htmlspecialchars($internship['id'] ?? 1); ?>"
 
 class="view-details">
 
@@ -464,7 +468,7 @@ View Details
 
 <a
 
-href="submit_application.php?id=<?= $internship['id']; ?>"
+href="submit_application.php?id=<?= htmlspecialchars($internship['id'] ?? 1); ?>"
 
 class="apply-now">
 

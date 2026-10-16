@@ -180,7 +180,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
         <span class="ico"><img src="../../../Assets/Images/Icons/internship.png"></span>
         <?php echo $student['applications']; ?>
     </h1>
-    <p>Applications</p>
+    <p>Active Teams</p>
 </div>
 
 </div>
@@ -314,7 +314,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
 <div class="project-header">
     <h2>Recent Projects</h2>
-    <a href="projects.php" class="view-all-btn">See All Projects</a>
+    <a href="teams.php" class="view-all-btn">See All Projects</a>
 </div>
 
 <?php foreach($projects as $project){ ?>
@@ -410,7 +410,7 @@ $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(t
 
     <p><?php echo htmlspecialchars($internship['tech_tags']); ?></p>
 
-    <a href="internships.php" class="apply-btn">Apply Now</a>
+    <a href="view_internship.php" class="apply-btn">View Details</a>
 </div>
 
 <?php } ?>

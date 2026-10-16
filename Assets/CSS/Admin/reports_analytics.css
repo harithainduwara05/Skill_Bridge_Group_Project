@@ -195,138 +195,6 @@
     margin-bottom: 26px;
 }
 
-.ra-kpi-card {
-    background: var(--ra-bg-card);
-    border: 1px solid var(--ra-border);
-    border-radius: var(--ra-radius-lg);
-    padding: 20px 22px;
-    box-shadow: var(--ra-shadow-sm);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-.ra-kpi-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--ra-shadow-md);
-    border-color: #cbd5e1;
-}
-
-.ra-kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.ra-kpi-card.kpi-blue::before { background: var(--ra-accent); }
-.ra-kpi-card.kpi-indigo::before { background: var(--ra-indigo); }
-.ra-kpi-card.kpi-green::before { background: var(--ra-success); }
-.ra-kpi-card.kpi-amber::before { background: var(--ra-warning); }
-
-.ra-kpi-card:hover::before {
-    opacity: 1;
-}
-
-.ra-kpi-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 14px;
-}
-
-.ra-kpi-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--ra-radius-md);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-
-.ra-kpi-icon.icon-blue {
-    background: #eff6ff;
-    color: #2563eb;
-}
-
-.ra-kpi-icon.icon-indigo {
-    background: #eef2ff;
-    color: #4f46e5;
-}
-
-.ra-kpi-icon.icon-green {
-    background: #f0fdf4;
-    color: #16a34a;
-}
-
-.ra-kpi-icon.icon-amber {
-    background: #fffbeb;
-    color: #d97706;
-}
-
-.ra-kpi-icon .material-symbols-outlined {
-    font-size: 24px;
-}
-
-.ra-kpi-trend {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: var(--ra-radius-pill);
-}
-
-.ra-kpi-trend.trend-up {
-    background: var(--ra-success-bg);
-    color: var(--ra-success);
-}
-
-.ra-kpi-trend.trend-neutral {
-    background: #eff6ff;
-    color: var(--ra-accent);
-}
-
-.ra-kpi-trend .material-symbols-outlined {
-    font-size: 14px;
-}
-
-.ra-kpi-label {
-    font-size: 12.5px;
-    font-weight: 600;
-    color: var(--ra-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    margin-bottom: 6px;
-}
-
-.ra-kpi-value {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--ra-text-main);
-    line-height: 1.1;
-    margin-bottom: 6px;
-    letter-spacing: -0.02em;
-}
-
-.ra-kpi-subtext {
-    font-size: 12px;
-    color: var(--ra-text-muted);
-    display: flex;
-    align-items: center;
-    gap: 5px;
-}
-
-.ra-kpi-subtext .material-symbols-outlined {
-    font-size: 15px;
-    color: #94a3b8;
-}
 
 /* --------------------------------------------------------------------------
    3. Domain Filter Navigation Tabs
@@ -858,45 +726,7 @@
 }
 
 .ra-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
     min-width: 880px;
-}
-
-.ra-table thead {
-    background: #f8fafc;
-    border-bottom: 1px solid var(--ra-border);
-}
-
-.ra-table th {
-    padding: 13px 20px;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--ra-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    white-space: nowrap;
-}
-
-.ra-table tbody tr {
-    border-bottom: 1px solid var(--ra-border-light);
-    transition: background 0.15s ease;
-}
-
-.ra-table tbody tr:hover {
-    background: #f8fafc;
-}
-
-.ra-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.ra-table td {
-    padding: 15px 20px;
-    font-size: 13px;
-    color: var(--ra-text-main);
-    vertical-align: middle;
 }
 
 /* University & Company Cell Meta */
@@ -1153,38 +983,7 @@
     border-top: 1px solid var(--ra-border);
 }
 
-/* --------------------------------------------------------------------------
-   9. Custom Non-Blocking Toast
-   -------------------------------------------------------------------------- */
-.ra-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: #0f172a;
-    color: #ffffff;
-    padding: 14px 20px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-    z-index: 10000;
-    font-size: 13.5px;
-    font-weight: 500;
-    transform: translateY(100px);
-    opacity: 0;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
 
-.ra-toast.show {
-    transform: translateY(0);
-    opacity: 1;
-}
-
-.ra-toast .material-symbols-outlined {
-    font-size: 20px;
-    color: #22c55e;
-}
 
 /* --------------------------------------------------------------------------
    10. Responsive Breakpoints

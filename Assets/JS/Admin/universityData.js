@@ -1,8 +1,4 @@
-/**
- * Sri Lankan Universities Dataset
- * Official list of state universities recognized by the UGC Sri Lanka,
- * along with major higher education institutes.
- */
+
 const sriLankaUniversities = [
     {
         name: "University of Colombo",

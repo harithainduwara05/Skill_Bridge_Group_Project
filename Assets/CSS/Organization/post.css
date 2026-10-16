@@ -1,0 +1,58 @@
+/* ============================================
+   Organization – Post Project page (post.php only; the form styles shared with Edit Project are in project_form.css)
+   Used by Functions/Organization/post.php.
+   Loaded after Assets/CSS/dashboard.css.
+   ============================================ */
+
+/* ---- Supporting documents: uploaded file list ---- */
+.doc-upload-errors { margin-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.doc-upload-errors:empty { display: none; }
+.doc-upload-error {
+    display: flex; align-items: center; gap: 8px;
+    background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+    border-radius: 10px; padding: 8px 12px; font-size: 13px;
+}
+.doc-upload-error .material-symbols-outlined { font-size: 18px; }
+
+.doc-upload-list { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.doc-upload-list:empty { display: none; }
+.doc-upload-summary { font-size: 12px; color: #6b7280; margin-bottom: 2px; }
+
+.doc-item {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+    padding: 10px 12px; transition: border-color .2s ease, box-shadow .2s ease;
+}
+.doc-item:hover { border-color: #bfdbfe; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+
+.doc-thumb {
+    width: 42px; height: 42px; border-radius: 10px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: #eff6ff; color: #2563eb; overflow: hidden;
+}
+.doc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.doc-thumb.pdf   { background: #fef2f2; color: #dc2626; }
+.doc-thumb.word  { background: #eff6ff; color: #2563eb; }
+.doc-thumb.ppt   { background: #fff7ed; color: #ea580c; }
+.doc-thumb.excel { background: #f0fdf4; color: #16a34a; }
+.doc-thumb.zip   { background: #f5f3ff; color: #7c3aed; }
+.doc-thumb.text  { background: #f3f4f6; color: #4b5563; }
+
+.doc-info { flex: 1; min-width: 0; }
+.doc-name {
+    display: block; font-size: 13px; font-weight: 600; color: #111827;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-decoration: none; cursor: pointer;
+}
+.doc-name:hover { color: #1e40af; text-decoration: underline; }
+.doc-meta { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+
+.doc-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.doc-btn {
+    width: 34px; height: 34px; border-radius: 8px; border: none; background: transparent;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    color: #6b7280; transition: background .15s ease, color .15s ease;
+}
+.doc-btn .material-symbols-outlined { font-size: 20px; }
+.doc-btn.view:hover   { background: #eff6ff; color: #1e40af; }
+.doc-btn.remove:hover { background: #fef2f2; color: #dc2626; }

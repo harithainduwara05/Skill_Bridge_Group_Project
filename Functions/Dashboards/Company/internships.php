@@ -1943,7 +1943,7 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
                         <div class="form-group">
                             <label for="academic_year">Preferred Academic Year</label>
                             <select id="academic_year" name="academic_year">
-                                <option value="">Any Year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option>
+                                <option value="">Any Year</option><option>3rd Year</option><option>4th Year</option>
                             </select>
                         </div>
                         <div class="form-group">

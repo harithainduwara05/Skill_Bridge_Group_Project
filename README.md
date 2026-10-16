@@ -383,16 +383,23 @@ All demo accounts in [`mainDb.sql`](file:///c:/xampp/htdocs/Skill_Bridge_Group_P
 
 ---
 
-## 👨‍💻 Team & Academic Contribution
+## 👥 Team & Academic Contribution
 
-SkillBridge was engineered as a collaborative group initiative to empower university students through technology:
+SkillBridge was engineered as a collaborative academic initiative to empower university students and streamline industry connections:
+- **Institution:** [University Of Colombo / School Of Computing]
 
-- **Institution:** Academic Undergraduate Group Project
-- **Lead Developer & Maintainer:** [Haritha Induwara](https://github.com/harithainduwara05)
+| Actor / Module | Developer | Role & Contribution | GitHub Profile |
+| :--- | :--- | :--- | :--- |
+| **Admin Actor** | **Haritha Induwara** | Lead Developer & Git Maintainer | [@harithainduwara05](https://github.com/harithainduwara05) |
+| **Company Actor** | **Shaini Ishawari** | Developer | [@username](https://github.com/) |
+| **Organization Actor** | **Sethmi Kodithuwakku** | Developer | [@username](https://github.com/) |
+| **Student Actor** | **Lasith** | Developer | [@username](https://github.com/) |
+
 - **Project Repository:** [harithainduwara05/Skill_Bridge_Group_Project](https://github.com/harithainduwara05/Skill_Bridge_Group_Project)
-- **Year:** 2026
+- **Academic Year:** 2026
 
 ---
+
 
 <p align="center">
   <sub>SkillBridge &copy; 2026. Designed with dedication to cultivate the next generation of software engineers.</sub>

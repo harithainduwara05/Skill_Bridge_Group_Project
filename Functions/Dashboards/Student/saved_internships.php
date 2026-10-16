@@ -26,6 +26,7 @@ include "../../../Includes/dash_header.php";
 $savedInternships=[
 
 [
+"id" => 1,
 "title"=>"Junior Frontend Developer",
 "company"=>"Nexus Cloud Systems",
 "location"=>"San Francisco (Hybrid)",
@@ -41,6 +42,7 @@ $savedInternships=[
 
 
 [
+"id" => 2,
 "title"=>"Product Design Intern",
 "company"=>"Prism Creative Agency",
 "location"=>"Fully Remote",
@@ -56,6 +58,7 @@ $savedInternships=[
 
 
 [
+"id" => 3,
 "title"=>"Data Science Analyst Intern",
 "company"=>"Quantum Ledger",
 "location"=>"New York, NY",
@@ -255,7 +258,7 @@ Deadline
 <div class="saved-actions">
 
 
-<a href="view_internship.php" class="view-btn">
+<a href="view_internship.php?id=<?= htmlspecialchars($internship['id'] ?? 1); ?>" class="view-btn">
 
 <i class="fa-solid fa-eye"></i>
 
@@ -264,7 +267,7 @@ View Details
 </a>
 
 
-<a href="submit_application.php" class="apply-btn">
+<a href="submit_application.php?id=<?= htmlspecialchars($internship['id'] ?? 1); ?>" class="apply-btn">
 
 <i class="fa-solid fa-paper-plane"></i>
 
