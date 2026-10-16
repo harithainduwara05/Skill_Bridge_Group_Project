@@ -10,75 +10,12 @@ function initReportsAnalytics() {
     let currentPeriod = '30d'; // '30d', 'quarter', 'ytd', 'all'
     let currentTab = 'all';
 
-    const periodData = {
-        '30d': {
-            placedStudents: '1,428',
-            placedTrend: '+18.4% vs last mo',
-            placementRate: '89.2% Placement Rate',
-            companies: '168 Companies',
-            companyTrend: '+14 New this month',
-            drives: '432 Active Drives',
-            projects: '842 Projects',
-            projectRate: '94.6% Completed',
-            projectReview: '124 In Supervisor Review',
-            resolution: '98.1% Resolved',
-            resolutionTime: '2.4h Avg Response',
-            complaintOpen: '3 Open in Queue',
-            monthlyLabels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-            applications: [320, 480, 560, 610],
-            hired: [190, 290, 380, 420]
-        },
-        'quarter': {
-            placedStudents: '4,150',
-            placedTrend: '+24.1% vs Q2',
-            placementRate: '91.5% Placement Rate',
-            companies: '210 Companies',
-            companyTrend: '+32 New this quarter',
-            drives: '620 Active Drives',
-            projects: '2,480 Projects',
-            projectRate: '95.8% Completed',
-            projectReview: '180 In Supervisor Review',
-            resolution: '99.0% Resolved',
-            resolutionTime: '2.1h Avg Response',
-            complaintOpen: '5 Open in Queue',
-            monthlyLabels: ['July', 'August', 'September'],
-            applications: [1200, 1550, 1850],
-            hired: [850, 1100, 1420]
-        },
-        'ytd': {
-            placedStudents: '12,890',
-            placedTrend: '+38.5% YoY',
-            placementRate: '92.8% Placement Rate',
-            companies: '340 Companies',
-            companyTrend: '+85 New in 2026',
-            drives: '1,240 Total Drives',
-            projects: '7,650 Projects',
-            projectRate: '96.2% Completed',
-            projectReview: '310 In Supervisor Review',
-            resolution: '98.8% Resolved',
-            resolutionTime: '2.6h Avg Response',
-            complaintOpen: '3 Open in Queue',
-            monthlyLabels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
-            applications: [780, 890, 1100, 1250, 1400, 1580, 1720, 1950, 2100],
-            hired: [520, 610, 780, 920, 1050, 1200, 1340, 1510, 1680]
-        },
-        'all': {
-            placedStudents: '28,450',
-            placedTrend: '+112% All Time',
-            placementRate: '93.5% Overall Rate',
-            companies: '512 Companies',
-            companyTrend: '512 Lifetime Partners',
-            drives: '3,890 Drives Conducted',
-            projects: '18,400 Projects',
-            projectRate: '97.1% Overall Success',
-            projectReview: '310 In Supervisor Review',
-            resolution: '99.2% Resolved',
-            resolutionTime: '2.8h Avg Response',
-            complaintOpen: '3 Open in Queue',
-            monthlyLabels: ['2023', '2024', '2025', '2026 (YTD)'],
-            applications: [3200, 6800, 11400, 15800],
-            hired: [2100, 4900, 8900, 12890]
-        }
+    // Pure Real Database Metrics (Zero Dummy Mockups)
+    const periodData = window.SB_PERIOD_DATA || {
+        '30d':     { placedStudents: '0', placementRate: '0%', companies: '0', drives: '0', projects: '0', projectReview: '0', resolution: '100%', complaintOpen: '0', monthlyLabels: [], applications: [], hired: [] },
+        'quarter': { placedStudents: '0', placementRate: '0%', companies: '0', drives: '0', projects: '0', projectReview: '0', resolution: '100%', complaintOpen: '0', monthlyLabels: [], applications: [], hired: [] },
+        'ytd':     { placedStudents: '0', placementRate: '0%', companies: '0', drives: '0', projects: '0', projectReview: '0', resolution: '100%', complaintOpen: '0', monthlyLabels: [], applications: [], hired: [] },
+        'all':     { placedStudents: '0', placementRate: '0%', companies: '0', drives: '0', projects: '0', projectReview: '0', resolution: '100%', complaintOpen: '0', monthlyLabels: [], applications: [], hired: [] }
     };
 
     // --------------------------------------------------------------------------
@@ -222,13 +159,15 @@ function initReportsAnalytics() {
         const plotHeight = (height - paddingBottom) - paddingTop; // 170
 
         // Determine max ceiling for dynamic scaling
-        const maxValRaw = Math.max(...apps, ...hired);
-        let maxCeil = 800;
+        const maxValRaw = (apps.length || hired.length) ? Math.max(...apps, ...hired, 0) : 0;
+        let maxCeil = 10;
         if (maxValRaw > 10000) maxCeil = 18000;
         else if (maxValRaw > 2000) maxCeil = 2400;
         else if (maxValRaw > 1000) maxCeil = 2000;
         else if (maxValRaw > 500) maxCeil = 800;
-        else maxCeil = 500;
+        else if (maxValRaw > 100) maxCeil = 200;
+        else if (maxValRaw > 20) maxCeil = 50;
+        else maxCeil = Math.max(5, maxValRaw + 2);
 
         // Update Y Axis numeric labels
         const yLabels = [
@@ -342,18 +281,11 @@ function initReportsAnalytics() {
     }
 
     function updateDonutChart(period) {
-        const totalEl = document.getElementById('raDonutTotalCandidates');
-        if (totalEl) {
-            if (period === '30d') totalEl.textContent = '3,850';
-            else if (period === 'quarter') totalEl.textContent = '4,150';
-            else if (period === 'ytd') totalEl.textContent = '12,890';
-            else if (period === 'all') totalEl.textContent = '28,450';
-        }
+        // Enrolled candidates is an absolute real institution audit metric from student database
     }
 
-    // Initial render of SVG Line Chart & Donut
+    // Initial render of SVG Line Chart
     renderSvgLineChart(currentPeriod);
-    updateDonutChart(currentPeriod);
 
     // --------------------------------------------------------------------------
     // Export Report Modal Logic
@@ -364,7 +296,7 @@ function initReportsAnalytics() {
     const btnCancelExport = document.getElementById('raBtnCancelExport');
     const btnGenerateReport = document.getElementById('raBtnGenerateReport');
     const formatCards = document.querySelectorAll('.ra-format-option');
-    let selectedFormat = 'PDF';
+    let selectedFormat = 'CSV';
 
     if (btnOpenExport && exportModal) {
         btnOpenExport.addEventListener('click', () => {
@@ -393,24 +325,6 @@ function initReportsAnalytics() {
             closeExportModal();
         }
     });
-
-    // Initialize 30d with real database rendered values
-    const initPlacedEl = document.getElementById('raKpiPlaced');
-    if (initPlacedEl && initPlacedEl.textContent.trim()) {
-        periodData['30d'].placedStudents = initPlacedEl.textContent.trim();
-    }
-    const initCompEl = document.getElementById('raKpiCompanies');
-    if (initCompEl && initCompEl.textContent.trim()) {
-        periodData['30d'].companies = initCompEl.textContent.trim();
-    }
-    const initProjEl = document.getElementById('raKpiProjects');
-    if (initProjEl && initProjEl.textContent.trim()) {
-        periodData['30d'].projects = initProjEl.textContent.trim();
-    }
-    const initResEl = document.getElementById('raKpiResolution');
-    if (initResEl && initResEl.textContent.trim()) {
-        periodData['30d'].resolution = initResEl.textContent.trim();
-    }
 
     formatCards.forEach(card => {
         card.addEventListener('click', () => {

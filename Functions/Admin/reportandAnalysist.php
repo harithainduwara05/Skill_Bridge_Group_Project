@@ -81,6 +81,11 @@ include "../../Includes/dash_header.php";
     <span id="raToastMessage">Report generated successfully!</span>
 </div>
 
+<!-- Inject Pure Real Database Metrics for Periods -->
+<script>
+    window.SB_PERIOD_DATA = <?php echo json_encode($periodDataBreakdown ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;
+</script>
+
 <!-- Pure Native Vanilla JS Reports & Analytics Script (Zero External Libraries) -->
 <script src="../../Assets/JS/Admin/reports_analytics.js?v=<?php echo time(); ?>"></script>
 

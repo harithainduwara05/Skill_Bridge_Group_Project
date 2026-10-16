@@ -27,10 +27,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_report') {
             fputcsv($out, [$c['Name'], $c['companytype'], $c['location'], $c['vacancies_count'], $c['applications_count'], $c['hired_count']]);
         }
     } elseif ($scope === 'complaints') {
-        fputcsv($out, ['ID', 'User', 'Role', 'Category', 'Subject', 'Status', 'Date']);
+        fputcsv($out, ['ID', 'Email', 'Category', 'Title', 'Status', 'Date']);
         $cmps = $dashboardDB->getComplaintsLog();
         foreach ($cmps as $cmp) {
-            fputcsv($out, [$cmp['id'], $cmp['user_name'] ?? 'N/A', $cmp['role'] ?? 'N/A', $cmp['category'] ?? 'General', $cmp['subject'] ?? 'N/A', $cmp['status'] ?? 'Pending', $cmp['created_at'] ?? 'N/A']);
+            fputcsv($out, [$cmp['id'], $cmp['email'] ?? 'N/A', $cmp['category'] ?? 'General', $cmp['title'] ?? 'N/A', $cmp['status'] ?? 'Pending', $cmp['create_at'] ?? 'N/A']);
         }
     } else {
         // Executive Summary
@@ -60,10 +60,10 @@ if (isset($_GET['action']) && $_GET['action'] === 'export_report') {
         }
         fputcsv($out, []);
         fputcsv($out, ['PARTNER UNIVERSITIES BENCHMARK']);
-        fputcsv($out, ['University', 'Location', 'Enrolled Students']);
+        fputcsv($out, ['University', 'Location', 'Enrolled Students', 'Projects Hosted', 'Placed Students']);
         $unis = $dashboardDB->getUniversityBenchmarks();
         foreach ($unis as $u) {
-            fputcsv($out, [$u['University'], $u['Location'], $u['student_count']]);
+            fputcsv($out, [$u['University'], $u['Location'], $u['student_count'], $u['project_count'], $u['placed_count']]);
         }
     }
 
@@ -90,4 +90,11 @@ $resolutionRate       = ($totalComplaintsCount > 0) ? round(($resolvedComplaints
 // Deep-Dive Benchmark Datasets
 $universityBenchmarks = $dashboardDB->getUniversityBenchmarks();
 $companyBenchmarks    = $dashboardDB->getCompanyBenchmarks();
+
+// Visual Analytics Pure Database Datasets
+$hiringVelocity       = $dashboardDB->getHiringVelocityData();
+$donutDistribution    = $dashboardDB->getStudentEnrolmentDistribution();
+$topSkills            = $dashboardDB->getTopInDemandSkills(5);
+$recruitmentFunnel    = $dashboardDB->getRecruitmentFunnelData();
+$periodDataBreakdown  = $dashboardDB->getPeriodDataBreakdown();
 ?>

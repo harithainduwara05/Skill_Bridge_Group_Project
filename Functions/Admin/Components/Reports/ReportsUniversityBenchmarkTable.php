@@ -67,8 +67,17 @@
                         $pRate = '92.0%';
                     } else {
                         $initials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $uName), 0, 2)) ?: 'UN';
-                        $pRate = '90.0%';
                     }
+
+                    $uPlaced = (int)($uni['placed_count'] ?? 0);
+                    $uProjects = (int)($uni['project_count'] ?? 0);
+                    $uRate = $uni['placement_rate'] ?? 0;
+                    $faculty = htmlspecialchars($uni['faculty'] ?? 'Department of Computing');
+
+                    if ($uRate >= 80) $rating = '5.0';
+                    elseif ($uRate >= 50) $rating = '4.8';
+                    elseif ($uRate > 0) $rating = '4.5';
+                    else $rating = $uStudents > 0 ? '4.0' : '-';
                 ?>
                 <tr>
                     <td>
@@ -76,15 +85,21 @@
                             <div class="ra-entity-icon <?= $uniClass ?>"><?= $initials ?></div>
                             <div class="ra-entity-info">
                                 <span class="ra-entity-name"><?= $uName ?></span>
-                                <span class="ra-entity-sub"><?= $uLoc ?> &bull; Computer Science & Information Systems</span>
+                                <span class="ra-entity-sub"><?= $uLoc ?> &bull; <?= $faculty ?></span>
                             </div>
                         </div>
                     </td>
-                    <td><strong><?= number_format(max($uStudents, 120 + ($idx * 80))) ?></strong></td>
-                    <td><span class="ra-pill <?= $ratePill ?>">99.<?= max(0, 9 - $idx) ?>% Verified</span></td>
-                    <td><?= max($uStudents, 45 + ($idx * 30)) ?> Students</td>
-                    <td><?= max(10, 35 + ($idx * 20)) ?> Projects</td>
-                    <td><strong style="color: #16a34a;"><?= $pRate ?></strong></td>
+                    <td><strong><?= number_format($uStudents) ?></strong></td>
+                    <td>
+                        <?php if ($uStudents > 0): ?>
+                            <span class="ra-pill ra-pill-green">100% Active</span>
+                        <?php else: ?>
+                            <span class="ra-pill ra-pill-blue">Pending Intake</span>
+                        <?php endif; ?>
+                    </td>
+                    <td><?= $uPlaced ?> Students</td>
+                    <td><?= $uProjects ?> Projects</td>
+                    <td><strong style="color: <?= ($uRate > 0) ? '#16a34a' : '#64748b' ?>;"><?= $uRate ?>%</strong></td>
                     <td>
                         <span class="ra-rating-badge">
                             <span class="material-symbols-outlined">star</span> <?= $rating ?>
@@ -93,26 +108,10 @@
                 </tr>
                 <?php endforeach; ?>
             <?php else: ?>
-                <!-- Fallback Static Benchmarks -->
                 <tr>
-                    <td>
-                        <div class="ra-entity-cell">
-                            <div class="ra-entity-icon uni-ucsc">UC</div>
-                            <div class="ra-entity-info">
-                                <span class="ra-entity-name">University of Colombo School of Computing (UCSC)</span>
-                                <span class="ra-entity-sub">Colombo 07 &bull; Computer Science & Information Systems</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td><strong>1,386</strong></td>
-                    <td><span class="ra-pill ra-pill-green">99.5% Verified</span></td>
-                    <td>580 Students</td>
-                    <td>412 Projects</td>
-                    <td><strong style="color: #16a34a;">96.4%</strong></td>
-                    <td>
-                        <span class="ra-rating-badge">
-                            <span class="material-symbols-outlined">star</span> 5.0
-                        </span>
+                    <td colspan="7" style="text-align: center; padding: 35px 20px; color: #64748b;">
+                        <span class="material-symbols-outlined" style="font-size: 36px; display: block; margin-bottom: 8px; color: #94a3b8;">domain_disabled</span>
+                        No partner universities currently registered in database.
                     </td>
                 </tr>
             <?php endif; ?>

@@ -12,55 +12,21 @@
         </div>
 
         <div class="ra-skills-list">
-            <div class="ra-skill-item">
-                <div class="ra-skill-meta">
-                    <span>Full-Stack Web (React, Node.js, Next.js)</span>
-                    <span>88% Demand</span>
+            <?php if (!empty($topSkills)): ?>
+                <?php foreach ($topSkills as $skill): ?>
+                <div class="ra-skill-item">
+                    <div class="ra-skill-meta">
+                        <span><?= htmlspecialchars($skill['name']) ?></span>
+                        <span><?= $skill['pct'] ?>% Demand (<?= $skill['freq'] ?> drives)</span>
+                    </div>
+                    <div class="ra-skill-bar-bg">
+                        <div class="ra-skill-bar-fill <?= $skill['color'] ?>" style="width: <?= max(5, $skill['pct']) ?>%;"></div>
+                    </div>
                 </div>
-                <div class="ra-skill-bar-bg">
-                    <div class="ra-skill-bar-fill fill-blue" style="width: 88%;"></div>
-                </div>
-            </div>
-
-            <div class="ra-skill-item">
-                <div class="ra-skill-meta">
-                    <span>Cloud Computing & DevOps (AWS, Docker, CI/CD)</span>
-                    <span>79% Demand</span>
-                </div>
-                <div class="ra-skill-bar-bg">
-                    <div class="ra-skill-bar-fill fill-indigo" style="width: 79%;"></div>
-                </div>
-            </div>
-
-            <div class="ra-skill-item">
-                <div class="ra-skill-meta">
-                    <span>Python, AI/ML Modeling & Data Analytics</span>
-                    <span>74% Demand</span>
-                </div>
-                <div class="ra-skill-bar-bg">
-                    <div class="ra-skill-bar-fill fill-green" style="width: 74%;"></div>
-                </div>
-            </div>
-
-            <div class="ra-skill-item">
-                <div class="ra-skill-meta">
-                    <span>Mobile Application Development (Flutter, React Native)</span>
-                    <span>62% Demand</span>
-                </div>
-                <div class="ra-skill-bar-bg">
-                    <div class="ra-skill-bar-fill fill-amber" style="width: 62%;"></div>
-                </div>
-            </div>
-
-            <div class="ra-skill-item">
-                <div class="ra-skill-meta">
-                    <span>Cyber Security & Threat Assessment</span>
-                    <span>54% Demand</span>
-                </div>
-                <div class="ra-skill-bar-bg">
-                    <div class="ra-skill-bar-fill fill-purple" style="width: 54%;"></div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <p style="color: #64748b; font-size: 13px; text-align: center; padding: 20px 0;">No technical skills indexed yet.</p>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -75,33 +41,16 @@
         </div>
 
         <div class="ra-funnel-grid">
-            <div class="ra-funnel-step">
-                <div class="ra-funnel-step-num">Step 1</div>
-                <div class="ra-funnel-val">4,850</div>
-                <div class="ra-funnel-label">Applications</div>
-                <span class="ra-funnel-pct">100% Volume</span>
-            </div>
-
-            <div class="ra-funnel-step">
-                <div class="ra-funnel-step-num">Step 2</div>
-                <div class="ra-funnel-val">2,910</div>
-                <div class="ra-funnel-label">Shortlisted</div>
-                <span class="ra-funnel-pct">60.0% Pass</span>
-            </div>
-
-            <div class="ra-funnel-step">
-                <div class="ra-funnel-step-num">Step 3</div>
-                <div class="ra-funnel-val">1,840</div>
-                <div class="ra-funnel-label">Interviews</div>
-                <span class="ra-funnel-pct">37.9% Screen</span>
-            </div>
-
-            <div class="ra-funnel-step">
-                <div class="ra-funnel-step-num">Step 4</div>
-                <div class="ra-funnel-val">1,428</div>
-                <div class="ra-funnel-label">Hired Offers</div>
-                <span class="ra-funnel-pct" style="background: #dcfce7; color: #15803d;">29.4% Hired</span>
-            </div>
+            <?php if (!empty($recruitmentFunnel)): ?>
+                <?php foreach ($recruitmentFunnel as $f): ?>
+                <div class="ra-funnel-step">
+                    <div class="ra-funnel-step-num"><?= $f['step'] ?></div>
+                    <div class="ra-funnel-val"><?= number_format($f['val']) ?></div>
+                    <div class="ra-funnel-label"><?= $f['label'] ?></div>
+                    <span class="ra-funnel-pct" <?= ($f['step'] === 'Step 4') ? 'style="background: #dcfce7; color: #15803d;"' : '' ?>><?= $f['pct'] ?></span>
+                </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
 
         <div style="margin-top: 20px; padding: 14px 16px; background: #f8fafc; border: 1px dashed var(--ra-border); border-radius: var(--ra-radius-md); display: flex; align-items: center; justify-content: space-between;">
