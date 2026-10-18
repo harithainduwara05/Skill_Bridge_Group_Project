@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -12,16 +12,16 @@ $pageTitle = "Applications | SkillBridge";
 
 $extra_css = '
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/applications.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/applications.css">
 
 ';
 
 
-include "../../../Includes/student_sidebar.php";
+include "../../Includes/student_sidebar.php";
 
-include "../../../Includes/dash_header.php";
+include "../../Includes/dash_header.php";
 
 
 
@@ -527,5 +527,5 @@ Prepare Now
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>

@@ -1,6 +1,6 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
-require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.php";
+require_once __DIR__ . "/../Functions/Student/check_student_access.php";
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -12,14 +12,14 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="../../../Assets/CSS/dashboard.css">
+    <link rel="stylesheet" href="../../Assets/CSS/dashboard.css">
     <?= $extra_css ?? '' ?>
 </head>
 <body>
 
 <aside class="sidebar">
     <div class="logo">
-        <img src="../../../Assets/Images/logo.png" alt="SkillBridge">
+        <img src="../../Assets/Images/logo.png" alt="SkillBridge">
     </div>
 
     <nav>
@@ -49,7 +49,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
             $email = $user['Email'] ?? $user['email'] ?? null;
         ?>
         <?php if($email && canApplyInternship($email)){ ?>
-            <a href="../../../Functions/Dashboards/Student/internships.php"
+            <a href="../../Functions/Student/internships.php"
             class="<?= $currentPage == 'internships.php' ? 'active' : '' ?>"
             title="Internships">
                 <span class="icon">
@@ -62,7 +62,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
                 </span>
             </a>
 
-            <a href="../../../Functions/Dashboards/Student/applications.php"
+            <a href="../../Functions/Student/applications.php"
             class="<?= $currentPage == 'applications.php' ? 'active' : '' ?>"
             title="Applications">
                 <span class="icon">
@@ -105,7 +105,7 @@ require_once __DIR__ . "/../Functions/Dashboards/Student/check_student_access.ph
         </a>
     </nav>
 
-    <button class="logout" onclick="window.location.href='../../../Session/Logout.php'" title="Logout">
+    <button class="logout" onclick="window.location.href='../../Session/Logout.php'" title="Logout">
         <span class="material-symbols-outlined" style="font-size:18px;">logout</span>
         <span class="btn-text">Logout</span>
     </button>

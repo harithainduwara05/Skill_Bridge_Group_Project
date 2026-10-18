@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 
 require_role("student");
 
@@ -19,11 +19,11 @@ if(!$user){
 $pageTitle="Team Workspace | SkillBridge";
 
 $extra_css='
-<link rel="stylesheet" href="../../../Assets/CSS/Student/team_workspace.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/team_workspace.css">
 ';
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -56,9 +56,9 @@ Modern E-commerce Redesign
 
 <div class="team-members">
 
-<img src="../../../Assets/Images/Profile/default.png">
-<img src="../../../Assets/Images/Profile/default.png">
-<img src="../../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
+<img src="../../Assets/Images/Profile/default.png">
 
 <span>
 +5
@@ -463,7 +463,7 @@ The mobile nav looks tight on smaller screens.
 </main>
 
 
-<script src="../../../Assets/JS/Student/team_workspace.js"></script>
+<script src="../../Assets/JS/Student/team_workspace.js"></script>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
@@ -474,4 +474,4 @@ The mobile nav looks tight on smaller screens.
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

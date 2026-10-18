@@ -178,10 +178,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['fp_action'])) {
                             header('Location:../Functions/Organization/dashboard.php');
                             exit();
                         case 'company':
-                            header('Location:../Functions/Dashboards/Company/dashboard.php');
+                            header('Location:../Functions/Company/dashboard.php');
                             exit();
                         case 'student':
-                            header('Location:../Functions/Dashboards/Student/dashboard.php');
+                            header('Location:../Functions/Student/dashboard.php');
                             exit();
                         default:
                             $emailError = "Cannot find role";

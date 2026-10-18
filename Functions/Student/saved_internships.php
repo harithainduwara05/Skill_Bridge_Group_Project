@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -12,15 +12,15 @@ $pageTitle="Saved Internships | SkillBridge";
 
 $extra_css='
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
 
-<link rel="stylesheet" href="../../../Assets/CSS/Student/saved_internships.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/saved_internships.css">
 
 ';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 
 $savedInternships=[
@@ -304,5 +304,5 @@ Apply Now
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>

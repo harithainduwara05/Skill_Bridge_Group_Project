@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -10,12 +10,12 @@ $user = current_user();
 $pageTitle = "Explore Projects | SkillBridge";
 
 $extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet" href="../../../Assets/CSS/Student/projects.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/projects.css">
 ';
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 
 $query = "
@@ -186,7 +186,7 @@ data-difficulty="<?= strtolower($project['difficulty']); ?>">
 
 <div class="project-image">
 
-<img src="../../../Assets/Images/UI/projects/<?= htmlspecialchars($projectImage) ?>" alt="<?= htmlspecialchars($project['title']) ?>">
+<img src="../../Assets/Images/UI/projects/<?= htmlspecialchars($projectImage) ?>" alt="<?= htmlspecialchars($project['title']) ?>">
 
 
 <span class="difficulty">
@@ -428,4 +428,4 @@ difficultyFilter.addEventListener("change",filterProjects);
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

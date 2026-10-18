@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 
 require_role("student");
 
@@ -119,13 +119,13 @@ while($row=$projectResult->fetch_assoc()){
 $pageTitle="CV Builder | SkillBridge";
 
 $extra_css='
-<link rel="stylesheet" href="../../../Assets/CSS/Student/cv_builder.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/cv_builder.css">
 ';
 
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -278,8 +278,8 @@ Personal Details
 <img
 id="profilePreview"
 src="<?= !empty($student['profile_image']) 
-? '../../../Assets/Images/Profile/'.$student['profile_image']
-: '../../../Assets/Images/Profile/default.png'; ?>">
+? '../../Assets/Images/Profile/'.$student['profile_image']
+: '../../Assets/Images/Profile/default.png'; ?>">
 
 
 
@@ -722,8 +722,8 @@ class="cv-document modern">
 <img
 id="previewPhoto"
 src="<?= !empty($student['profile_image'])
-? '../../../Assets/Images/Profile/'.$student['profile_image']
-: '../../../Assets/Images/Profile/default.png'; ?>">
+? '../../Assets/Images/Profile/'.$student['profile_image']
+: '../../Assets/Images/Profile/default.png'; ?>">
 
 
 
@@ -960,7 +960,7 @@ CV saved successfully
 
 </main>
 
-<script src="../../../Assets/JS/Student/cv_builder.js"></script>
+<script src="../../Assets/JS/Student/cv_builder.js"></script>
 
 <footer class="footer">
     <div>&copy; 2026 SkillBridge. All rights reserved.</div>
@@ -971,4 +971,4 @@ CV saved successfully
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

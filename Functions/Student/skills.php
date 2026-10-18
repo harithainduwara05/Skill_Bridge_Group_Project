@@ -3,10 +3,10 @@
 error_reporting(E_ALL);
 ini_set('display_errors',1);
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
-require_once __DIR__ . "/../../../Backend/StudentBackend.php";
+require_once __DIR__ . "/../../Backend/StudentBackend.php";
 require_once __DIR__ . "/profile_completion.php";
 require_role("student");
 
@@ -33,6 +33,39 @@ $skillCount = $studentManager->getSkillCount($email);
 $certificateCount = $studentManager->getCertificateCount($email);
 $projectCount = 0;
 
+/** Experience-based level policy used consistently by PHP and JavaScript. */
+function skillLevelForYears(int $years): string
+{
+    if ($years <= 1) return 'Beginner';
+    if ($years <= 3) return 'Intermediate';
+    if ($years <= 5) return 'Advanced';
+    return 'Expert';
+}
+
+function validExperienceYears($years): bool
+{
+    return filter_var($years, FILTER_VALIDATE_INT) !== false
+        && (int)$years >= 0 && (int)$years <= 30;
+}
+
+/** Full years elapsed since the skill was added. */
+function elapsedSkillYears($createdAt): int
+{
+    try {
+        $created = new DateTime($createdAt);
+        $today = new DateTime();
+        if ($created > $today) return 0;
+        return $created->diff($today)->y;
+    } catch (Exception $e) {
+        return 0;
+    }
+}
+
+function totalSkillYears($initial, $createdAt): int
+{
+    return min(30, max(1, (int)$initial) + elapsedSkillYears($createdAt));
+}
+
 /*
 |--------------------------------------------------------------------------
 | ADD SKILL
@@ -41,9 +74,16 @@ $projectCount = 0;
 if(isset($_POST['save_skill']))
 {
     $skill_name=trim($_POST['skill_name']);
-    $category=trim($_POST['category']);
-    $level=$_POST['level'];
-    $initial_experience=$_POST['initial_experience'];
+    // Category is not collected from students. Keep the existing database column compatible.
+    $category='Other';
+    $initial_experience=$_POST['initial_experience'] ?? '';
+    if (!validExperienceYears($initial_experience)) {
+        $_SESSION['skill_error'] = 'Experience must be a whole number from 0 to 30.';
+        header('Location: skills.php');
+        exit();
+    }
+    $initial_experience=max(1, (int)$initial_experience);
+    $level=skillLevelForYears($initial_experience);
     $percentage=calculatePercentage($level);
 
     // Duplicate checking
@@ -87,10 +127,34 @@ if(isset($_POST['update_skill']))
     $skill_id=$_POST['skill_id'];
 
     $skill_name=trim($_POST['skill_name']);
-    $category=trim($_POST['category']);
-    $level=$_POST['level'];
-    $initial_experience=$_POST['initial_experience'];
+    $initial_experience=$_POST['initial_experience'] ?? '';
+    if (!validExperienceYears($initial_experience)) {
+        $_SESSION['skill_error'] = 'Experience must be a whole number from 0 to 30.';
+        header('Location: skills.php');
+        exit();
+    }
+    $initial_experience=max(1, (int)$initial_experience);
+    $level=skillLevelForYears($initial_experience);
     $percentage=calculatePercentage($level);
+
+    // Editing shows current total experience. Convert it back to the original
+    // baseline so elapsed years are not added twice after saving.
+    $originalSkill=$conn->prepare("SELECT created_at FROM skills WHERE skill_id=? AND Email=?");
+    $originalSkill->bind_param("is",$skill_id,$email);
+    $originalSkill->execute();
+    $originalRow=$originalSkill->get_result()->fetch_assoc();
+    if (!$originalRow) {
+        $_SESSION['skill_error']='Skill not found.';
+        header('Location: skills.php');
+        exit();
+    }
+    $elapsedYears=elapsedSkillYears($originalRow['created_at']);
+    if ($initial_experience < $elapsedYears) {
+        $_SESSION['skill_error']='Total experience cannot be less than the full years since this skill was added (' . $elapsedYears . ').';
+        header('Location: skills.php');
+        exit();
+    }
+    $initial_experience=$initial_experience-$elapsedYears;
 
     // Duplicate checking during update
 
@@ -113,12 +177,12 @@ if(isset($_POST['update_skill']))
     }
 
     $sql="UPDATE skills
-    SET skill_name=?,category=?,level=?,initial_experience=?,percentage=?
+    SET skill_name=?,level=?,initial_experience=?,percentage=?
     WHERE skill_id=?
     AND Email=?";
 
     $stmt=$conn->prepare($sql);
-    $stmt->bind_param("sssiiis",$skill_name,$category,$level,$initial_experience,$percentage,$skill_id,$email);
+    $stmt->bind_param("ssiiis",$skill_name,$level,$initial_experience,$percentage,$skill_id,$email);
     $stmt->execute();
     header("Location: skills.php");
     exit();
@@ -147,28 +211,8 @@ if(isset($_POST['delete_skill']))
 
 function calculateExperience($initial,$created_at)
 {
-    $created=new DateTime($created_at);
-    $today=new DateTime();
-    // Calculate years passed since skill was added
-    $years=$created->diff($today)->y;
-
-    // Add initial experience
-    $total=$initial+$years;
-
-    // Less than 1 year experience
-    if($total <= 0)
-    {
-        return "1 Year";
-    }
-
-    // Singular year
-    if($total == 1)
-    {
-        return "1 Year";
-    }
-
-    // Multiple years
-    return $total." Years";
+    $years=totalSkillYears($initial,$created_at);
+    return $years === 1 ? '1 Year' : $years . ' Years';
 }
 
 function calculatePercentage($level)
@@ -179,6 +223,22 @@ function calculatePercentage($level)
 
 $student = $studentManager->getStudent($email);
 $skills=$studentManager->getSkills($email);
+// Refresh calculated experience level and percentage on page visit.
+$syncSkill=$conn->prepare("UPDATE skills SET level=?, percentage=? WHERE skill_id=? AND Email=?");
+foreach ($skills as &$skill) {
+    $currentYears=totalSkillYears($skill['initial_experience'],$skill['created_at']);
+    $derivedLevel=skillLevelForYears($currentYears);
+    $derivedPercentage=calculatePercentage($derivedLevel);
+    if ($skill['level'] !== $derivedLevel || (int)$skill['percentage'] !== $derivedPercentage) {
+        $syncSkill->bind_param("siis",$derivedLevel,$derivedPercentage,$skill['skill_id'],$email);
+        $syncSkill->execute();
+    }
+    $skill['level']=$derivedLevel;
+    $skill['percentage']=$derivedPercentage;
+    $skill['current_experience']=$currentYears;
+}
+unset($skill);
+
 $totalSkills=$studentManager->getSkillCount($email);
 $averagePercentage=$studentManager->getAverageSkillPercentage($email);
 $profileStrength = calculateProfileCompletion(
@@ -203,11 +263,11 @@ $extra_css='
 href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 <link rel="stylesheet"
-href="../../../Assets/CSS/Student/skills.css">';
+href="../../Assets/CSS/Student/skills.css">';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 ?>
 
 <div class="skills-container">
@@ -279,7 +339,6 @@ include "../../../Includes/dash_header.php";
 
 <div>
     <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
-    <span><?php echo htmlspecialchars($skill['category']); ?></span>
 </div>
 </div>
 
@@ -326,9 +385,8 @@ class="edit-btn"
 onclick='editSkill(
 <?= json_encode($skill["skill_id"]) ?>,
 <?= json_encode($skill["skill_name"]) ?>,
-<?= json_encode($skill["category"]) ?>,
 <?= json_encode($skill["level"]) ?>,
-<?= json_encode($skill["initial_experience"]) ?>
+<?= json_encode($skill["current_experience"]) ?>
 )'>
 <i class="fa-solid fa-pen"></i>
 </button>
@@ -348,7 +406,6 @@ onclick='editSkill(
 </div>
 
 <h3><?php echo htmlspecialchars($skill['skill_name']); ?></h3>
-<p class="category"> <?php echo htmlspecialchars($skill['category']); ?></p>
 
 <span class="level-badge">
 <?php echo htmlspecialchars($skill['level']); ?>
@@ -406,35 +463,13 @@ Experience
     <label>Skill Name</label>
     <input type="text" name="skill_name" id="skill_name" placeholder="Example: React" required>
 
-
-    <label>Category</label>
-
-    <select name="category" id="category" required>
-        <option value="">Select Category</option>
-        <option value="Programming">Programming</option>
-        <option value="Frontend">Frontend</option>
-        <option value="Backend">Backend</option>
-        <option value="Database">Database</option>
-        <option value="Mobile Development">Mobile Development</option>
-        <option value="AI & Machine Learning">AI & Machine Learning</option>
-        <option value="Cloud & DevOps">Cloud & DevOps</option>
-        <option value="Web Design">Web Design</option>
-        <option value="Other">Other</option>
-    </select>
-
-    <label>Level</label>
-
-    <select name="level" id="level" required>
-        <option value="">Select Level</option>
-        <option value="Beginner">Beginner</option>
-        <option value="Intermediate">Intermediate</option>
-        <option value="Advanced">Advanced</option>
-        <option value="Expert">Expert</option>
-    </select>
-
     <label>Experience (Years)</label>
+    <input type="number" name="initial_experience" id="initial_experience" min="0" max="30" step="1" required>
+    <small id="experienceHint">Beginner: 0–1, Intermediate: 2–3, Advanced: 4–5, Expert: 6–30 years.</small>
 
-    <input type="number" name="initial_experience" id="initial_experience" min="0" required>
+    <label>Level<label>
+    <input type="text" id="level" readonly placeholder="Enter years of experience">
+
 
     <button type="submit" name="save_skill" id="saveButton" class="save-btn">
     Save Skill
@@ -446,11 +481,44 @@ Experience
 </div>
 
 <script>
+    const skillForm = document.getElementById('skillForm');
+    const skillLevel = document.getElementById('level');
+    const skillYears = document.getElementById('initial_experience');
+    function updateSkillLevel() {
+        skillYears.setCustomValidity('');
+        skillLevel.value = '';
+        if (skillYears.value === '') return;
+        const years = Number(skillYears.value);
+        if (!Number.isInteger(years) || years < 0 || years > 30) {
+            skillYears.setCustomValidity('Enter a whole number between 0 and 30.');
+            return;
+        }
+        skillLevel.value = years <= 1 ? 'Beginner'
+            : years <= 3 ? 'Intermediate'
+            : years <= 5 ? 'Advanced' : 'Expert';
+    }
+    skillYears.addEventListener('input', updateSkillLevel);
+    skillYears.addEventListener('change', () => {
+        if (skillYears.value === '0') {
+            skillYears.value = '1';
+            updateSkillLevel();
+        }
+    });
+    skillForm.addEventListener('submit', event => {
+        updateSkillLevel();
+        if (!skillForm.checkValidity()) {
+            event.preventDefault();
+            skillForm.reportValidity();
+        }
+    });
+
     function openSkillModal()
     {
         document.getElementById("skillModal").style.display="flex";
         document.getElementById("modalTitle").innerHTML="Add Skill";
         document.getElementById("skillForm").reset();
+        skillYears.setCustomValidity('');
+        skillLevel.value='';
         document.getElementById("skill_id").value="";
         document.getElementById("saveButton").name="save_skill";
         document.getElementById("saveButton").innerHTML="Save Skill";
@@ -461,15 +529,15 @@ Experience
         document.getElementById("skillModal").style.display="none";
     }
 
-    function editSkill(id,name,category,level,experience)
+    function editSkill(id,name,level,experience)
     {
         document.getElementById("skillModal").style.display="flex";
         document.getElementById("modalTitle").innerHTML="Edit Skill";
         document.getElementById("skill_id").value=id;
         document.getElementById("skill_name").value=name;
-        document.getElementById("category").value=category;
         document.getElementById("level").value=level;
         document.getElementById("initial_experience").value=experience;
+        updateSkillLevel();
         document.getElementById("saveButton").name="update_skill";
         document.getElementById("saveButton").innerHTML="Update Skill";
     }
@@ -523,4 +591,4 @@ Experience
     </div>
 </footer>
 
-<?php include "../../../Includes/dash_footer.php"; ?>
+<?php include "../../Includes/dash_footer.php"; ?>

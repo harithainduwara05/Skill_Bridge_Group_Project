@@ -2,7 +2,7 @@
     error_reporting(E_ALL);
     ini_set('display_errors',1);
 
-    include "../../../Config/db.php";
+    include "../../Config/db.php";
 
     $email = $_GET['email'] ?? null;
 
@@ -49,7 +49,7 @@
 
 <head>
     <title><?= htmlspecialchars($student['Name']); ?> | SkillBridge</title>
-    <link rel="stylesheet" href="../../../Assets/CSS/Student/public_profile.css">
+    <link rel="stylesheet" href="../../Assets/CSS/Student/public_profile.css">
     <link rel="stylesheet"href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -62,7 +62,7 @@
         <div class="avatar">
 
         <?php if(!empty($student['profile_image'])){ ?>
-        <img src="../../../Assets/Images/Student/<?= htmlspecialchars($student['profile_image']); ?>">
+        <img src="../../Assets/Images/Student/<?= htmlspecialchars($student['profile_image']); ?>">
         <?php }else{ ?>
 
         <div class="avatar-letter">

@@ -1,7 +1,7 @@
 <?php
 
-include "../../../Config/db.php";
-include "../../../Session/Session.php";
+include "../../Config/db.php";
+include "../../Session/Session.php";
 
 require_role("student");
 
@@ -9,14 +9,14 @@ $pageTitle = "Saved Projects | SkillBridge";
 
 
 $extra_css = '
-<link rel="stylesheet" href="../../../Assets/CSS/Student/dashboard.css">
-<link rel="stylesheet" href="../../../Assets/CSS/Student/projects.css">
-<link rel="stylesheet" href="../../../Assets/CSS/Student/saved_projects.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/projects.css">
+<link rel="stylesheet" href="../../Assets/CSS/Student/saved_projects.css">
 ';
 
 
-include "../../../Includes/student_sidebar.php";
-include "../../../Includes/dash_header.php";
+include "../../Includes/student_sidebar.php";
+include "../../Includes/dash_header.php";
 
 ?>
 
@@ -93,7 +93,7 @@ Explore Projects
 
 <div class="saved-image">
 
-<img src="../../../Assets/Images/UI/projects/project1.png">
+<img src="../../Assets/Images/UI/projects/project1.png">
 
 
 <span>
@@ -193,7 +193,7 @@ Remove
 <div class="saved-image">
 
 
-<img src="../../../Assets/Images/UI/projects/project2.webp">
+<img src="../../Assets/Images/UI/projects/project2.webp">
 
 
 <span>
@@ -294,7 +294,7 @@ Remove
 <div class="saved-image">
 
 
-<img src="../../../Assets/Images/UI/projects/project3.jpg">
+<img src="../../Assets/Images/UI/projects/project3.jpg">
 
 
 <span>
@@ -427,5 +427,5 @@ function removeSaved(button){
 </footer>
 
 <?php
-include "../../../Includes/dash_footer.php";
+include "../../Includes/dash_footer.php";
 ?>
