@@ -104,7 +104,7 @@ const AdminCore = {
                     if (el) closeElements.push(el);
                 });
             }
-            modal.querySelectorAll('[data-dismiss="modal"], [data-close], .btn-close, .modal-close').forEach(b => {
+            modal.querySelectorAll('[data-dismiss="modal"], [data-cm-dismiss="modal"], [data-close], .btn-close, .modal-close, .cm-modal-close, .pm-modal-close').forEach(b => {
                 closeElements.push(b);
             });
 

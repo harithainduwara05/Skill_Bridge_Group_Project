@@ -6,7 +6,7 @@
                     <h3 id="modalComplaintId">#CMP-9284</h3>
                     <span style="font-size: 12px; color: #64748b;">Complaint Investigation & Resolution</span>
                 </div>
-                <button type="button" class="cm-modal-close" data-cm-dismiss="modal" title="Close">
+                <button type="button" class="cm-modal-close" data-dismiss="modal" onclick="closeDetailModal()" title="Close">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
@@ -93,7 +93,7 @@
             </div>
 
             <div class="cm-modal-footer">
-                <button type="button" class="cm-btn-secondary" data-cm-dismiss="modal">Close</button>
+                <button type="button" class="cm-btn-secondary" data-dismiss="modal" onclick="closeDetailModal()">Close</button>
                 <button type="button" id="modalBtnSubmitAction" class="cm-btn-primary">Update Status</button>
             </div>
         </form>

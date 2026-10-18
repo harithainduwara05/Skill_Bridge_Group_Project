@@ -7,7 +7,10 @@ $adminDB = $complaintDB; // Reference alias for child class
 
 // Handle AJAX Status & Resolution Updates
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax_action']) && $_POST['ajax_action'] === 'update_complaint_status') {
-    header('Content-Type: application/json');
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+    header('Content-Type: application/json; charset=utf-8');
     $complaintId = intval($_POST['complaint_id'] ?? 0);
     $newStatus = trim($_POST['status'] ?? 'PENDING');
     $notes = trim($_POST['notes'] ?? '');

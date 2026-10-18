@@ -95,7 +95,7 @@ function initComplaintManagement() {
             emptyIcon: 'report_off',
             emptyMessage: 'No matching complaints found',
             emptySubtext: 'Try adjusting your search criteria or resetting active filters.',
-            colspan: 7
+            colspan: 6
         });
     }
 

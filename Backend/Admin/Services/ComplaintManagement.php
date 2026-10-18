@@ -239,5 +239,9 @@ class ComplaintManagement extends AdminDB
             'avg_response_time' => $avgFormatted
         ];
     }
+    public function getActiveComplainCount(){
+        $cntRes=$this->runCount("SELECT COUNT(*) AS active_count FROM complain WHERE status NOT IN ('RESOLVED', 'DISMISSED')");
+        return (int)$cntRes;
+    }
 }
 ?>
