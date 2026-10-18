@@ -1,10 +1,8 @@
-<!--Initialize Admin Environment: Auth Guard, 
-Backend Controller & Sidebar-->
 <?php
+ob_start();
 $backendPage = "Project_Management.php";
 require_once __DIR__ . "/Components/Common/AdminInit.php";
 ?>
-<!--End Here -->
 
 <!-- Project Management Custom Stylesheet -->
 <link rel="stylesheet" href="../../Assets/CSS/Admin/project_management.css?v=<?php echo time(); ?>">

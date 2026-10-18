@@ -8,14 +8,15 @@
                 <input type="text" id="pmSearchInput" class="pm-search-input" placeholder="Search projects...">
             </div>
 
-            <!-- Project Status Filter (Active, Hold, Completed, Review, Rejected) -->
+            <!-- Project Status Filter (Published, Review, Active, Hold, Completed, Rejected) -->
             <div class="pm-select-wrap">
                 <select id="pmStatusFilter" class="pm-select" aria-label="Filter by Project Status">
                     <option value="all">Project Status</option>
+                    <option value="published">Published</option>
+                    <option value="review">Review</option>
                     <option value="active">Active</option>
                     <option value="hold">Hold</option>
                     <option value="completed">Completed</option>
-                    <option value="review">Review</option>
                     <option value="rejected">Rejected</option>
                 </select>
                 <span class="material-symbols-outlined select-chevron">expand_more</span>

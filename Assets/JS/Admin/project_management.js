@@ -63,7 +63,9 @@ function initProjectManagement() {
             // Match status
             let matchesStatus = (selectedStatus === 'all');
             if (!matchesStatus) {
-                if (selectedStatus === 'active') {
+                if (selectedStatus === 'published' || selectedStatus === 'publish') {
+                    matchesStatus = (projectStatus === 'published' || projectStatus === 'publish');
+                } else if (selectedStatus === 'active') {
                     matchesStatus = (projectStatus === 'active' || projectStatus === 'inprogress');
                 } else if (selectedStatus === 'completed' || selectedStatus === 'close') {
                     matchesStatus = (projectStatus === 'completed' || projectStatus === 'close' || projectStatus === 'complete');
@@ -98,7 +100,7 @@ function initProjectManagement() {
             emptyIcon: 'folder_off',
             emptyMessage: 'No matching projects found',
             emptySubtext: 'Try adjusting your search query or filter selections.',
-            colspan: 8
+            colspan: 6
         });
     }
 
@@ -117,10 +119,11 @@ function initProjectManagement() {
     AdminCore.modal.bind(rejectModal, { form: rejectForm });
 
     window.closeProjectDetailsModal = () => AdminCore.modal.close(detailsModal);
-    window.closeHoldModal        = () => AdminCore.modal.close(holdModal, holdForm);
-    window.closeReviewHoldModal  = () => AdminCore.modal.close(reviewHoldModal);
-    window.closeRejectReasonModal= () => AdminCore.modal.close(rejectModal, rejectForm);
+    window.closeHoldModal           = () => AdminCore.modal.close(holdModal, holdForm);
+    window.closeReviewHoldModal     = () => AdminCore.modal.close(reviewHoldModal);
+    window.closeRejectReasonModal   = () => AdminCore.modal.close(rejectModal, rejectForm);
 
+    // --------------------------------------------------------------------------
     // --------------------------------------------------------------------------
     // Project Details Modal View
     // --------------------------------------------------------------------------
@@ -129,94 +132,222 @@ function initProjectManagement() {
         const row = document.querySelector(`tr[data-id="${projectId}"]`);
         if (!row) return;
 
-        const title        = row.getAttribute('data-title') || projectId;
-        const category     = row.getAttribute('data-category') || 'General';
-        const org          = row.getAttribute('data-org') || 'N/A';
-        const status       = row.getAttribute('data-status') || 'Active';
-        const skills       = row.getAttribute('data-skills') || 'General';
-        const holdReason   = row.getAttribute('data-hold-reason') || '';
-        const holdDays     = row.getAttribute('data-hold-days') || '5';
-        const rejectReason = row.getAttribute('data-reject-reason') || '';
+        const title              = row.getAttribute('data-title') || projectId;
+        const category           = row.getAttribute('data-category') || 'General';
+        const org                = row.getAttribute('data-org') || 'N/A';
+        const orgEmail           = row.getAttribute('data-org-email') || '';
+        const status             = row.getAttribute('data-status') || 'Active';
+        const skills             = row.getAttribute('data-skills') || 'General';
+        const description        = row.getAttribute('data-description') || 'No description provided.';
+        const learningObjectives = row.getAttribute('data-learning-objectives') || 'Standard industry project objectives.';
+        const expectedOutcomes   = row.getAttribute('data-expected-outcomes') || 'Production ready deliverables.';
+        const difficulty         = row.getAttribute('data-difficulty') || 'Intermediate';
+        const duration           = row.getAttribute('data-duration') || '8 Weeks';
+        const deadline           = row.getAttribute('data-deadline') || 'Not Specified';
+        const members            = row.getAttribute('data-members') || '1';
+        const holdReason         = row.getAttribute('data-hold-reason') || '';
+        const holdDays           = row.getAttribute('data-hold-days') || '7';
+        const teamResponse       = row.getAttribute('data-team-response') || '';
+        const rejectReason       = row.getAttribute('data-reject-reason') || '';
 
-        document.getElementById('pmDetailId').textContent       = projectId;
-        document.getElementById('pmDetailTitle').textContent    = title;
-        document.getElementById('pmDetailCategory').textContent = category;
-        document.getElementById('pmDetailOrg').textContent      = org;
-        document.getElementById('pmDetailSkills').textContent   = skills;
+        // Core text elements
+        const idEl       = document.getElementById('pmDetailId');
+        const titleEl    = document.getElementById('pmDetailTitle');
+        const catEl      = document.getElementById('pmDetailCategory');
+        const orgEl      = document.getElementById('pmDetailOrg');
+        const orgEmailEl = document.getElementById('pmDetailOrgEmail');
+        const diffEl     = document.getElementById('pmDetailDifficulty');
+        const durEl      = document.getElementById('pmDetailDuration');
+        const memEl      = document.getElementById('pmDetailMembers');
+        const deadEl     = document.getElementById('pmDetailDeadline');
+        const descEl     = document.getElementById('pmDetailDescription');
+        const objEl      = document.getElementById('pmDetailObjectives');
+        const outEl      = document.getElementById('pmDetailOutcomes');
 
+        if (idEl)       idEl.textContent = projectId;
+        if (titleEl)    titleEl.textContent = title;
+        if (catEl)      catEl.textContent = category;
+        if (orgEl)      orgEl.textContent = org;
+        if (orgEmailEl) orgEmailEl.textContent = orgEmail;
+        if (diffEl)     diffEl.textContent = difficulty;
+        if (durEl)      durEl.textContent = duration;
+        if (memEl)      memEl.textContent = members;
+        if (deadEl)     deadEl.textContent = deadline;
+        if (descEl)     descEl.textContent = description;
+        if (objEl)      objEl.textContent = learningObjectives;
+        if (outEl)      outEl.textContent = expectedOutcomes;
+
+        // Render skill chips
+        const skillsContainer = document.getElementById('pmDetailSkillsContainer');
+        if (skillsContainer) {
+            skillsContainer.innerHTML = '';
+            const skillTokens = skills.split(',').map(s => s.trim()).filter(Boolean);
+            if (skillTokens.length > 0) {
+                skillTokens.forEach(sk => {
+                    const span = document.createElement('span');
+                    span.className = 'pm-skill-pill';
+                    span.textContent = sk;
+                    skillsContainer.appendChild(span);
+                });
+            } else {
+                skillsContainer.innerHTML = '<span class="pm-skill-pill">General</span>';
+            }
+        }
+
+        // Status Badge
         const statusEl = document.getElementById('pmDetailStatus');
+        const sLower   = (status || '').toLowerCase();
         if (statusEl) {
             statusEl.className = 'pm-status-pill';
-            if (status === 'Active') {
-                statusEl.textContent = 'Active';
+            if (sLower === 'published' || sLower === 'publish') {
+                statusEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">public</span>Published';
+                statusEl.classList.add('status-published');
+            } else if (sLower === 'active' || sLower === 'inprogress') {
+                statusEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">bolt</span>Active';
                 statusEl.classList.add('status-active');
-            } else if (status === 'Hold') {
-                statusEl.innerHTML = `<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (${holdDays}d left)`;
+            } else if (sLower === 'hold') {
+                statusEl.innerHTML = `<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">pause_circle</span>Hold (${holdDays}d left)`;
                 statusEl.classList.add('status-hold');
-            } else if (status === 'Completed' || status === 'Close' || status === 'Complete') {
-                statusEl.textContent = 'Completed';
+            } else if (sLower === 'completed' || sLower === 'close' || sLower === 'complete') {
+                statusEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">task_alt</span>Completed';
                 statusEl.classList.add('status-completed');
-            } else if (status === 'Review') {
-                statusEl.textContent = 'Review';
+            } else if (sLower === 'review' || sLower === 'reviewing' || sLower === 'rewiewing') {
+                statusEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">hourglass_top</span>Review';
                 statusEl.classList.add('status-review');
-            } else if (status === 'Rejected') {
-                statusEl.textContent = 'Rejected';
+            } else if (sLower === 'rejected') {
+                statusEl.innerHTML = '<span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">block</span>Rejected';
                 statusEl.classList.add('status-rejected');
+            } else {
+                statusEl.textContent = status;
+                statusEl.classList.add('status-active');
             }
         }
 
-        // Hold Status Banner
-        const holdBox = document.getElementById('pmDetailHoldBox');
+        // Banners
+        const reviewBox    = document.getElementById('pmDetailReviewBox');
+        const holdBox      = document.getElementById('pmDetailHoldBox');
+        const rejectedBox  = document.getElementById('pmDetailRejectedBox');
+        const activeBox    = document.getElementById('pmDetailActiveBox');
+        const publishedBox = document.getElementById('pmDetailPublishedBox');
+
+        if (reviewBox)    reviewBox.style.display    = (sLower === 'review' || sLower === 'reviewing' || sLower === 'rewiewing') ? 'block' : 'none';
+        if (publishedBox) publishedBox.style.display = (sLower === 'published' || sLower === 'publish') ? 'block' : 'none';
+        if (activeBox)    activeBox.style.display    = (sLower === 'active' || sLower === 'inprogress') ? 'block' : 'none';
+        
         if (holdBox) {
-            holdBox.style.display = (status === 'Hold') ? 'block' : 'none';
-            if (status === 'Hold') {
+            holdBox.style.display = (sLower === 'hold') ? 'block' : 'none';
+            if (sLower === 'hold') {
                 const holdReasonEl   = document.getElementById('pmDetailHoldReason');
                 const holdDeadlineEl = document.getElementById('pmDetailHoldDeadline');
-                if (holdReasonEl)   holdReasonEl.textContent = holdReason || 'Complaint received or milestone discrepancy reported.';
+                const holdRespBadge  = document.getElementById('pmDetailHoldRespBadge');
+                if (holdReasonEl)   holdReasonEl.textContent = holdReason || 'Issue reported. Organization has been given a grace period to clarify.';
                 if (holdDeadlineEl) holdDeadlineEl.textContent = `${holdDays} Days Left`;
+                if (holdRespBadge) {
+                    if (teamResponse && teamResponse.trim() !== '') {
+                        holdRespBadge.style.background = '#dcfce7';
+                        holdRespBadge.style.color = '#15803d';
+                        holdRespBadge.textContent = 'Organization Justification Submitted';
+                    } else {
+                        holdRespBadge.style.background = '#fbbf24';
+                        holdRespBadge.style.color = '#78350f';
+                        holdRespBadge.textContent = 'Awaiting Organization Response';
+                    }
+                }
             }
         }
 
-        // Rejected Status Banner
-        const rejectedBox = document.getElementById('pmDetailRejectedBox');
         if (rejectedBox) {
-            rejectedBox.style.display = (status === 'Rejected') ? 'block' : 'none';
-            if (status === 'Rejected') {
+            rejectedBox.style.display = (sLower === 'rejected') ? 'block' : 'none';
+            if (sLower === 'rejected') {
                 const rejectReasonEl = document.getElementById('pmDetailRejectReason');
-                if (rejectReasonEl) rejectReasonEl.textContent = 'Reason: ' + (rejectReason || 'Failed grace period response or committed policy violation.');
+                if (rejectReasonEl) rejectReasonEl.textContent = 'Reason: ' + (rejectReason || 'Violated submission criteria or failed grace period response.');
             }
         }
 
-        // Moderation Controls
+        // Moderation Controls Area
         const actionControls = document.getElementById('pmDetailActionControls');
         if (actionControls) {
-            if (status === 'Active' || status === 'Review') {
+            const escapedTitle = title.replace(/'/g, "\\'");
+            if (sLower === 'review' || sLower === 'reviewing' || sLower === 'rewiewing') {
+                actionControls.innerHTML = `
+                    <div id="pmDetailNormalActions" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+                        <div>
+                            <label style="font-size: 13.5px; font-weight: 700; color: #0f172a; display: block; margin-bottom: 2px;">Initial Moderation Decision</label>
+                            <span style="font-size: 12px; color: #64748b;">Accept to publish this project to students, or place on hold if corrections are needed.</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <button type="button" class="pm-btn-hold" onclick="openHoldModal('${projectId}', true)">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">pause_circle</span>
+                                <span>Place on Hold</span>
+                            </button>
+                            <button type="button" class="pm-btn-accept" onclick="showInlinePublishConfirm('${projectId}')">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
+                                <span>Accept & Publish</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="pmDetailInlineConfirmBox" style="display: none; padding: 14px 16px; background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="material-symbols-outlined" style="color: #16a34a; font-size: 26px;">public</span>
+                                <div>
+                                    <strong style="color: #14532d; font-size: 13.5px; display: block;">Publish this project to students now?</strong>
+                                    <span style="font-size: 12px; color: #166534;">
+                                        Status will become <strong>Published</strong>. Registered university students will be able to discover and apply immediately.
+                                    </span>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                                <button type="button" class="pm-btn-secondary" style="padding: 7px 14px; font-size: 12.5px;" onclick="hideInlinePublishConfirm()">Cancel</button>
+                                <button type="button" class="pm-btn-accept" id="pmBtnInlinePublish" style="padding: 7px 16px; font-size: 12.5px;" onclick="executeInlinePublish('${projectId}')">
+                                    <span class="material-symbols-outlined" style="font-size: 17px;">check_circle</span>
+                                    <span>Yes, Publish</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (sLower === 'published' || sLower === 'publish') {
                 actionControls.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                         <div>
-                            <label style="font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 2px;">Ethical Moderation Action</label>
-                            <span style="font-size: 12px; color: #64748b;">Notice a complaint or workflow issue? Place project on Hold to give team time to clarify.</span>
+                            <label style="font-size: 13px; font-weight: 700; color: #0369a1; display: block; margin-bottom: 2px;">Published Project Moderation</label>
+                            <span style="font-size: 12px; color: #64748b;">This project is published and visible to students. Place on Hold if any ethical or compliance issue arises.</span>
                         </div>
-                        <button type="button" class="pm-btn-hold" onclick="openHoldModal('${projectId}')">
+                        <button type="button" class="pm-btn-hold" onclick="openHoldModal('${projectId}', true)">
                             <span class="material-symbols-outlined" style="font-size: 18px;">pause_circle</span>
                             <span>Place on Hold</span>
                         </button>
                     </div>
                 `;
-            } else if (status === 'Hold') {
+            } else if (sLower === 'active' || sLower === 'inprogress') {
                 actionControls.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
                         <div>
-                            <label style="font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 2px;">Hold Review & Decision</label>
-                            <span style="font-size: 12px; color: #64748b;">Review team's submitted justification against pause reason to decide Active or Reject.</span>
+                            <label style="font-size: 13px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 2px;">Ethical Moderation Action</label>
+                            <span style="font-size: 12px; color: #64748b;">Notice a violation or report? Place project on Hold to request the organization to clarify.</span>
                         </div>
-                        <button type="button" class="pm-btn-reactivate" onclick="openReviewHoldModal('${projectId}')">
-                            <span class="material-symbols-outlined" style="font-size: 18px;">task_alt</span>
-                            <span>Open Hold Review</span>
+                        <button type="button" class="pm-btn-hold" onclick="openHoldModal('${projectId}', true)">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">pause_circle</span>
+                            <span>Place on Hold</span>
                         </button>
                     </div>
                 `;
-            } else if (status === 'Rejected') {
+            } else if (sLower === 'hold') {
+                actionControls.innerHTML = `
+                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                        <div>
+                            <label style="font-size: 13.5px; font-weight: 700; color: #0f172a; display: block; margin-bottom: 2px;">Hold Review & Decision</label>
+                            <span style="font-size: 12px; color: #64748b;">Review organization's submitted justification against pause reason to decide Published or Reject.</span>
+                        </div>
+                        <button type="button" class="pm-btn-reactivate" onclick="openReviewHoldModal('${projectId}', true)">
+                            <span class="material-symbols-outlined" style="font-size: 18px;">rate_review</span>
+                            <span>Review Hold & Decide</span>
+                        </button>
+                    </div>
+                `;
+            } else if (sLower === 'rejected') {
                 actionControls.innerHTML = `
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #fef2f2; border-radius: 10px; border: 1px dashed #fca5a5;">
                         <div style="display: flex; align-items: center; gap: 8px;">
@@ -235,11 +366,85 @@ function initProjectManagement() {
     };
 
     // --------------------------------------------------------------------------
+    // Inline Confirmation Handlers inside Project Details Modal
+    // (Accept & Publish directly within details modal - no nested popups)
+    // --------------------------------------------------------------------------
+    window.showInlinePublishConfirm = function(projectId) {
+        const normalActions = document.getElementById('pmDetailNormalActions');
+        const confirmBox    = document.getElementById('pmDetailInlineConfirmBox');
+        if (normalActions && confirmBox) {
+            normalActions.style.display = 'none';
+            confirmBox.style.display = 'block';
+        }
+    };
+
+    window.hideInlinePublishConfirm = function() {
+        const normalActions = document.getElementById('pmDetailNormalActions');
+        const confirmBox    = document.getElementById('pmDetailInlineConfirmBox');
+        if (normalActions && confirmBox) {
+            confirmBox.style.display = 'none';
+            normalActions.style.display = 'flex';
+        }
+    };
+
+    window.executeInlinePublish = function(projectId) {
+        if (!projectId) return;
+        const btn = document.getElementById('pmBtnInlinePublish');
+        const origHtml = btn ? btn.innerHTML : '';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 17px;">hourglass_top</span><span>Publishing...</span>';
+        }
+
+        const formData = new FormData();
+        formData.append('ajax_action', 'accept_project');
+        formData.append('project_id', projectId);
+
+        fetch('Project_Management.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Non-JSON response:', text);
+                throw new Error('Invalid JSON response');
+            }
+        }))
+        .then(data => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            if (data.success) {
+                if (detailsModal) AdminCore.modal.close(detailsModal);
+                AdminCore.toast(data.message || `Project ${projectId} accepted & published successfully!`, 'success');
+                setTimeout(() => window.location.reload(), 600);
+            } else {
+                AdminCore.toast(data.message || 'Failed to publish project.', 'error');
+            }
+        })
+        .catch(err => {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+            console.error(err);
+            AdminCore.toast('An error occurred while approving the project.', 'error');
+        });
+    };
+
+    // --------------------------------------------------------------------------
     // Place on Hold Modal Handlers (Stage 1: Pause with Grace Period)
     // --------------------------------------------------------------------------
-    window.openHoldModal = function(optionalProjectId) {
+    window.openHoldModal = function(optionalProjectId, fromDetails = false) {
         let id = optionalProjectId;
         let title = '';
+
+        if (fromDetails && detailsModal) {
+            AdminCore.modal.close(detailsModal);
+        }
 
         if (id) {
             const row = document.querySelector(`tr[data-id="${id}"]`);
@@ -326,7 +531,11 @@ function initProjectManagement() {
     // --------------------------------------------------------------------------
     // Review Hold & Resolution Modal Handlers (Stage 2)
     // --------------------------------------------------------------------------
-    window.openReviewHoldModal = function(projectId) {
+    window.openReviewHoldModal = function(projectId, fromDetails = false) {
+        if (fromDetails && detailsModal) {
+            AdminCore.modal.close(detailsModal);
+        }
+
         const row = document.querySelector(`tr[data-id="${projectId}"]`);
         if (!row) return;
 
@@ -336,21 +545,64 @@ function initProjectManagement() {
         }
 
         const title        = row.getAttribute('data-title') || projectId;
-        const holdReason   = row.getAttribute('data-hold-reason') || 'Complaint or workflow discrepancy reported.';
-        const holdDays     = row.getAttribute('data-hold-days') || '5';
-        const teamResponse = row.getAttribute('data-team-response') || 'We have revised the milestone deliverables and uploaded verified documentation.';
+        const holdReason   = (row.getAttribute('data-hold-reason') || '').trim();
+        const holdDays     = row.getAttribute('data-hold-days') || '7';
+        const rawResponse  = (row.getAttribute('data-team-response') || '').trim();
+        const hasResponse  = (rawResponse !== '');
 
         const revId           = document.getElementById('pmReviewProjectId');
         const revTitle        = document.getElementById('pmReviewProjectTitle');
         const revAdminReason  = document.getElementById('pmReviewAdminReason');
         const revTeamResponse = document.getElementById('pmReviewTeamResponse');
         const revDaysBadge    = document.getElementById('pmReviewHoldDaysBadge');
+        const revTeamStatus   = document.getElementById('pmReviewTeamStatusBadge');
+        const teamCard        = document.getElementById('pmReviewTeamCard');
+        const teamTitleSpan   = document.getElementById('pmReviewTeamTitleSpan');
 
-        if (revId)           revId.textContent = projectId;
-        if (revTitle)        revTitle.textContent = title;
-        if (revAdminReason)  revAdminReason.textContent = holdReason;
-        if (revTeamResponse) revTeamResponse.textContent = teamResponse;
-        if (revDaysBadge)    revDaysBadge.textContent = `Grace Period: ${holdDays}d left`;
+        if (revId)          revId.textContent = projectId;
+        if (revTitle)       revTitle.textContent = title;
+        if (revAdminReason) revAdminReason.textContent = holdReason || 'Reason not specified.';
+        if (revDaysBadge)   revDaysBadge.textContent = `Grace Period: ${holdDays}d left`;
+
+        if (hasResponse) {
+            if (teamCard) {
+                teamCard.style.backgroundColor = '#f0fdf4';
+                teamCard.style.borderColor = '#bbf7d0';
+            }
+            if (teamTitleSpan) {
+                teamTitleSpan.style.color = '#166534';
+                teamTitleSpan.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">forum</span>Organization Submitted Justification';
+            }
+            if (revTeamStatus) {
+                revTeamStatus.style.background = '#dcfce7';
+                revTeamStatus.style.color = '#15803d';
+                revTeamStatus.textContent = 'Response Submitted';
+            }
+            if (revTeamResponse) {
+                revTeamResponse.style.color = '#14532d';
+                revTeamResponse.style.fontStyle = 'normal';
+                revTeamResponse.textContent = rawResponse;
+            }
+        } else {
+            if (teamCard) {
+                teamCard.style.backgroundColor = '#f8fafc';
+                teamCard.style.borderColor = '#e2e8f0';
+            }
+            if (teamTitleSpan) {
+                teamTitleSpan.style.color = '#475569';
+                teamTitleSpan.innerHTML = '<span class="material-symbols-outlined" style="font-size: 18px;">hourglass_empty</span>Organization Response Status';
+            }
+            if (revTeamStatus) {
+                revTeamStatus.style.background = '#fef3c7';
+                revTeamStatus.style.color = '#b45309';
+                revTeamStatus.textContent = 'Awaiting Response';
+            }
+            if (revTeamResponse) {
+                revTeamResponse.style.color = '#64748b';
+                revTeamResponse.style.fontStyle = 'italic';
+                revTeamResponse.textContent = 'The organization has not submitted a justification or response yet. They are currently within their grace period to submit explanations or update the project.';
+            }
+        }
 
         const step2Id   = document.getElementById('pmReviewStep2ProjectId');
         const step2Title= document.getElementById('pmReviewStep2ProjectTitle');
@@ -431,7 +683,7 @@ function initProjectManagement() {
         .then(data => {
             if (data.success) {
                 AdminCore.modal.close(reviewHoldModal);
-                AdminCore.toast(data.message || `Project ${id} has been reactivated to Active status!`);
+                AdminCore.toast(data.message || `Project ${id} has been restored to Published status!`);
                 setTimeout(() => window.location.reload(), 600);
             } else {
                 AdminCore.toast(data.message || 'Failed to reactivate project.', 'error');

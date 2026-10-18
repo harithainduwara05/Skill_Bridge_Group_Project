@@ -1,7 +1,7 @@
 <div class="pm-table-responsive">
     <table class="data-table pm-table">
         <?php 
-            $TableColumns = ["PROJECT ID", "PROJECT TITLE", "ORGANIZATION", "REQUIRED SKILLS", "TEAM MEMBERS", "STATUS", "CREATED DATE", "ACTIONS"];
+            $TableColumns = ["PROJECT ID", "PROJECT TITLE", "ORGANIZATION", "STATUS", "CREATED DATE", "ACTIONS"];
             include dirname(__DIR__) . "/Common/TableHeder.php";
         ?>
         <tbody id="pmTableBody">
@@ -14,9 +14,11 @@
                     $category = htmlspecialchars($proj['category'] ?? 'General');
                     $org = htmlspecialchars($proj['company'] ?? 'N/A');
                     
-                    $rawStatus = trim($proj['status'] ?? 'Active');
+                    $rawStatus = trim($proj['status'] ?? 'Published');
                     $sLower = strtolower($rawStatus);
-                    if (in_array($sLower, ['inprogress', 'active'])) {
+                    if (in_array($sLower, ['published', 'publish', 'approved'])) {
+                        $status = 'Published';
+                    } elseif (in_array($sLower, ['inprogress', 'active'])) {
                         $status = 'Active';
                     } elseif (in_array($sLower, ['completed', 'complete', 'close'])) {
                         $status = 'Completed';
@@ -32,7 +34,7 @@
 
                     $skillsStr = trim($proj['tech_stack'] ?? '');
                     $skillsArr = !empty($skillsStr) ? array_filter(array_map('trim', explode(',', $skillsStr))) : ['General'];
-                    $skillsAttr = htmlspecialchars(implode(' ', $skillsArr));
+                    $skillsAttr = htmlspecialchars(implode(', ', $skillsArr));
                     $members = (int)($proj['members'] ?? 1);
                     $createdDate = !empty($proj['posted_at']) ? date('d F Y', strtotime($proj['posted_at'])) : date('d F Y');
                     
@@ -41,6 +43,14 @@
                     $rejectReason = ($status === 'Rejected') ? $holdReason : '';
                     $orgInitial = !empty($org) ? strtoupper(substr($org, 0, 1)) : 'U';
                     
+                    $description = htmlspecialchars($proj['description'] ?? 'No description provided.');
+                    $learningObjectives = htmlspecialchars($proj['learning_objectives'] ?? 'Standard industry project objectives.');
+                    $expectedOutcomes = htmlspecialchars($proj['expected_outcomes'] ?? 'Production ready deliverables.');
+                    $difficulty = htmlspecialchars($proj['difficulty'] ?? 'Intermediate');
+                    $duration = htmlspecialchars($proj['duration'] ?? '8 Weeks');
+                    $deadline = !empty($proj['deadline']) ? htmlspecialchars($proj['deadline']) : 'Not Specified';
+                    $orgEmail = htmlspecialchars($proj['organization_email'] ?? 'N/A');
+
                     $holdDaysLeft = 7;
                     if (!empty($proj['held_at'])) {
                         $diffDays = floor((time() - strtotime($proj['held_at'])) / 86400);
@@ -64,8 +74,16 @@
                     data-title="<?= $title ?>" 
                     data-category="<?= $category ?>" 
                     data-org="<?= $org ?>" 
+                    data-org-email="<?= $orgEmail ?>"
                     data-status="<?= $status ?>" 
                     data-skills="<?= $skillsAttr ?>"
+                    data-description="<?= $description ?>"
+                    data-learning-objectives="<?= $learningObjectives ?>"
+                    data-expected-outcomes="<?= $expectedOutcomes ?>"
+                    data-difficulty="<?= $difficulty ?>"
+                    data-duration="<?= $duration ?>"
+                    data-deadline="<?= $deadline ?>"
+                    data-members="<?= $members ?>"
                     data-hold-reason="<?= $holdReason ?>"
                     data-hold-days="<?= $holdDaysLeft ?>"
                     data-team-response="<?= $holdResponse ?>"
@@ -84,53 +102,39 @@
                         </div>
                     </td>
                     <td>
-                        <div class="pm-skills-list">
-                            <?php foreach (array_slice($skillsArr, 0, 3) as $sk): ?>
-                                <span class="pm-skill-pill"><?= htmlspecialchars($sk) ?></span>
-                            <?php endforeach; ?>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="pm-team-count">
-                            <span class="material-symbols-outlined">group</span>
-                            <span><?= $members ?> Members</span>
-                        </div>
-                    </td>
-                    <td>
-                        <?php if ($status === 'Active'): ?>
-                            <span class="pm-status-pill status-active">Active</span>
+                        <?php if ($status === 'Published'): ?>
+                            <span class="pm-status-pill status-published" title="Approved by Admin, currently open for student applications">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">public</span>Published
+                            </span>
+                        <?php elseif ($status === 'Active'): ?>
+                            <span class="pm-status-pill status-active" title="Team formed and active in progress">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">bolt</span>Active
+                            </span>
                         <?php elseif ($status === 'Hold'): ?>
                             <span class="pm-status-pill status-hold" title="On Hold: <?= $holdDaysLeft ?> days left in grace period">
-                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">schedule</span>Hold (<?= $holdDaysLeft ?>d left)
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">pause_circle</span>Hold (<?= $holdDaysLeft ?>d left)
                             </span>
                         <?php elseif ($status === 'Completed'): ?>
-                            <span class="pm-status-pill status-completed">Completed</span>
+                            <span class="pm-status-pill status-completed">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">task_alt</span>Completed
+                            </span>
                         <?php elseif ($status === 'Review'): ?>
-                            <span class="pm-status-pill status-review">Review</span>
+                            <span class="pm-status-pill status-review" title="Pending Admin review before student publication">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">hourglass_top</span>Review
+                            </span>
                         <?php elseif ($status === 'Rejected'): ?>
-                            <span class="pm-status-pill status-rejected">Rejected</span>
+                            <span class="pm-status-pill status-rejected">
+                                <span class="material-symbols-outlined" style="font-size: 13px; margin-right: 3px;">block</span>Rejected
+                            </span>
                         <?php else: ?>
                             <span class="pm-status-pill status-active"><?= htmlspecialchars($status) ?></span>
                         <?php endif; ?>
                     </td>
                     <td class="pm-created-date"><?= $createdDate ?></td>
                     <td class="pm-actions-cell">
-                        <button class="pm-btn-icon" title="View Details" onclick="viewProjectDetails('<?= $projId ?>')">
+                        <button class="pm-btn-icon" title="View Full Details & Moderate" onclick="viewProjectDetails('<?= $projId ?>')">
                             <span class="material-symbols-outlined">visibility</span>
                         </button>
-                        <?php if ($status === 'Active' || $status === 'Review'): ?>
-                            <button class="pm-btn-icon pm-btn-icon-hold" title="Place on Hold (Temporary Review)" onclick="openHoldModal('<?= $projId ?>')">
-                                <span class="material-symbols-outlined">pause_circle</span>
-                            </button>
-                        <?php elseif ($status === 'Hold'): ?>
-                            <button class="pm-btn-icon pm-btn-icon-reactivate" title="Review Hold & Decide Status" onclick="openReviewHoldModal('<?= $projId ?>')">
-                                <span class="material-symbols-outlined">check_circle</span>
-                            </button>
-                        <?php elseif ($status === 'Rejected'): ?>
-                            <button class="pm-btn-icon" title="Permanently Rejected (Cannot be reactivated)" disabled style="color: #cbd5e1; cursor: not-allowed;">
-                                <span class="material-symbols-outlined">lock</span>
-                            </button>
-                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

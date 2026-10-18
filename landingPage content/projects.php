@@ -7,14 +7,14 @@ if ($page < 1)
     $page = 1;
 $offset = ($page - 1) * $limit;
 
-// Total count for pagination
-$sql_count = "SELECT COUNT(*) as total FROM projects";
+// Total count for pagination (only active/approved/published projects)
+$sql_count = "SELECT COUNT(*) as total FROM projects WHERE visibility = 'Public' AND LOWER(status) IN ('published', 'publish', 'active', 'inprogress', 'accepted')";
 $result_count = $conn->query($sql_count);
 $total_projects = ($result_count) ? $result_count->fetch_assoc()['total'] : 0;
 $total_pages = ceil($total_projects / $limit);
 
 // Fetch projects for the current page
-$sql_projects = "SELECT * FROM projects LIMIT $limit OFFSET $offset";
+$sql_projects = "SELECT * FROM projects WHERE visibility = 'Public' AND LOWER(status) IN ('published', 'publish', 'active', 'inprogress', 'accepted') ORDER BY posted_at DESC LIMIT $limit OFFSET $offset";
 $result_projects = $conn->query($sql_projects);
 
 $page_css = "Assets/CSS/projects.css";

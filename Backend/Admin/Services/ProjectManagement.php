@@ -5,7 +5,21 @@ class ProjectManagement extends AdminDB
     public function getActiveProjectCount()
     {
         return (int) $this->runCount(
-            "SELECT COUNT(*) FROM projects WHERE LOWER(status) IN ('inprogress', 'active')"
+            "SELECT COUNT(*) FROM projects WHERE LOWER(status) IN ('published', 'inprogress', 'active', 'accepted')"
+        );
+    }
+
+    public function getPublishedProjectCount()
+    {
+        return (int) $this->runCount(
+            "SELECT COUNT(*) FROM projects WHERE LOWER(status) IN ('published', 'publish', 'approved')"
+        );
+    }
+
+    public function getReviewingProjectCount()
+    {
+        return (int) $this->runCount(
+            "SELECT COUNT(*) FROM projects WHERE LOWER(status) IN ('reviewing', 'review', 'rewiewing')"
         );
     }
 
@@ -41,16 +55,29 @@ class ProjectManagement extends AdminDB
             if ($ok) {
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
-                    $this->addNotification($proj['organization_email'], 'Project on Hold', "Your project '{$proj['title']}' has been placed on hold: {$holdReason}", 'project');
+                    $this->addNotification(
+                        $proj['organization_email'],
+                        'Project Placed on Hold',
+                        "Your project '{$proj['title']}' has been placed on hold by Admin. Reason: {$holdReason}. Please review and submit your clarification.",
+                        'project'
+                    );
                 }
             }
             return $ok;
-        } elseif (strcasecmp($statusClean, 'Active') === 0) {
-            $ok = $this->runAction("UPDATE projects SET status = 'Active', hold_resolved_at = NOW() WHERE id = ?", "i", $cleanId);
+        } elseif (strcasecmp($statusClean, 'Published') === 0 || strcasecmp($statusClean, 'Active') === 0) {
+            $existingProj = $this->getProjectById($cleanId);
+            $wasHold = strcasecmp($existingProj['status'] ?? '', 'Hold') === 0;
+            $newStatus = (strcasecmp($statusClean, 'Active') === 0) ? 'Active' : 'Published';
+
+            $ok = $this->runAction("UPDATE projects SET status = ?, hold_resolved_at = NOW() WHERE id = ?", "si", $newStatus, $cleanId);
             if ($ok) {
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
-                    $this->addNotification($proj['organization_email'], 'Project Reactivated', "Your project '{$proj['title']}' has been restored to Active status.", 'project');
+                    $notifTitle = $wasHold ? 'Project Restored & Published' : 'Project Approved & Published';
+                    $notifMsg   = $wasHold 
+                        ? "Your project '{$proj['title']}' has been verified by Admin and restored to Published status! It is now open to students."
+                        : "Great news! Your project '{$proj['title']}' has been reviewed and approved by Admin. It is now published and open for students to apply!";
+                    $this->addNotification($proj['organization_email'], $notifTitle, $notifMsg, 'project');
                 }
             }
             return $ok;
@@ -59,7 +86,7 @@ class ProjectManagement extends AdminDB
             if ($ok && strcasecmp($statusClean, 'Rejected') === 0) {
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
-                    $this->addNotification($proj['organization_email'], 'Project Rejected', "Your project '{$proj['title']}' has been rejected: {$holdReason}", 'project');
+                    $this->addNotification($proj['organization_email'], 'Project Rejected', "Your project '{$proj['title']}' has been permanently rejected. Reason: {$holdReason}", 'project');
                 }
             }
             return $ok;
