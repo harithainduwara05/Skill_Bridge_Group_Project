@@ -34,6 +34,7 @@
     $student['certificates'] = $studentManager->getCertificateCount($email);
     $student['projects'] = 0;
     $student['applications'] = $studentManager->getApplicationCount($email);
+    $student['active_teams'] = $studentManager->getActiveTeamCount($email);
 
     // Skills
     $skills = array_slice($studentManager->getSkills($email),0,6);
@@ -75,18 +76,43 @@
         <div class="top-section">
             <div class="profile-card">
                 <?php
-                $student_img_src = null;
-                $student_img_file = !empty($student['profile_image']) ? __DIR__ . '/../../../Assets/Images/Student/' . $student['profile_image'] : null;
-                if ($student_img_file && file_exists($student_img_file)) {
-                    $student_img_src = "../../../Assets/Images/Student/" . htmlspecialchars($student['profile_image']) . "?v=" . time();
+                // Use the same image directory as the Student Settings upload handler.
+                // This dashboard is expected to live in Functions/Student/.
+                if (!array_key_exists('profile_image', $student) && isset($conn)) {
+                    // Some getStudent() implementations omit profile_image.
+                    $photoQuery = $conn->prepare(
+                        "SELECT profile_image FROM student WHERE Email = ? LIMIT 1"
+                    );
+                    if ($photoQuery) {
+                        $photoQuery->bind_param('s', $email);
+                        $photoQuery->execute();
+                        $photoRow = $photoQuery->get_result()->fetch_assoc();
+                        $student['profile_image'] = $photoRow['profile_image'] ?? null;
+                        $photoQuery->close();
+                    }
                 }
-                $student_initial = !empty(trim($student['Name'] ?? '')) ? strtoupper(mb_substr(trim($student['Name']), 0, 1)) : 'S';
+
+                $student_img_src = null;
+                $profile_image = trim((string)($student['profile_image'] ?? ''));
+                $profile_image = basename(str_replace('\\', '/', $profile_image));
+                if ($profile_image !== '' && $profile_image !== '.' && $profile_image !== '..') {
+                    $student_img_file = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
+                    if (is_file($student_img_file)) {
+                        // Browser path is also relative to Functions/Student/.
+                        $student_img_src = '../../Assets/Images/Student/'
+                            . rawurlencode($profile_image)
+                            . '?v=' . filemtime($student_img_file);
+                    }
+                }
+                $student_name = trim((string)($student['Name'] ?? ''));
+                $student_initial = $student_name !== ''
+                    ? strtoupper(mb_substr($student_name, 0, 1)) : 'S';
                 ?>
                 <div class = "dashboard-avatar">
                     <?php if(!empty($student_img_src)): ?>
                         <img 
-                            src = "<?php echo $student_img_src; ?>"
-                            alt = "<?php echo htmlspecialchars($student['Name']); ?>"
+                            src = "<?php echo htmlspecialchars($student_img_src, ENT_QUOTES, 'UTF-8'); ?>"
+                            alt = "<?php echo htmlspecialchars($student['Name'], ENT_QUOTES, 'UTF-8'); ?>"
                             onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
                         >
                         <div class = "default-avatar-placeholder" style = "display:none;">
@@ -147,8 +173,8 @@
             </div>
             <div class="card">
                 <h1>
-                    <span class="ico"><img src="../../../Assets/Images/Icons/teams.png"></span>
-                    <?php echo $student['applications']; ?>
+                    <span class="ico"><i class="fa fa-users" aria-hidden="true"></i></span>
+                    <?php echo $student['active_teams']; ?>
                 </h1>
                 <p>Active Teams</p>
             </div>

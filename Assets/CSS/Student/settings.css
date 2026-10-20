@@ -75,6 +75,22 @@ body{
     margin-bottom:25px;
 }
 
+/* Default Profile Avatar */
+.profile-initial {
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #193c60, #078e8c);
+    color: #ffffff;
+    font-size: 64px;
+    font-weight: 700;
+    align-items: center;
+    justify-content: center;
+    border: 6px solid #dbe7ff;
+    box-sizing: border-box;
+}
+
+
 /* IMAGE */
 .avatar{
     position:relative;

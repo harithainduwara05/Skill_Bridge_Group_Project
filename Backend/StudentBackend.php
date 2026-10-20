@@ -228,6 +228,32 @@ public function getProjects($email)
 
 }
 
+public function getActiveTeamCount($email)
+{
+    global $conn;
+
+    $sql = "
+        SELECT COUNT(DISTINCT t.id) AS total
+        FROM org_teams t
+        INNER JOIN org_team_members m
+            ON t.id = m.team_id
+        WHERE m.Email = ?
+        AND t.status = 'ontrack'
+    ";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $row = $result->fetch_assoc();
+
+    $stmt->close();
+
+    return (int) ($row['total'] ?? 0);
+}
+
+
 // Get student notifications
 public function getNotifications($email)
 {
