@@ -390,10 +390,10 @@ SkillBridge was engineered as a collaborative academic initiative to empower uni
 
 | Actor / Module | Developer | Role & Contribution | GitHub Profile |
 | :--- | :--- | :--- | :--- |
-| **Admin Actor** | **Haritha Induwara** | Lead Developer & Git Maintainer | [@harithainduwara05](https://github.com/harithainduwara05) |
-| **Company Actor** | **Shaini Ishawari** | Developer | [@username](https://github.com/) |
-| **Organization Actor** | **Sethmi Kodithuwakku** | Developer | [@username](https://github.com/) |
-| **Student Actor** | **Lasith** | Developer | [@username](https://github.com/) |
+| **Admin Actor** | **Haritha Induwara** | Developer & Git Maintainer | [@harithainduwara05](https://github.com/harithainduwara05) |
+| **Company Actor** | **Shaini Ishawari** | Developer | [@sethmikodithuwakku61-svg](https://github.com/sethmikodithuwakku61-svg) |
+| **Organization Actor** | **Sethmi Kodithuwakku** | Developer | [@Lasith-Perera](https://github.com/Lasith-Perera) |
+| **Student Actor** | **Lasith** | Developer | [@shainiishuwara123](https://github.com/shainiishuwara123) |
 
 - **Project Repository:** [harithainduwara05/Skill_Bridge_Group_Project](https://github.com/harithainduwara05/Skill_Bridge_Group_Project)
 - **Academic Year:** 2026
