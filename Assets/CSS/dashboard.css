@@ -1186,3 +1186,27 @@ body.sidebar-open .sidebar .logout span:not(.material-symbols-outlined),
     font-size: 12px;
     padding: 0 2px;
 }
+.notfound {
+    font-weight: bold;
+    text-align: center;
+     font-family: 'Times New Roman', Times, serif;
+    padding-top: 20%;
+
+}
+.notfound .nfButton{
+    padding-top: 20px;
+}
+.notfound .nfButton button{
+    border-radius: 6px;
+    height: 40px;
+    width:150px;
+    background-color: rgb(48, 54, 222);
+    border:none;
+    color: white;
+    font-weight: bold;
+}
+.notfound .nfButton button:hover{
+    scale: 1.01;
+    background-color: rgb(154, 154, 226);
+    color: black;
+}

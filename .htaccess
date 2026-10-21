@@ -1,0 +1,2 @@
+ErrorDocument 404 /Skill_Bridge_Group_Project/notFoundPage.php
+DirectoryIndex index.php dashboard.php
