@@ -1,8 +1,17 @@
 <?php
 /*
-| Organization backend - Feedback: submit feedback for a team + list of given feedback (+ demo reviews)
+| Organization backend - Feedback: give feedback to a project team + list the feedback given
 | Used by: Functions/Organization/feedback.php
 | (the page already loaded Config/db.php + Session/Session.php and checked the role)
+|
+| Rules
+|  - Feedback is given to a TEAM (org_teams) that is COMPLETED - the organization accepted
+|    the team's final report (Teams page) - and the team has members.
+|  - The whole team always sees the feedback.
+|  - ONE feedback per team (project_feedback.team_id is UNIQUE), and it is FINAL once submitted (it can not be edited),
+|    like Upwork / Fiverr: so a rating can't be changed later to affect a student unfairly.
+|  - Every member of the team gets a notification when the feedback is given.
+| Tables: project_feedback (one row per team) + feedback_improvements (one row per area to improve)
 */
 
 $user = current_user();
@@ -21,207 +30,205 @@ function fbFetch(mysqli $conn, string $sql, string $types = '', array $params = 
     }
 }
 
-// ---------------------------------------------------------------
-// Projects that can get feedback = this organization's projects that
-// already have students working on them. Team name comes from Teams
-// (org_teams) when one exists, otherwise "<project> Team".
-// ---------------------------------------------------------------
-$fbProjects = [];
-foreach (fbFetch($conn,
-    "SELECT p.id, p.title, p.category, p.status
-     FROM projects p
-     WHERE p.organization_email = ?
-       AND EXISTS (SELECT 1 FROM student_projects sp WHERE sp.project_id = p.id)
-     ORDER BY p.posted_at DESC", "s", [$organization_email]) as $pr) {
+// Members of a team (name + role in the team)
+function fbMembers(mysqli $conn, int $teamId): array
+{
+    return fbFetch($conn,
+        "SELECT s.Name AS name, m.role
+         FROM org_team_members m JOIN student s ON s.Email = m.Email
+         WHERE m.team_id = ? ORDER BY s.Name", "i", [$teamId]);
+}
 
-    $team = fbFetch($conn, "SELECT name FROM org_teams WHERE project_id = ? AND organization_email = ? ORDER BY created_at DESC LIMIT 1",
-                    "is", [(int)$pr['id'], $organization_email])[0]['name'] ?? ($pr['title'] . ' Team');
-    $students = fbFetch($conn,
-        "SELECT s.Name AS name, sp.role FROM student_projects sp JOIN student s ON s.Email = sp.Email WHERE sp.project_id = ?",
-        "i", [(int)$pr['id']]);
+// ---------------------------------------------------------------
+// All teams of this organization's projects + team size + feedback (if any)
+// ---------------------------------------------------------------
+$orgTeams = fbFetch($conn,
+    "SELECT t.id AS team_id, t.name AS team_name, p.id AS project_id, p.title, c.category_name AS category,
+            t.status AS team_status,
+            (SELECT COUNT(*) FROM org_team_members m WHERE m.team_id = t.id) AS team_size,
+            (SELECT f.id FROM project_feedback f WHERE f.team_id = t.id LIMIT 1) AS feedback_id
+     FROM org_teams t
+     JOIN projects p ON p.id = t.project_id
+     LEFT JOIN project_categories c ON c.category_id = p.category_id
+     WHERE p.organization_email = ?
+     ORDER BY t.created_at DESC", "s", [$organization_email]);
+
+// Teams that can get NEW feedback (team Completed, team has members, no feedback yet)
+// 'id' = the team id (sent by the form as team_id)
+$fbProjects = [];
+foreach ($orgTeams as $tm) {
+    if ($tm['team_status'] !== 'completed' || (int)$tm['team_size'] === 0 || $tm['feedback_id']) continue;
 
     $fbProjects[] = [
-        'id' => (int)$pr['id'], 'title' => $pr['title'], 'category' => $pr['category'],
-        'status' => $pr['status'], 'team' => $team, 'students' => $students,
+        'id' => (int)$tm['team_id'], 'project_id' => (int)$tm['project_id'],
+        'title' => $tm['title'], 'category' => $tm['category'],
+        'status' => 'completed',
+        'team' => $tm['team_name'],
+        'students' => fbMembers($conn, (int)$tm['team_id']),
     ];
 }
 
 // ---------------------------------------------------------------
-// Save new feedback
+// Read + check the form
+// returns [data, errorCode]  (errorCode '' = everything is fine)
 // ---------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submit_feedback') {
-    $pid     = (int)($_POST['project_id'] ?? 0);
-    $rating  = (int)($_POST['rating'] ?? 0);
-    $scores  = [];
+function fbReadForm(): array
+{
+    $rating = (int)($_POST['rating'] ?? 0);
+
+    $scores = [];
     foreach (['technical', 'communication', 'teamwork', 'problem_solving'] as $k) {
         $scores[$k] = round((float)($_POST[$k] ?? 0) * 2) / 2;      // steps of 0.5
     }
-    $summaryText  = trim($_POST['summary'] ?? '');
-    $improvements = implode(', ', array_slice(array_filter(array_map('trim', explode(',', $_POST['improvements'] ?? ''))), 0, 8));
-    $share        = 1;   // the team always gets a notification when feedback is submitted
+
+    $summary = trim($_POST['summary'] ?? '');
+
+    // improvements: unique, max 8, each max 40 characters
+    $improvements = [];
+    foreach (explode(',', $_POST['improvements'] ?? '') as $imp) {
+        $imp = mb_substr(trim(preg_replace('/\s+/', ' ', $imp)), 0, 40);
+        if ($imp === '' || in_array(mb_strtolower($imp), array_map('mb_strtolower', $improvements), true)) continue;
+        if (count($improvements) >= 8 || mb_strlen(implode(', ', array_merge($improvements, [$imp]))) > 500) break;
+        $improvements[] = $imp;
+    }
+
+    $error = '';
+    if ($rating < 1 || $rating > 5)                                                       $error = 'rating';
+    elseif (count(array_filter($scores, fn($v) => $v >= 1 && $v <= 5)) !== 4)            $error = 'scores';
+    elseif (mb_strlen($summary) < 20)                                                    $error = 'summary_short';
+    elseif (mb_strlen($summary) > 1500)                                                  $error = 'summary_long';
+
+    return [[
+        'rating' => $rating, 'scores' => $scores, 'summary' => $summary,
+        'improvements' => $improvements,       // saved one per row in feedback_improvements
+    ], $error];
+}
+
+// Send a notification to every member of the team
+function fbNotifyTeam(mysqli $conn, int $teamId, string $title, string $message): void
+{
+    $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
+                         SELECT Email, ?, ?, 'project', 'Unread' FROM org_team_members WHERE team_id = ?");
+    $n->bind_param("ssi", $title, $message, $teamId);
+    $n->execute();
+}
+
+$orgName = fbFetch($conn, "SELECT Name FROM organization WHERE Email = ?", "s", [$organization_email])[0]['Name'] ?? 'The organization';
+
+// ---------------------------------------------------------------
+// Save NEW feedback
+// ---------------------------------------------------------------
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submit_feedback') {
+    $teamId = (int)($_POST['team_id'] ?? 0);
 
     $project = null;
-    foreach ($fbProjects as $fp) { if ($fp['id'] === $pid) { $project = $fp; break; } }
+    foreach ($fbProjects as $fp) { if ($fp['id'] === $teamId) { $project = $fp; break; } }
+    if (!$project) {
+        // not this organization's team, team not Completed, no members, or already has feedback
+        header("Location: feedback.php?fb_error=project");
+        exit;
+    }
 
-    $scoresOk = count(array_filter($scores, fn($v) => $v >= 1 && $v <= 5)) === 4;
-    if (!$project || $rating < 1 || $rating > 5 || !$scoresOk || mb_strlen($summaryText) < 20) {
-        header("Location: feedback.php?fb_error=1");
+    [$d, $error] = fbReadForm();
+    if ($error !== '') {
+        header("Location: feedback.php?fb_error=" . $error);
         exit;
     }
 
     try {
+        $conn->begin_transaction();
         $q = $conn->prepare("INSERT INTO project_feedback
-            (organization_email, project_id, team_name, rating, technical, communication, teamwork, problem_solving, summary, improvements, shared_with_students)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?)");
-        $q->bind_param("sisiddddssi", $organization_email, $pid, $project['team'], $rating,
-            $scores['technical'], $scores['communication'], $scores['teamwork'], $scores['problem_solving'],
-            $summaryText, $improvements, $share);
+            (team_id, rating, technical, communication, teamwork, problem_solving, summary)
+            VALUES (?,?,?,?,?,?,?)");
+        $q->bind_param("iidddds", $teamId, $d['rating'],
+            $d['scores']['technical'], $d['scores']['communication'], $d['scores']['teamwork'], $d['scores']['problem_solving'],
+            $d['summary']);
         $q->execute();
+        $feedbackId = (int)$conn->insert_id;
 
-        if ($share) {
-            $orgName = fbFetch($conn, "SELECT Name FROM organization WHERE Email = ?", "s", [$organization_email])[0]['Name'] ?? 'The organization';
-            $nTitle = 'New Project Feedback';
-            $nMsg   = $orgName . ' gave your team ' . $rating . '/5 for "' . $project['title'] . '". Open your project to read the full feedback.';
-            $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status)
-                                 SELECT Email, ?, ?, 'project', 'Unread' FROM student_projects WHERE project_id = ?");
-            $n->bind_param("ssi", $nTitle, $nMsg, $pid);
-            $n->execute();
+        // areas to improve: one row each
+        $iq = $conn->prepare("INSERT INTO feedback_improvements (feedback_id, area) VALUES (?, ?)");
+        foreach ($d['improvements'] as $area) {
+            $iq->bind_param("is", $feedbackId, $area);
+            $iq->execute();
         }
+        $conn->commit();
+
+        fbNotifyTeam($conn, $teamId, 'New Project Feedback',
+            $orgName . ' gave your team ' . $d['rating'] . '/5 for "' . $project['title'] . '". Open your project to read the full feedback.');
+
         header("Location: feedback.php?fb_saved=1");
     } catch (Throwable $e) {
-        header("Location: feedback.php?fb_error=1");
+        try { $conn->rollback(); } catch (Throwable $ignore) {}
+        header("Location: feedback.php?fb_error=save");
     }
     exit;
 }
 
+// ---------------------------------------------------------------
+// Messages after saving
+// ---------------------------------------------------------------
+$fbErrors = [
+    'project'       => 'This team can not get feedback. Choose a Completed team (final report accepted) that has no feedback yet.',
+    'rating'        => 'Please give an overall rating from 1 to 5 stars.',
+    'scores'        => 'Each competency score must be between 1 and 5.',
+    'summary_short' => 'The performance summary must be at least 20 characters.',
+    'summary_long'  => 'The performance summary can be at most 1500 characters.',
+    'save'          => 'Something went wrong while saving. Please try again.',
+];
 $flash = null;
-if (isset($_GET['fb_saved'])) $flash = ['type' => 'success', 'title' => 'Feedback submitted', 'message' => 'Your feedback was saved and shared with the team.'];
-if (isset($_GET['fb_error'])) $flash = ['type' => 'error', 'title' => 'Could not submit feedback', 'message' => 'Please fill all required fields and try again.'];
+if (isset($_GET['fb_saved']))   $flash = ['type' => 'success', 'title' => 'Feedback submitted', 'message' => 'Your feedback was saved and the team has been notified.'];
+if (isset($_GET['fb_error']))   $flash = ['type' => 'error', 'title' => 'Could not save feedback',
+                                          'message' => $fbErrors[$_GET['fb_error']] ?? 'Please fill all required fields and try again.'];
 
 // ---------------------------------------------------------------
-// Feedback saved in the database (shown first)
+// Feedback given by this organization (from the database)
 // ---------------------------------------------------------------
-$dbReviews = [];
 $catIcon = ['Web Development' => 'language', 'Mobile Development' => 'smartphone', 'AI / Machine Learning' => 'psychology',
             'Data Science' => 'monitoring', 'UI/UX Design' => 'palette', 'Cloud & DevOps' => 'cloud', 'Cybersecurity' => 'shield'];
+$reviews = [];
 foreach (fbFetch($conn,
-    "SELECT f.*, p.title, p.category FROM project_feedback f JOIN projects p ON p.id = f.project_id
-     WHERE f.organization_email = ? ORDER BY f.created_at DESC", "s", [$organization_email]) as $f) {
-    $dbReviews[] = [
+    "SELECT f.*, t.name AS team_name, t.project_id, p.title, c.category_name AS category,
+            (SELECT GROUP_CONCAT(i.area SEPARATOR ',') FROM feedback_improvements i WHERE i.feedback_id = f.id) AS improvements
+     FROM project_feedback f
+     JOIN org_teams t ON t.id = f.team_id
+     JOIN projects p ON p.id = t.project_id
+     LEFT JOIN project_categories c ON c.category_id = p.category_id
+     WHERE p.organization_email = ? ORDER BY f.created_at DESC", "s", [$organization_email]) as $f) {
+    $created = strtotime($f['created_at']);
+    $reviews[] = [
         'icon' => $catIcon[$f['category']] ?? 'folder', 'title' => $f['title'], 'team' => $f['team_name'],
-        'days_ago' => max(0, (int)floor((time() - strtotime($f['created_at'])) / 86400)),
-        'created' => strtotime($f['created_at']),
+        'days_ago' => max(0, (int)floor((time() - $created) / 86400)),
+        'created' => $created,
         'rating' => (int)$f['rating'],
         'skills' => ['Technical Skills' => (float)$f['technical'], 'Communication' => (float)$f['communication'],
                      'Teamwork' => (float)$f['teamwork'], 'Problem-solving' => (float)$f['problem_solving']],
         'summary' => $f['summary'],
         'improvements' => array_values(array_filter(array_map('trim', explode(',', $f['improvements'] ?? '')))),
-        'is_new' => true,
+        'is_new' => (time() - $created) < 7 * 86400,          // "New" badge for the first week
         'id' => (int)$f['id'], 'key' => 'db-' . (int)$f['id'], 'project_id' => (int)$f['project_id'],
-        'category' => $f['category'], 'shared' => (bool)$f['shared_with_students'],
-        'updated' => !empty($f['updated_at']) ? date('M d, Y', strtotime($f['updated_at'])) : '',
-        'members' => fbFetch($conn, "SELECT s.Name AS name, sp.role FROM student_projects sp JOIN student s ON s.Email = sp.Email WHERE sp.project_id = ?",
-                             "i", [(int)$f['project_id']]),
+        'category' => $f['category'],
+        'members' => fbMembers($conn, (int)$f['team_id']),
     ];
 }
 
 // ---------------------------------------------------------------
-// UI-ONLY DEMO DATA (kept for the demo)
+// Stat cards (real numbers)
+//   Pending Reviews    = Completed teams (with members) that have no feedback yet
+//   Completed Projects = this organization's Completed projects
 // ---------------------------------------------------------------
-$summary = [
-    'submitted' => 42, 'submitted_change' => '+12%',
-    'pending'   => 5,
-    'avg'       => 4.8,
-    'completed' => 47,
-];
-
-$reviews = [
-    [
-        'icon' => 'cloud', 'title' => 'Cloud Architecture Redesign', 'team' => 'Skyline Team', 'days_ago' => 5,
-        'rating' => 5,
-        'skills' => ['Technical Skills' => 5.0, 'Communication' => 4.5, 'Teamwork' => 4.8, 'Problem-solving' => 5.0],
-        'summary' => 'The team demonstrated exceptional mastery of Azure serverless components. Their ability to migrate the legacy SQL structure into a distributed CosmosDB environment with zero downtime was a significant technical achievement.',
-        'improvements' => ['Docker Optimization', 'Agile Documentation', 'Terraform Modularization'],
-        'key' => 'demo-cloud', 'category' => 'Cloud & DevOps', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Tharindu Rajapaksha', 'role' => 'Cloud Architect'], ['name' => 'Hiruni Fernando', 'role' => 'Backend Developer'],
-                      ['name' => 'Janith Wickramasinghe', 'role' => 'Database Engineer'], ['name' => 'Oshadi Senarath', 'role' => 'DevOps Engineer']],
-    ],
-    [
-        'icon' => 'api', 'title' => 'Secure API Gateway Implementation', 'team' => 'Omega Devs', 'days_ago' => 21,
-        'rating' => 4,
-        'skills' => ['Technical Skills' => 4.2, 'Communication' => 4.0, 'Teamwork' => 4.5, 'Problem-solving' => 4.0],
-        'summary' => 'Strong execution of the security protocols and OAuth2 implementation. The team was highly responsive to feedback regarding the latency issues in the initial staging environment and optimized the caching layer effectively.',
-        'improvements' => ['Security Auditing', 'GraphQL Optimization'],
-        'key' => 'demo-api', 'category' => 'Cybersecurity', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Ravindu Gamage', 'role' => 'Security Engineer'], ['name' => 'Sithumi Perera', 'role' => 'Backend Developer'],
-                      ['name' => 'Kaveesha Jayalath', 'role' => 'QA Engineer']],
-    ],
-    [
-        'icon' => 'smartphone', 'title' => 'Campus Event Management App', 'team' => 'Pixel Pioneers', 'days_ago' => 28,
-        'rating' => 5,
-        'skills' => ['Technical Skills' => 4.8, 'Communication' => 4.6, 'Teamwork' => 5.0, 'Problem-solving' => 4.7],
-        'summary' => 'A polished Flutter app with QR check-in that worked smoothly during a live faculty event. The team planned their sprints well and handled last-minute changes calmly.',
-        'improvements' => ['Accessibility', 'Automated UI Tests'],
-        'key' => 'demo-event', 'category' => 'Mobile Development', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Nadeesha Kumari', 'role' => 'Mobile Developer'], ['name' => 'Chathura Bandara', 'role' => 'Backend Developer'], ['name' => 'Isuri Madushani', 'role' => 'UI/UX Designer']],
-    ],
-    [
-        'icon' => 'psychology', 'title' => 'Sinhala Sentiment Analysis Model', 'team' => 'Lanka NLP Crew', 'days_ago' => 35,
-        'rating' => 4,
-        'skills' => ['Technical Skills' => 4.5, 'Communication' => 3.8, 'Teamwork' => 4.2, 'Problem-solving' => 4.4],
-        'summary' => 'Good model accuracy on a difficult local-language dataset. Documentation of the data cleaning steps was limited, which made it harder for us to reproduce the results.',
-        'improvements' => ['Documentation', 'Experiment Tracking', 'Data Versioning'],
-        'key' => 'demo-nlp', 'category' => 'AI / Machine Learning', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Dilshan Rathnayake', 'role' => 'ML Engineer'], ['name' => 'Sanduni Wijesekara', 'role' => 'Data Analyst'], ['name' => 'Pubudu Herath', 'role' => 'Backend Developer']],
-    ],
-    [
-        'icon' => 'language', 'title' => 'Community Library Website', 'team' => 'Code Crafters', 'days_ago' => 42,
-        'rating' => 3,
-        'skills' => ['Technical Skills' => 3.4, 'Communication' => 3.0, 'Teamwork' => 3.5, 'Problem-solving' => 3.2],
-        'summary' => 'The site meets the basic requirements, but several features were delivered late and the search page still has performance issues. Communication improved towards the end.',
-        'improvements' => ['Time Management', 'Performance Tuning', 'Code Reviews'],
-        'key' => 'demo-library', 'category' => 'Web Development', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Kasun Dissanayake', 'role' => 'Frontend Developer'], ['name' => 'Hansani Peiris', 'role' => 'Backend Developer']],
-    ],
-    [
-        'icon' => 'monitoring', 'title' => 'Sales Forecast Dashboard', 'team' => 'Data Dynamos', 'days_ago' => 56,
-        'rating' => 4,
-        'skills' => ['Technical Skills' => 4.3, 'Communication' => 4.4, 'Teamwork' => 4.0, 'Problem-solving' => 4.1],
-        'summary' => 'Clear and useful Power BI dashboards. Forecasts were reasonable, and the team explained their assumptions well in the final presentation.',
-        'improvements' => ['SQL Optimization', 'Unit Testing'],
-        'key' => 'demo-sales', 'category' => 'Data Science', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Tharaka Liyanage', 'role' => 'Data Analyst'], ['name' => 'Rashmi Gunasekara', 'role' => 'BI Developer'], ['name' => 'Akila Perera', 'role' => 'Data Engineer']],
-    ],
-    [
-        'icon' => 'palette', 'title' => 'Tourism App UI Redesign', 'team' => 'Design Pulse', 'days_ago' => 70,
-        'rating' => 5,
-        'skills' => ['Technical Skills' => 4.6, 'Communication' => 5.0, 'Teamwork' => 4.8, 'Problem-solving' => 4.7],
-        'summary' => 'Outstanding user research and a beautiful, consistent design system. The prototype tested very well with real tourists visiting Kandy.',
-        'improvements' => ['Design Handoff', 'Git Workflow'],
-        'key' => 'demo-tourism', 'category' => 'UI/UX Design', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Sachintha Fonseka', 'role' => 'UI/UX Designer'], ['name' => 'Imesha Ranasinghe', 'role' => 'UX Researcher']],
-    ],
-    [
-        'icon' => 'shield', 'title' => 'Network Intrusion Detection Lab', 'team' => 'Cipher Squad', 'days_ago' => 84,
-        'rating' => 4,
-        'skills' => ['Technical Skills' => 4.4, 'Communication' => 3.9, 'Teamwork' => 4.1, 'Problem-solving' => 4.5],
-        'summary' => 'Solid detection rules and a well-built lab setup. The final report could explain the false-positive analysis in more detail.',
-        'improvements' => ['Report Writing', 'Threat Modelling'],
-        'key' => 'demo-ids', 'category' => 'Cybersecurity', 'shared' => true, 'updated' => '',
-        'members' => [['name' => 'Pasan Jayawardena', 'role' => 'Security Analyst'], ['name' => 'Nethmi Abeyratne', 'role' => 'Network Engineer'], ['name' => 'Lahiru Silva', 'role' => 'Python Developer']],
-    ],
-];
-
-foreach ($reviews as &$rv) { $rv['created'] = strtotime('-' . (int)$rv['days_ago'] . ' day'); }
-unset($rv);
-$reviews = array_merge($dbReviews, $reviews);
-
-// stat cards include the saved feedback
-if ($dbReviews) {
-    $allRatings = array_merge(array_fill(0, (int)$summary['submitted'], (float)$summary['avg']), array_column($dbReviews, 'rating'));
-    $summary['avg'] = round(array_sum($allRatings) / count($allRatings), 1);
-    $summary['submitted'] += count($dbReviews);
+$pending = 0;
+foreach ($orgTeams as $tm) {
+    if ($tm['team_status'] === 'completed' && (int)$tm['team_size'] > 0 && !$tm['feedback_id']) $pending++;
 }
+$completed = (int)(fbFetch($conn, "SELECT COUNT(*) AS n FROM projects WHERE organization_email = ? AND status = 'completed'",
+                           "s", [$organization_email])[0]['n'] ?? 0);
+$summary = [
+    'submitted' => count($reviews),
+    'pending'   => $pending,
+    'avg'       => $reviews ? round(array_sum(array_column($reviews, 'rating')) / count($reviews), 1) : 0,
+    'completed' => $completed,
+];
 
 $ratingLabels = [5 => 'Exceptional', 4 => 'Very Good', 3 => 'Good', 2 => 'Fair', 1 => 'Needs Work'];
 

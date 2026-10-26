@@ -15,9 +15,8 @@ $orgStmt->execute();
 $orgRow  = $orgStmt->get_result()->fetch_assoc();
 $orgName = $orgRow['Name'] ?? ($user['username'] ?? 'Organization');
 
-// Projects are NOT promoted automatically any more.
-// A new project starts as "Reviewing" and stays Reviewing even when the team is full;
-// the organization changes it to "Active" manually from Edit Project.
+// Status flow: Reviewing (waiting for Admin) -> Published (Admin accepted, students can see it)
+// -> Active (set manually from Edit Project when the team is full) -> Completed.
 
 // ---- Stat cards: real counts ----
 $stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=?");
@@ -25,13 +24,14 @@ $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $totalProjects = (int)$stmt->get_result()->fetch_row()[0];
 
-$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status IN ('reviewing','inprogress')");
+$stmt = $conn->prepare("SELECT COUNT(*) FROM projects WHERE organization_email=? AND status IN ('reviewing','published','accepted','active','inprogress')");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $activeProjects = (int)$stmt->get_result()->fetch_row()[0];
 
-$stmt = $conn->prepare("SELECT COUNT(*) FROM student_projects sp
-                         JOIN projects p ON sp.project_id = p.id
+// "Proposals Received" = proposals students sent for this organization's projects
+$stmt = $conn->prepare("SELECT COUNT(*) FROM project_proposals pa
+                         JOIN projects p ON pa.project_id = p.id
                          WHERE p.organization_email = ?");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
@@ -44,29 +44,32 @@ $stmt->execute();
 $unreadNotifCount = (int)$stmt->get_result()->fetch_row()[0];
 
 // ---- Recent Project Posts (latest 5) ----
-$stmt = $conn->prepare("SELECT p.*,
-                                (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS proposal_count
-                         FROM projects p
-                         WHERE p.organization_email = ?
-                         ORDER BY p.posted_at DESC
-                         LIMIT 5");
+// (category + keywords come from project_categories / project_skills, see org_db.php)
+require_once __DIR__ . '/org_db.php';
+$stmt = $conn->prepare(str_replace("\n    FROM projects p", ",
+                                (SELECT COUNT(*) FROM project_proposals pa WHERE pa.project_id = p.id) AS proposal_count,
+                                (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS team_count
+    FROM projects p", ORG_PROJECT_SELECT)
+                       . " WHERE p.organization_email = ? ORDER BY p.posted_at DESC LIMIT 5");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $recentProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-
-// An "Active" project whose team is not full yet is still shown as "Reviewing":
-// it only becomes Active when the number of students it needs have joined.
+// lowercase, because the Admin saves some statuses as 'Hold'
+// (Admin's 'Active' / old 'accepted' = Published; the organization's own Active is 'inprogress')
 foreach ($recentProjects as &$rp) {
-    $needed = (int)($rp['members'] ?? 0);
-    if ($rp['status'] === 'inprogress' && $needed > 0 && (int)$rp['proposal_count'] < $needed) {
-        $rp['status'] = 'reviewing';
+    $rp['status'] = strtolower(trim($rp['status'] ?? ''));
+    if (in_array($rp['status'], ['active', 'approved', 'accepted'], true)) $rp['status'] = 'published';
+    // Active only when the team is full: an Active project whose team is not full
+    // (old data, a student left, or Students Required was raised) is shown as Published.
+    if ($rp['status'] === 'inprogress' && (int)$rp['team_count'] < max(1, (int)($rp['members'] ?? 1))) {
+        $rp['status'] = 'published';
     }
 }
 unset($rp);
 
 // Human-readable label for a status value (DB stores 'inprogress' for what's shown as "Active")
 function statusLabel($status) {
-    $labels = ['reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'rejected' => 'Rejected', 'completed' => 'Completed', 'draft' => 'Draft'];
+    $labels = ['reviewing' => 'Reviewing', 'published' => 'Published', 'inprogress' => 'Active', 'hold' => 'Hold', 'rejected' => 'Rejected', 'completed' => 'Completed', 'draft' => 'Draft'];
     return $labels[$status] ?? ucfirst($status);
 }
 

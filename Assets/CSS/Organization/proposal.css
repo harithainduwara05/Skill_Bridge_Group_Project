@@ -952,29 +952,11 @@
 
 /* =========================================================
    TOAST
+   The "Proposal accepted / rejected" message uses the shared
+   Assets/CSS/flash-toast.css (same as Manage Projects).
+   Add Proposals-only changes here with the .pr-flash class, e.g.
+   .flash-toast.pr-flash { top: 80px; }
 ========================================================= */
-
-.pr-toast {
-    position: fixed;
-    right: 24px;
-    bottom: 24px;
-    background: #0f2a4a;
-    color: #fff;
-    padding: 13px 18px;
-    border-radius: 10px;
-    font-size: 14px;
-    box-shadow: 0 10px 30px rgba(0,0,0,.18);
-    transform: translateY(20px);
-    opacity: 0;
-    pointer-events: none;
-    transition: .25s ease;
-    z-index: 10001;
-}
-
-.pr-toast.show {
-    transform: translateY(0);
-    opacity: 1;
-}
 
 
 /* =========================================================
@@ -1025,3 +1007,70 @@
     }
 
 }
+
+/* =========================================================
+   PORTFOLIO BOX (card) + PREVIEW POPUP
+========================================================= */
+.pr-portfolio-box { flex-direction: column; gap: 4px; width: 100%; padding: 10px; text-align: center;
+                    font-family: inherit; box-sizing: border-box; text-decoration: none; }
+.pr-portfolio-box.pf-has-file { background: #f8fafc; color: #1e3a5f; border: 1px dashed #93c5fd; cursor: pointer;
+                                transition: background .15s ease, border-color .15s ease; }
+.pr-portfolio-box.pf-has-file:hover { background: #eff6ff; border-color: #3b82f6; }
+.pf-box-name { font-size: 12.5px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-box-hint { font-size: 11.5px; color: #64748b; }
+
+.pv-modal { width: min(900px, 100%); display: flex; flex-direction: column; }
+.pv-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid #eef0f3; }
+.pv-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pv-title .material-symbols-outlined { color: #1e3a5f; }
+.pv-title strong { display: block; font-size: 15px; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-title small { display: block; font-size: 12px; color: #64748b; }
+.pv-body { height: 65vh; background: #f1f5f9; display: flex; align-items: center; justify-content: center; }
+.pv-body iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+.pv-body img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.pv-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid #eef0f3; }
+.pv-download { background: #1e3a5f; color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.pv-download:hover { background: #16304d; }
+
+/* Portfolio box: the student's latest profile project (when no file is attached) */
+.pr-portfolio-box.pf-project { display: block; height: auto; min-height: 130px; text-align: left; padding: 12px 14px;
+                               background: #ffffff; border: 1px solid #e2e8f0; color: #334155; }
+.pf-project-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.pf-project-top .material-symbols-outlined { font-size: 18px !important; color: #1e3a5f; }
+.pf-project-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
+.pf-project-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+.pf-project-desc { font-size: 12.5px; line-height: 1.45; color: #475569; margin: 0 0 8px;
+                   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pf-project-links { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.pf-project-links a, .pf-project-links button { display: inline-flex; align-items: center; gap: 3px; font-size: 12.5px;
+        font-weight: 600; color: #2563eb; text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
+.pf-project-links a:hover, .pf-project-links button:hover { text-decoration: underline; }
+.pf-project-links .material-symbols-outlined { font-size: 15px !important; }
+
+/* Portfolio Preview list: attached file + chosen profile projects (click -> preview) */
+.pf-list { display: flex; flex-direction: column; gap: 8px; }
+.pf-list-note { font-size: 11.5px; color: #64748b; }
+.pf-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; text-align: left;
+           background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-family: inherit;
+           text-decoration: none; color: inherit; box-sizing: border-box; transition: border-color .15s ease, background .15s ease; }
+.pf-item:hover { border-color: #93c5fd; background: #f8fbff; }
+.pf-thumb { width: 44px; height: 44px; flex-shrink: 0; border-radius: 8px; background: #eef2f7; color: #1e3a5f;
+            display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.pf-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.pf-thumb-file { background: #eff6ff; color: #2563eb; }
+.pf-thumb .material-symbols-outlined { font-size: 22px !important; }
+.pf-item-text { min-width: 0; display: flex; flex-direction: column; }
+.pf-item-text strong { font-size: 13px; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-item-text small { font-size: 11.5px; color: #64748b; }
+.pf-more { align-self: flex-start; background: none; border: 0; padding: 0; color: #2563eb; font-size: 12.5px;
+           font-weight: 600; cursor: pointer; font-family: inherit; }
+.pf-more:hover { text-decoration: underline; }
+
+/* preview popup: project mode */
+.pv-body.pv-project-mode { height: auto; max-height: 65vh; overflow: auto; background: #fff; display: block; }
+.pv-project { padding: 20px 24px; }
+.pv-project img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 10px; border: 1px solid #e2e8f0; margin-bottom: 14px; }
+.pv-project h3 { margin: 0 0 8px; font-size: 18px; color: #0f172a; }
+.pv-project p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-line; }
+.pv-project .pv-muted { color: #94a3b8; font-size: 13px; }
+.pv-download[hidden] { display: none !important; }

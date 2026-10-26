@@ -59,7 +59,7 @@ const RP_COLUMNS = [
 const RP_DATE_FIELD = ['projects' => 'posted', 'teams' => 'created', 'individual' => 'joined', 'proposals' => 'submitted', 'feedback' => 'date'];
 
 const RP_STATUS = [
-    'projects'   => ['open' => 'Open', 'reviewing' => 'Reviewing', 'inprogress' => 'Active', 'hold' => 'Hold', 'completed' => 'Completed', 'draft' => 'Draft', 'rejected' => 'Rejected'],
+    'projects'   => ['open' => 'Open', 'reviewing' => 'Reviewing', 'published' => 'Published', 'inprogress' => 'Active', 'hold' => 'Hold', 'completed' => 'Completed', 'draft' => 'Draft', 'rejected' => 'Rejected'],
     'teams'      => ['ontrack' => 'On Track', 'behind' => 'Behind Schedule', 'completed' => 'Completed'],
     'individual' => ['In Progress' => 'In Progress', 'Completed' => 'Completed', 'Not started' => 'Not started'],
     'proposals'  => ['pending' => 'Pending', 'accepted' => 'Accepted', 'rejected' => 'Rejected'],
@@ -88,22 +88,30 @@ function rpDate($v): string
 // ===================================================================
 function rpDataset(mysqli $conn, string $org): array
 {
+    // the team status follows the deadline / tasks / final report (Backend/TeamWorkspace.php)
+    require_once __DIR__ . '/org_db.php';
+    orgRefreshTeamStatuses($conn, $org);
+
     $d = ['projects' => [], 'teams' => [], 'individual' => [], 'proposals' => [], 'feedback' => []];
 
     // ---------- projects ----------
     foreach (rpQuery($conn,
-        "SELECT p.id, p.title, p.category, p.status, p.posted_at, p.deadline, p.members,
+        "SELECT p.id, p.title, c.category_name AS category, p.status, p.posted_at, p.deadline, p.members,
                 (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS students,
                 (SELECT COALESCE(AVG(sp.progress), 0) FROM student_projects sp WHERE sp.project_id = p.id) AS progress
-         FROM projects p WHERE p.organization_email = ? ORDER BY p.posted_at DESC", "s", [$org]) as $p) {
+         FROM projects p LEFT JOIN project_categories c ON c.category_id = p.category_id
+         WHERE p.organization_email = ? ORDER BY p.posted_at DESC", "s", [$org]) as $p) {
         $pid = (int)$p['id'];
-        $apps = rpQuery($conn, "SELECT status FROM project_applications WHERE project_id = ?", "i", [$pid]);
+        $apps = rpQuery($conn, "SELECT status FROM project_proposals WHERE project_id = ? AND status <> 'withdrawn'", "i", [$pid]);
         $teams = rpQuery($conn, "SELECT COUNT(*) AS c FROM org_teams WHERE project_id = ?", "i", [$pid]);
         $d['projects'][] = [
             'title' => $p['title'], 'category' => $p['category'] ?: 'Uncategorized',
-            // an "Active" project is shown as "Reviewing" until its team is full
-            'status_key' => ($p['status'] === 'inprogress' && (int)$p['members'] > 0 && (int)$p['students'] < (int)$p['members'])
-                            ? 'reviewing' : ($p['status'] ?: 'reviewing'),
+            // Admin's 'Active' / old 'accepted' = Published (the organization's own Active is 'inprogress')
+            // Active only when the team is full, otherwise it is shown as Published
+            'status_key' => (in_array(strtolower($p['status'] ?? ''), ['active', 'approved', 'accepted'], true)
+                             || (strtolower($p['status'] ?? '') === 'inprogress'
+                                 && (int)$p['students'] < max(1, (int)$p['members'])))
+                            ? 'published' : (strtolower($p['status'] ?? '') ?: 'reviewing'),
             'posted' => rpDate($p['posted_at']), 'deadline' => rpDate($p['deadline']),
             'needed' => (int)$p['members'], 'proposals' => count($apps),
             'accepted' => count(array_filter($apps, fn($a) => $a['status'] === 'accepted')),
@@ -115,9 +123,12 @@ function rpDataset(mysqli $conn, string $org): array
     // ---------- teams + their members (individual) ----------
     $inTeam = [];
     foreach (rpQuery($conn,
-        "SELECT t.id, t.name, t.leader_email, t.skills, t.deadline, t.status, t.created_at, p.id AS pid, p.title, p.category, p.keywords
+        "SELECT t.id, t.name, t.leader_email, t.deadline, t.status, t.created_at,
+                p.id AS pid, p.title, c.category_name AS category,
+                (SELECT GROUP_CONCAT(ps.skill_name SEPARATOR ', ') FROM project_skills ps WHERE ps.project_id = p.id) AS keywords
          FROM org_teams t JOIN projects p ON p.id = t.project_id
-         WHERE t.organization_email = ? ORDER BY t.created_at DESC", "s", [$org]) as $t) {
+         LEFT JOIN project_categories c ON c.category_id = p.category_id
+         WHERE p.organization_email = ? ORDER BY t.created_at DESC", "s", [$org]) as $t) {
         $members = rpQuery($conn,
             "SELECT s.Email, s.Name, s.University, COALESCE(NULLIF(m.role, ''), sp.role) AS role, sp.progress, sp.status AS work
              FROM org_team_members m
@@ -144,15 +155,17 @@ function rpDataset(mysqli $conn, string $org): array
             'status_key' => $t['status'] ?: 'ontrack', 'leader' => $leader, 'members' => count($members),
             'progress' => $members ? (int)round($sum / count($members)) : 0,
             'created' => rpDate($t['created_at']), 'deadline' => rpDate($t['deadline']),
-            'skills' => ($t['skills'] ?? '') !== '' ? $t['skills'] : (string)$t['keywords'],
+            'skills' => (string)$t['keywords'],   // a team's skills = its project's skills (project_skills)
             'sample' => false,
         ];
     }
 
     // students working on a project who are not in a team yet
     foreach (rpQuery($conn,
-        "SELECT s.Email, s.Name, s.University, sp.role, sp.progress, sp.status AS work, p.id AS pid, p.title, p.category, p.posted_at
+        "SELECT s.Email, s.Name, s.University, sp.role, sp.progress, sp.status AS work, p.id AS pid, p.title,
+                c.category_name AS category, p.posted_at
          FROM student_projects sp JOIN student s ON s.Email = sp.Email JOIN projects p ON p.id = sp.project_id
+         LEFT JOIN project_categories c ON c.category_id = p.category_id
          WHERE p.organization_email = ?", "s", [$org]) as $m) {
         if (isset($inTeam[strtolower($m['Email']) . '|' . $m['pid']])) continue;
         $d['individual'][] = [
@@ -167,10 +180,11 @@ function rpDataset(mysqli $conn, string $org): array
 
     // ---------- proposals ----------
     foreach (rpQuery($conn,
-        "SELECT s.Name, pa.Email, pa.status, pa.applied_at, p.title, p.category
-         FROM project_applications pa JOIN projects p ON p.id = pa.project_id
-         LEFT JOIN student s ON LOWER(s.Email) = LOWER(pa.Email)
-         WHERE p.organization_email = ?", "s", [$org]) as $a) {
+        "SELECT s.Name, pa.student_email AS Email, pa.status, pa.submitted_at AS applied_at, p.title, c.category_name AS category
+         FROM project_proposals pa JOIN projects p ON p.id = pa.project_id
+         LEFT JOIN project_categories c ON c.category_id = p.category_id
+         LEFT JOIN student s ON LOWER(s.Email) = LOWER(pa.student_email)
+         WHERE p.organization_email = ? AND pa.status <> 'withdrawn'", "s", [$org]) as $a) {
         $d['proposals'][] = [
             'student' => $a['Name'] ?: $a['Email'], 'email' => strtolower($a['Email']), 'project' => $a['title'],
             'category' => $a['category'] ?: 'Uncategorized', 'status_key' => $a['status'] ?: 'pending',
@@ -182,8 +196,13 @@ function rpDataset(mysqli $conn, string $org): array
 
     // ---------- feedback ----------
     foreach (rpQuery($conn,
-        "SELECT f.team_name, f.rating, f.technical, f.communication, f.teamwork, f.problem_solving, f.created_at, p.title, p.category
-         FROM project_feedback f JOIN projects p ON p.id = f.project_id WHERE f.organization_email = ?", "s", [$org]) as $f) {
+        "SELECT t.name AS team_name, f.rating, f.technical, f.communication, f.teamwork, f.problem_solving, f.created_at,
+                p.title, c.category_name AS category
+         FROM project_feedback f
+         JOIN org_teams t ON t.id = f.team_id
+         JOIN projects p ON p.id = t.project_id
+         LEFT JOIN project_categories c ON c.category_id = p.category_id
+         WHERE p.organization_email = ?", "s", [$org]) as $f) {
         $d['feedback'][] = [
             'project' => $f['title'], 'team' => $f['team_name'] ?: '-', 'category' => $f['category'] ?: 'Uncategorized',
             'rating' => (int)$f['rating'], 'technical' => (float)$f['technical'], 'communication' => (float)$f['communication'],
@@ -507,7 +526,7 @@ function rpCardsAndCharts(string $type, array $rows): array
 
     switch ($type) {
         case 'projects':
-            $active = count(array_filter($rows, fn($r) => in_array($r['status_key'], ['open', 'reviewing', 'inprogress'], true)));
+            $active = count(array_filter($rows, fn($r) => in_array($r['status_key'], ['open', 'reviewing', 'published', 'inprogress'], true)));
             $props  = array_sum(array_column($rows, 'proposals'));
             [$l, $v] = $top($rows, 'title', 'progress');
             $cats = rpCount($rows, 'category');

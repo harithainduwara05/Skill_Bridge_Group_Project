@@ -8,7 +8,9 @@ require_role('organization');
 // Backend (PHP + SQL) of this page
 require_once __DIR__ . "/../../Backend/Organization/manage_projects.php";
 
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/manage_projects.css">';
+// ?v=<file time> makes the browser load the NEW css every time the file changes (no old cached colours)
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/manage_projects.css?v='
+           . filemtime(__DIR__ . '/../../Assets/CSS/Organization/manage_projects.css') . '">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 ?>
@@ -86,7 +88,9 @@ include "../../Includes/dash_header.php";
 
             <select name="status" class="select-filter" onchange="this.form.submit()">
                 <option value="all" <?= (($_GET['status'] ?? 'all') == 'all') ? 'selected' : '' ?>>Status: All</option>
+                <option value="draft" <?= (($_GET['status'] ?? '') == 'draft') ? 'selected' : '' ?>>Draft</option>
                 <option value="reviewing" <?= (($_GET['status'] ?? '') == 'reviewing') ? 'selected' : '' ?>>Reviewing</option>
+                <option value="published" <?= (($_GET['status'] ?? '') == 'published') ? 'selected' : '' ?>>Published</option>
                 <option value="inprogress" <?= (($_GET['status'] ?? '') == 'inprogress') ? 'selected' : '' ?>>Active</option>
                 <option value="hold" <?= (($_GET['status'] ?? '') == 'hold') ? 'selected' : '' ?>>Hold</option>
                 <option value="completed" <?= (($_GET['status'] ?? '') == 'completed') ? 'selected' : '' ?>>Completed</option>
@@ -175,7 +179,7 @@ include "../../Includes/dash_header.php";
                             <td><?= htmlspecialchars(formatDeadline($p['deadline'])) ?></td>
                             <td>
                                 <span class="badge-status <?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(statusLabel($p['status'])) ?></span>
-                                <?php if ($p['status'] === 'hold' && !empty($p['hold_resolved_at'])): ?>
+                                <?php if ($p['status'] === 'hold' && !empty($p['hold_response'])): /* the organization already answered the Admin */ ?>
                                     <div class="hold-requested"><span class="material-symbols-outlined">hourglass_top</span> Activation requested</div>
                                 <?php endif; ?>
                             </td>
@@ -253,7 +257,7 @@ include "../../Includes/dash_header.php";
                     <div class="project-management-card-top">
                         <span class="category-tag"><?= htmlspecialchars($p['category']) ?></span>
                         <span class="badge-status <?= htmlspecialchars($p['status']) ?>"><?= htmlspecialchars(statusLabel($p['status'])) ?></span>
-                        <?php if ($p['status'] === 'hold' && !empty($p['hold_resolved_at'])): ?>
+                        <?php if ($p['status'] === 'hold' && !empty($p['hold_response'])): /* the organization already answered the Admin */ ?>
                             <span class="hold-requested"><span class="material-symbols-outlined">hourglass_top</span> Activation requested</span>
                         <?php endif; ?>
                     </div>
@@ -431,18 +435,19 @@ include "../../Includes/dash_header.php";
                 'expected_outcomes'   => $p['expected_outcomes'] ?? '',
                 'deadline'    => $dlTs ? date('Y-m-d', $dlTs) : '',
                 'members'     => (int)($p['members'] ?? 1),
+                'in_team'     => (int)($teamCounts[(int)$p['id']] ?? 0),
                 'duration'    => $hm[0] ?? '',
                 'reason'      => $p['hold_reason'] ?? '',
-                'fields'      => array_values(array_filter(array_map('trim', explode(',', $p['hold_fields'] ?? '')))),
                 'held_at'     => !empty($p['held_at']) ? date('M d, Y · h:i A', strtotime($p['held_at'])) : '',
-                'requested_at'=> !empty($p['hold_resolved_at']) ? date('M d, Y · h:i A', strtotime($p['hold_resolved_at'])) : '',
+                'requested_at'=> !empty($p['hold_response']) ? 'sent' : '',   // the organization already answered the Admin
                 'response'    => $p['hold_response'] ?? '',
             ];
         }
-        $holdCategories = ['Web Development', 'Mobile Development', 'AI / Machine Learning', 'Data Science', 'UI/UX Design', 'Cloud & DevOps', 'Cybersecurity', 'Other'];
+        $holdCategories = orgCategories($conn);   // from project_categories (same list as Post Project)
     ?>
     <div class="confirm-modal-overlay" id="holdModal">
-        <form class="hm-modal" method="post" action="manage_projects.php" role="dialog" aria-modal="true" aria-labelledby="hmTitle">
+        <!-- novalidate: the steps are checked by holdValidate() below (messages under the fields), and again on the server -->
+        <form class="hm-modal" method="post" action="manage_projects.php" role="dialog" aria-modal="true" aria-labelledby="hmTitle" novalidate>
             <input type="hidden" name="action" value="resolve_hold">
             <input type="hidden" name="project_id" id="hmProjectId">
 
@@ -487,8 +492,7 @@ include "../../Includes/dash_header.php";
                         </div>
                     </div>
 
-                    <div class="hm-subtitle">Needs your attention</div>
-                    <div class="hm-flag-list" id="hmFlagList"></div>
+                    <p class="hm-hint hm-next"><span class="material-symbols-outlined">info</span> Read the reason, then click <b>Next</b> to fix the project.</p>
                 </section>
 
                 <!-- STEP 2: fix the fields -->
@@ -498,60 +502,71 @@ include "../../Includes/dash_header.php";
                         <p id="hmReasonMini"></p>
                     </details>
 
-                    <p class="hm-hint"><span class="material-symbols-outlined">info</span> Fill in the fields marked <span class="hm-flag-tag">Flagged</span>. Other fields are optional – leave them empty to keep them as they are.</p>
+                    <p class="hm-hint"><span class="material-symbols-outlined">info</span> <span id="hmHintText">The current details are filled in. Change only what the Admin asked you to fix.</span></p>
+                    <p class="hm-req-note">Fields marked <span class="req">*</span> are required, because the project will be published again.</p>
 
                     <div class="hm-grid-2">
                         <div class="hm-field" data-field="title">
-                            <label class="form-label">Project Title</label>
-                            <input type="text" name="title" class="form-input">
+                            <label class="form-label">Project Title <span class="req">*</span></label>
+                            <input type="text" name="title" class="form-input" maxlength="100">
+                            <div class="field-error" data-for="title"></div>
                         </div>
                         <div class="hm-field" data-field="category">
-                            <label class="form-label">Category</label>
+                            <label class="form-label">Category <span class="req">*</span></label>
                             <select name="category" class="form-select">
-                                <option value="">Keep current category</option>
+                                <option value="">Select category</option>
                                 <?php foreach ($holdCategories as $cat): ?>
                                     <option value="<?= htmlspecialchars($cat) ?>"><?= htmlspecialchars($cat) ?></option>
                                 <?php endforeach; ?>
                             </select>
+                            <div class="field-error" data-for="category"></div>
                         </div>
                     </div>
 
                     <div class="hm-field" data-field="keywords">
-                        <label class="form-label">Required Skills / Keywords</label>
+                        <label class="form-label">Required Skills / Keywords <span class="req">*</span></label>
                         <div class="chip-input-box hm-chip-box" id="hmChipBox">
                             <input type="text" id="hmChipInput" class="hm-main-input" placeholder="Type a skill and press Enter (e.g. Laravel)">
                         </div>
                         <input type="hidden" name="keywords" id="hmKeywords">
-                        <div class="hm-field-note">Add as many skills as you need. Press <b>Enter</b> or <b>,</b> after each one.</div>
+                        <div class="hm-field-note">Up to 10 skills. Press <b>Enter</b> or <b>,</b> after each one.</div>
+                        <div class="field-error" data-for="keywords"></div>
                     </div>
 
                     <div class="hm-field" data-field="description">
-                        <label class="form-label">Description</label>
-                        <textarea name="description" class="form-textarea" rows="4"></textarea>
+                        <label class="form-label">Description <span class="req">*</span></label>
+                        <textarea name="description" class="form-textarea" rows="4" maxlength="3000"></textarea>
+                        <div class="hm-field-note">At least 50 characters.</div>
+                        <div class="field-error" data-for="description"></div>
                     </div>
 
                     <div class="hm-field" data-field="learning_objectives">
                         <label class="form-label">Learning Objectives</label>
-                        <textarea name="learning_objectives" class="form-textarea" rows="3"></textarea>
+                        <textarea name="learning_objectives" class="form-textarea" rows="3" maxlength="1500"></textarea>
+                        <div class="field-error" data-for="learning_objectives"></div>
                     </div>
 
                     <div class="hm-field" data-field="expected_outcomes">
                         <label class="form-label">Expected Outcomes</label>
-                        <textarea name="expected_outcomes" class="form-textarea" rows="3"></textarea>
+                        <textarea name="expected_outcomes" class="form-textarea" rows="3" maxlength="1500"></textarea>
+                        <div class="field-error" data-for="expected_outcomes"></div>
                     </div>
 
                     <div class="hm-grid-3">
                         <div class="hm-field" data-field="deadline">
-                            <label class="form-label">Application Deadline</label>
+                            <label class="form-label">Application Deadline <span class="req">*</span></label>
                             <input type="date" name="deadline" class="form-input">
+                            <div class="field-error" data-for="deadline"></div>
                         </div>
                         <div class="hm-field" data-field="members">
-                            <label class="form-label">Students Required</label>
-                            <input type="number" min="1" name="members" class="form-input">
+                            <label class="form-label">Students Required <span class="req">*</span></label>
+                            <input type="number" min="1" max="10" name="members" class="form-input">
+                            <div class="field-error" data-for="members"></div>
                         </div>
                         <div class="hm-field" data-field="duration">
-                            <label class="form-label">Duration (Weeks)</label>
-                            <input type="number" min="1" name="duration_weeks" class="form-input">
+                            <label class="form-label">Duration (Weeks) <span class="req">*</span></label>
+                            <input type="number" min="1" max="52" name="duration_weeks" class="form-input">
+                            <div class="field-error" data-for="duration_weeks"></div>
                         </div>
                     </div>
                 </section>
@@ -570,20 +585,28 @@ include "../../Includes/dash_header.php";
                         </div>
                         <span class="material-symbols-outlined hm-flow-arrow">arrow_forward</span>
                         <div class="hm-flow-item">
-                            <span class="badge-status inprogress">Active</span>
+                            <span class="badge-status published">Published</span>
                             <small>Set by the Admin</small>
                         </div>
                     </div>
 
                     <div class="hm-field">
-                        <label class="form-label">Message to Admin *</label>
-                        <textarea name="hold_response" class="form-textarea" rows="4" required
+                        <label class="form-label">Message to Admin <span class="req">*</span></label>
+                        <textarea name="hold_response" class="form-textarea" rows="4" maxlength="500"
                                   placeholder="Explain what you fixed, e.g. 'Added a detailed description, moved the deadline to Nov 15 and reduced the team to 4 students.'"></textarea>
+                        <div class="hm-field-note">10 to 500 characters.</div>
+                        <div class="field-error" data-for="hold_response"></div>
+                    </div>
+
+                    <!-- shown when the organization tries to send without changing anything -->
+                    <div class="hm-nochange" id="hmNoChange" hidden>
+                        <span class="material-symbols-outlined">warning</span>
+                        <span>You did not change any project details. Go <b>Back</b> to fix the project, or click <b>Send Anyway</b> if you only want to reply to the Admin.</span>
                     </div>
 
                     <div class="hm-notify-note">
                         <span class="material-symbols-outlined">info</span>
-                        <span>Only the Admin can activate this project. It stays <b>On Hold</b> until the Admin approves it. After that you can change its status as usual.</span>
+                        <span>Only the Admin can activate this project. It stays <b>On Hold</b> until the Admin approves it. Then it becomes <b>Published</b> and students can see it again.</span>
                     </div>
                 </section>
             </div>
@@ -598,7 +621,7 @@ include "../../Includes/dash_header.php";
                         Next <span class="material-symbols-outlined">arrow_forward</span>
                     </button>
                     <button type="submit" class="hm-btn primary" id="hmSubmit" hidden>
-                        <span class="material-symbols-outlined">send</span> Send Activation Request
+                        <span class="material-symbols-outlined">send</span> <span id="hmSubmitText">Send Activation Request</span>
                     </button>
                 </div>
             </div>
@@ -619,418 +642,17 @@ include "../../Includes/dash_header.php";
 
 </main>
 
-<script>
-    const PROJECT_VIEW_DATA = <?= json_encode($projectViewData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
 
-    function pvEl(tag, cls, text) {
-        const el = document.createElement(tag);
-        if (cls) el.className = cls;
-        if (text !== undefined) el.textContent = text;
-        return el;
-    }
 
-    function openProjectView(id) {
-        const d = PROJECT_VIEW_DATA[id];
-        if (!d) return;
-
-        document.getElementById('pvTitle').textContent = d.title;
-        document.getElementById('pvCategory').textContent = d.category;
-        const STATUS_LABELS = { reviewing: 'Reviewing', inprogress: 'Active', hold: 'Hold', completed: 'Completed', draft: 'Draft' };
-        const st = document.getElementById('pvStatus');
-        st.className = 'badge-status ' + d.status;
-        st.textContent = d.status ? (STATUS_LABELS[d.status] || (d.status.charAt(0).toUpperCase() + d.status.slice(1))) : '';
-
-        // key facts (empty ones are skipped)
-        const info = document.getElementById('pvInfo');
-        info.innerHTML = '';
-        [
-            ['Posted', d.posted],
-            ['Deadline', d.deadline],
-            ['Applicants', d.applicants],
-            ['Assigned Team', d.assigned > 0 ? ('Assigned (' + d.assigned + '/' + d.required + ')') : 'Not Assigned'],
-            ['Visibility', d.visibility],
-            ['Duration', d.duration],
-            ['Students Required', d.members],
-            ['Preferred Year', d.year],
-            ['Difficulty', d.difficulty]
-        ].forEach(function (row) {
-            if (row[1] === '' || row[1] === null || row[1] === undefined) return;
-            const box = pvEl('div');
-            box.appendChild(pvEl('div', 'pv-info-label', row[0]));
-            box.appendChild(pvEl('div', 'pv-info-value', String(row[1])));
-            info.appendChild(box);
-        });
-
-        // text sections (empty ones are skipped)
-        const sections = document.getElementById('pvSections');
-        sections.innerHTML = '';
-        [['Description', d.description], ['Learning Objectives', d.objectives], ['Expected Outcomes', d.outcomes]].forEach(function (sec) {
-            if (!sec[1]) return;
-            const box = pvEl('div', 'pv-section');
-            box.appendChild(pvEl('h4', '', sec[0]));
-            box.appendChild(pvEl('p', '', sec[1]));
-            sections.appendChild(box);
-        });
-        if (d.keywords) {
-            const box = pvEl('div', 'pv-section');
-            box.appendChild(pvEl('h4', '', 'Skills / Keywords'));
-            const chips = pvEl('div', 'pv-chips');
-            d.keywords.split(',').forEach(function (k) {
-                k = k.trim();
-                if (k) chips.appendChild(pvEl('span', 'pv-chip', k));
-            });
-            box.appendChild(chips);
-            sections.appendChild(box);
-        }
-
-        const pvEdit = document.getElementById('pvEdit');
-        pvEdit.href = 'edit_project.php?id=' + encodeURIComponent(d.id);
-        pvEdit.style.display = (d.status === 'hold' || d.status === 'rejected') ? 'none' : '';
-        document.getElementById('projectViewModal').classList.add('open');
-    }
-
-    function closeProjectView() {
-        document.getElementById('projectViewModal').classList.remove('open');
-    }
-
-    document.getElementById('projectViewModal').addEventListener('click', function (e) {
-        if (e.target === this) closeProjectView();
-    });
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeProjectView();
-    });
-</script>
 
 <script>
-    let pendingDeleteId = null;
-
-    function openDeleteModal(id, title, blockReason) {
-        // Not allowed -> show the warning instead of the delete confirmation
-        if (blockReason) {
-            showBlocked(
-                'You can’t delete this project', title, blockReason,
-                'Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.'
-            );
-            return;
-        }
-        pendingDeleteId = id;
-        document.getElementById('deleteProjectTitle').textContent = title;
-        document.getElementById('deleteConfirmModal').classList.add('open');
-    }
-
-    function closeDeleteModal() {
-        pendingDeleteId = null;
-        document.getElementById('deleteConfirmModal').classList.remove('open');
-    }
-
-    function confirmDelete() {
-        if (pendingDeleteId !== null) {
-            window.location.href = 'manage_projects.php?delete=' + pendingDeleteId;
-        }
-    }
-
-    document.getElementById('deleteConfirmModal').addEventListener('click', function (e) {
-        if (e.target === this) closeDeleteModal();
-    });
-
-    // Shared warning popup (used for blocked Delete and blocked Edit)
-    function showBlocked(heading, title, reason, ruleHtml, holdId) {
-        document.getElementById('blockedHeading').textContent = heading;
-        document.getElementById('blockedProjectTitle').textContent = title;
-        document.getElementById('blockedReason').textContent = reason;
-        document.getElementById('blockedRule').innerHTML = ruleHtml;
-
-        const holdBtn = document.getElementById('blockedHoldBtn');
-        holdBtn.hidden = !holdId;
-        holdBtn.onclick = holdId ? function () { closeDeleteBlocked(); openHoldModal(holdId); } : null;
-
-        document.getElementById('deleteBlockedModal').classList.add('open');
-    }
-
-    function openEditBlocked(title, status, holdId) {
-        if (status === 'hold') {
-            showBlocked(
-                'You can’t edit this project', title,
-                'This project is On Hold by the Admin, so it can’t be edited from here.',
-                'Use the <b>hold icon</b> in the Actions column to see the Admin’s reason, fix the project and send it back.',
-                holdId
-            );
-        } else {
-            showBlocked(
-                'You can’t edit this project', title,
-                'This project was Rejected by the Admin, so it can’t be edited.',
-                'Rejected projects can’t be changed. You can delete it and post a new project instead.'
-            );
-        }
-    }
-
-    function closeDeleteBlocked() {
-        document.getElementById('deleteBlockedModal').classList.remove('open');
-    }
-    document.getElementById('deleteBlockedModal').addEventListener('click', function (e) {
-        if (e.target === this) closeDeleteBlocked();
-    });
-</script>
-
-<script>
-    /* ===================== ON HOLD MODAL ===================== */
-    const HOLD_DATA = <?= json_encode($holdData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>;
-    const HOLD_FIELD_LABELS = {
-        title: ['Project Title', 'title'],
-        category: ['Category', 'category'],
-        keywords: ['Skills / Keywords', 'sell'],
-        description: ['Description', 'description'],
-        learning_objectives: ['Learning Objectives', 'school'],
-        expected_outcomes: ['Expected Outcomes', 'flag'],
-        deadline: ['Application Deadline', 'event'],
-        members: ['Students Required', 'group'],
-        duration: ['Duration', 'schedule']
+    // Values from PHP (database) used by Assets/JS/Organization/manage_projects.js
+    const ORG_DATA = {
+        PROJECT_VIEW_DATA: <?= json_encode($projectViewData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>,
+        HOLD_DATA: <?= json_encode($holdData, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>,
     };
-
-    const holdModal = document.getElementById('holdModal');
-    const holdForm  = holdModal.querySelector('form');
-    let holdCurrentStep = 1;
-    // form.elements[...] is used because inputs named "title"/"action" clash with form properties
-    const hf = function (name) { return holdForm.elements.namedItem(name); };
-
-    /* ---- Skills chips in the Fix step (same idea as Post Project) ---- */
-    let hmSkills = [];
-    const hmChipBox   = document.getElementById('hmChipBox');
-    const hmChipInput = document.getElementById('hmChipInput');
-
-    function hmRenderSkills() {
-        hmChipBox.querySelectorAll('.chip').forEach(function (c) { c.remove(); });
-        hmSkills.forEach(function (word, idx) {
-            const chip = document.createElement('span');
-            chip.className = 'chip';
-            chip.appendChild(document.createTextNode(word + ' '));
-            const x = document.createElement('button');
-            x.type = 'button';
-            x.className = 'chip-remove';
-            x.innerHTML = '&times;';
-            x.addEventListener('click', function (e) {
-                e.stopPropagation();
-                hmSkills.splice(idx, 1);
-                hmRenderSkills();
-            });
-            chip.appendChild(x);
-            hmChipBox.insertBefore(chip, hmChipInput);
-        });
-        document.getElementById('hmKeywords').value = hmSkills.join(', ');
-        hmChipInput.placeholder = hmSkills.length ? 'Add another skill…' : 'Type a skill and press Enter (e.g. Laravel)';
-        hmChipInput.setCustomValidity('');
-    }
-    function hmSetSkills(list) { hmSkills = list.slice(); hmRenderSkills(); }
-    function hmAddSkill(raw) {
-        (raw || '').split(',').forEach(function (part) {
-            const val = part.trim();
-            const exists = hmSkills.some(function (s) { return s.toLowerCase() === val.toLowerCase(); });
-            if (val && !exists) hmSkills.push(val);
-        });
-        hmChipInput.value = '';
-        hmRenderSkills();
-    }
-
-    hmChipInput.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter' || e.key === ',') {
-            e.preventDefault();               // Enter must not submit the form
-            hmAddSkill(hmChipInput.value);
-        } else if (e.key === 'Backspace' && hmChipInput.value === '' && hmSkills.length) {
-            hmSkills.pop();
-            hmRenderSkills();
-        }
-    });
-    hmChipInput.addEventListener('blur', function () { hmAddSkill(hmChipInput.value); });
-    hmChipBox.addEventListener('click', function () { hmChipInput.focus(); });
-
-    function openHoldModal(id) {
-        const d = HOLD_DATA[id];
-        if (!d) return;
-
-        holdForm.reset();
-        document.getElementById('hmProjectId').value = d.id;
-        document.getElementById('hmTitle').textContent = d.title;
-        document.getElementById('hmReason').textContent = d.reason || 'No reason was given by the Admin.';
-        document.getElementById('hmHeldAt').textContent = d.held_at ? 'On ' + d.held_at : '';
-        document.getElementById('hmPending').hidden = !d.requested_at;
-        document.getElementById('hmPendingDate').textContent = d.requested_at ? '· ' + d.requested_at : '';
-
-        // Step 1: chips for the flagged fields
-        const list = document.getElementById('hmFlagList');
-        list.innerHTML = '';
-        if (d.fields.length === 0) {
-            list.innerHTML = '<span class="hm-empty">The Admin did not mark specific fields. Please check the whole project.</span>';
-        }
-        d.fields.forEach(function (f) {
-            const info = HOLD_FIELD_LABELS[f];
-            if (!info) return;
-            const chip = document.createElement('span');
-            chip.className = 'hm-flag-chip';
-            chip.innerHTML = '<span class="material-symbols-outlined">' + info[1] + '</span>';
-            chip.appendChild(document.createTextNode(info[0]));
-            list.appendChild(chip);
-        });
-
-        // Step 2: a clean, EMPTY form – the organization types the fixes.
-        // Placeholders are only examples (no old values are shown).
-        const EXAMPLES = {
-            title: 'e.g. Smart Clinic Queue System',
-            description: 'Describe the project again, following the Admin’s reason…',
-            learning_objectives: 'What will students learn?',
-            expected_outcomes: 'What will be delivered at the end?',
-            members: 'e.g. 4',
-            duration_weeks: 'e.g. 12'
-        };
-        Object.keys(EXAMPLES).forEach(function (name) {
-            hf(name).value = '';
-            hf(name).placeholder = EXAMPLES[name];
-        });
-        hf('deadline').value = '';
-        hf('category').value = '';
-        hf('hold_response').value = '';
-        hmSetSkills([]);
-
-        // Short copy of the Admin's reason, so it can be read while typing
-        document.getElementById('hmReasonMini').textContent = d.reason || '';
-        document.getElementById('hmReasonToggle').open = false;
-
-        // Flagged fields: highlight + must be filled
-        holdModal.querySelectorAll('.hm-field[data-field]').forEach(function (el) {
-            const flagged = d.fields.indexOf(el.dataset.field) !== -1;
-            el.classList.toggle('flagged', flagged);
-
-            const label = el.querySelector('.form-label');
-            const oldTag = label.querySelector('.hm-flag-tag');
-            if (oldTag) oldTag.remove();
-
-            const mainInput = el.querySelector('.hm-main-input') || el.querySelector('input, select, textarea');
-            mainInput.required = flagged && el.dataset.field !== 'keywords';
-            el.dataset.required = flagged ? '1' : '';
-
-            if (flagged) {
-                const tag = document.createElement('span');
-                tag.className = 'hm-flag-tag';
-                tag.textContent = 'Flagged';
-                label.appendChild(tag);
-            }
-        });
-
-        showHoldStep(1);
-        holdModal.classList.add('open');
-    }
-
-    function closeHoldModal() {
-        holdModal.classList.remove('open');
-    }
-
-    function showHoldStep(step) {
-        holdCurrentStep = step;
-        holdModal.querySelectorAll('.hm-panel').forEach(function (p) {
-            p.hidden = Number(p.dataset.panel) !== step;
-        });
-        holdModal.querySelectorAll('.hm-step').forEach(function (s) {
-            const n = Number(s.dataset.step);
-            s.classList.toggle('active', n === step);
-            s.classList.toggle('done', n < step);
-        });
-        document.getElementById('hmBack').style.visibility = step === 1 ? 'hidden' : 'visible';
-        document.getElementById('hmNext').hidden = step === 3;
-        document.getElementById('hmSubmit').hidden = step !== 3;
-        holdModal.querySelector('.hm-body').scrollTop = 0;
-    }
-
-    function holdStep(dir) {
-        const next = holdCurrentStep + dir;
-        if (next < 1 || next > 3) return;
-
-        // Don't leave step 2 with a required field empty
-        if (dir > 0 && holdCurrentStep === 2) {
-            hmAddSkill(document.getElementById('hmChipInput').value);   // keep a half-typed skill
-            const skillsField = holdModal.querySelector('.hm-field[data-field="keywords"]');
-            const chipInput = document.getElementById('hmChipInput');
-            chipInput.setCustomValidity(
-                skillsField.dataset.required && hmSkills.length === 0 ? 'Please add at least one skill.' : ''
-            );
-            const panel = holdModal.querySelector('[data-panel="2"]');
-            const invalid = Array.from(panel.querySelectorAll('input, select, textarea')).find(function (el) {
-                return !el.checkValidity();
-            });
-            if (invalid) { invalid.reportValidity(); return; }
-        }
-        showHoldStep(next);
-    }
-
-    holdModal.addEventListener('click', function (e) {
-        if (e.target === holdModal) closeHoldModal();
-    });
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && holdModal.classList.contains('open')) closeHoldModal();
-    });
-
-    // Hide the success / error toast after a few seconds
-    (function () {
-        const toast = document.getElementById('holdFlash');
-        if (!toast) return;
-        // remove ?updated / ?deleted ... from the address bar so a refresh doesn't show it again
-        try {
-            const url = new URL(location.href);
-            ['updated', 'deleted', 'delete_blocked', 'hold_resolved', 'hold_error'].forEach(k => url.searchParams.delete(k));
-            history.replaceState(null, '', url.pathname + (url.search || '') + url.hash);
-        } catch (e) {}
-        setTimeout(function () {
-            toast.style.transition = 'opacity .4s ease, transform .4s ease';
-            toast.style.opacity = '0';
-            toast.style.transform = 'translateX(20px)';
-            setTimeout(function () { toast.remove(); }, 400);
-        }, 3500);
-    })();
 </script>
+<script src="../../Assets/JS/Organization/manage_projects.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/Organization/manage_projects.js') ?>"></script>
 
-<script>
-(function () {
-    const listView = document.getElementById('projectListView');
-    const gridView = document.getElementById('projectGridView');
-    const buttons = document.querySelectorAll('.view-toggle-group button[data-view]');
-
-    if (!listView || !gridView || !buttons.length) return;
-
-    function setView(view, save = true) {
-        const isGrid = view === 'grid';
-        listView.hidden = isGrid;
-        gridView.hidden = !isGrid;
-
-        buttons.forEach(button => {
-            const active = button.dataset.view === view;
-            button.classList.toggle('active', active);
-            button.setAttribute('aria-pressed', active ? 'true' : 'false');
-        });
-
-        if (save) {
-            try { localStorage.setItem('skillbridge-project-view', view); } catch (e) {}
-        }
-    }
-
-    buttons.forEach(button => {
-        button.addEventListener('click', function () {
-            setView(this.dataset.view);
-        });
-    });
-
-    let savedView = 'list';
-    try {
-        savedView = localStorage.getItem('skillbridge-project-view') || 'list';
-    } catch (e) {}
-    setView(savedView, false);
-})();
-</script>
-
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Privacy Policy</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Terms of Service</a>
-    </div>
-</footer>
 
 <?php include "../../Includes/dash_footer.php"; ?>

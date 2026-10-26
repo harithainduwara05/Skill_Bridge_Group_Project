@@ -220,3 +220,13 @@
 @media (max-width: 1100px) { .fb-stats { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 900px)  { .fb-body { grid-template-columns: 1fr; } }
 @media (max-width: 600px)  { .fb-wrap { padding: 12px 16px 24px; } .fb-head h1 { font-size: 24px; } .fb-stats { grid-template-columns: 1fr; } .fb-top { flex-direction: column; } .fb-rating { text-align: left; } .fb-rating .stars { justify-content: flex-start; } }
+
+/* note / fields / submit button are switched on and off with the hidden attribute */
+#fbNoProjects[hidden], #fbFields[hidden], #fbSubmitBtn[hidden] { display: none !important; }
+.fb-note .material-symbols-outlined { flex-shrink: 0; }
+.fb-foot { gap: 10px; }
+
+/* "Feedback is final" note at the end of the form */
+.fb-final-note { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: 10px;
+                 background: #f1f5f9; border: 1px solid #e2e8f0; color: #334155; font-size: 13px; line-height: 1.5; }
+.fb-final-note .material-symbols-outlined { font-size: 18px; color: #1e3a5f; flex-shrink: 0; }

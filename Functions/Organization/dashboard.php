@@ -8,7 +8,9 @@ require_role('organization');
 // Backend (PHP + SQL) of this page
 require_once __DIR__ . "/../../Backend/Organization/dashboard.php";
 
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/dashboard.css">';
+// ?v=<file time> makes the browser load the NEW css every time the file changes (no old cached colours)
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/dashboard.css?v='
+           . filemtime(__DIR__ . '/../../Assets/CSS/Organization/dashboard.css') . '">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 
@@ -168,13 +170,5 @@ include "../../Includes/dash_header.php";
 
 </main>
 
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Privacy Policy</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Terms of Service</a>
-    </div>
-</footer>
 
 <?php include "../../Includes/dash_footer.php"; ?>
