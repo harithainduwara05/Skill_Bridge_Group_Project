@@ -386,6 +386,56 @@
     border-color:#082544;
 }
 
+/* Compact Project Toast Notifications */
+.project-toast-stack,
+.project-toast-container {
+    position: fixed !important;
+    top: 85px !important;
+    right: 24px !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.project-toast,
+.project-toast-stack > *,
+.project-toast-container > * {
+    width: max-content !important;
+    min-width: 250px;
+    max-width: 340px !important;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    font-size: 14px;
+    line-height: 1.5;
+    pointer-events: auto;
+}
+
+@media (max-width: 480px) {
+    .project-toast-stack,
+    .project-toast-container {
+        top: 75px !important;
+        right: 12px !important;
+        left: 12px !important;
+        align-items: stretch;
+    }
+
+    .project-toast,
+    .project-toast-stack > *,
+    .project-toast-container > * {
+        width: 100% !important;
+        min-width: 0;
+        max-width: none !important;
+    }
+}
+
 
 /* ANIMATION */
 
@@ -460,4 +510,37 @@
     width:100%;
 }
 
+}
+/* Database-backed controls and shared feedback */
+.project-search { min-width: 220px; padding: 0 12px; }
+.project-apply-filter { border: 0; cursor: pointer; height: 38px; }
+.project-alert, .project-empty { background: #fff; padding: 20px; border-radius: 12px; color: #344054; margin: 16px 0; }
+.project-alert { border: 1px solid #fecaca; color: #991b1b; }
+.project-saved-label { display: inline-flex; align-items: center; gap: 7px; color: #0b3a66; font-size: 13px; font-weight: 700; }
+.project-toast { position: fixed; top: 88px; right: 22px; z-index: 10020; display: flex; align-items: center; gap: 14px; max-width: min(380px, calc(100vw - 28px)); padding: 13px 16px; border: 1px solid #a7f3d0; border-radius: 12px; background: #fff; color: #065f46; box-shadow: 0 8px 24px #0002; font-size: 14px; }
+.project-toast.error { border-color: #fecaca; color: #991b1b; }
+.project-toast button { margin-left: auto; border: 0; background: none; color: inherit; cursor: pointer; font-size: 20px; }
+.projects-grid .project-card { min-width: 0; }
+.projects-grid .project-actions { flex-wrap: wrap; }
+.project-toolbar .filter-group { flex-wrap: wrap; }
+.project-toolbar .toolbar-right { display: flex; gap: 10px; align-items: center; }
+.pagination a { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; height: 36px; padding: 5px 10px; color: #082544; text-decoration: none; border-radius: 9px; background: white; }
+.pagination a.active { color: white; background: #082544; }
+@media (max-width: 780px) { .project-toolbar { flex-wrap: wrap; gap: 12px; } .project-search { min-width: 0; width: 100%; } .project-toolbar .filter-group { width: 100%; } }
+
+/* Compact auto-dismissing toast for all Projects pages */
+.project-toast {
+    width: max-content;
+    min-width: 0;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.45;
+}
+.project-toast span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.project-toast button {
+    flex-shrink: 0;
 }
