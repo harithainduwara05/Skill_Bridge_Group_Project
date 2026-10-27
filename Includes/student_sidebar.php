@@ -1,5 +1,21 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+$studentUnreadNotifications = 0;
+require_once __DIR__ . '/../Config/db.php';
+require_once __DIR__ . '/../Session/Session.php';
+$sidebarUser = current_user();
+$sidebarEmail = $sidebarUser['Email'] ?? $sidebarUser['email'] ?? null;
+if (is_string($sidebarEmail) && $sidebarEmail !== '' && isset($conn)) {
+    try {
+        $unreadStmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE Email = ? AND status = 'Unread'");
+        $unreadStmt->bind_param('s', $sidebarEmail);
+        $unreadStmt->execute();
+        $studentUnreadNotifications = (int) ($unreadStmt->get_result()->fetch_row()[0] ?? 0);
+        $unreadStmt->close();
+    } catch (Throwable $exception) {
+        error_log('Student notification sidebar count: ' . $exception->getMessage());
+    }
+}
 require_once __DIR__ . "/../Functions/Student/check_student_access.php";
 ?>
 <!DOCTYPE html>
@@ -14,6 +30,9 @@ require_once __DIR__ . "/../Functions/Student/check_student_access.php";
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../../Assets/CSS/dashboard.css">
     <?= $extra_css ?? '' ?>
+    <style>
+        .sidebar .student-nav-unread-badge { margin-left: auto; padding: 2px 7px; border-radius: 999px; background: #dc2626; color: #fff; font-size: 11px; font-weight: 700; }
+    </style>
 </head>
 <body>
 
@@ -95,6 +114,9 @@ require_once __DIR__ . "/../Functions/Student/check_student_access.php";
                 <span class="material-symbols-outlined">notifications</span>
             </span>
             <span class="nav-text">Notifications</span>
+            <?php if ($studentUnreadNotifications > 0): ?>
+                <span class="student-nav-unread-badge" aria-label="<?= $studentUnreadNotifications ?> unread notifications"><?= $studentUnreadNotifications > 99 ? '99+' : $studentUnreadNotifications ?></span>
+            <?php endif; ?>
         </a>
 
         <a href="settings.php" class="<?= in_array($currentPage, ['settings.php', 'profile.php']) ? 'active' : '' ?>" title="Settings">
@@ -112,4 +134,3 @@ require_once __DIR__ . "/../Functions/Student/check_student_access.php";
 </aside>
 
 <div class="main-wrapper">
-
