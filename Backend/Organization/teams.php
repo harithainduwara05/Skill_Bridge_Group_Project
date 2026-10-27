@@ -1,6 +1,8 @@
 <?php
 /*
-| Organization backend - Teams: create / edit team, team status, extend deadline (+ demo teams)
+| Organization backend - Teams: create / edit team, extend deadline, review the final report (+ demo teams)
+| Team status is never set by hand: twRefreshStatus() / orgRefreshTeamStatuses() work it out
+| (Completed only when the organization accepts the team's final report).
 | Used by: Functions/Organization/teams.php
 | (the page already loaded Config/db.php + Session/Session.php and checked the role)
 */
@@ -8,8 +10,15 @@
 $user = current_user();
 $organization_email = $user['email'];
 
-require_once __DIR__ . "/team_schema.php";
-tmEnsureSchema($conn);
+require_once __DIR__ . "/org_db.php";
+
+// Kanban tasks + team chat are shared with the students of the team (Backend/TeamWorkspace.php).
+// The workspace on this page sends fetch() requests with ws_action -> answered here as JSON.
+require_once __DIR__ . "/../TeamWorkspace.php";
+twHandleRequest($conn, $user);
+
+// a deadline may have passed since the last visit -> save the correct status of every team first
+orgRefreshTeamStatuses($conn, $organization_email);
 
 function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = []): array
 {
@@ -27,16 +36,15 @@ function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = 
 // ---------------------------------------------------------------
 // Data for "Create New Team"
 //   - only this organization's projects that can have a team
-//     (Open / Reviewing / Active – not Draft, On Hold, Rejected or Completed)
+//     (Open / Reviewing / Published / Active – not Draft, On Hold, Rejected or Completed)
 //   - for each project, only the students whose PROPOSAL WAS ACCEPTED
-//     (project_applications.status = 'accepted', set from Proposals page)
+//     (project_proposals.status = 'accepted', set from Proposals page)
 //   - a student who is already in a team of that project is shown but locked
 // ---------------------------------------------------------------
 $tmProjects = tmFetch($conn,
-    "SELECT id, title, members, deadline, keywords
-     FROM projects
-     WHERE organization_email = ? AND status IN ('open', 'reviewing', 'inprogress')
-     ORDER BY posted_at DESC", "s", [$organization_email]);
+    ORG_PROJECT_SELECT . " WHERE p.organization_email = ?
+       AND p.status IN ('open', 'reviewing', 'published', 'accepted', 'active', 'inprogress')
+     ORDER BY p.posted_at DESC", "s", [$organization_email]);
 
 $tmCandidates = [];   // project_id => [ {email, name, sub, skills[], team, team_id} ]
 foreach ($tmProjects as $pr) {
@@ -47,7 +55,7 @@ foreach ($tmProjects as $pr) {
     foreach (tmFetch($conn,
         "SELECT LOWER(m.Email) AS email, t.id, t.name
          FROM org_team_members m JOIN org_teams t ON t.id = m.team_id
-         WHERE t.project_id = ? AND t.organization_email = ?", "is", [$pid, $organization_email]) as $r) {
+         WHERE t.project_id = ?", "i", [$pid]) as $r) {
         $inTeam[$r['email']] = ['id' => (int)$r['id'], 'name' => $r['name']];
     }
 
@@ -55,8 +63,8 @@ foreach ($tmProjects as $pr) {
     $seen = [];
     foreach (tmFetch($conn,
         "SELECT s.Email AS email, s.Name AS name, s.University AS university, s.degree
-         FROM project_applications pa
-         JOIN student s ON LOWER(s.Email) = LOWER(pa.Email)
+         FROM project_proposals pa
+         JOIN student s ON LOWER(s.Email) = LOWER(pa.student_email)
          WHERE pa.project_id = ? AND pa.status = 'accepted'
          ORDER BY s.Name", "i", [$pid]) as $r) {
         $key = strtolower($r['email']);
@@ -84,18 +92,6 @@ function tmFindProject(array $projects, int $id): ?array
     return null;
 }
 
-// "React, node.js ,React" -> ['React', 'node.js']   (max 15, each max 40 chars)
-function tmCleanSkills(string $raw): array
-{
-    $out = [];
-    foreach (explode(',', $raw) as $sk) {
-        $sk = trim(preg_replace('/\s+/', ' ', $sk));
-        if ($sk === '' || mb_strlen($sk) > 40) continue;
-        $out[mb_strtolower($sk)] ??= $sk;   // keep the first spelling
-    }
-    return array_slice(array_values($out), 0, 15);
-}
-
 // roles[email] = role  ->  only for the chosen members, trimmed
 function tmCleanRoles(array $members, $rawRoles): array
 {
@@ -105,14 +101,22 @@ function tmCleanRoles(array $members, $rawRoles): array
     return $roles;
 }
 
-// Team deadline: required, not in the past, not after the project deadline
+// The day the project ends = Application Deadline (projects.deadline) + Duration (projects.duration_weeks).
+// The team works AFTER the applications close, so its deadline can be up to this day. '' = no limit.
+function tmProjectEnd($deadline, $weeks): string
+{
+    if (empty($deadline) || !strtotime($deadline)) return '';
+    return date('Y-m-d', strtotime($deadline . ' +' . (max(0, (int)$weeks) * 7) . ' days'));
+}
+
+// Team deadline: required, not in the past, not after the day the project ends
 function tmCheckDeadline(string $deadline, ?array $project): ?string
 {
     if ($deadline === '' || !strtotime($deadline)) return null;
     $dl = date('Y-m-d', strtotime($deadline));
     if ($dl < date('Y-m-d')) return null;
-    if ($project && !empty($project['deadline']) && strtotime($project['deadline'])
-        && $dl > date('Y-m-d', strtotime($project['deadline']))) return null;
+    $end = $project ? tmProjectEnd($project['deadline'] ?? '', $project['duration_weeks'] ?? 0) : '';
+    if ($end !== '' && $dl > $end) return null;
     return $dl;
 }
 
@@ -162,6 +166,30 @@ function tmSaveMembers(mysqli $conn, int $teamId, int $projectId, array $roles, 
     }
 }
 
+// Latest 6 things that happened in the team: [ ['text' => .., 'when' => 'Oct 20, 2026'], ... ]
+// Built from the dates already saved in the team tables (team created, deadline changes, tasks, files, final report).
+function tmActivity(mysqli $conn, int $teamId): array
+{
+    $rows = tmFetch($conn,
+        "SELECT CONCAT('Team created with ', (SELECT COUNT(*) FROM org_team_members m WHERE m.team_id = t.id), ' member(s)') AS text,
+                t.created_at AS at FROM org_teams t WHERE t.id = ?
+         UNION ALL
+         SELECT CONCAT('Deadline moved to ', DATE_FORMAT(d.new_deadline, '%b %d, %Y'), ' – ', d.reason), d.changed_at
+         FROM team_deadline_changes d WHERE d.team_id = ?
+         UNION ALL
+         SELECT CONCAT('Task added: ', k.title), k.created_at FROM team_tasks k WHERE k.team_id = ?
+         UNION ALL
+         SELECT CONCAT('File shared: ', f.original_name), f.uploaded_at FROM team_files f WHERE f.team_id = ?
+         UNION ALL
+         SELECT 'Final report sent for review', r.submitted_at FROM team_final_reports r WHERE r.team_id = ?
+         UNION ALL
+         SELECT IF(r.status = 'accepted', 'Final report accepted – team completed', 'Changes requested on the final report'), r.reviewed_at
+         FROM team_final_reports r WHERE r.team_id = ? AND r.reviewed_at IS NOT NULL
+         ORDER BY at DESC LIMIT 6",
+        "iiiiii", [$teamId, $teamId, $teamId, $teamId, $teamId, $teamId]);
+    return array_map(fn($a) => ['text' => $a['text'], 'when' => date('M d, Y', strtotime($a['at']))], $rows);
+}
+
 function tmNotify(mysqli $conn, array $emails, string $title, string $message): void
 {
     $nq = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'project', 'Unread')");
@@ -180,7 +208,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     $members   = array_values(array_unique(array_map(fn($m) => strtolower(trim($m)), (array)($_POST['members'] ?? []))));
     $leader    = strtolower(trim($_POST['leader'] ?? ''));
     $roles     = tmCleanRoles($members, $_POST['roles'] ?? []);
-    $skills    = tmCleanSkills($_POST['skills'] ?? '');
     $project   = tmFindProject($tmProjects, $projectId);
     $deadline  = tmCheckDeadline(trim($_POST['deadline'] ?? ''), $project);
 
@@ -189,12 +216,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     foreach ($tmCandidates[$projectId] ?? [] as $c) { if (!$c['team_id']) $allowed[] = $c['email']; }
 
     $error = null;
-    if ($name === '' || mb_strlen($name) > 100 || !$project)                              $error = '1';
+    if ($name === '' || !$project)                                                        $error = '1';
+    elseif (mb_strlen($name) < 3 || mb_strlen($name) > 100)                                $error = 'name';
     elseif (!$members || array_diff($members, $allowed))                                   $error = 'members';
     elseif (count($members) > max(1, (int)$project['members']))                            $error = 'members';
     elseif (!in_array($leader, $members, true))                                            $error = '1';
     elseif (in_array('', $roles, true) || max(array_map('mb_strlen', $roles)) > 50)        $error = 'roles';
-    elseif (!$skills)                                                                      $error = 'skills';
     elseif (!$deadline)                                                                    $error = 'deadline';
 
     if ($error) { header("Location: teams.php?team_error=" . $error); exit; }
@@ -202,10 +229,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     try {
         $conn->begin_transaction();
 
-        $skillText = implode(', ', $skills);
-        $ins = $conn->prepare("INSERT INTO org_teams (organization_email, project_id, name, leader_email, skills, deadline, status)
-                               VALUES (?, ?, ?, ?, ?, ?, 'ontrack')");
-        $ins->bind_param("sissss", $organization_email, $projectId, $name, $leader, $skillText, $deadline);
+        // (the organization of a team = the organization of its project)
+        $ins = $conn->prepare("INSERT INTO org_teams (project_id, name, leader_email, deadline, status)
+                               VALUES (?, ?, ?, ?, 'ontrack')");
+        $ins->bind_param("isss", $projectId, $name, $leader, $deadline);
         $ins->execute();
         $teamId = (int)$conn->insert_id;
 
@@ -227,45 +254,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         header("Location: teams.php?team_created=1");
     } catch (Throwable $e) {
         try { $conn->rollback(); } catch (Throwable $ignore) {}
-        // 1062 = duplicate team name for this organization
+        // 1062 = this project already has a team with this name
         header("Location: teams.php?team_error=" . (($e->getCode() == 1062) ? 'duplicate' : 'save'));
     }
     exit;
 }
 
 // ---------------------------------------------------------------
-// ⋮ menu actions for teams saved in the database:
-//   edit_team (name, deadline) | team_status | extend_deadline (Delay Review)
+// Actions for teams saved in the database:
+//   edit_team (⋮ menu: name, deadline) | extend_deadline (Delay Review) | review_report (final report)
 // ---------------------------------------------------------------
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['edit_team', 'team_status', 'extend_deadline'], true)) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['edit_team', 'extend_deadline', 'review_report'], true)) {
     $teamId = (int)($_POST['team_id'] ?? 0);
-    $own = tmFetch($conn, "SELECT id, project_id, name, deadline FROM org_teams WHERE id = ? AND organization_email = ?",
+    // the team must belong to one of this organization's projects
+    $own = tmFetch($conn, "SELECT t.id, t.project_id, t.name, t.deadline, t.status, p.title AS project
+                           FROM org_teams t JOIN projects p ON p.id = t.project_id
+                           WHERE t.id = ? AND p.organization_email = ?",
                    "is", [$teamId, $organization_email])[0] ?? null;
     if (!$own) { header("Location: teams.php?team_error=1"); exit; }
 
+    // a Completed team (final report accepted) can't be changed any more
+    if ($own['status'] === 'completed') { header("Location: teams.php?team_error=completed"); exit; }
+
     try {
-        if ($_POST['action'] === 'team_status') {
-            $st = $_POST['status'] ?? '';
-            if (!in_array($st, ['ontrack', 'behind', 'completed'], true)) throw new Exception('bad status');
-            $q = $conn->prepare("UPDATE org_teams SET status = ? WHERE id = ?");
-            $q->bind_param("si", $st, $teamId);
-            $q->execute();
-            header("Location: teams.php?team_updated=status");
+        if ($_POST['action'] === 'review_report') {
+            // Accept the final report  -> team Completed (+ project Completed when all its teams are)
+            // Request changes (+ note) -> the team leader fixes it and sends it again
+            $report   = twReport($conn, $teamId);
+            $decision = $_POST['decision'] ?? '';
+            $note     = trim($_POST['note'] ?? '');
+            if (!$report || $report['status'] !== 'submitted' || !in_array($decision, ['accept', 'changes'], true)) {
+                header("Location: teams.php?team_error=report");
+                exit;
+            }
+            if ($decision === 'changes' && (mb_strlen($note) < 10 || mb_strlen($note) > 500)) {
+                header("Location: teams.php?team_error=report_note");
+                exit;
+            }
+
+            $memberEmails = array_column(tmFetch($conn, "SELECT Email FROM org_team_members WHERE team_id = ?", "i", [$teamId]), 'Email');
+            $conn->begin_transaction();
+
+            if ($decision === 'accept') {
+                $q = $conn->prepare("UPDATE team_final_reports SET status = 'accepted', review_note = NULL, reviewed_at = NOW() WHERE team_id = ?");
+                $q->bind_param("i", $teamId);
+                $q->execute();
+                twRefreshStatus($conn, $teamId);   // -> completed
+
+                // the members' project (student dashboard) is finished too
+                $pid = (int)$own['project_id'];
+                $sp = $conn->prepare("UPDATE student_projects SET status = 'Completed', progress = 100 WHERE project_id = ? AND Email = ?");
+                foreach ($memberEmails as $me) { $sp->bind_param("is", $pid, $me); $sp->execute(); }
+
+                // the project is Completed when every team of it is Completed
+                $left = tmFetch($conn, "SELECT COUNT(*) AS c FROM org_teams WHERE project_id = ? AND status <> 'completed'", "i", [$pid])[0]['c'] ?? 1;
+                if ((int)$left === 0) {
+                    $pq = $conn->prepare("UPDATE projects SET status = 'completed' WHERE id = ?");
+                    $pq->bind_param("i", $pid);
+                    $pq->execute();
+                }
+
+                tmNotify($conn, $memberEmails, 'Final Report Accepted',
+                         'The organization accepted the final report of ' . $own['name'] . ' for "' . $own['project'] . '". The project is completed – well done!');
+                twAddMessage($conn, $teamId, $organization_email, 'We accepted your final report. The team is now completed – thank you all!');
+                $done = 'report_accepted';
+            } else {
+                $q = $conn->prepare("UPDATE team_final_reports SET status = 'changes_requested', review_note = ?, reviewed_at = NOW() WHERE team_id = ?");
+                $q->bind_param("si", $note, $teamId);
+                $q->execute();
+                twRefreshStatus($conn, $teamId);
+
+                tmNotify($conn, $memberEmails, 'Final Report: Changes Requested',
+                         'The organization asked for changes to the final report of ' . $own['name'] . ': ' . $note);
+                twAddMessage($conn, $teamId, $organization_email, 'Please update the final report and send it again. ' . $note);
+                $done = 'report_changes';
+            }
+
+            $conn->commit();
+            header("Location: teams.php?team_updated=" . $done);
             exit;
         }
 
         if ($_POST['action'] === 'extend_deadline') {
             $newDl  = trim($_POST['deadline'] ?? '');
             $reason = trim($_POST['reason'] ?? '');
-            if (!$newDl || !strtotime($newDl) || strtotime($newDl) <= strtotime('today') || mb_strlen($reason) < 5) {
+            // new date after today, and a short reason (5 - 300 characters) that is sent to the team
+            if (!$newDl || !strtotime($newDl) || strtotime($newDl) <= strtotime('today')
+                || mb_strlen($reason) < 5 || mb_strlen($reason) > 300) {
                 header("Location: teams.php?team_error=edit");
                 exit;
             }
             $dl = date('Y-m-d', strtotime($newDl));
-            $status = !empty($_POST['set_ontrack']) ? 'ontrack' : 'behind';
-            $q = $conn->prepare("UPDATE org_teams SET deadline = ?, status = ? WHERE id = ?");
-            $q->bind_param("ssi", $dl, $status, $teamId);
+            $q = $conn->prepare("UPDATE org_teams SET deadline = ? WHERE id = ?");
+            $q->bind_param("si", $dl, $teamId);
             $q->execute();
+
+            // keep a history of deadline changes (team_deadline_changes)
+            $oldDl = !empty($own['deadline']) ? $own['deadline'] : date('Y-m-d');
+            $hq = $conn->prepare("INSERT INTO team_deadline_changes (team_id, old_deadline, new_deadline, reason) VALUES (?, ?, ?, ?)");
+            $hq->bind_param("isss", $teamId, $oldDl, $dl, $reason);
+            $hq->execute();
+
+            // the status follows the new deadline (On Track again unless a task is still overdue)
+            twRefreshStatus($conn, $teamId);
 
             // tell every member of the team
             $nTitle = 'Team Deadline Extended';
@@ -275,12 +366,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
             $nq->bind_param("ssi", $nTitle, $nMsg, $teamId);
             $nq->execute();
 
+            // ...and the same note in the team chat, so the whole team sees it there too
+            twAddMessage($conn, $teamId, $organization_email,
+                         'The team deadline was moved to ' . date('M d, Y', strtotime($dl)) . '. Reason: ' . mb_substr($reason, 0, 300));
+
             header("Location: teams.php?team_updated=extended");
             exit;
         }
 
         // edit_team: only the team name and the team deadline can be changed here
-        // (members, leader and skills are set when the team is created)
+        // (members and leader are set when the team is created)
         $name     = trim(preg_replace('/\s+/', ' ', $_POST['team_name'] ?? ''));
         $pid      = (int)$own['project_id'];
         $project  = tmFindProject($tmProjects, $pid);
@@ -291,7 +386,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
                     ? date('Y-m-d', strtotime($own['deadline']))
                     : tmCheckDeadline($postedDl, $project);
 
-        if ($name === '' || mb_strlen($name) > 100 || !$deadline) {
+        if (mb_strlen($name) < 3 || mb_strlen($name) > 100 || !$deadline) {
             header("Location: teams.php?team_error=edit");
             exit;
         }
@@ -299,6 +394,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
         $q = $conn->prepare("UPDATE org_teams SET name = ?, deadline = ? WHERE id = ?");
         $q->bind_param("ssi", $name, $deadline, $teamId);
         $q->execute();
+        twRefreshStatus($conn, $teamId);
 
         header("Location: teams.php?team_updated=edited");
     } catch (Throwable $e) {
@@ -310,25 +406,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
 
 $flash = null;
 $tmErrText = [
+    'name'     => 'The team name must be 3 to 100 characters.',
     'members'  => 'Only students with an accepted proposal (and not already in another team) can be added, up to the number the project needs.',
     'roles'    => 'Please give every team member a role (max 50 characters).',
-    'skills'   => 'Please add at least one required skill.',
-    'deadline' => 'Please pick a team deadline from today up to the project deadline.',
+    'deadline' => 'Please pick a team deadline from today up to the day the project ends.',
     'save'     => 'Something went wrong while saving. Please try again.',
 ];
 $tmUpdated = [
-    'status'  => ['Status updated', 'The team status was changed.'],
+    'report_accepted' => ['Final report accepted', 'The team is now completed and its members were notified.'],
+    'report_changes'  => ['Changes requested', 'The team was asked to update the final report and send it again.'],
     'edited'  => ['Team updated', 'Your changes to the team were saved.'],
     'extended' => ['Deadline extended', 'The new deadline was saved and the team was notified.'],
 ];
 if (isset($_GET['team_updated'], $tmUpdated[$_GET['team_updated']])) {
     $flash = ['type' => 'success', 'title' => $tmUpdated[$_GET['team_updated']][0], 'message' => $tmUpdated[$_GET['team_updated']][1]];
+} elseif (in_array($_GET['team_error'] ?? '', ['report', 'report_note', 'completed'], true)) {
+    $flash = ['type' => 'error', 'title' => 'Could not save', 'message' => [
+        'report'      => 'This final report can’t be reviewed now. Please refresh the page.',
+        'report_note' => 'Please tell the team what to change (10 to 500 characters).',
+        'completed'   => 'This team is completed, so it can no longer be changed.',
+    ][$_GET['team_error']]];
 } elseif (($_GET['team_error'] ?? '') === 'edit') {
     $flash = ['type' => 'error', 'title' => 'Could not save changes', 'message' => 'Please check the team details and try again.'];
 } elseif (isset($_GET['team_created'])) {
     $flash = ['type' => 'success', 'title' => 'Team created', 'message' => 'The new team was created successfully.'];
 } elseif (($_GET['team_error'] ?? '') === 'duplicate') {
-    $flash = ['type' => 'error', 'title' => 'Name already used', 'message' => 'You already have a team with this name. Please choose another name.'];
+    $flash = ['type' => 'error', 'title' => 'Name already used', 'message' => 'This project already has a team with this name. Please choose another name.'];
 } elseif (isset($_GET['team_error'], $tmErrText[$_GET['team_error']])) {
     $flash = ['type' => 'error', 'title' => 'Could not create team', 'message' => $tmErrText[$_GET['team_error']]];
 } elseif (isset($_GET['team_error'])) {
@@ -339,6 +442,7 @@ if (isset($_GET['team_updated'], $tmUpdated[$_GET['team_updated']])) {
 // Teams created by this organization (from the database)
 // ---------------------------------------------------------------
 // Buttons at the bottom of a team card depend on the team status
+// (Completed -> only the final report; a report waiting for review -> "Review Report" first)
 $tmStateActions = [
     'ontrack'   => ['View', 'Task', 'Chat'],
     'behind'    => ['View', 'Review', 'Chat'],
@@ -347,10 +451,15 @@ $tmStateActions = [
 
 $dbTeams = [];
 foreach (tmFetch($conn,
-    "SELECT t.id, t.project_id, t.name, t.leader_email, t.skills AS team_skills, t.deadline, t.status, t.created_at,
-            p.title AS project, p.keywords, p.company, p.category, p.deadline AS project_deadline, p.duration
-     FROM org_teams t JOIN projects p ON p.id = t.project_id
-     WHERE t.organization_email = ?
+    "SELECT t.id, t.project_id, t.name, t.leader_email, t.deadline, t.status, t.created_at,
+            p.title AS project, o.Name AS company, c.category_name AS category,
+            p.deadline AS project_deadline, p.duration_weeks, CONCAT(p.duration_weeks, ' Weeks') AS duration,
+            (SELECT GROUP_CONCAT(ps.skill_name SEPARATOR ', ') FROM project_skills ps WHERE ps.project_id = p.id) AS keywords
+     FROM org_teams t
+     JOIN projects p ON p.id = t.project_id
+     LEFT JOIN organization o ON o.Email = p.organization_email
+     LEFT JOIN project_categories c ON c.category_id = p.category_id
+     WHERE p.organization_email = ?
      ORDER BY t.created_at DESC", "s", [$organization_email]) as $row) {
 
     $memberRows = tmFetch($conn,
@@ -372,7 +481,15 @@ foreach (tmFetch($conn,
             $others[] = $mr['Name'];
         }
     }
-    $percent = $memberRows ? (int)round($progressSum / count($memberRows)) : 0;
+    // Progress = tasks done on the Kanban board (shared with the students).
+    // No tasks yet -> the average progress of the members (student_projects.progress).
+    $teamTasks = twTasks($conn, (int)$row['id']);
+    if ($teamTasks) {
+        $doneTasks = count(array_filter($teamTasks, fn($t) => $t['col'] === 'done'));
+        $percent = (int)round($doneTasks / count($teamTasks) * 100);
+    } else {
+        $percent = $memberRows ? (int)round($progressSum / count($memberRows)) : 0;
+    }
 
     // Full details for the "View" popup
     $detailMembers = [];
@@ -389,8 +506,14 @@ foreach (tmFetch($conn,
     }
     usort($detailMembers, fn($a, $b) => $b['leader'] <=> $a['leader']);   // leader first
 
+    $report = twReport($conn, (int)$row['id']);
+    $doneCount = count(array_filter($teamTasks, fn($t) => $t['col'] === 'done'));
+
     $time = 'No deadline'; $tone = 'ok'; $state = $row['status'] ?: 'ontrack';
-    if (!empty($row['deadline'])) {
+    if ($state === 'completed') {
+        $percent = 100;
+        $time = 'Finished on ' . ($report && $report['reviewed'] ? date('M d', strtotime($report['reviewed'])) : '-');
+    } elseif (!empty($row['deadline'])) {
         $days = (int)floor((strtotime($row['deadline']) - strtotime('today')) / 86400);
         if ($days >= 0) { $time = $days . ' day' . ($days === 1 ? '' : 's') . ' left'; $tone = $days <= 14 ? 'warn' : 'ok'; }
         else            { $time = abs($days) . ' days delayed'; $tone = 'late'; }
@@ -402,26 +525,42 @@ foreach (tmFetch($conn,
         'project' => $row['project'],
         'leader' => $leaderName, 'role' => $leaderRole,
         'members' => array_slice($others, 0, 3), 'more' => max(0, count($others) - 3),
-        'skills' => array_values(array_filter(array_map('trim', explode(',', ($row['team_skills'] ?? '') !== '' ? $row['team_skills'] : ($row['keywords'] ?? ''))))),
-        'phase' => $percent > 0 ? 'In Progress' : 'Phase 1: Planning', 'percent' => $percent,
+        // the skills a team needs are the project's skills (project_skills)
+        'skills' => array_values(array_filter(array_map('trim', explode(',', $row['keywords'] ?? '')))),
+        'phase' => $state === 'completed' ? 'Project Completed'
+                 : ($report && $report['status'] === 'submitted' ? 'Final report sent – waiting for your review'
+                 : ($report && $report['status'] === 'changes_requested' ? 'Final report: changes requested'
+                 : ($percent > 0 ? 'In Progress' : 'Phase 1: Planning'))),
+        'percent' => $percent,
+        // the final report is waiting for this organization
+        'report_waiting' => $report && $report['status'] === 'submitted',
         'deadline' => !empty($row['deadline']) ? date('M d', strtotime($row['deadline'])) : '',
         'time' => $time, 'tone' => $tone,
-        'actions' => $tmStateActions[$state] ?? $tmStateActions['ontrack'],
+        // a final report waiting for review -> the first button opens it
+        'actions' => ($report && $report['status'] === 'submitted' && $state !== 'completed')
+                     ? ['Review Report', 'Task', 'Chat'] : ($tmStateActions[$state] ?? $tmStateActions['ontrack']),
         'is_new' => true,
         'id' => (int)$row['id'],
         'project_id' => (int)$row['project_id'],
         'leader_email' => strtolower($row['leader_email']),
         'member_emails' => array_map(fn($m) => strtolower($m['Email']), $memberRows),
         'deadline_raw' => !empty($row['deadline']) ? date('Y-m-d', strtotime($row['deadline'])) : '',
-        'project_deadline_raw' => (!empty($row['project_deadline']) && strtotime($row['project_deadline'])) ? date('Y-m-d', strtotime($row['project_deadline'])) : '',
+        'tasks' => $teamTasks,
+        // the team deadline can be moved up to the day the project ends
+        'project_deadline_raw' => tmProjectEnd($row['project_deadline'], $row['duration_weeks']),
         'details' => [
             'company' => $row['company'], 'category' => $row['category'], 'duration' => $row['duration'],
-            'project_deadline' => (!empty($row['project_deadline']) && strtotime($row['project_deadline'])) ? date('M d, Y', strtotime($row['project_deadline'])) : '',
+            'project_deadline' => tmProjectEnd($row['project_deadline'], $row['duration_weeks']) !== ''
+                                  ? date('M d, Y', strtotime(tmProjectEnd($row['project_deadline'], $row['duration_weeks']))) : '',
             'team_deadline' => !empty($row['deadline']) ? date('M d, Y', strtotime($row['deadline'])) : '',
             'created' => date('M d, Y', strtotime($row['created_at'])),
             'members' => $detailMembers,
-            'milestones' => [],
-            'activity' => [['text' => 'Team created', 'when' => date('M d, Y', strtotime($row['created_at']))]],
+            // latest things that happened (from the dates in the team tables)
+            'activity' => tmActivity($conn, (int)$row['id']),
+            // final report (team_final_reports) + how many tasks are Done (the leader can send it when all are)
+            'report' => $report,
+            'tasks_total' => count($teamTasks), 'tasks_done' => $doneCount,
+            'can_review' => true,
         ],
     ];
 }
@@ -430,12 +569,6 @@ foreach (tmFetch($conn,
 // UI-ONLY DEMO DATA (kept for the demo). Teams from the database are shown first.
 // state: ontrack | behind | completed      tone: ok | warn | late
 // ---------------------------------------------------------------
-$summary = [
-    ['icon' => 'hub',           'class' => 'navy',  'label' => 'Total Teams',       'value' => 18 + 42],   // active + completed
-    ['icon' => 'groups',        'class' => 'blue',  'label' => 'Active Teams',      'value' => 18],
-    ['icon' => 'check_circle',  'class' => 'green', 'label' => 'Completed Teams',   'value' => 42],
-    ['icon' => 'school',        'class' => 'sky',   'label' => 'Students Involved', 'value' => 156],
-];
 
 $demoTeams = [
     [
@@ -464,7 +597,7 @@ $demoTeams = [
         'leader' => 'Erandi Weerasinghe', 'role' => 'Data Analyst',
         'members' => ['Ishan Rathnayake', 'Dilini Herath'], 'more' => 3,
         'skills' => [],
-        'phase' => 'All Milestones Met', 'percent' => 100,
+        'phase' => 'Project Completed', 'percent' => 100,
         'deadline' => '', 'time' => 'Finished on Sep 18', 'tone' => 'ok',
         'actions' => ['Final Report'],
     ],
@@ -503,12 +636,6 @@ $demoDetails = [
             tmM('Chamod Fernando', 'Data Engineer', '2023is018@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Information Systems', '3', ['SQL', 'Airflow', 'Python'], 66, 'In Progress'),
             tmM('Ishara Gunawardena', 'QA Engineer', 'ishara.g@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '2', ['Selenium', 'Jest'], 55, 'In Progress'),
         ],
-        'milestones' => [
-            ['title' => 'Phase 1: Requirements & Data Collection', 'done' => true],
-            ['title' => 'Phase 2: Prototyping', 'done' => false, 'current' => true],
-            ['title' => 'Phase 3: Model Training & Integration', 'done' => false],
-            ['title' => 'Phase 4: Testing & Final Demo', 'done' => false],
-        ],
         'activity' => [
             ['text' => 'Nimal Silva uploaded the demand-forecast model v2', 'when' => '2 hours ago'],
             ['text' => 'Amaya Dissanayake shared the dashboard prototype', 'when' => 'Yesterday'],
@@ -523,11 +650,6 @@ $demoDetails = [
             tmM('Kasun Madushanka', 'Blockchain Developer', 'kasun.m@uom.lk', $UOM, 'B.Sc. in Computer Engineering', '3', ['Solidity', 'Hardhat', 'Ethers.js'], 40, 'In Progress'),
             tmM('Tharushi Wijeratne', 'Frontend Developer', 'it22098311@my.sliit.lk', $SLIIT, 'B.Sc. in IT', '3', ['React.js', 'Tailwind CSS'], 48, 'In Progress'),
             tmM('Dulaj Bandara', 'Backend Developer', 'dulaj.b@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '3', ['Node.js', 'MongoDB'], 38, 'In Progress'),
-        ],
-        'milestones' => [
-            ['title' => 'Phase 1: Smart Contract Design', 'done' => false, 'current' => true],
-            ['title' => 'Phase 2: Credential Issuing Portal', 'done' => false],
-            ['title' => 'Phase 3: Verification App & Audit', 'done' => false],
         ],
         'activity' => [
             ['text' => 'Deadline for Phase 1 was missed', 'when' => '5 days ago'],
@@ -546,16 +668,16 @@ $demoDetails = [
             tmM('Nethmi Samarasinghe', 'Data Visualization', '2023cs090@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Computer Science', '3', ['D3.js', 'Chart.js'], 100, 'Completed'),
             tmM('Yasith Abeysekara', 'Technical Writer', 'yasith.a@uom.lk', $UOM, 'B.Sc. in IT', '3', ['Documentation', 'Markdown'], 100, 'Completed'),
         ],
-        'milestones' => [
-            ['title' => 'Sensor data pipeline', 'done' => true],
-            ['title' => 'Failure prediction model', 'done' => true],
-            ['title' => 'City maintenance dashboard', 'done' => true],
-            ['title' => 'Final report & hand-over', 'done' => true],
+        'report' => [
+            'name' => 'Final_Report.pdf', 'path' => '', 'status' => 'accepted', 'note' => '',
+            'summary' => 'We built a sensor data pipeline, a failure prediction model and a maintenance dashboard for the city. The report explains the design, the test results and how to run the system.',
+            'by' => 'Erandi Weerasinghe', 'submitted' => 'Sep 18, 2026', 'reviewed' => 'Sep 18, 2026',
         ],
         'activity' => [
+            ['text' => 'Final report accepted – team completed', 'when' => 'Sep 18, 2026'],
             ['text' => 'Final report submitted', 'when' => 'Sep 18, 2026'],
             ['text' => 'Dashboard handed over to the client', 'when' => 'Sep 16, 2026'],
-            ['text' => 'All milestones completed', 'when' => 'Sep 15, 2026'],
+
         ],
     ],
     'Alpha Ops' => [
@@ -566,12 +688,6 @@ $demoDetails = [
             tmM('Sahan Liyanage', 'Cloud Engineer', 'sahan.l@uom.lk', $UOM, 'B.Sc. in Computer Engineering', '3', ['Kubernetes', 'Helm'], 84, 'In Progress'),
             tmM('Malsha Karunaratne', 'Automation Developer', 'it22031477@my.sliit.lk', $SLIIT, 'B.Sc. in IT', '3', ['Python', 'Ansible'], 86, 'In Progress'),
             tmM('Tharindu Wickramaratne', 'Monitoring & SRE', 'tharindu.w@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '3', ['Grafana', 'Prometheus'], 80, 'In Progress'),
-        ],
-        'milestones' => [
-            ['title' => 'Phase 1: Infrastructure as Code', 'done' => true],
-            ['title' => 'Phase 2: CI/CD Pipelines', 'done' => true],
-            ['title' => 'Phase 3: Strategy Deployment', 'done' => false, 'current' => true],
-            ['title' => 'Phase 4: Monitoring & Hand-over', 'done' => false],
         ],
         'activity' => [
             ['text' => 'Kubernetes cluster moved to production', 'when' => '3 hours ago'],
@@ -585,14 +701,15 @@ unset($dt);
 
 $teams = array_merge($dbTeams, $demoTeams);
 
-// Summary cards also count the teams created from the database
-$dbActive = count(array_filter($dbTeams, fn($t) => $t['state'] !== 'completed'));
-$dbStudents = array_sum(array_map(fn($t) => 1 + count($t['members']) + $t['more'], $dbTeams));
-$dbCompleted = count($dbTeams) - $dbActive;
-$summary[0]['value'] += count($dbTeams);      // Total Teams
-$summary[1]['value'] += $dbActive;            // Active Teams
-$summary[2]['value'] += $dbCompleted;         // Completed Teams
-$summary[3]['value'] += $dbStudents;          // Students Involved
+// Summary cards = the teams shown on this page (database teams + the demo teams)
+$activeCount    = count(array_filter($teams, fn($t) => $t['state'] !== 'completed'));
+$studentsCount  = array_sum(array_map(fn($t) => 1 + count($t['members']) + $t['more'], $teams));   // leader + members
+$summary = [
+    ['icon' => 'hub',          'class' => 'navy',  'label' => 'Total Teams',       'value' => count($teams)],
+    ['icon' => 'groups',       'class' => 'blue',  'label' => 'Active Teams',      'value' => $activeCount],
+    ['icon' => 'check_circle', 'class' => 'green', 'label' => 'Completed Teams',   'value' => count($teams) - $activeCount],
+    ['icon' => 'school',       'class' => 'sky',   'label' => 'Students Involved', 'value' => $studentsCount],
+];
 
 function tmInitials($name) {
     $parts = preg_split('/\s+/', trim($name));
@@ -601,4 +718,5 @@ function tmInitials($name) {
     return $out;
 }
 $tmColors = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
-$tmActionIcon = ['View' => 'visibility', 'Task' => 'task_alt', 'Chat' => 'chat_bubble', 'Review' => 'rate_review', 'Final Report' => 'description'];
+$tmActionIcon = ['View' => 'visibility', 'Task' => 'task_alt', 'Chat' => 'chat_bubble', 'Review' => 'rate_review',
+                 'Final Report' => 'description', 'Review Report' => 'fact_check'];

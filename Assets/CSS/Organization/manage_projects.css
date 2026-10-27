@@ -473,26 +473,12 @@
 .hm-reason-date { font-size: 12px; color: #b45309; margin-top: 1px; }
 .hm-reason-text { margin: 0; font-size: 14px; line-height: 1.65; color: #451a03; white-space: pre-wrap; }
 
-.hm-subtitle { margin: 18px 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #6b7280; }
-.hm-flag-list { display: flex; flex-wrap: wrap; gap: 8px; }
-.hm-flag-chip {
-    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px;
-    background: #fff7ed; border: 1px solid #fed7aa; color: #c2410c; font-size: 12.5px; font-weight: 600;
-}
-.hm-flag-chip .material-symbols-outlined { font-size: 16px; }
-.hm-empty { font-size: 13px; color: #9ca3af; }
 
 .hm-hint { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 12.5px; color: #6b7280; flex-wrap: wrap; }
 .hm-hint .material-symbols-outlined { font-size: 16px; color: #3b82f6; }
+.hm-next { margin: 16px 0 0; }
 .hm-field { margin-bottom: 14px; position: relative; }
 .hm-field .form-input, .hm-field .form-select, .hm-field .form-textarea { width: 100%; box-sizing: border-box; }
-.hm-field.flagged .form-input, .hm-field.flagged .form-select, .hm-field.flagged .form-textarea {
-    border-color: #f59e0b; background: #fffbeb; box-shadow: 0 0 0 3px rgba(245,158,11,0.12);
-}
-.hm-flag-tag {
-    display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
-    background: #fef3c7; color: #b45309; padding: 2px 7px; border-radius: 999px; margin-left: 6px; vertical-align: middle;
-}
 .hm-reason-mini {
     margin-bottom: 14px; border: 1px solid #fde68a; background: #fffbeb; border-radius: 12px; padding: 10px 14px;
 }
@@ -511,7 +497,6 @@
 .hm-field .form-input::placeholder, .hm-field .form-textarea::placeholder { color: #b6bcc6; }
 
 .hm-chip-box { background: #fff; min-height: 46px; }
-.hm-field.flagged .hm-chip-box { border-color: #f59e0b; background: #fffbeb; box-shadow: 0 0 0 3px rgba(245,158,11,0.12); }
 .hm-field-note { font-size: 11.5px; color: #9ca3af; margin-top: 6px; }
 
 .hm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
@@ -584,3 +569,35 @@
 /* "On Hold" status badge */
 .badge-status.hold { background: #fefce8; color: #a16207; border: 1px solid #fde68a; }
 .badge-status.hold::before { content: '●'; font-size: 8px; }
+/* Published = accepted by the Admin, visible to students (soft violet) */
+.badge-status.published,
+.badge-status.accepted { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+/* Same soft outline for every project status badge on the Organization pages
+   (Reviewing and Completed had no border, so they looked flat next to the others) */
+.badge-status.reviewing { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-status.completed { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+.badge-status.draft     { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; }
+.badge-status.draft::before { content: '●'; font-size: 8px; }
+.badge-status.published::before,
+.badge-status.accepted::before { content: '●'; font-size: 8px; }
+
+/* On Hold popup: "you did not change anything" warning (step 3) */
+.hm-nochange { display: flex; align-items: flex-start; gap: 8px; margin-top: 14px; padding: 11px 14px;
+               background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px;
+               color: #92400e; font-size: 13px; line-height: 1.45; }
+.hm-nochange[hidden] { display: none; }
+.hm-nochange .material-symbols-outlined { font-size: 18px; color: #d97706; }
+
+/* ---- Hold popup: required fields + validation messages ---- */
+.hm-modal .req { color: #dc2626; font-weight: 700; margin-left: 2px; }
+.hm-req-note { font-size: 12px; color: #6b7280; margin: -4px 0 12px; }
+.hm-modal .field-error { font-size: 12px; color: #dc2626; margin-top: 6px; }
+.hm-modal .field-error:empty { display: none; }
+.hm-field:has(.field-error:not(:empty)) .form-input,
+.hm-field:has(.field-error:not(:empty)) .form-select,
+.hm-field:has(.field-error:not(:empty)) .form-textarea,
+.hm-field:has(.field-error:not(:empty)) .chip-input-box {
+    border-color: #f87171;
+    background: #fff;
+}

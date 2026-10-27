@@ -185,3 +185,15 @@
     color: #1f2937;
     margin-top: 2px;
 }
+/* Published = accepted by the Admin, visible to students (soft violet) */
+.badge-status.published,
+.badge-status.accepted { background: #f5f3ff; color: #6d28d9; border: 1px solid #ddd6fe; }
+
+/* Same soft outline for every project status badge on the Organization pages
+   (Reviewing and Completed had no border, so they looked flat next to the others) */
+.badge-status.reviewing { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+.badge-status.completed { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+.badge-status.draft     { background: #f8fafc; color: #64748b; border: 1px dashed #cbd5e1; }
+.badge-status.draft::before { content: '●'; font-size: 8px; }
+.badge-status.published::before,
+.badge-status.accepted::before { content: '●'; font-size: 8px; }

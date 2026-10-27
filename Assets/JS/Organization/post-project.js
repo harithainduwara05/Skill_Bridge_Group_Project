@@ -4,7 +4,10 @@ document.addEventListener('DOMContentLoaded', function () {
     const chipBox = document.getElementById('chipBox');
     const chipInput = document.getElementById('chipInput');
     const keywordsHidden = document.getElementById('keywordsHidden');
-    let keywords = [];
+    // start with the skills already in the hidden field (kept after a validation error)
+    let keywords = keywordsHidden && keywordsHidden.value
+        ? keywordsHidden.value.split(',').map(s => s.trim()).filter(Boolean)
+        : [];
 
     function renderChips() {
         chipBox.querySelectorAll('.chip').forEach(el => el.remove());
@@ -28,7 +31,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (e.key === 'Enter' || e.key === ',') {
                 e.preventDefault();
                 const val = chipInput.value.trim();
-                if (val && !keywords.includes(val)) {
+                // same skill twice (any case) is added once
+                if (val && !keywords.some(k => k.toLowerCase() === val.toLowerCase())) {
                     keywords.push(val);
                     renderChips();
                 }
@@ -42,6 +46,19 @@ document.addEventListener('DOMContentLoaded', function () {
         chipBox.addEventListener('click', function () {
             chipInput.focus();
         });
+
+        // A skill typed but not "entered" yet is added when the form is sent,
+        // so it is not lost (runs before the check in project-validation.js)
+        chipInput.form.addEventListener('submit', function () {
+            const val = chipInput.value.trim().replace(/,+$/, '');
+            if (val && !keywords.some(k => k.toLowerCase() === val.toLowerCase())) {
+                keywords.push(val);
+                renderChips();
+            }
+            chipInput.value = '';
+        });
+
+        renderChips();
 
         chipBox.addEventListener('click', function (e) {
             if (e.target.classList.contains('chip-remove')) {
