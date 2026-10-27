@@ -422,3 +422,90 @@ border-color:#082544;
     }
 
 }
+/* Proposal skill entry and attachment upload */
+.proposal-page .proposal-skills-card label {
+    display: block;
+    margin: 18px 0 8px;
+    color: #082544;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.proposal-page .proposal-skills-input {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #082544;
+    font: inherit;
+}
+
+.proposal-page .proposal-skills-input:focus-visible,
+.proposal-page .role-select:focus-visible {
+    outline: 2px solid #c87500;
+    outline-offset: 2px;
+}
+
+.proposal-page .mini-card,
+.proposal-page .upload-card {
+    min-width: 0;
+}
+
+.proposal-page .upload-box {
+    min-height: 155px;
+    height: auto;
+    padding: 20px 16px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.proposal-page .upload-box:hover,
+.proposal-page .upload-box:focus-within {
+    border-color: #c87500;
+    background: #fffaf3;
+}
+
+.proposal-page .upload-box input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.proposal-page .upload-box small {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.proposal-page .proposal-clear-file {
+    display: inline-flex;
+    margin-top: 10px;
+    padding: 8px 0;
+    border: 0;
+    background: none;
+    color: #b45309;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.proposal-page .proposal-clear-file[hidden] {
+    display: none;
+}
+
+@media (max-width: 560px) {
+    .proposal-page {
+        padding: 16px;
+    }
+
+    .proposal-page .proposal-card,
+    .proposal-page .mini-card,
+    .proposal-page .upload-card,
+    .proposal-page .summary-card {
+        padding: 16px;
+    }
+}

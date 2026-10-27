@@ -5,7 +5,7 @@
     include "../../Config/db.php";
     include "../../Session/Session.php";
 
-    require_once __DIR__ . "/../../Backend/StudentBackend.php";
+    require_once __DIR__ . "/../../Backend/Student/StudentBackend.php";
     require_once __DIR__ . "/profile_completion.php";
     require_once __DIR__ . "/check_student_access.php";
     require_login();

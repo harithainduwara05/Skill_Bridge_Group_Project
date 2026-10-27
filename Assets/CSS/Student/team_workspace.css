@@ -761,3 +761,12 @@
 
 
 }
+/* Student Teams database integration: retain original visual structure */
+.team-empty-state { padding: 28px; margin: 18px 0; border: 1px dashed #ccd7e5; border-radius: 16px; background: #fff; color: #64748b; }
+.team-person-initial { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; background: #e8f0fb; color: #0b3157; font-weight: 700; }
+.team-member-count-icon { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: #eaf0fa; }
+.team-readonly-notice { padding: 15px; color: #64748b; line-height: 1.5; font-size: 13px; }
+.teams-page .team-actions-top a.team-secondary-btn { text-decoration: none; }
+.view-team-page .team-tabs a { display: inline-flex; align-items: center; padding: 12px 18px; text-decoration: none; color: #243e5d; font-weight: 600; }
+.view-team-page .team-tabs a.active { color: #c87500; border-bottom: 3px solid #c87500; }
+@media (max-width: 700px) { .team-stat-grid, .teams-grid { grid-template-columns: 1fr; } .team-banner { flex-direction: column; } }
