@@ -194,3 +194,34 @@
     .notification-tabs a { flex: 1; justify-content: center; padding: 10px 8px; }
     .notification-toast { right: 12px; }
 }
+
+/* Scoped card navigation and compact messages */
+.notification-page .notification-open-form { margin: 0; flex: 1; }
+.notification-page .notification-open-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #082544;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: left;
+    cursor: pointer;
+}
+.notification-page .notification-open-button:hover { color: #c87500; }
+.notification-page .notification-open-button .fa-arrow-up-right-from-square { font-size: 11px; opacity: 0.6; }
+.notification-page .notification-open-button:focus-visible { outline: 2px solid #c87500; outline-offset: 3px; }
+.notification-page .notification-toast {
+    left: auto;
+    width: max-content;
+    min-width: 240px;
+    max-width: min(360px, calc(100vw - 32px));
+    box-sizing: border-box;
+}
+@media (max-width: 420px) {
+    .notification-page .notification-toast { right: 12px; min-width: 0; }
+}

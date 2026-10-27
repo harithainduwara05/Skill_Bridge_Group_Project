@@ -54,6 +54,7 @@ final class StudentNotificationRepository
     {
         $transition = match ($action) {
             'read' => ["status = 'Read'", "status = 'Unread'"],
+            'unread' => ["status = 'Unread'", "status = 'Read'"],
             'archive' => ["status = 'Archived'", "status <> 'Archived'"],
             'restore' => ["status = 'Read'", "status = 'Archived'"],
             default => throw new InvalidArgumentException('Unsupported notification action.')
@@ -67,6 +68,23 @@ final class StudentNotificationRepository
         $changed = $stmt->affected_rows > 0;
         $stmt->close();
         return $changed;
+    }
+
+    /** Mark one owned notification as read and return its type for routing. */
+    public function openNotification(string $email, int $id): ?string
+    {
+        $stmt = $this->db->prepare(
+            "SELECT type FROM notifications WHERE Email = ? AND notification_id = ? AND status <> 'Archived' LIMIT 1"
+        );
+        $stmt->bind_param('si', $email, $id);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+        if (!$row) {
+            return null;
+        }
+        $this->changeStatus($email, $id, 'read');
+        return strtolower(trim((string) ($row['type'] ?? 'system')));
     }
 
     public function markAllRead(string $email): int

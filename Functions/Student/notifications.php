@@ -40,6 +40,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $action = (string) ($_POST['action'] ?? '');
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         $message = '';
+        if ($action === 'open' && is_int($id)) {
+            $type = $repository->openNotification($email, $id);
+            if ($type === null) {
+                throw new InvalidArgumentException('Notification is unavailable.');
+            }
+            // Route only to known local Student pages; no URL is taken from the database.
+            $routes = [
+                'project' => 'projects.php',
+                'team' => 'teams.php',
+                'invitation' => 'teams.php',
+                'application' => 'applications.php',
+                'candidate' => 'applications.php',
+                'internship' => 'internships.php',
+                'certificate' => 'portfolio.php',
+                'proposal' => 'projects.php'
+            ];
+            $destination = $routes[$type] ?? 'notifications.php';
+            if (!is_file(__DIR__ . '/' . $destination)) {
+                $destination = 'notifications.php';
+            }
+            header('Location: ' . $destination, true, 303);
+            exit;
+        }
         if ($action === 'mark_all_read') {
             $count = $repository->markAllRead($email);
             $message = $count > 0 ? "{$count} notification(s) marked as read." : 'No unread notifications.';
@@ -48,10 +71,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $message = "{$count} notification(s) deleted.";
         } elseif ($action === 'delete' && is_int($id)) {
             $message = $repository->deleteOne($email, $id) ? 'Notification deleted.' : 'Notification not found.';
-        } elseif (in_array($action, ['read', 'archive', 'restore'], true) && is_int($id)) {
+        } elseif (in_array($action, ['read', 'unread', 'archive', 'restore'], true) && is_int($id)) {
             $changed = $repository->changeStatus($email, $id, $action);
             $message = $changed ? match ($action) {
                 'read' => 'Notification marked as read.',
+                'unread' => 'Notification marked as unread.',
                 'archive' => 'Notification archived.',
                 'restore' => 'Notification restored.'
             } : 'No changes were needed.';
@@ -128,7 +152,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
     </section>
 
     <?php if ($flash || $error): ?>
-        <div class="notification-toast <?= ($error || ($flash['error'] ?? false)) ? 'is-error' : '' ?>" role="status" data-autohide="4500">
+        <div class="notification-toast <?= ($error || ($flash['error'] ?? false)) ? 'is-error' : '' ?>" role="status" data-autohide="<?= ($error || ($flash['error'] ?? false)) ? 7000 : 4500 ?>">
             <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
             <span><?= notificationEscape($error ?? $flash['text']) ?></span>
             <button type="button" class="notification-toast-close" aria-label="Dismiss message">&times;</button>
@@ -156,7 +180,15 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <div class="notification-icon"><i class="fa-solid <?= $icon ?>" aria-hidden="true"></i></div>
                 <div class="notification-content">
                     <div class="notification-top">
-                        <h3><?= notificationEscape($item['title']) ?> <?= $unread ? '<span class="unread-dot" aria-label="Unread"></span>' : '' ?></h3>
+                        <form method="post" class="notification-open-form">
+                            <input type="hidden" name="csrf" value="<?= notificationEscape($csrf) ?>">
+                            <input type="hidden" name="action" value="open">
+                            <input type="hidden" name="id" value="<?= $id ?>">
+                            <button type="submit" class="notification-open-button" title="Open related page">
+                                <?= notificationEscape($item['title']) ?> <?= $unread ? '<span class="unread-dot" aria-label="Unread"></span>' : '' ?>
+                                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                            </button>
+                        </form>
                         <time datetime="<?= $date ? date('c', $date) : '' ?>" title="<?= notificationEscape($item['created_at']) ?>">
                             <?= $date ? date('d M Y, h:i A', $date) : 'Date unavailable' ?>
                         </time>
@@ -170,6 +202,15 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                 <input type="hidden" name="id" value="<?= $id ?>">
                                 <button type="submit" name="action" value="read"><i class="fa-solid fa-check" aria-hidden="true"></i> Mark read</button>
                             </form>
+                        <?php else: ?>
+                            <?php if ($item['status'] === 'Read'): ?>
+                                <form method="post" class="notification-inline-form">
+                                    <input type="hidden" name="csrf" value="<?= notificationEscape($csrf) ?>">
+                                    <input type="hidden" name="filter" value="<?= $filter ?>">
+                                    <input type="hidden" name="id" value="<?= $id ?>">
+                                    <button type="submit" name="action" value="unread"><i class="fa-solid fa-envelope" aria-hidden="true"></i> Mark unread</button>
+                                </form>
+                            <?php endif; ?>
                         <?php endif; ?>
                         <form method="post" class="notification-inline-form">
                             <input type="hidden" name="csrf" value="<?= notificationEscape($csrf) ?>">
