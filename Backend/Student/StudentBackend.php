@@ -1,7 +1,5 @@
 <?php
-
 declare(strict_types=1);
-
 require_once __DIR__ . '/StudentPortfolioRepository.php';
 
 class StudentManager
@@ -15,11 +13,9 @@ class StudentManager
             global $conn;
             $db = $conn ?? null;
         }
-
         if (!$db instanceof mysqli) {
             throw new RuntimeException('SkillBridge database connection is not available.');
         }
-
         $this->db = $db;
     }
 
@@ -50,7 +46,7 @@ class StudentManager
     }
 
     // ---------------------------------------------------------------------
-    // Student profile and skills (compatible with existing Dashboard pages)
+    // Student profile and skills
     // ---------------------------------------------------------------------
 
     public function getStudent(string $email): ?array
@@ -126,18 +122,19 @@ class StudentManager
         return $this->count('SELECT COUNT(*) AS total FROM student_projects WHERE Email = ?', $email);
     }
 
-    public function getProjects(string $email, int $limit = 2): array
+    public function getProjects(string $email): array
     {
-        $limit = max(1, min($limit, 100));
         return $this->fetchAll(
-            'SELECT p.id, p.title, p.company AS organization, sp.role AS team,
-                    sp.progress, sp.status
+            'SELECT p.id, p.title, o.Name AS organization,
+                    sp.role AS team, sp.progress, sp.status
              FROM student_projects AS sp
              INNER JOIN projects AS p ON p.id = sp.project_id
+             LEFT JOIN organization AS o ON o.Email = p.organization_email
              WHERE sp.Email = ?
-             ORDER BY sp.student_project_id DESC LIMIT ?',
-            'si',
-            [$email, $limit]
+             ORDER BY sp.student_project_id DESC
+             LIMIT 2',
+            's',
+            [$email]
         );
     }
 
@@ -184,8 +181,20 @@ class StudentManager
     {
         $limit = max(1, min($limit, 50));
         return $this->fetchAll(
-            'SELECT id, title, company, industry, tech_tags, duration, deadline
-             FROM internships ORDER BY id DESC LIMIT ?',
+            "SELECT i.id, i.title, c.Name AS company,
+                    ind.industry_name AS industry,
+                    (SELECT GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ')
+                     FROM internship_tech_tag_map AS m
+                     INNER JOIN internship_tech_tags AS t ON t.tag_id = m.tag_id
+                     WHERE m.internship_id = i.id) AS tech_tags,
+                    CONCAT(i.duration_value, ' ',
+                           CASE WHEN i.duration_value = 1 THEN i.duration_unit
+                                ELSE CONCAT(i.duration_unit, 's') END) AS duration,
+                    DATE_FORMAT(i.deadline_date, '%b %d, %Y') AS deadline
+             FROM internships AS i
+             LEFT JOIN company AS c ON c.Email = i.company_email
+             LEFT JOIN internship_industries AS ind ON ind.industry_id = i.industry_id
+             ORDER BY i.id DESC LIMIT ?",
             'i',
             [$limit]
         );
@@ -195,10 +204,13 @@ class StudentManager
     {
         return $this->fetchAll(
             'SELECT a.application_id, a.internship_id, a.status,
-                    a.applied_date, i.title, i.company, i.deadline
+                    a.applied_date, i.title, c.Name AS company,
+                    i.deadline_date AS deadline
              FROM internship_applications AS a
              INNER JOIN internships AS i ON i.id = a.internship_id
-             WHERE a.Email = ? ORDER BY a.applied_date DESC, a.application_id DESC',
+             LEFT JOIN company AS c ON c.Email = i.company_email
+             WHERE a.Email = ?
+             ORDER BY a.applied_date DESC, a.application_id DESC',
             's',
             [$email]
         );
@@ -208,10 +220,13 @@ class StudentManager
     {
         return $this->fetchAll(
             'SELECT a.id AS application_id, a.project_id, a.status,
-                    a.applied_at, a.decided_at, p.title, p.company AS organization
+                    a.applied_at, a.decided_at, p.title,
+                    o.Name AS organization
              FROM project_applications AS a
              INNER JOIN projects AS p ON p.id = a.project_id
-             WHERE a.Email = ? ORDER BY a.applied_at DESC, a.id DESC',
+             LEFT JOIN organization AS o ON o.Email = p.organization_email
+             WHERE a.Email = ?
+             ORDER BY a.applied_at DESC, a.id DESC',
             's',
             [$email]
         );
@@ -220,11 +235,23 @@ class StudentManager
     public function getSavedInternships(string $email): array
     {
         return $this->fetchAll(
-            'SELECT i.id, i.title, i.company, i.industry, i.tech_tags,
-                    i.duration, i.deadline, s.saved_at
+            "SELECT i.id, i.title, c.Name AS company,
+                    ind.industry_name AS industry,
+                    (SELECT GROUP_CONCAT(t.tag_name ORDER BY t.tag_name SEPARATOR ', ')
+                     FROM internship_tech_tag_map AS m
+                     INNER JOIN internship_tech_tags AS t ON t.tag_id = m.tag_id
+                     WHERE m.internship_id = i.id) AS tech_tags,
+                    CONCAT(i.duration_value, ' ',
+                           CASE WHEN i.duration_value = 1 THEN i.duration_unit
+                                ELSE CONCAT(i.duration_unit, 's') END) AS duration,
+                    DATE_FORMAT(i.deadline_date, '%b %d, %Y') AS deadline,
+                    s.saved_at
              FROM student_saved_internships AS s
              INNER JOIN internships AS i ON i.id = s.internship_id
-             WHERE s.student_email = ? ORDER BY s.saved_at DESC',
+             LEFT JOIN company AS c ON c.Email = i.company_email
+             LEFT JOIN internship_industries AS ind ON ind.industry_id = i.industry_id
+             WHERE s.student_email = ?
+             ORDER BY s.saved_at DESC",
             's',
             [$email]
         );
@@ -387,12 +414,7 @@ class StudentManager
             $email
         );
     }
-
-    /**
-     * Call only from a public-profile request after you have resolved the
-     * profile owner's email from the database. Never trust a posted owner email.
-     * Avoid logging the owner's own page views at the caller.
-     */
+    
     public function recordProfileView(string $profileOwnerEmail): void
     {
         $stmt = $this->db->prepare(
