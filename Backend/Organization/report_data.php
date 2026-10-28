@@ -12,7 +12,7 @@
 
 // Sample data is shown together with the real database rows (same as the Teams /
 // Proposals / Feedback pages). Set to false when the real data is enough.
-const RP_INCLUDE_SAMPLE = true;
+const RP_INCLUDE_SAMPLE = false;
 
 const RP_TYPES = [
     'projects'   => ['label' => 'Projects',    'icon' => 'folder_open',  'hint' => 'Every project you posted'],

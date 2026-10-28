@@ -218,7 +218,8 @@ function holdValidate() {
 
     const title = v('title');
     if (title === '') e.title = 'Project title is required.';
-    else if (title.length < 5 || title.length > 100) e.title = 'Title must be 5 to 100 characters.';
+    else if (title.length < 3 || title.length > 80) e.title = 'Title must be 3 to 80 characters.';
+    else if (!/\p{L}/u.test(title)) e.title = 'Title must have letters, not only numbers or symbols.';
 
     if (v('category') === '') e.category = 'Please select a category.';
 
@@ -228,8 +229,9 @@ function holdValidate() {
 
     const desc = v('description');
     if (desc === '') e.description = 'Project description is required.';
-    else if (desc.length < 50) e.description = 'Description must have at least 50 characters (now ' + desc.length + ').';
+    else if (desc.length < 3) e.description = 'Description must have at least 3 characters.';
     else if (desc.length > 3000) e.description = 'Description can have up to 3000 characters.';
+    else if (!/\p{L}/u.test(desc)) e.description = 'Description must have words, not only numbers or symbols.';
 
     if (v('learning_objectives').length > 1500) e.learning_objectives = 'Learning objectives can have up to 1500 characters.';
     if (v('expected_outcomes').length > 1500) e.expected_outcomes = 'Expected outcomes can have up to 1500 characters.';

@@ -508,7 +508,7 @@ include "../../Includes/dash_header.php";
                     <div class="hm-grid-2">
                         <div class="hm-field" data-field="title">
                             <label class="form-label">Project Title <span class="req">*</span></label>
-                            <input type="text" name="title" class="form-input" maxlength="100">
+                            <input type="text" name="title" class="form-input" maxlength="80">
                             <div class="field-error" data-for="title"></div>
                         </div>
                         <div class="hm-field" data-field="category">
@@ -536,7 +536,7 @@ include "../../Includes/dash_header.php";
                     <div class="hm-field" data-field="description">
                         <label class="form-label">Description <span class="req">*</span></label>
                         <textarea name="description" class="form-textarea" rows="4" maxlength="3000"></textarea>
-                        <div class="hm-field-note">At least 50 characters.</div>
+                        <div class="hm-field-note">At least 3 characters.</div>
                         <div class="field-error" data-for="description"></div>
                     </div>
 

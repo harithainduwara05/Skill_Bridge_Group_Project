@@ -1074,3 +1074,10 @@
 .pv-project p { margin: 0 0 10px; font-size: 14px; line-height: 1.6; color: #334155; white-space: pre-line; }
 .pv-project .pv-muted { color: #94a3b8; font-size: 13px; }
 .pv-download[hidden] { display: none !important; }
+
+/* Load More (5 proposals at a time) */
+.pr-more { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 22px; }
+.pr-more[hidden], .pr-more-btn[hidden] { display: none; }
+.pr-more p { margin: 0; color: #6b7280; font-size: 13px; }
+.pr-more-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border: 1px solid #d1d5db; border-radius: 10px; background: #fff; color: #0f3a66; font-weight: 600; font-size: 14px; cursor: pointer; }
+.pr-more-btn:hover { background: #f3f4f6; }

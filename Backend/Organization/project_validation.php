@@ -20,8 +20,8 @@ const PROJECT_DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced'];
 const PROJECT_YEARS        = ['Any Year', 'Year 1', 'Year 2', 'Year 3', 'Year 4'];
 const PROJECT_VISIBILITY   = ['Public', 'Private'];
 
-const TITLE_MIN = 5;      const TITLE_MAX = 100;
-const DESC_MIN  = 50;     const DESC_MAX  = 3000;
+const TITLE_MIN = 3;      const TITLE_MAX = 80;    // like job / project titles on other sites
+const DESC_MIN  = 3;      const DESC_MAX  = 3000;
 const TEXT_MAX  = 1500;   // Learning Objectives / Expected Outcomes
 const SKILLS_MAX = 10;    const SKILL_MAX_LEN = 30;
 const WEEKS_MAX = 52;     // 1 year
@@ -64,6 +64,8 @@ function validateProjectForm(array $d, bool $isDraft, array $extra = []): array
         $errors['title'] = 'Project title is required.';
     } elseif ($len < TITLE_MIN || $len > TITLE_MAX) {
         $errors['title'] = 'Title must be ' . TITLE_MIN . ' to ' . TITLE_MAX . ' characters.';
+    } elseif (!preg_match('/\p{L}/u', $d['title'])) {
+        $errors['title'] = 'Title must have letters, not only numbers or symbols.';
     }
 
     // ---- Category ----
@@ -102,6 +104,8 @@ function validateProjectForm(array $d, bool $isDraft, array $extra = []): array
         $errors['description'] = 'Description must have at least ' . DESC_MIN . ' characters (now ' . $len . ').';
     } elseif ($len > DESC_MAX) {
         $errors['description'] = 'Description can have up to ' . DESC_MAX . ' characters.';
+    } elseif (!preg_match('/\p{L}/u', $d['description'])) {
+        $errors['description'] = 'Description must have words, not only numbers or symbols.';
     }
 
     // ---- Learning Objectives / Expected Outcomes (optional) ----

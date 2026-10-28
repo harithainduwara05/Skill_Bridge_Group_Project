@@ -1,6 +1,6 @@
 <?php
 /*
-| Organization backend - Teams: create / edit team, extend deadline, review the final report (+ demo teams)
+| Organization backend - Teams: create / edit team, extend deadline, review the final report
 | Team status is never set by hand: twRefreshStatus() / orgRefreshTeamStatuses() work it out
 | (Completed only when the organization accepts the team's final report).
 | Used by: Functions/Organization/teams.php
@@ -539,7 +539,6 @@ foreach (tmFetch($conn,
         // a final report waiting for review -> the first button opens it
         'actions' => ($report && $report['status'] === 'submitted' && $state !== 'completed')
                      ? ['Review Report', 'Task', 'Chat'] : ($tmStateActions[$state] ?? $tmStateActions['ontrack']),
-        'is_new' => true,
         'id' => (int)$row['id'],
         'project_id' => (int)$row['project_id'],
         'leader_email' => strtolower($row['leader_email']),
@@ -565,143 +564,10 @@ foreach (tmFetch($conn,
     ];
 }
 
-// ---------------------------------------------------------------
-// UI-ONLY DEMO DATA (kept for the demo). Teams from the database are shown first.
-// state: ontrack | behind | completed      tone: ok | warn | late
-// ---------------------------------------------------------------
+// Only the teams saved in the database (org_teams) are shown
+$teams = $dbTeams;
 
-$demoTeams = [
-    [
-        'name' => 'Nexus Systems', 'state' => 'ontrack', 'status' => 'On Track',
-        'project' => 'AI-Driven Supply Chain Optimizer',
-        'leader' => 'Sanduni Perera', 'role' => 'Full Stack Lead',
-        'members' => ['Ravindu Pathirana', 'Nimal Silva', 'Amaya Dissanayake'], 'more' => 2,
-        'skills' => ['React.js', 'Python', 'TensorFlow', 'Figma'],
-        'phase' => 'Phase 2: Prototyping', 'percent' => 72,
-        'deadline' => 'Oct 24', 'time' => '14 days left', 'tone' => 'warn',
-        'actions' => ['View', 'Task', 'Chat'],
-    ],
-    [
-        'name' => 'Vortex Group', 'state' => 'behind', 'status' => 'Behind Schedule',
-        'project' => 'Blockchain-Based Academic Credentials',
-        'leader' => 'Malith Senanayake', 'role' => 'Security Architect',
-        'members' => ['Kasun Madushanka', 'Tharushi Wijeratne'], 'more' => 1,
-        'skills' => ['Solidity', 'Node.js', 'Cryptography'],
-        'phase' => 'Phase 1: Smart Contract Design', 'percent' => 45,
-        'deadline' => 'Oct 15', 'time' => '5 days delayed', 'tone' => 'late',
-        'actions' => ['View', 'Review', 'Chat'],
-    ],
-    [
-        'name' => 'Quantum Analytics', 'state' => 'completed', 'status' => 'Completed',
-        'project' => 'Predictive Maintenance for Smart Cities',
-        'leader' => 'Erandi Weerasinghe', 'role' => 'Data Analyst',
-        'members' => ['Ishan Rathnayake', 'Dilini Herath'], 'more' => 3,
-        'skills' => [],
-        'phase' => 'Project Completed', 'percent' => 100,
-        'deadline' => '', 'time' => 'Finished on Sep 18', 'tone' => 'ok',
-        'actions' => ['Final Report'],
-    ],
-    [
-        'name' => 'Alpha Ops', 'state' => 'ontrack', 'status' => 'On Track',
-        'project' => 'Cloud Infrastructure Automation',
-        'leader' => 'Kavinda Jayasuriya', 'role' => 'DevOps Engineer',
-        'members' => ['Sahan Liyanage', 'Malsha Karunaratne'], 'more' => 1,
-        'skills' => ['AWS', 'Docker', 'Kubernetes'],
-        'phase' => 'Phase 3: Strategy Deployment', 'percent' => 85,
-        'deadline' => 'Nov 02', 'time' => '22 days left', 'tone' => 'ok',
-        'actions' => ['View', 'Task', 'Chat'],
-    ],
-];
-
-
-
-
-// ---------------------------------------------------------------
-// Full details for the demo teams ("View" popup)
-// ---------------------------------------------------------------
-function tmM($name, $role, $email, $uni, $degree, $year, $skills, $progress, $work, $leader = false) {
-    return compact('name', 'role', 'email', 'skills', 'progress', 'work', 'leader') + ['university' => $uni, 'degree' => $degree, 'year' => $year];
-}
-$UOC = 'University of Colombo'; $UOM = 'University of Moratuwa'; $SLIIT = 'SLIIT'; $UOK = 'University of Kelaniya';
-
-$demoDetails = [
-    'Nexus Systems' => [
-        'company' => 'SLIIT FOSS Community', 'category' => 'AI / Machine Learning', 'duration' => '12 Weeks',
-        'project_deadline' => 'Oct 30, 2026', 'team_deadline' => 'Oct 24, 2026', 'created' => 'Aug 04, 2026',
-        'members' => [
-            tmM('Sanduni Perera', 'Full Stack Lead', '2023cs041@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Computer Science', '3', ['React.js', 'Node.js', 'MySQL'], 78, 'In Progress', true),
-            tmM('Ravindu Pathirana', 'Backend Developer', 'ravindu.p@uom.lk', $UOM, 'B.Sc. in IT', '3', ['Python', 'FastAPI', 'PostgreSQL'], 74, 'In Progress'),
-            tmM('Nimal Silva', 'ML Engineer', 'nimal.s@uom.lk', $UOM, 'B.Sc. in Data Science', '4', ['TensorFlow', 'Pandas', 'Scikit-learn'], 69, 'In Progress'),
-            tmM('Amaya Dissanayake', 'UI/UX Designer', 'it22104587@my.sliit.lk', $SLIIT, 'B.Sc. in Software Engineering', '3', ['Figma', 'User Research'], 90, 'In Progress'),
-            tmM('Chamod Fernando', 'Data Engineer', '2023is018@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Information Systems', '3', ['SQL', 'Airflow', 'Python'], 66, 'In Progress'),
-            tmM('Ishara Gunawardena', 'QA Engineer', 'ishara.g@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '2', ['Selenium', 'Jest'], 55, 'In Progress'),
-        ],
-        'activity' => [
-            ['text' => 'Nimal Silva uploaded the demand-forecast model v2', 'when' => '2 hours ago'],
-            ['text' => 'Amaya Dissanayake shared the dashboard prototype', 'when' => 'Yesterday'],
-            ['text' => 'Phase 1 marked as completed', 'when' => 'Sep 12, 2026'],
-        ],
-    ],
-    'Vortex Group' => [
-        'company' => 'SLIIT FOSS Community', 'category' => 'Blockchain', 'duration' => '10 Weeks',
-        'project_deadline' => 'Oct 20, 2026', 'team_deadline' => 'Oct 15, 2026', 'created' => 'Aug 11, 2026',
-        'members' => [
-            tmM('Malith Senanayake', 'Security Architect', '2023cs077@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Computer Science', '4', ['Cryptography', 'Solidity'], 52, 'In Progress', true),
-            tmM('Kasun Madushanka', 'Blockchain Developer', 'kasun.m@uom.lk', $UOM, 'B.Sc. in Computer Engineering', '3', ['Solidity', 'Hardhat', 'Ethers.js'], 40, 'In Progress'),
-            tmM('Tharushi Wijeratne', 'Frontend Developer', 'it22098311@my.sliit.lk', $SLIIT, 'B.Sc. in IT', '3', ['React.js', 'Tailwind CSS'], 48, 'In Progress'),
-            tmM('Dulaj Bandara', 'Backend Developer', 'dulaj.b@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '3', ['Node.js', 'MongoDB'], 38, 'In Progress'),
-        ],
-        'activity' => [
-            ['text' => 'Deadline for Phase 1 was missed', 'when' => '5 days ago'],
-            ['text' => 'Kasun Madushanka pushed contract tests', 'when' => '6 days ago'],
-            ['text' => 'Team meeting: re-planned Phase 1 tasks', 'when' => 'Sep 18, 2026'],
-        ],
-    ],
-    'Quantum Analytics' => [
-        'company' => 'SLIIT FOSS Community', 'category' => 'Data Science', 'duration' => '8 Weeks',
-        'project_deadline' => 'Sep 20, 2026', 'team_deadline' => 'Sep 18, 2026', 'created' => 'Jul 20, 2026',
-        'members' => [
-            tmM('Erandi Weerasinghe', 'Data Analyst', '2023is052@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Information Systems', '4', ['Power BI', 'SQL', 'Python'], 100, 'Completed', true),
-            tmM('Ishan Rathnayake', 'ML Engineer', 'ishan.r@uom.lk', $UOM, 'B.Sc. in Data Science', '4', ['XGBoost', 'Pandas'], 100, 'Completed'),
-            tmM('Dilini Herath', 'IoT Developer', 'it21876540@my.sliit.lk', $SLIIT, 'B.Sc. in IT', '4', ['Arduino', 'MQTT'], 100, 'Completed'),
-            tmM('Pasindu Kumara', 'Backend Developer', 'pasindu.k@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '3', ['Java', 'Spring Boot'], 100, 'Completed'),
-            tmM('Nethmi Samarasinghe', 'Data Visualization', '2023cs090@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Computer Science', '3', ['D3.js', 'Chart.js'], 100, 'Completed'),
-            tmM('Yasith Abeysekara', 'Technical Writer', 'yasith.a@uom.lk', $UOM, 'B.Sc. in IT', '3', ['Documentation', 'Markdown'], 100, 'Completed'),
-        ],
-        'report' => [
-            'name' => 'Final_Report.pdf', 'path' => '', 'status' => 'accepted', 'note' => '',
-            'summary' => 'We built a sensor data pipeline, a failure prediction model and a maintenance dashboard for the city. The report explains the design, the test results and how to run the system.',
-            'by' => 'Erandi Weerasinghe', 'submitted' => 'Sep 18, 2026', 'reviewed' => 'Sep 18, 2026',
-        ],
-        'activity' => [
-            ['text' => 'Final report accepted – team completed', 'when' => 'Sep 18, 2026'],
-            ['text' => 'Final report submitted', 'when' => 'Sep 18, 2026'],
-            ['text' => 'Dashboard handed over to the client', 'when' => 'Sep 16, 2026'],
-
-        ],
-    ],
-    'Alpha Ops' => [
-        'company' => 'SLIIT FOSS Community', 'category' => 'Cloud & DevOps', 'duration' => '12 Weeks',
-        'project_deadline' => 'Nov 10, 2026', 'team_deadline' => 'Nov 02, 2026', 'created' => 'Aug 01, 2026',
-        'members' => [
-            tmM('Kavinda Jayasuriya', 'DevOps Engineer', '2023cs012@stu.ucsc.cmb.ac.lk', $UOC, 'B.Sc. in Computer Science', '4', ['AWS', 'Terraform', 'Docker'], 88, 'In Progress', true),
-            tmM('Sahan Liyanage', 'Cloud Engineer', 'sahan.l@uom.lk', $UOM, 'B.Sc. in Computer Engineering', '3', ['Kubernetes', 'Helm'], 84, 'In Progress'),
-            tmM('Malsha Karunaratne', 'Automation Developer', 'it22031477@my.sliit.lk', $SLIIT, 'B.Sc. in IT', '3', ['Python', 'Ansible'], 86, 'In Progress'),
-            tmM('Tharindu Wickramaratne', 'Monitoring & SRE', 'tharindu.w@kln.ac.lk', $UOK, 'B.Sc. in Software Engineering', '3', ['Grafana', 'Prometheus'], 80, 'In Progress'),
-        ],
-        'activity' => [
-            ['text' => 'Kubernetes cluster moved to production', 'when' => '3 hours ago'],
-            ['text' => 'Malsha Karunaratne automated nightly backups', 'when' => 'Yesterday'],
-            ['text' => 'Phase 2 marked as completed', 'when' => 'Sep 20, 2026'],
-        ],
-    ],
-];
-foreach ($demoTeams as &$dt) { $dt['details'] = $demoDetails[$dt['name']] ?? null; }
-unset($dt);
-
-$teams = array_merge($dbTeams, $demoTeams);
-
-// Summary cards = the teams shown on this page (database teams + the demo teams)
+// Summary cards = the teams shown on this page
 $activeCount    = count(array_filter($teams, fn($t) => $t['state'] !== 'completed'));
 $studentsCount  = array_sum(array_map(fn($t) => 1 + count($t['members']) + $t['more'], $teams));   // leader + members
 $summary = [
