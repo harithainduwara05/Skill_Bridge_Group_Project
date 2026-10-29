@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/AdminDB.php';
+
 class ProjectManagement extends AdminDB
 {
     public function getActiveProjectCount()
@@ -25,20 +26,81 @@ class ProjectManagement extends AdminDB
 
     public function getAllProjects()
     {
-        $res = $this->runQuery("SELECT * FROM projects ORDER BY id DESC");
+        $sql = "
+            SELECT 
+                p.id,
+                p.title,
+                o.Name AS company,
+                o.Name AS organization_name,
+                p.organization_email,
+                p.icon,
+                pc.category_name AS category,
+                p.difficulty,
+                p.duration_weeks,
+                CONCAT(p.duration_weeks, ' Weeks') AS duration,
+                p.members,
+                p.preferred_year,
+                p.deadline,
+                p.visibility,
+                p.status,
+                p.posted_at,
+                p.description,
+                p.learning_objectives,
+                p.expected_outcomes,
+                (SELECT GROUP_CONCAT(skill_name SEPARATOR ', ') FROM project_skills WHERE project_id = p.id) AS tech_stack,
+                (SELECT reason FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS hold_reason,
+                (SELECT org_response FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS hold_response,
+                (SELECT created_at FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS held_at
+            FROM projects p
+            INNER JOIN organization o ON p.organization_email = o.Email
+            INNER JOIN project_categories pc ON p.category_id = pc.category_id
+            ORDER BY p.id DESC
+        ";
+        $res = $this->runQuery($sql);
         return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
     }
 
     public function getProjectById($projectId)
     {
         $cleanId = (int) preg_replace('/[^0-9]/', '', (string)$projectId);
-        $res = $this->runQuery("SELECT * FROM projects WHERE id = ? LIMIT 1", "i", $cleanId);
+        $sql = "
+            SELECT 
+                p.id,
+                p.title,
+                o.Name AS company,
+                o.Name AS organization_name,
+                p.organization_email,
+                p.icon,
+                pc.category_name AS category,
+                p.difficulty,
+                p.duration_weeks,
+                CONCAT(p.duration_weeks, ' Weeks') AS duration,
+                p.members,
+                p.preferred_year,
+                p.deadline,
+                p.visibility,
+                p.status,
+                p.posted_at,
+                p.description,
+                p.learning_objectives,
+                p.expected_outcomes,
+                (SELECT GROUP_CONCAT(skill_name SEPARATOR ', ') FROM project_skills WHERE project_id = p.id) AS tech_stack,
+                (SELECT reason FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS hold_reason,
+                (SELECT org_response FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS hold_response,
+                (SELECT created_at FROM project_moderation_logs WHERE project_id = p.id ORDER BY id DESC LIMIT 1) AS held_at
+            FROM projects p
+            INNER JOIN organization o ON p.organization_email = o.Email
+            INNER JOIN project_categories pc ON p.category_id = pc.category_id
+            WHERE p.id = ?
+            LIMIT 1
+        ";
+        $res = $this->runQuery($sql, "i", $cleanId);
         return ($res && $res->num_rows > 0) ? $res->fetch_assoc() : null;
     }
 
     public function getDistinctCategories()
     {
-        $res = $this->runQuery("SELECT DISTINCT category FROM projects WHERE category IS NOT NULL AND TRIM(category) <> '' ORDER BY category ASC");
+        $res = $this->runQuery("SELECT category_name AS category FROM project_categories ORDER BY category_name ASC");
         return $res ? array_column($res->fetch_all(MYSQLI_ASSOC), 'category') : [];
     }
 
@@ -46,13 +108,16 @@ class ProjectManagement extends AdminDB
     {
         $cleanId = (int) preg_replace('/[^0-9]/', '', (string)$projectId);
         $statusClean = trim($status);
+        $adminEmail = !empty($heldBy) ? $heldBy : 'skillbridge62@gmail.com';
 
         if (strcasecmp($statusClean, 'Hold') === 0) {
-            $ok = $this->runAction(
-                "UPDATE projects SET status = 'Hold', hold_reason = ?, held_by = ?, held_at = NOW() WHERE id = ?",
-                "ssi", $holdReason, $heldBy, $cleanId
-            );
+            $ok = $this->runAction("UPDATE projects SET status = 'hold' WHERE id = ?", "i", $cleanId);
             if ($ok) {
+                $this->runAction(
+                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, 'Hold', ?, 'Open')",
+                    "isss",
+                    $cleanId, $adminEmail, $holdReason
+                );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
                     $this->addNotification(
@@ -69,8 +134,13 @@ class ProjectManagement extends AdminDB
             $wasHold = strcasecmp($existingProj['status'] ?? '', 'Hold') === 0;
             $newStatus = (strcasecmp($statusClean, 'Active') === 0) ? 'Active' : 'Published';
 
-            $ok = $this->runAction("UPDATE projects SET status = ?, hold_resolved_at = NOW() WHERE id = ?", "si", $newStatus, $cleanId);
+            $ok = $this->runAction("UPDATE projects SET status = ? WHERE id = ?", "si", $newStatus, $cleanId);
             if ($ok) {
+                $this->runAction(
+                    "UPDATE project_moderation_logs SET status = 'Resolved', resolved_at = NOW() WHERE project_id = ? AND status = 'Open'",
+                    "i",
+                    $cleanId
+                );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
                     $notifTitle = $wasHold ? 'Project Restored & Published' : 'Project Approved & Published';
@@ -82,8 +152,13 @@ class ProjectManagement extends AdminDB
             }
             return $ok;
         } else {
-            $ok = $this->runAction("UPDATE projects SET status = ?, hold_reason = ? WHERE id = ?", "ssi", $statusClean, $holdReason, $cleanId);
+            $ok = $this->runAction("UPDATE projects SET status = ? WHERE id = ?", "si", strtolower($statusClean), $cleanId);
             if ($ok && strcasecmp($statusClean, 'Rejected') === 0) {
+                $this->runAction(
+                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, 'Rejected', ?, 'Open')",
+                    "isss",
+                    $cleanId, $adminEmail, $holdReason
+                );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
                     $this->addNotification($proj['organization_email'], 'Project Rejected', "Your project '{$proj['title']}' has been permanently rejected. Reason: {$holdReason}", 'project');

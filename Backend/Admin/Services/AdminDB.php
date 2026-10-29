@@ -11,7 +11,9 @@ class AdminDB
     protected $conn;
     protected $allowedTables = [
         'user', 'student', 'company', 'organization', 'admin', 
-        'universityemails', 'projects', 'project', 'internships', 'internship', 'student_projects', 'complain', 'internship_applications'
+        'universityemails', 'university_faculties', 'projects', 'project', 
+        'internships', 'internship', 'student_projects', 'complain', 
+        'internship_applications', 'project_moderation_logs', 'internship_moderation_logs'
     ];
 
     public function __construct($conn)
@@ -68,6 +70,12 @@ class AdminDB
         $tableLower = strtolower($table);
         if (!in_array($tableLower, $this->allowedTables)) return 0;
         $actualTable = ($tableLower === 'project') ? 'projects' : (($tableLower === 'internship') ? 'internships' : $tableLower);
+        
+        // Handle internships suspension count from moderation logs if status column not in internships
+        if ($actualTable === 'internships' && strtolower($column) === 'status' && strtolower($value) === 'suspended') {
+            return $this->runCount("SELECT COUNT(DISTINCT internship_id) FROM internship_moderation_logs WHERE status = 'Suspended'");
+        }
+
         return $this->runCount("SELECT COUNT(*) FROM $actualTable WHERE $column = ?", "s", $value);
     }
 

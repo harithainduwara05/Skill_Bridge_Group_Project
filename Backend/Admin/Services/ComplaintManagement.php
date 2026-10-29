@@ -96,59 +96,51 @@ class ComplaintManagement extends AdminDB
     public function getComplaintById($id)
     {
         $sql = "
-        SELECT 
-            c.id,
-            c.email,
-            c.title,
-            c.discription,
-            COALESCE(c.category, 'Technical') AS category,
-            c.priority,
-            c.status,
-            c.resolution_notes,
-            c.create_at,
-            c.update_at,
-            LOWER(COALESCE(u.role, 'user')) AS role,
-            COALESCE(s.Name, comp.contactPersonName, o.contactPersonName, a.Name, 'Community Member') AS user_name,
-            COALESCE(s.University, comp.Name, o.Name, 'SkillBridge') AS organization_name,
-            s.profile_image AS profile_image
-        FROM complain c
-        LEFT JOIN user u ON c.email = u.Email
-        LEFT JOIN student s ON c.email = s.Email
-        LEFT JOIN company comp ON c.email = comp.Email
-        LEFT JOIN organization o ON c.email = o.Email
-        LEFT JOIN admin a ON c.email = a.Email
-        WHERE c.id = ?
-        LIMIT 1
+            SELECT 
+                c.id,
+                c.email,
+                c.title,
+                c.discription,
+                COALESCE(c.category, 'Technical') AS category,
+                c.priority,
+                c.status,
+                c.resolution_notes,
+                c.create_at,
+                c.update_at,
+                LOWER(u.role) AS role
+            FROM complain c
+            INNER JOIN user u ON c.email = u.Email
+            WHERE c.id = ?
+            LIMIT 1
         ";
         $res = $this->runQuery($sql, "i", $id);
-        return $res ? $res->fetch_assoc() : null;
+        $cmp = ($res && $res->num_rows > 0) ? $res->fetch_assoc() : null;
+
+        if ($cmp) {
+            $this->populateUserDetails($cmp);
+        }
+
+        return $cmp;
     }
 
     public function getAllComplaintsDetailed($status = 'all', $priority = 'all', $category = 'all', $search = '')
     {
         $sql = "
-        SELECT 
-            c.id,
-            c.email,
-            c.title,
-            c.discription,
-            COALESCE(c.category, 'Technical') AS category,
-            c.priority,
-            c.status,
-            c.resolution_notes,
-            c.create_at,
-            c.update_at,
-            LOWER(COALESCE(u.role, 'user')) AS role,
-            COALESCE(s.Name, comp.contactPersonName, o.contactPersonName, a.Name, 'Community Member') AS user_name,
-            COALESCE(s.University, comp.Name, o.Name, 'SkillBridge') AS organization_name,
-            s.profile_image AS profile_image
-        FROM complain c
-        LEFT JOIN user u ON c.email = u.Email
-        LEFT JOIN student s ON c.email = s.Email
-        LEFT JOIN company comp ON c.email = comp.Email
-        LEFT JOIN organization o ON c.email = o.Email
-        LEFT JOIN admin a ON c.email = a.Email
-        WHERE 1=1
+            SELECT 
+                c.id,
+                c.email,
+                c.title,
+                c.discription,
+                COALESCE(c.category, 'Technical') AS category,
+                c.priority,
+                c.status,
+                c.resolution_notes,
+                c.create_at,
+                c.update_at,
+                LOWER(u.role) AS role
+            FROM complain c
+            INNER JOIN user u ON c.email = u.Email
+            WHERE 1=1
         ";
 
         $params = [];
@@ -178,8 +170,8 @@ class ComplaintManagement extends AdminDB
 
         if (!empty($search)) {
             $searchTerm = '%' . $search . '%';
-            $sql .= " AND (c.id LIKE ? OR c.email LIKE ? OR c.title LIKE ? OR c.discription LIKE ? OR s.Name LIKE ? OR comp.contactPersonName LIKE ? OR o.contactPersonName LIKE ? OR a.Name LIKE ?)";
-            for ($i = 0; $i < 8; $i++) {
+            $sql .= " AND (c.id LIKE ? OR c.email LIKE ? OR c.title LIKE ? OR c.discription LIKE ?)";
+            for ($i = 0; $i < 4; $i++) {
                 $params[] = $searchTerm;
                 $types .= "s";
             }
@@ -204,9 +196,59 @@ class ComplaintManagement extends AdminDB
             c.id DESC";
 
         if (!empty($types)) {
-            return $this->runQuery($sql, $types, ...$params)->fetch_all(MYSQLI_ASSOC);
+            $complaints = $this->runQuery($sql, $types, ...$params)->fetch_all(MYSQLI_ASSOC);
+        } else {
+            $complaints = $this->runQuery($sql)->fetch_all(MYSQLI_ASSOC);
         }
-        return $this->runQuery($sql)->fetch_all(MYSQLI_ASSOC);
+
+        foreach ($complaints as &$cmp) {
+            $this->populateUserDetails($cmp);
+        }
+
+        return $complaints;
+    }
+
+    /**
+     * Helper to populate user details using simple direct queries without LEFT JOIN
+     */
+    protected function populateUserDetails(&$cmp)
+    {
+        $cmp['user_name'] = 'Community Member';
+        $cmp['organization_name'] = 'SkillBridge';
+        $cmp['profile_image'] = null;
+
+        $email = $cmp['email'] ?? '';
+        $role = strtolower($cmp['role'] ?? '');
+
+        if ($role === 'student') {
+            $res = $this->runQuery("SELECT Name, University, profile_image FROM student WHERE Email = ? LIMIT 1", "s", $email);
+            if ($res && $row = $res->fetch_assoc()) {
+                $cmp['user_name'] = $row['Name'] ?? 'Student';
+                $cmp['organization_name'] = $row['University'] ?? 'University';
+                $cmp['profile_image'] = $row['profile_image'];
+            }
+        } elseif ($role === 'company') {
+            $res = $this->runQuery("SELECT contactPersonName, Name, profile_img FROM company WHERE Email = ? LIMIT 1", "s", $email);
+            if ($res && $row = $res->fetch_assoc()) {
+                $cmp['user_name'] = $row['contactPersonName'] ?? 'Company Representative';
+                $cmp['organization_name'] = $row['Name'] ?? 'Company';
+                $cmp['profile_image'] = $row['profile_img'];
+            }
+        } elseif ($role === 'organization') {
+            $res = $this->runQuery("SELECT contactPersonName, Name, logo FROM organization WHERE Email = ? LIMIT 1", "s", $email);
+            if ($res && $row = $res->fetch_assoc()) {
+                $cmp['user_name'] = $row['contactPersonName'] ?? 'Organization Lead';
+                $cmp['organization_name'] = $row['Name'] ?? 'Organization';
+                $cmp['profile_image'] = $row['logo'];
+            }
+        } elseif ($role === 'admin') {
+            $res = $this->runQuery("SELECT Name, profile_image FROM admin WHERE Email = ? LIMIT 1", "s", $email);
+            if ($res && $row = $res->fetch_assoc()) {
+                $cmp['user_name'] = $row['Name'] ?? 'Admin';
+                $cmp['organization_name'] = 'System';
+                $cmp['profile_image'] = $row['profile_image'];
+            }
+        }
     }
 
     public function getComplaintStats()
@@ -239,8 +281,10 @@ class ComplaintManagement extends AdminDB
             'avg_response_time' => $avgFormatted
         ];
     }
-    public function getActiveComplainCount(){
-        $cntRes=$this->runCount("SELECT COUNT(*) AS active_count FROM complain WHERE status NOT IN ('RESOLVED', 'DISMISSED')");
+
+    public function getActiveComplainCount()
+    {
+        $cntRes = $this->runCount("SELECT COUNT(*) AS active_count FROM complain WHERE status NOT IN ('RESOLVED', 'DISMISSED')");
         return (int)$cntRes;
     }
 }

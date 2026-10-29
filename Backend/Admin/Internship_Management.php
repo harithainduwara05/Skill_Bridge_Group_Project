@@ -47,7 +47,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 // Card Statistics via AdminDB base functions & InternshipManagement
 $totalInternships     = $internshipDB->getCount('internships');
 $activeInternships    = $internshipDB->getActiveInternshipCount();
-$suspendedInternships = $internshipDB->getCountWhere('internships', 'status', 'suspended');
+$suspendedInternships = $internshipDB->getSuspendedInternshipCount();
 $totalApplications    = $internshipDB->getCount('internship_applications');
 
 // Fetch Data for Table and Filters
