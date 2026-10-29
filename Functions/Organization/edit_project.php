@@ -49,7 +49,7 @@ include "../../Includes/dash_header.php";
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Project Title <span class="req">*</span></label>
-                        <input type="text" name="title" class="form-input" maxlength="100" value="<?= htmlspecialchars($project['title']) ?>">
+                        <input type="text" name="title" class="form-input" maxlength="80" value="<?= htmlspecialchars($project['title']) ?>">
                         <?= fieldError($errors, 'title') ?>
                     </div>
                     <div class="form-group">
@@ -88,7 +88,7 @@ include "../../Includes/dash_header.php";
                 <div class="form-group">
                     <label class="form-label">Project Description <span class="req">*</span></label>
                     <textarea name="description" class="form-textarea" maxlength="3000"><?= htmlspecialchars($project['description'] ?? '') ?></textarea>
-                    <div class="form-hint">At least 50 characters, so students understand the project.</div>
+                    <div class="form-hint">Tell students what the project is about.</div>
                     <?= fieldError($errors, 'description') ?>
                 </div>
 
@@ -161,9 +161,10 @@ include "../../Includes/dash_header.php";
                     <div class="form-group">
                         <label class="form-label">Application Deadline <span class="req">*</span></label>
                         <!-- data-original: a deadline that is not changed is not checked again -->
+                        <!-- min / max: days before tomorrow or after 1 year are grey in the calendar and can't be picked -->
                         <input type="date" name="deadline" class="form-input" value="<?= htmlspecialchars($deadlineValue) ?>"
                                data-original="<?= htmlspecialchars($originalDeadline) ?>"
-                               max="<?= date('Y-m-d', strtotime('+1 year')) ?>">
+                               min="<?= date('Y-m-d', strtotime('+1 day')) ?>" max="<?= date('Y-m-d', strtotime('+1 year')) ?>">
                         <div class="form-hint">Last day students can apply. A new date must be after today.</div>
                         <?= fieldError($errors, 'deadline') ?>
                     </div>

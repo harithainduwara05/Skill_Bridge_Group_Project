@@ -66,7 +66,7 @@ include "../../Includes/dash_header.php";
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Project Title <span class="req">*</span></label>
-                        <input type="text" name="title" class="form-input" maxlength="100" value="<?= old('title') ?>" placeholder="e.g. AI-Driven Customer Insights Platform">
+                        <input type="text" name="title" class="form-input" maxlength="80" value="<?= old('title') ?>" placeholder="e.g. AI-Driven Customer Insights Platform">
                         <?= fieldError($errors, 'title') ?>
                     </div>
                     <div class="form-group">
@@ -102,7 +102,7 @@ include "../../Includes/dash_header.php";
                 <div class="form-group">
                     <label class="form-label">Project Description <span class="req">*</span></label>
                     <textarea name="description" class="form-textarea" maxlength="3000" placeholder="Provide a high-level overview of the project goals..."><?= old('description') ?></textarea>
-                    <div class="form-hint">At least 50 characters, so students understand the project.</div>
+                    <div class="form-hint">Tell students what the project is about.</div>
                     <?= fieldError($errors, 'description') ?>
                 </div>
 
@@ -165,6 +165,7 @@ include "../../Includes/dash_header.php";
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">Application Deadline <span class="req">*</span></label>
+                        <!-- min / max: days before tomorrow or after 1 year are grey in the calendar and can't be picked -->
                         <input type="date" name="deadline" class="form-input" value="<?= old('deadline') ?>"
                                min="<?= $deadlineMin ?>" max="<?= $deadlineMax ?>">
                         <div class="form-hint">Last day students can apply (after today, within 1 year).</div>

@@ -217,7 +217,7 @@ function updateCardStatus(
 
     }
 
-    applyFilters();
+    applyFilters(true);   // keep the cards already loaded with "Load More"
 }
 
 
@@ -225,8 +225,15 @@ function updateCardStatus(
    FILTER PROPOSALS
 ================================================================ */
 
-function applyFilters()
+const PAGE_SIZE = 5;           // proposals shown first, and per "Load More"
+let shownLimit = PAGE_SIZE;
+const loadMoreBox = document.getElementById('prMore');
+const loadMoreBtn = document.getElementById('prLoadMore');
+
+function applyFilters(keepLimit)
 {
+    // a filter / search / sort change starts again from the first 5
+    if (keepLimit !== true) shownLimit = PAGE_SIZE;
 
     const search =
         searchInput.value
@@ -297,9 +304,10 @@ function applyFilters()
 
         if (shouldShow) {
 
-            card.classList.remove('hidden');
-
             visibleCount++;
+
+            // matching, but only the first "shownLimit" are shown
+            card.classList.toggle('hidden', visibleCount > shownLimit);
 
         } else {
 
@@ -315,6 +323,26 @@ function applyFilters()
         visibleCount === 0
     );
 
+    // "Load More" + "Showing x of y"
+    if (loadMoreBox) {
+        const shown = Math.min(shownLimit, visibleCount);
+        document.getElementById('prShown').textContent = shown;
+        document.getElementById('prTotal').textContent = visibleCount;
+        loadMoreBox.hidden = visibleCount === 0;
+        loadMoreBtn.hidden = shown >= visibleCount;
+    }
+
+}
+
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', function () {
+        const firstNew = shownLimit;
+        shownLimit += PAGE_SIZE;
+        applyFilters(true);
+        // scroll gently to the first newly loaded proposal
+        const visible = Array.from(document.querySelectorAll('.pr-card:not(.hidden)'));
+        if (visible[firstNew]) visible[firstNew].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
 }
 
 

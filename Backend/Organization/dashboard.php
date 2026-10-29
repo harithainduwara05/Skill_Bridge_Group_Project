@@ -1,6 +1,6 @@
 <?php
 /*
-| Organization backend - Dashboard: stat card counts, recent project posts, team progress (+ demo rows)
+| Organization backend - Dashboard: stat card counts, recent project posts, team progress
 | Used by: Functions/Organization/dashboard.php
 | (the page already loaded Config/db.php + Session/Session.php and checked the role)
 */
@@ -48,7 +48,7 @@ $unreadNotifCount = (int)$stmt->get_result()->fetch_row()[0];
 require_once __DIR__ . '/org_db.php';
 $stmt = $conn->prepare(str_replace("\n    FROM projects p", ",
                                 (SELECT COUNT(*) FROM project_proposals pa WHERE pa.project_id = p.id) AS proposal_count,
-                                (SELECT COUNT(*) FROM student_projects sp WHERE sp.project_id = p.id) AS team_count
+                                (SELECT COUNT(*) FROM org_teams t JOIN org_team_members m ON m.team_id = t.id WHERE t.project_id = p.id) AS team_count
     FROM projects p", ORG_PROJECT_SELECT)
                        . " WHERE p.organization_email = ? ORDER BY p.posted_at DESC LIMIT 5");
 $stmt->bind_param("s", $organization_email);
@@ -73,76 +73,36 @@ function statusLabel($status) {
     return $labels[$status] ?? ucfirst($status);
 }
 
-// ---- Pad with demo/fake data for presentation so the table always shows 5 rows ----
-$fakeProjectPool = [
-    ['title' => 'AI Chatbot for Student Support', 'keywords' => 'Python, NLP, Flask', 'category' => 'AI/ML', 'posted_at' => date('Y-m-d', strtotime('-1 day')), 'proposal_count' => 5, 'status' => 'reviewing'],
-    ['title' => 'Mobile Attendance Tracker', 'keywords' => 'Flutter, Firebase', 'category' => 'Mobile Development', 'posted_at' => date('Y-m-d', strtotime('-3 day')), 'proposal_count' => 3, 'status' => 'reviewing'],
-    ['title' => 'Portfolio Website Builder', 'keywords' => 'React, Tailwind CSS', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-10 day')), 'proposal_count' => 2, 'status' => 'reviewing'],
-    ['title' => 'Campus Event Management System', 'keywords' => 'Laravel, MySQL', 'category' => 'Web Development', 'posted_at' => date('Y-m-d', strtotime('-14 day')), 'proposal_count' => 6, 'status' => 'completed'],
-    ['title' => 'Smart Library Assistant', 'keywords' => 'Java, Spring Boot', 'category' => 'Software Engineering', 'posted_at' => date('Y-m-d', strtotime('-18 day')), 'proposal_count' => 4, 'status' => 'inprogress'],
-];
-$needed = 5 - count($recentProjects);
-if ($needed > 0) {
-    // Demo/fake rows are only for filling out this table visually.
-    // "Total Projects" / "Active Projects" stay based on the real DB
-    // count, since that's what Manage Projects (View All) actually lists.
-    $recentProjects = array_merge($recentProjects, array_slice($fakeProjectPool, 0, $needed));
-}
-
-// ---- Team Progress (mini team cards: lead, progress, status, deadline) ----
-$stmt = $conn->prepare("SELECT p.id, p.title, p.deadline,
-                                COUNT(sp.student_project_id) AS team_size,
-                                AVG(sp.progress) AS avg_progress,
-                                SUM(CASE WHEN sp.status = 'Completed' THEN 1 ELSE 0 END) AS completed_count,
-                                (SELECT s.Name FROM student_projects sp2
-                                    JOIN student s ON s.Email = sp2.Email
-                                    WHERE sp2.project_id = p.id AND sp2.role LIKE '%Lead%'
-                                    LIMIT 1) AS lead_name
-                         FROM projects p
-                         JOIN student_projects sp ON sp.project_id = p.id
+// ---- Team Progress (latest 3 teams from org_teams, same status / progress as the Teams page) ----
+orgRefreshTeamStatuses($conn, $organization_email);
+$stmt = $conn->prepare("SELECT t.id, t.name, t.deadline, t.status, p.title,
+                                COALESCE(s.Name, t.leader_email) AS lead_name,
+                                (SELECT COUNT(*) FROM org_team_members m WHERE m.team_id = t.id) AS team_size,
+                                (SELECT COUNT(*) FROM team_tasks k WHERE k.team_id = t.id) AS task_total,
+                                (SELECT COUNT(*) FROM team_tasks k WHERE k.team_id = t.id AND k.status = 'Done') AS task_done
+                         FROM org_teams t
+                         JOIN projects p ON p.id = t.project_id
+                         LEFT JOIN student s ON s.Email = t.leader_email
                          WHERE p.organization_email = ?
-                         GROUP BY p.id, p.title, p.deadline
-                         ORDER BY p.posted_at DESC
+                         ORDER BY t.created_at DESC
                          LIMIT 3");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $teamProgressRows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 foreach ($teamProgressRows as &$tpRow) {
-    $tpRow['avg_progress'] = (int)round((float)$tpRow['avg_progress']);
+    $state = $tpRow['status'] ?: 'ontrack';
+    $tpRow['title'] = $tpRow['name'] . ' - ' . $tpRow['title'];
+    $tpRow['team_status'] = ['ontrack' => 'On Track', 'behind' => 'Behind Schedule', 'completed' => 'Completed'][$state] ?? 'On Track';
+    // progress = Done tasks / all tasks (100% when the team is completed)
+    $tpRow['avg_progress'] = $state === 'completed' ? 100
+        : ((int)$tpRow['task_total'] > 0 ? (int)round($tpRow['task_done'] / $tpRow['task_total'] * 100) : 0);
 
-    // Work out a status badge: Completed / Behind Schedule / On Track
-    $deadlineTs = $tpRow['deadline'] ? strtotime($tpRow['deadline']) : false;
-    if ((int)$tpRow['completed_count'] === (int)$tpRow['team_size']) {
-        $tpRow['team_status'] = 'Completed';
-    } elseif ($deadlineTs && $deadlineTs < time()) {
-        $tpRow['team_status'] = 'Behind Schedule';
-    } else {
-        $tpRow['team_status'] = 'On Track';
+    $tpRow['days_text'] = null;
+    if ($state !== 'completed' && !empty($tpRow['deadline'])) {
+        $days = (int)floor((strtotime($tpRow['deadline']) - strtotime('today')) / 86400);
+        $tpRow['days_text'] = $days >= 0 ? $days . ' day' . ($days === 1 ? '' : 's') . ' left' : abs($days) . ' days delayed';
     }
-
-    // Days left / overdue text
-    if ($deadlineTs) {
-        $daysDiff = (int)ceil(($deadlineTs - time()) / 86400);
-        $tpRow['days_text'] = $daysDiff >= 0 ? "$daysDiff days left" : (abs($daysDiff) . " days delayed");
-    } else {
-        $tpRow['days_text'] = null;
-    }
-
-    if (!$tpRow['lead_name']) {
-        $tpRow['lead_name'] = 'Unassigned';
-    }
+    $tpRow['deadline'] = !empty($tpRow['deadline']) ? date('M d, Y', strtotime($tpRow['deadline'])) : '';
 }
 unset($tpRow);
-
-// ---- Pad with demo/fake teams so the panel always shows a nice full set ----
-$fakeTeamPool = [
-    ['title' => 'AI-Driven Supply Chain Optimizer', 'lead_name' => 'Sarah Chen', 'team_size' => 4, 'avg_progress' => 72, 'team_status' => 'On Track', 'deadline' => 'Oct 24, 2026', 'days_text' => '14 days left'],
-    ['title' => 'Blockchain Academic Credentials', 'lead_name' => 'Marcus Thorne', 'team_size' => 3, 'avg_progress' => 45, 'team_status' => 'Behind Schedule', 'deadline' => 'Oct 15, 2026', 'days_text' => '5 days delayed'],
-    ['title' => 'Predictive Maintenance for Smart Cities', 'lead_name' => 'Elena Vance', 'team_size' => 4, 'avg_progress' => 100, 'team_status' => 'Completed', 'deadline' => 'Sep 18, 2026', 'days_text' => null],
-    ['title' => 'Cloud Infrastructure Automation', 'lead_name' => 'Kevin Zhang', 'team_size' => 3, 'avg_progress' => 85, 'team_status' => 'On Track', 'deadline' => 'Nov 02, 2026', 'days_text' => '22 days left'],
-];
-$neededTeams = 3 - count($teamProgressRows);
-if ($neededTeams > 0) {
-    $teamProgressRows = array_merge($teamProgressRows, array_slice($fakeTeamPool, 0, $neededTeams));
-}

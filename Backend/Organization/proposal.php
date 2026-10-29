@@ -53,10 +53,15 @@ try {
 function prPortfolioInfo(?string $path): array
 {
     $path = ltrim(str_replace('\\', '/', trim((string)$path)), '/');
-    // only a file name saved (e.g. "portfolio_scanner.png") -> it is in the proposals upload folder
-    if ($path !== '' && strpos($path, '/') === false) $path = 'Assets/Uploads/proposals/' . $path;
+    // only a file name saved (e.g. "portfolio_scanner.png") -> look in the proposal upload folders
+    // (the Student "Apply" page saves them in Assets/Uploads/Student/Proposals/)
+    if ($path !== '' && strpos($path, '/') === false) {
+        $name = $path;
+        $path = 'Assets/Uploads/proposals/' . $name;
+        if (!is_file(__DIR__ . '/../../' . $path)) $path = 'Assets/Uploads/Student/Proposals/' . $name;
+    }
     $ext  = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-    $types = ['pdf' => 'pdf', 'png' => 'image', 'jpg' => 'image', 'jpeg' => 'image', 'zip' => 'zip'];
+    $types = ['pdf' => 'pdf', 'png' => 'image', 'jpg' => 'image', 'jpeg' => 'image', 'webp' => 'image', 'zip' => 'zip'];
 
     if ($path === '' || strpos($path, 'Assets/Uploads/') !== 0 || strpos($path, '..') !== false || !isset($types[$ext])
         || !is_file(__DIR__ . '/../../' . $path)) {          // the file must really be there

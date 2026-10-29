@@ -42,7 +42,8 @@ document.addEventListener('DOMContentLoaded', function () {
         // ---- Title (required also for a draft) ----
         const title = val('title');
         if (title === '') errors.title = 'Project title is required.';
-        else if (title.length < 5 || title.length > 100) errors.title = 'Title must be 5 to 100 characters.';
+        else if (title.length < 3 || title.length > 80) errors.title = 'Title must be 3 to 80 characters.';
+        else if (!/\p{L}/u.test(title)) errors.title = 'Title must have letters, not only numbers or symbols.';
 
         // ---- Category ----
         if (val('category') === '' && !draft) errors.category = 'Please select a category.';
@@ -63,10 +64,12 @@ document.addEventListener('DOMContentLoaded', function () {
         const desc = val('description');
         if (desc === '') {
             if (!draft) errors.description = 'Project description is required.';
-        } else if (desc.length < 50) {
-            errors.description = 'Description must have at least 50 characters (now ' + desc.length + ').';
+        } else if (desc.length < 3) {
+            errors.description = 'Description must have at least 3 characters.';
         } else if (desc.length > 3000) {
             errors.description = 'Description can have up to 3000 characters.';
+        } else if (!/\p{L}/u.test(desc)) {
+            errors.description = 'Description must have words, not only numbers or symbols.';
         }
 
         // ---- Optional long texts ----

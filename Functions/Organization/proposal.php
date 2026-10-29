@@ -465,6 +465,15 @@ include "../../Includes/dash_header.php";
 
         </div>
 
+        <!-- Load more (5 proposals at a time) -->
+        <div class="pr-more" id="prMore" hidden>
+            <button type="button" class="pr-more-btn" id="prLoadMore">
+                <span class="material-symbols-outlined">expand_more</span>
+                Load More Proposals
+            </button>
+            <p>Showing <span id="prShown">0</span> of <span id="prTotal">0</span> proposals</p>
+        </div>
+
     </div>
 
 
