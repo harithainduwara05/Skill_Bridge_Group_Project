@@ -184,3 +184,30 @@
 /* ---- Builder validation messages (instead of alert popups) ---- */
 .rp-error { font-size: 12px; color: #dc2626; margin-top: 6px; }
 .rp-error:empty { display: none; }
+
+/* Filters: one simple row (time period + the filters for this report) */
+.rp-filters { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.rp-filters .rp-f { flex: 1 1 200px; max-width: 280px; }
+.rp-filters .rp-custom { display: flex; gap: 10px; max-width: 380px; flex: 2 1 320px; }
+.rp-filters .rp-custom[hidden] { display: none; }
+.rp-filters .rp-custom > div { flex: 1; }
+
+/* "Customize the table and download" (closed by default) */
+.rp-more { margin-top: 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f8fafc; }
+.rp-more summary { display: flex; align-items: center; gap: 8px; padding: 10px 14px; cursor: pointer; font-size: 13.5px; font-weight: 700; color: #0f3a66; list-style: none; }
+.rp-more summary::-webkit-details-marker { display: none; }
+.rp-more summary::after { content: '▾'; margin-left: auto; color: #64748b; transition: transform .2s; }
+.rp-more[open] summary::after { transform: rotate(180deg); }
+.rp-more summary .material-symbols-outlined { font-size: 19px; color: #2563eb; }
+.rp-more-body { display: grid; grid-template-columns: 2fr 1fr; gap: 0; padding: 0 14px 6px; border-top: 1px solid #e5e7eb; }
+/* both parts start at the same line; a thin line between them */
+.rp-more-body > .rp-sec { border-top: none; padding: 14px 0; }
+.rp-more-body > .rp-sec + .rp-sec { border-left: 1px solid #e5e7eb; padding-left: 18px; }
+.rp-more-body > .rp-sec:first-child { padding-right: 18px; }
+/* All / None right after the title */
+.rp-more-body .rp-sec-title { justify-content: flex-start; gap: 12px; align-items: center; min-height: 20px; }
+.rp-more-body .rp-links { gap: 4px; }
+.rp-more-body .rp-link { padding: 2px 8px; border: 1px solid #d1d5db; border-radius: 999px; background: #fff; font-size: 11.5px; }
+.rp-more-body .rp-link:hover { background: #eef2f7; text-decoration: none; }
+.rp-more-body > .rp-sec:last-child .rp-checks { grid-template-columns: 1fr; }
+@media (max-width: 760px) { .rp-more-body { grid-template-columns: 1fr; } .rp-more-body > .rp-sec + .rp-sec { border-left: none; padding-left: 0; border-top: 1px solid #e5e7eb; } .rp-more-body > .rp-sec:first-child { padding-right: 0; } }

@@ -78,9 +78,19 @@ document.body.appendChild(document.getElementById('fbModal'));
     document.getElementById('fbOpenForm').addEventListener('click', () => window.fbOpenForm ? window.fbOpenForm() : open());
 
     // opened from a notification: feedback.php?give=1 -> open the form straight away
-    if (new URLSearchParams(location.search).has('give')) {
+    // (&team=<id> from Teams after a final report is accepted -> that team is already chosen)
+    const giveParams = new URLSearchParams(location.search);
+    if (giveParams.has('give')) {
+        const giveTeam = giveParams.get('team');
         history.replaceState(null, '', location.pathname);
-        setTimeout(() => document.getElementById('fbOpenForm').click(), 0);
+        setTimeout(() => {
+            document.getElementById('fbOpenForm').click();
+            const sel = document.getElementById('fbProject');
+            if (giveTeam && sel && sel.querySelector('option[value="' + CSS.escape(giveTeam) + '"]')) {
+                sel.value = giveTeam;
+                sel.dispatchEvent(new Event('change'));
+            }
+        }, 0);
     }
     modal.querySelectorAll('[data-fb-close]').forEach(b => b.addEventListener('click', close));
     modal.addEventListener('click', e => { if (e.target === modal) close(); });

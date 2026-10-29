@@ -24,12 +24,14 @@ const RP = ORG_DATA.RP;
         if (period.value !== 'custom') form.requestSubmit();
     });
 
-    // simple choices update the report straight away
-    form.querySelectorAll('select:not(#rpPeriod):not(#rpSort):not(#rpDir), input[name="group"]').forEach(el =>
+    // a filter changed -> update the report straight away
+    form.querySelectorAll('select:not(#rpPeriod)').forEach(el =>
         el.addEventListener('change', () => form.requestSubmit()));   // requestSubmit = goes through the check below
 
+    // "Customize the table and download": All / None for the table details
     document.querySelectorAll('[data-cols]').forEach(b => b.addEventListener('click', () => {
         document.querySelectorAll('#rpCols input').forEach(c => c.checked = b.dataset.cols === 'all');
+        if (colsErr.textContent) checkBuilder();
     }));
 
     // ---- Check the builder before the report is made (messages under the fields, no popups) ----
@@ -49,6 +51,7 @@ const RP = ORG_DATA.RP;
         }
         dateErr.textContent = dateMsg;
         colsErr.textContent = document.querySelector('#rpCols input:checked') ? '' : 'Pick at least one detail for the table.';
+        if (colsErr.textContent) form.querySelector('.rp-more').open = true;
         return !dateMsg && !colsErr.textContent;
     }
     form.addEventListener('submit', e => {
@@ -61,7 +64,6 @@ const RP = ORG_DATA.RP;
     form.from.addEventListener('change', () => { if (dateErr.textContent) checkBuilder(); });
     form.to.addEventListener('change', () => { if (dateErr.textContent) checkBuilder(); });
     document.getElementById('rpCols').addEventListener('change', () => { if (colsErr.textContent) checkBuilder(); });
-    document.querySelectorAll('[data-cols]').forEach(b => b.addEventListener('click', () => { if (colsErr.textContent) checkBuilder(); }));
 })();
 
 /* =================================================================
@@ -285,14 +287,15 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(rpDrawAll)
 /* =================================================================
    PDF DOWNLOAD – the browser's own print window ("Save as PDF")
    Only the report is printed (no sidebar, header or options).
-   The "Include in the download" boxes that are ticked RIGHT NOW decide
+   The "Include in the PDF" boxes that are ticked RIGHT NOW decide
    what goes into the PDF (summary cards, charts, table).
 ================================================================= */
 document.getElementById('rpPdfBtn').addEventListener('click', function () {
     const inc = Array.from(document.querySelectorAll('input[name="inc[]"]:checked')).map(el => el.value);
     const incErr = document.getElementById('rpIncErr');
-    incErr.textContent = inc.length ? '' : 'Pick at least one of Summary cards, Charts or Table to include in the download.';
+    incErr.textContent = inc.length ? '' : 'Pick at least one of Summary cards, Charts or Table to include in the PDF.';
     if (!inc.length) {
+        document.querySelector('.rp-more').open = true;
         incErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
     }

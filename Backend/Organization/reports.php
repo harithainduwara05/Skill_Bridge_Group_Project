@@ -17,10 +17,9 @@ require_once __DIR__ . "/report_data.php";
 | The organization chooses:
 |   - report type  : Projects / Teams / Individual students / Proposals / Feedback
 |   - period       : last 7 days ... this year, all time, or a custom date range
-|   - trend by     : day / week / month
-|   - filters      : team, student, project, category, status, progress, rating
-|   - columns      : which details go into the table
-|   - sort order   and what goes into the PDF (summary cards, charts, table)
+|   - filters      : only the ones that matter for the report type (project, team, status or rating)
+|   - "Customize the table and download" (closed by default): which details go into the table,
+|     and what goes into the PDF (summary cards, charts, table). The table is newest first.
 | The page shows a live preview; the same report downloads as PDF or CSV.
 */
 $params = rpParams($_GET);
@@ -34,11 +33,11 @@ $orgName = rpQuery($conn, "SELECT Name FROM organization WHERE Email = ?", "s", 
 $csvQuery = http_build_query(array_merge($_GET, ['type' => $type]));
 
 // which filters make sense for which report
+// (kept short: time period + at most two more)
 $show = [
-    'team'    => in_array($type, ['teams', 'individual', 'feedback'], true),
-    'student' => in_array($type, ['individual', 'proposals'], true),
-    'status'  => $type !== 'feedback',
-    'band'    => in_array($type, ['projects', 'teams', 'individual'], true),
+    'project' => $type !== 'projects',
+    'team'    => $type === 'individual',
+    'status'  => in_array($type, ['projects', 'teams', 'proposals'], true),
     'rating'  => $type === 'feedback',
 ];
 

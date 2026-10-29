@@ -535,3 +535,39 @@ a.tv-rep-file:hover { border-color: #0f2a4a; }
     .tv-rep-actions .tm-btn { flex: 1; justify-content: center; }
     .tv-rep-hint { text-align: left; }
 }
+
+/* team deadline after the day the project ends -> the project will be made longer */
+.tm-warn { font-size: 12.5px; color: #92400e; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 8px 10px; margin-top: 8px; }
+.tm-warn[hidden] { display: none; }
+#tmExtendConfirm { z-index: 6000; }   /* above the Create / Edit / Delay Review popups */
+
+/* Kanban: Approve / Send back on the cards in Review */
+.tw-card[draggable="false"] { cursor: default; }
+.tw-card-actions { display: flex; gap: 6px; margin-top: 10px; }
+.tw-card-actions button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 6px 8px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; border: 1px solid transparent; }
+.tw-card-actions .material-symbols-outlined { font-size: 16px; }
+.tw-card-actions button { white-space: nowrap; }
+.tw-open-review { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe !important; }
+.tw-open-review:hover { background: #dbeafe; }
+.tw-card { cursor: pointer; }
+/* task details popup */
+.tw-d-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px; }
+.tw-d-grid div { background: #f8fafc; border-radius: 10px; padding: 8px 10px; }
+.tw-d-grid span { display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .03em; }
+.tw-d-grid b { font-size: 13.5px; color: #0f172a; }
+.tw-d-sec { margin-top: 14px; }
+.tw-d-sec h4 { margin: 0 0 6px; font-size: 13px; font-weight: 800; color: #0f3a66; }
+.tw-d-sec p { margin: 0; font-size: 13.5px; color: #334155; white-space: pre-line; }
+.tw-d-sub { border: 1px solid #bfdbfe; background: #eff6ff; border-radius: 10px; padding: 10px 12px; }
+.tw-d-sub small, .tw-d-hist small { display: block; margin-top: 4px; font-size: 11.5px; color: #64748b; }
+.tw-d-link { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; word-break: break-all; }
+.tw-d-link .material-symbols-outlined { font-size: 17px; color: #2563eb; }
+.tw-d-file { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 6px; color: #0f172a; text-decoration: none; font-size: 13px; }
+.tw-d-file small { margin-left: auto; color: #64748b; }
+.tw-d-file:hover { background: #f8fafc; }
+.tw-d-hist { list-style: none; margin: 0; padding: 0; border-left: 2px solid #e5e7eb; }
+.tw-d-hist li { padding: 0 0 10px 12px; font-size: 13px; color: #334155; }
+.tw-d-empty { font-size: 13px; color: #94a3b8; }
+@media (max-width: 560px) { .tw-d-grid { grid-template-columns: 1fr; } }
+.tw-menu-note { font-size: 12px; color: #64748b; padding: 6px 10px; }
+#tvAcceptModal, #twFileDelModal, #twBackModal, #twDetailModal { z-index: 5500; }   /* above the team View popup */

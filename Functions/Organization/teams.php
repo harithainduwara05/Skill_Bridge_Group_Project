@@ -261,7 +261,7 @@ include "../../Includes/dash_header.php";
         <form class="tm-modal" id="twTaskForm" style="width:min(520px,100%);" novalidate>
             <div class="tm-modal-head">
                 <div class="tm-modal-icon"><span class="material-symbols-outlined">add_task</span></div>
-                <div><h3>New Task</h3><p>Add a task to this team’s board.</p></div>
+                <div><h3>New Task</h3><p>The task starts in To Do. The student moves it when they start working on it.</p></div>
                 <button type="button" class="tm-x" data-close-task aria-label="Close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="tm-modal-body">
@@ -284,13 +284,6 @@ include "../../Includes/dash_header.php";
                         </select>
                     </div>
                     <div class="tm-field">
-                        <label class="tm-f-label" for="twTCol">Column</label>
-                        <select id="twTCol" class="tm-input">
-                            <option value="todo">To Do</option><option value="progress">In Progress</option>
-                            <option value="review">Review</option><option value="done">Done</option>
-                        </select>
-                    </div>
-                    <div class="tm-field">
                         <label class="tm-f-label" for="twTWho">Assign To</label>
                         <select id="twTWho" class="tm-input"></select>
                     </div>
@@ -304,6 +297,76 @@ include "../../Includes/dash_header.php";
             <div class="tm-modal-foot">
                 <button type="button" class="tm-btn" data-close-task>Cancel</button>
                 <button type="submit" class="tm-btn solid"><span class="material-symbols-outlined">check</span>Add Task</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Task details: what the student did (note, link, files) + history. Approve / Send back for a task in Review -->
+    <div class="tm-overlay" id="twDetailModal">
+        <div class="tm-modal" role="dialog" aria-modal="true" style="width:min(560px,100%);">
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon"><span class="material-symbols-outlined">task_alt</span></div>
+                <div><h3 id="twDetailTitle"></h3><p id="twDetailSub"></p></div>
+                <button type="button" class="tm-x" data-close-detail aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="tm-modal-body" id="twDetailBody"></div>
+            <div class="tm-modal-foot" id="twDetailFoot"></div>
+        </div>
+    </div>
+
+    <!-- Accept the final report? -->
+    <div class="tm-overlay" id="tvAcceptModal">
+        <div class="tm-modal" role="dialog" aria-modal="true" style="width:min(440px,100%);">
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon" style="background:#dcfce7;color:#15803d;"><span class="material-symbols-outlined">check_circle</span></div>
+                <div><h3>Accept the final report?</h3><p id="tvAcceptTeam"></p></div>
+            </div>
+            <div class="tm-modal-body">
+                <p style="margin:0;font-size:14px;color:#334155;">The team will be marked as <b>Completed</b> (and the project too, when all its teams are completed).
+                   The members are notified. This can’t be undone.</p>
+            </div>
+            <div class="tm-modal-foot">
+                <button type="button" class="tm-btn" data-close-accept>Cancel</button>
+                <button type="button" class="tm-btn solid" id="tvAcceptOk"><span class="material-symbols-outlined">check_circle</span>Accept Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remove a shared file? -->
+    <div class="tm-overlay" id="twFileDelModal">
+        <div class="tm-modal" role="dialog" aria-modal="true" style="width:min(420px,100%);">
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon" style="background:#fee2e2;color:#dc2626;"><span class="material-symbols-outlined">delete</span></div>
+                <div><h3>Remove this file?</h3><p id="twFileDelName"></p></div>
+            </div>
+            <div class="tm-modal-body">
+                <p style="margin:0;font-size:14px;color:#334155;">The file is removed for the whole team. This can’t be undone.</p>
+                <div class="tm-err" id="twFileDelErr"></div>
+            </div>
+            <div class="tm-modal-foot">
+                <button type="button" class="tm-btn" data-close-filedel>Cancel</button>
+                <button type="button" class="tm-btn solid" id="twFileDelOk" style="background:#dc2626;border-color:#dc2626;"><span class="material-symbols-outlined">delete</span>Remove</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Send a task back (Review -> In Progress) with a short note for the student -->
+    <div class="tm-overlay" id="twBackModal">
+        <form class="tm-modal" id="twBackForm" style="width:min(460px,100%);" novalidate>
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon" style="background:#fef3c7;color:#b45309;"><span class="material-symbols-outlined">undo</span></div>
+                <div><h3>Send task back</h3><p id="twBackTitle"></p></div>
+                <button type="button" class="tm-x" data-close-back aria-label="Close"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="tm-modal-body">
+                <label class="tm-f-label" for="twBackNote">What should the student change? *</label>
+                <textarea id="twBackNote" class="tm-input" rows="3" maxlength="300" placeholder="e.g. Please add the error message for a wrong password."></textarea>
+                <div class="tm-hint">The task goes back to In Progress. The student gets a notification and the note is posted in the team chat.</div>
+                <div class="tm-err" id="twBackErr"></div>
+            </div>
+            <div class="tm-modal-foot">
+                <button type="button" class="tm-btn" data-close-back>Cancel</button>
+                <button type="submit" class="tm-btn solid"><span class="material-symbols-outlined">undo</span>Send back</button>
             </div>
         </form>
     </div>
@@ -348,6 +411,8 @@ include "../../Includes/dash_header.php";
                 <div class="tm-field">
                     <label class="tm-f-label" for="teDeadline">Team Deadline *</label>
                     <input type="date" id="teDeadline" name="deadline" class="tm-input">
+                    <input type="hidden" name="extend_project" value="0">
+                    <div class="tm-warn" data-extend-note hidden></div>
                     <div class="tm-err" id="teErrDeadline"></div>
                 </div>
             </div>
@@ -385,9 +450,25 @@ include "../../Includes/dash_header.php";
         <input type="hidden" name="team_id">
         <input type="hidden" name="deadline">
         <input type="hidden" name="reason">
+        <input type="hidden" name="extend_project" value="0">
     </form>
 
-    <!-- final report: Accept / Request changes (View popup, database teams) -->
+    <!-- ===================== MAKE THE PROJECT LONGER? (team deadline after the project ends) ===================== -->
+    <div class="tm-overlay" id="tmExtendConfirm">
+        <div class="tm-modal" role="dialog" aria-modal="true" style="width:min(460px, 100%);">
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon" style="background:#fef3c7;color:#b45309;"><span class="material-symbols-outlined">date_range</span></div>
+                <div><h3>Make the project longer?</h3><p>The team deadline is after the day the project ends.</p></div>
+            </div>
+            <div class="tm-modal-body" id="tmExtendText"></div>
+            <div class="tm-modal-foot">
+                <button type="button" class="tm-btn" data-extend-cancel>Pick another date</button>
+                <button type="button" class="tm-btn solid" data-extend-ok><span class="material-symbols-outlined">check</span>Yes, make it longer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- final report: Accept / Send back for changes (View popup, database teams) -->
     <form method="post" action="teams.php" id="tmReportForm" hidden>
         <input type="hidden" name="action" value="review_report">
         <input type="hidden" name="team_id">
@@ -472,7 +553,10 @@ include "../../Includes/dash_header.php";
                 <div class="tm-field">
                     <label class="tm-f-label" for="tmDeadline">Team Deadline *</label>
                     <input type="date" id="tmDeadline" name="deadline" class="tm-input" min="<?= date('Y-m-d') ?>">
-                    <div class="tm-hint" id="tmDeadlineHint">Must be today or later, and not after the day the project ends.</div>
+                    <!-- 1 = the organization agreed to make the project longer (date after the day the project ends) -->
+                    <input type="hidden" name="extend_project" value="0">
+                    <div class="tm-hint" id="tmDeadlineHint">Must be today or later. By default it is the day the project ends.</div>
+                    <div class="tm-warn" data-extend-note hidden></div>
                     <div class="tm-err" data-err="deadline"></div>
                 </div>
 
@@ -487,6 +571,27 @@ include "../../Includes/dash_header.php";
             </div>
         </form>
     </div>
+
+    <?php if ($tmFeedbackTeam): ?>
+    <!-- the final report was accepted -> the team is completed: give feedback now or later -->
+    <div class="tm-overlay open" id="tmFeedbackAsk">
+        <div class="tm-modal" role="dialog" aria-modal="true" style="width:min(440px, 100%);">
+            <div class="tm-modal-head">
+                <div class="tm-modal-icon" style="background:#dcfce7;color:#15803d;"><span class="material-symbols-outlined">verified</span></div>
+                <div><h3>Team completed</h3><p><?= htmlspecialchars($tmFeedbackTeam['name'] . ' · ' . $tmFeedbackTeam['project']) ?></p></div>
+            </div>
+            <div class="tm-modal-body">
+                <p style="margin:0;font-size:14px;color:#334155;">The final report was accepted and the team was notified.
+                   Would you like to give the team feedback now?</p>
+            </div>
+            <div class="tm-modal-foot">
+                <button type="button" class="tm-btn" onclick="document.getElementById('tmFeedbackAsk').classList.remove('open')">Later</button>
+                <a class="tm-btn solid" href="feedback.php?give=1&amp;team=<?= (int)$tmFeedbackTeam['id'] ?>" style="text-decoration:none;">
+                    <span class="material-symbols-outlined">rate_review</span>Give Feedback</a>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
 
     <?php if ($flash): ?>
     <div class="flash-toast flash-<?= htmlspecialchars($flash['type']) ?>" id="tmFlash">
@@ -511,9 +616,13 @@ include "../../Includes/dash_header.php";
                             'deadline_text' => tmProjectEnd($p['deadline'] ?? '', $p['duration_weeks'] ?? 0) !== ''
                                                ? date('M d, Y', strtotime(tmProjectEnd($p['deadline'] ?? '', $p['duration_weeks'] ?? 0))) : '',
                             'skills' => array_values(array_filter(array_map('trim', explode(',', $p['keywords'] ?? '')))),
+                            // Application Deadline + weeks: a later team deadline can make the project longer (up to MAX_WEEKS)
+                            'start' => !empty($p['deadline']) && strtotime($p['deadline']) ? date('Y-m-d', strtotime($p['deadline'])) : '',
+                            'weeks' => (int)($p['duration_weeks'] ?? 0),
                         ], $tmProjects), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
         CANDIDATES: <?= json_encode($tmCandidates, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
         TODAY: <?= json_encode(date('Y-m-d')) ?>,
+        MAX_WEEKS: <?= TM_MAX_WEEKS ?>,
         DETAIL_TEAMS: <?= json_encode(array_values(array_map(fn($t) => [
                         'name' => $t['name'], 'state' => $t['state'], 'status' => $t['status'], 'project' => $t['project'],
                         'skills' => $t['skills'], 'phase' => $t['phase'], 'percent' => (int)$t['percent'],
@@ -537,6 +646,7 @@ include "../../Includes/dash_header.php";
                     'member_emails' => $t['member_emails'] ?? [],
                     'deadline_raw' => $t['deadline_raw'] ?? '', 'deadline' => $t['deadline'],
                     'skills' => $t['skills'], 'project_deadline_raw' => $t['project_deadline_raw'] ?? '',
+                    'project_start_raw' => $t['project_start_raw'] ?? '', 'project_weeks' => (int)($t['project_weeks'] ?? 0),
                     'members' => array_map(fn($m) => ['name' => $m['name'], 'email' => strtolower($m['email'] ?? ''), 'role' => $m['role'], 'leader' => !empty($m['leader'])],
                                            $t['details']['members'] ?? []),
                   ], $teams)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
@@ -545,6 +655,8 @@ include "../../Includes/dash_header.php";
                     'id' => $t['id'] ?? null, 'name' => $t['name'], 'project' => $t['project'],
                     'percent' => (int)$t['percent'], 'time' => $t['time'], 'deadline' => $t['deadline'],
                     'created' => $t['details']['created'] ?? '', 'team_deadline' => $t['details']['team_deadline'] ?? '',
+                    'deadline_raw' => $t['deadline_raw'] ?? '', 'project_deadline_raw' => $t['project_deadline_raw'] ?? '',
+                    'project_start_raw' => $t['project_start_raw'] ?? '', 'project_weeks' => (int)($t['project_weeks'] ?? 0),
                     'members' => array_map(fn($m) => ['name' => $m['name'], 'role' => $m['role'], 'progress' => (int)$m['progress']],
                                            $t['details']['members'] ?? []),
                   ], $teams)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,

@@ -109,15 +109,39 @@ function tmProjectEnd($deadline, $weeks): string
     return date('Y-m-d', strtotime($deadline . ' +' . (max(0, (int)$weeks) * 7) . ' days'));
 }
 
-// Team deadline: required, not in the past, not after the day the project ends
-function tmCheckDeadline(string $deadline, ?array $project): ?string
+// A project can run up to 52 weeks (the same limit as Post / Edit Project)
+const TM_MAX_WEEKS = 52;
+
+// Team deadline: required, not in the past, and not after the day the project ends.
+// $extend = true -> the organization agreed to make the project longer, so a later date
+// is fine up to the longest possible project end (Application Deadline + 52 weeks).
+function tmCheckDeadline(string $deadline, ?array $project, bool $extend = false): ?string
 {
     if ($deadline === '' || !strtotime($deadline)) return null;
     $dl = date('Y-m-d', strtotime($deadline));
     if ($dl < date('Y-m-d')) return null;
     $end = $project ? tmProjectEnd($project['deadline'] ?? '', $project['duration_weeks'] ?? 0) : '';
-    if ($end !== '' && $dl > $end) return null;
+    if ($end !== '' && $dl > $end) {
+        if (!$extend || $dl > tmProjectEnd($project['deadline'], TM_MAX_WEEKS)) return null;
+    }
     return $dl;
+}
+
+// The team deadline is after the day the project ends -> make the project longer:
+// duration_weeks = whole weeks from the Application Deadline to the team deadline.
+// Returns the new number of weeks, or 0 when nothing had to change.
+function tmExtendProject(mysqli $conn, array $project, string $teamDeadline): int
+{
+    $end = tmProjectEnd($project['deadline'] ?? '', $project['duration_weeks'] ?? 0);
+    if ($end === '' || $teamDeadline <= $end) return 0;
+    $start = date('Y-m-d', strtotime($project['deadline']));
+    $weeks = (int)ceil((strtotime($teamDeadline) - strtotime($start)) / (7 * 86400));
+    $weeks = min(TM_MAX_WEEKS, max((int)$project['duration_weeks'] + 1, $weeks));
+    $q = $conn->prepare("UPDATE projects SET duration_weeks = ? WHERE id = ?");
+    $pid = (int)$project['id'];
+    $q->bind_param("ii", $weeks, $pid);
+    $q->execute();
+    return $weeks;
 }
 
 // Save members + roles, and keep student_projects in sync so the
@@ -183,7 +207,7 @@ function tmActivity(mysqli $conn, int $teamId): array
          UNION ALL
          SELECT 'Final report sent for review', r.submitted_at FROM team_final_reports r WHERE r.team_id = ?
          UNION ALL
-         SELECT IF(r.status = 'accepted', 'Final report accepted – team completed', 'Changes requested on the final report'), r.reviewed_at
+         SELECT IF(r.status = 'accepted', 'Final report accepted – team completed', 'Final report sent back for changes'), r.reviewed_at
          FROM team_final_reports r WHERE r.team_id = ? AND r.reviewed_at IS NOT NULL
          ORDER BY at DESC LIMIT 6",
         "iiiiii", [$teamId, $teamId, $teamId, $teamId, $teamId, $teamId]);
@@ -209,7 +233,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
     $leader    = strtolower(trim($_POST['leader'] ?? ''));
     $roles     = tmCleanRoles($members, $_POST['roles'] ?? []);
     $project   = tmFindProject($tmProjects, $projectId);
-    $deadline  = tmCheckDeadline(trim($_POST['deadline'] ?? ''), $project);
+    // extend_project = 1 -> the organization confirmed that the project can be made longer
+    $deadline  = tmCheckDeadline(trim($_POST['deadline'] ?? ''), $project, ($_POST['extend_project'] ?? '') === '1');
 
     // only accepted students who are not in another team of this project
     $allowed = [];
@@ -236,6 +261,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         $ins->execute();
         $teamId = (int)$conn->insert_id;
 
+        // a team deadline after the day the project ends makes the project longer
+        $newWeeks = tmExtendProject($conn, $project, $deadline);
+
         tmSaveMembers($conn, $teamId, $projectId, $roles);
 
         // tell every member which team they are in and what their role is
@@ -251,7 +279,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'creat
         }
 
         $conn->commit();
-        header("Location: teams.php?team_created=1");
+        header("Location: teams.php?team_created=1" . ($newWeeks ? "&project_weeks=" . $newWeeks : ""));
     } catch (Throwable $e) {
         try { $conn->rollback(); } catch (Throwable $ignore) {}
         // 1062 = this project already has a team with this name
@@ -279,7 +307,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
     try {
         if ($_POST['action'] === 'review_report') {
             // Accept the final report  -> team Completed (+ project Completed when all its teams are)
-            // Request changes (+ note) -> the team leader fixes it and sends it again
+            // Send back for changes (+ note) -> the team leader fixes it and sends it again
             $report   = twReport($conn, $teamId);
             $decision = $_POST['decision'] ?? '';
             $note     = trim($_POST['note'] ?? '');
@@ -324,14 +352,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
                 $q->execute();
                 twRefreshStatus($conn, $teamId);
 
-                tmNotify($conn, $memberEmails, 'Final Report: Changes Requested',
-                         'The organization asked for changes to the final report of ' . $own['name'] . ': ' . $note);
-                twAddMessage($conn, $teamId, $organization_email, 'Please update the final report and send it again. ' . $note);
+                tmNotify($conn, $memberEmails, 'Final Report Sent Back',
+                         'The organization sent back the final report of ' . $own['name'] . ' for changes: ' . $note);
+                twAddMessage($conn, $teamId, $organization_email, 'We sent back the final report for changes: ' . $note . ' Please fix it and send it again.');
                 $done = 'report_changes';
             }
 
             $conn->commit();
-            header("Location: teams.php?team_updated=" . $done);
+            // report accepted -> the team is completed: ask the organization to give feedback now
+            header("Location: teams.php?team_updated=" . $done . ($done === 'report_accepted' ? "&feedback_team=" . $teamId : ""));
             exit;
         }
 
@@ -344,7 +373,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
                 header("Location: teams.php?team_error=edit");
                 exit;
             }
-            $dl = date('Y-m-d', strtotime($newDl));
+            // not after the day the project ends, unless the organization agreed to make the project longer
+            $project = tmFetch($conn, "SELECT id, deadline, duration_weeks FROM projects WHERE id = ?", "i", [(int)$own['project_id']])[0] ?? null;
+            $dl = tmCheckDeadline($newDl, $project, ($_POST['extend_project'] ?? '') === '1');
+            if (!$dl) { header("Location: teams.php?team_error=edit"); exit; }
+
+            $conn->begin_transaction();
+            $newWeeks = $project ? tmExtendProject($conn, $project, $dl) : 0;
             $q = $conn->prepare("UPDATE org_teams SET deadline = ? WHERE id = ?");
             $q->bind_param("si", $dl, $teamId);
             $q->execute();
@@ -369,8 +404,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
             // ...and the same note in the team chat, so the whole team sees it there too
             twAddMessage($conn, $teamId, $organization_email,
                          'The team deadline was moved to ' . date('M d, Y', strtotime($dl)) . '. Reason: ' . mb_substr($reason, 0, 300));
+            $conn->commit();
 
-            header("Location: teams.php?team_updated=extended");
+            header("Location: teams.php?team_updated=extended" . ($newWeeks ? "&project_weeks=" . $newWeeks : ""));
             exit;
         }
 
@@ -378,25 +414,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
         // (members and leader are set when the team is created)
         $name     = trim(preg_replace('/\s+/', ' ', $_POST['team_name'] ?? ''));
         $pid      = (int)$own['project_id'];
-        $project  = tmFindProject($tmProjects, $pid);
+        $project  = tmFetch($conn, "SELECT id, deadline, duration_weeks FROM projects WHERE id = ?", "i", [$pid])[0] ?? null;
         $postedDl = trim($_POST['deadline'] ?? '');
         // keeping the old deadline is always fine (even if it has already passed)
         $deadline = (!empty($own['deadline']) && $postedDl !== '' && strtotime($postedDl)
                      && date('Y-m-d', strtotime($postedDl)) === date('Y-m-d', strtotime($own['deadline'])))
                     ? date('Y-m-d', strtotime($own['deadline']))
-                    : tmCheckDeadline($postedDl, $project);
+                    : tmCheckDeadline($postedDl, $project, ($_POST['extend_project'] ?? '') === '1');
 
         if (mb_strlen($name) < 3 || mb_strlen($name) > 100 || !$deadline) {
             header("Location: teams.php?team_error=edit");
             exit;
         }
 
+        $conn->begin_transaction();
+        $newWeeks = $project ? tmExtendProject($conn, $project, $deadline) : 0;
         $q = $conn->prepare("UPDATE org_teams SET name = ?, deadline = ? WHERE id = ?");
         $q->bind_param("ssi", $name, $deadline, $teamId);
         $q->execute();
+        $conn->commit();
         twRefreshStatus($conn, $teamId);
 
-        header("Location: teams.php?team_updated=edited");
+        header("Location: teams.php?team_updated=edited" . ($newWeeks ? "&project_weeks=" . $newWeeks : ""));
     } catch (Throwable $e) {
         try { $conn->rollback(); } catch (Throwable $ignore) {}
         header("Location: teams.php?team_error=" . (($e->getCode() == 1062) ? 'duplicate' : 'edit'));
@@ -409,12 +448,12 @@ $tmErrText = [
     'name'     => 'The team name must be 3 to 100 characters.',
     'members'  => 'Only students with an accepted proposal (and not already in another team) can be added, up to the number the project needs.',
     'roles'    => 'Please give every team member a role (max 50 characters).',
-    'deadline' => 'Please pick a team deadline from today up to the day the project ends.',
+    'deadline' => 'Please pick a team deadline from today. A date after the day the project ends needs your OK to make the project longer (up to ' . TM_MAX_WEEKS . ' weeks).',
     'save'     => 'Something went wrong while saving. Please try again.',
 ];
 $tmUpdated = [
     'report_accepted' => ['Final report accepted', 'The team is now completed and its members were notified.'],
-    'report_changes'  => ['Changes requested', 'The team was asked to update the final report and send it again.'],
+    'report_changes'  => ['Report sent back', 'The team was notified to fix the final report and send it again.'],
     'edited'  => ['Team updated', 'Your changes to the team were saved.'],
     'extended' => ['Deadline extended', 'The new deadline was saved and the team was notified.'],
 ];
@@ -436,6 +475,21 @@ if (isset($_GET['team_updated'], $tmUpdated[$_GET['team_updated']])) {
     $flash = ['type' => 'error', 'title' => 'Could not create team', 'message' => $tmErrText[$_GET['team_error']]];
 } elseif (isset($_GET['team_error'])) {
     $flash = ['type' => 'error', 'title' => 'Could not create team', 'message' => 'Please fill all required fields and try again.'];
+}
+
+// a final report was just accepted -> "Give feedback now?" popup (only if this team has no feedback yet)
+$tmFeedbackTeam = null;
+if ((int)($_GET['feedback_team'] ?? 0) > 0) {
+    $tmFeedbackTeam = tmFetch($conn,
+        "SELECT t.id, t.name, p.title AS project FROM org_teams t JOIN projects p ON p.id = t.project_id
+         WHERE t.id = ? AND p.organization_email = ? AND t.status = 'completed'
+           AND NOT EXISTS (SELECT 1 FROM project_feedback f WHERE f.team_id = t.id)",
+        "is", [(int)$_GET['feedback_team'], $organization_email])[0] ?? null;
+}
+
+// the team deadline made the project longer -> say so in the same message
+if ($flash && $flash['type'] === 'success' && (int)($_GET['project_weeks'] ?? 0) > 0) {
+    $flash['message'] .= ' The project now runs ' . (int)$_GET['project_weeks'] . ' weeks, so it ends on the new team deadline.';
 }
 
 // ---------------------------------------------------------------
@@ -529,7 +583,7 @@ foreach (tmFetch($conn,
         'skills' => array_values(array_filter(array_map('trim', explode(',', $row['keywords'] ?? '')))),
         'phase' => $state === 'completed' ? 'Project Completed'
                  : ($report && $report['status'] === 'submitted' ? 'Final report sent – waiting for your review'
-                 : ($report && $report['status'] === 'changes_requested' ? 'Final report: changes requested'
+                 : ($report && $report['status'] === 'changes_requested' ? 'Final report sent back for changes'
                  : ($percent > 0 ? 'In Progress' : 'Phase 1: Planning'))),
         'percent' => $percent,
         // the final report is waiting for this organization
@@ -547,6 +601,9 @@ foreach (tmFetch($conn,
         'tasks' => $teamTasks,
         // the team deadline can be moved up to the day the project ends
         'project_deadline_raw' => tmProjectEnd($row['project_deadline'], $row['duration_weeks']),
+        // ...or later, if the organization agrees to make the project longer (up to TM_MAX_WEEKS)
+        'project_start_raw' => !empty($row['project_deadline']) && strtotime($row['project_deadline']) ? date('Y-m-d', strtotime($row['project_deadline'])) : '',
+        'project_weeks' => (int)$row['duration_weeks'],
         'details' => [
             'company' => $row['company'], 'category' => $row['category'], 'duration' => $row['duration'],
             'project_deadline' => tmProjectEnd($row['project_deadline'], $row['duration_weeks']) !== ''
