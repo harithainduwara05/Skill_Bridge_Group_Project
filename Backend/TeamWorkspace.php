@@ -18,8 +18,21 @@
 | and gets JSON back. Actions:
 |     load          team_id, after_id     -> members, tasks, files, new messages, final report, team status
 |     send_message  team_id, message
-|     add_task      team_id, title, description, col, assignee (email or ''), due (Y-m-d or '')
-|     move_task     task_id, col
+|     add_task      team_id, title, description, assignee (email or ''), due (Y-m-d or '')
+|                   a new task always starts in To Do
+|     move_task     task_id, col, note, link
+|                   Send for Review: note (what was done, required) + link (optional)
+|                   Send back / Reopen: note (what to change, required)
+|     task_detail   task_id  -> the task, what the student sent for review, the task history, the student's files
+|                   (the history is kept in the team chat: messages that start with "[Task #<id>] ")
+|                   who can move a task (TW_MOVES):
+|                     student (the task's assignee or the team leader):
+|                         To Do -> In Progress ("Start")        In Progress -> Review ("Send for Review")
+|                         In Progress -> To Do                   Review -> In Progress (take it back)
+|                     organization:
+|                         Review -> Done ("Approve")             Review -> In Progress ("Send back" + note)
+|                         Done -> In Progress ("Reopen")
+|                   only the organization can mark a task Done, so the progress shows approved work only
 |     delete_task   task_id
 |     upload_file   team_id, files[]  (multipart form, max 10MB each)
 |     delete_file   file_id
@@ -46,6 +59,15 @@
 
 // Kanban column (used by the page)  <->  team_tasks.status (saved in the database)
 const TW_STATUS = ['todo' => 'Todo', 'progress' => 'In Progress', 'review' => 'Review', 'done' => 'Done'];
+
+// Task history lives in the team chat: every step is a message that starts with this tag
+function twTaskTag(int $taskId): string { return '[Task #' . $taskId . '] '; }
+
+// Allowed moves: role => [from => [to, ...]]
+const TW_MOVES = [
+    'student'      => ['todo' => ['progress'], 'progress' => ['review', 'todo'], 'review' => ['progress']],
+    'organization' => ['review' => ['done', 'progress'], 'done' => ['progress']],
+];
 
 // Shared team files: allowed types + size limit
 const TW_FILE_MAX = 10 * 1024 * 1024;   // 10MB per file
@@ -176,17 +198,73 @@ function twMessages(mysqli $conn, int $teamId, int $afterId, string $myEmail): a
                          ORDER BY m.message_id LIMIT 500");
     $q->bind_param("ii", $teamId, $afterId);
     $q->execute();
+    $rows = $q->get_result()->fetch_all(MYSQLI_ASSOC);
+    // "[Task #12] Sent for review: ..." is shown as  Task "Login page" – Sent for review: ...
+    $titles = [];
+    $tq = $conn->prepare("SELECT task_id, title FROM team_tasks WHERE team_id = ?");
+    $tq->bind_param("i", $teamId);
+    $tq->execute();
+    foreach ($tq->get_result()->fetch_all(MYSQLI_ASSOC) as $t) $titles[(int)$t['task_id']] = $t['title'];
     $out = [];
-    foreach ($q->get_result()->fetch_all(MYSQLI_ASSOC) as $m) {
+    foreach ($rows as $m) {
         $ts = strtotime($m['sent_at']);
+        $text = $m['message'];
+        $taskId = null;
+        if (preg_match('/^\[Task #(\d+)\] (.*)$/s', $text, $mm)) {
+            $taskId = (int)$mm[1];
+            $text = 'Task "' . ($titles[$taskId] ?? 'deleted task') . '" – ' . $mm[2];
+        }
         $out[] = [
             'id' => (int)$m['message_id'], 'who' => $m['sender_name'], 'role' => $m['role'] ?? '',
             'me' => strtolower($m['sender_email']) === strtolower($myEmail),
-            'text' => $m['message'],
+            'text' => $text, 'task_id' => $taskId,
             'time' => date('H:i', $ts), 'date' => date('M d, Y', $ts),
         ];
     }
     return $out;
+}
+
+/** One task: details + what the student sent for review + its history (from the team chat) + the student's files */
+function twTaskDetail(mysqli $conn, int $teamId, int $taskId): array
+{
+    $task = null;
+    foreach (twTasks($conn, $teamId) as $t) { if ($t['id'] === $taskId) $task = $t; }
+
+    $tag = twTaskTag($taskId);
+    $like = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $tag) . '%';
+    $q = $conn->prepare("SELECT m.message, m.sent_at, COALESCE(s.Name, o.Name, m.sender_email) AS who
+                         FROM team_messages m
+                         LEFT JOIN student s      ON s.Email = m.sender_email
+                         LEFT JOIN organization o ON o.Email = m.sender_email
+                         WHERE m.team_id = ? AND m.message LIKE ? ORDER BY m.message_id");
+    $q->bind_param("is", $teamId, $like);
+    $q->execute();
+    $history = [];
+    $submission = null;   // the latest "Sent for review" (note + link)
+    foreach ($q->get_result()->fetch_all(MYSQLI_ASSOC) as $m) {
+        $text = substr($m['message'], strlen($tag));
+        $when = date('M d, Y H:i', strtotime($m['sent_at']));
+        $history[] = ['who' => $m['who'], 'text' => $text, 'when' => $when];
+        if (strpos($text, 'Sent for review: ') === 0) {
+            $body = substr($text, strlen('Sent for review: '));
+            $link = '';
+            if (preg_match('/\nLink: (\S+)$/', $body, $lm)) { $link = $lm[1]; $body = substr($body, 0, -strlen($lm[0])); }
+            $submission = ['who' => $m['who'], 'note' => $body, 'link' => $link, 'when' => $when];
+        }
+    }
+
+    // files the student shared in the team (Shared Assets), newest first
+    $files = [];
+    if ($task && $task['assignee'] !== '') {
+        $f = $conn->prepare("SELECT original_name, file_path, uploaded_at FROM team_files
+                             WHERE team_id = ? AND LOWER(uploaded_by) = ? ORDER BY file_id DESC LIMIT 5");
+        $f->bind_param("is", $teamId, $task['assignee']);
+        $f->execute();
+        foreach ($f->get_result()->fetch_all(MYSQLI_ASSOC) as $r) {
+            $files[] = ['name' => $r['original_name'], 'path' => $r['file_path'], 'when' => date('M d, Y', strtotime($r['uploaded_at']))];
+        }
+    }
+    return ['task' => $task, 'submission' => $submission, 'history' => $history, 'files' => $files];
 }
 
 /**
@@ -256,9 +334,9 @@ function twHandleRequest(mysqli $conn, ?array $user): void
             $fileRow = $q->get_result()->fetch_assoc();
             if (!$fileRow) twJson(['ok' => false, 'message' => 'This file no longer exists.']);
             $teamId = (int)$fileRow['team_id'];
-        } elseif (in_array($action, ['move_task', 'delete_task'], true)) {
+        } elseif (in_array($action, ['move_task', 'delete_task', 'task_detail'], true)) {
             $taskId = (int)($_POST['task_id'] ?? 0);
-            $q = $conn->prepare("SELECT task_id, team_id, title FROM team_tasks WHERE task_id = ?");
+            $q = $conn->prepare("SELECT task_id, team_id, title, status, LOWER(assigned_to) AS assigned_to FROM team_tasks WHERE task_id = ?");
             $q->bind_param("i", $taskId);
             $q->execute();
             $taskRow = $q->get_result()->fetch_assoc();
@@ -306,7 +384,7 @@ function twHandleRequest(mysqli $conn, ?array $user): void
             case 'add_task':
                 $title    = trim(preg_replace('/\s+/', ' ', $_POST['title'] ?? ''));
                 $desc     = trim($_POST['description'] ?? '');
-                $col      = $_POST['col'] ?? 'todo';
+                $col      = 'todo';                       // a new task always starts in To Do
                 $assignee = strtolower(trim($_POST['assignee'] ?? ''));
                 $due      = trim($_POST['due'] ?? '');
 
@@ -345,15 +423,84 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId)]);
 
             case 'move_task':
-                $col = $_POST['col'] ?? '';
+                $col  = $_POST['col'] ?? '';
+                $from = array_search($taskRow['status'], TW_STATUS, true) ?: 'todo';
+                $id   = (int)$taskRow['task_id'];
+                $assignee = (string)($taskRow['assigned_to'] ?? '');
                 if (!isset(TW_STATUS[$col])) twJson(['ok' => false, 'message' => 'Unknown column.']);
+                if ($col === $from)          twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId)]);
+
+                $who = $role === 'organization' ? 'organization' : 'student';
+                if (!in_array($col, TW_MOVES[$who][$from] ?? [], true)) {
+                    twJson(['ok' => false, 'message' => $who === 'organization'
+                        ? ($col === 'done' ? 'A task can be marked Done after the student sends it for Review.'
+                                           : 'The student moves the task (Start / Send for Review). You can approve it or send it back when it is in Review.')
+                        : ($col === 'done' ? 'Send the task for Review. The organization marks it as Done.'
+                                           : 'This task can’t be moved there.')]);
+                }
+                // a student moves only their own task (the leader: any task); an open task is taken by the one who starts it
+                if ($who === 'student' && !$isLeader && $assignee !== '' && $assignee !== $email) {
+                    twJson(['ok' => false, 'message' => 'Only the student who has this task (or the team leader) can move it.']);
+                }
+                $note = trim($_POST['note'] ?? '');
+                $link = trim($_POST['link'] ?? '');
+                if (mb_strlen($note) > 500) twJson(['ok' => false, 'message' => 'The note can have up to 500 characters.']);
+                // Send for Review: say what was done (+ an optional link, e.g. GitHub / Figma / Google Drive)
+                if ($col === 'review') {
+                    if (mb_strlen($note) < 5) twJson(['ok' => false, 'message' => 'Please write what you did (at least 5 characters).']);
+                    if ($link !== '' && (strlen($link) > 300 || !filter_var($link, FILTER_VALIDATE_URL) || !preg_match('#^https?://#i', $link)))
+                        twJson(['ok' => false, 'message' => 'Please enter a full link that starts with http:// or https://']);
+                }
+                // Send back / Reopen: tell the student what to change
+                if ($who === 'organization' && $col === 'progress' && mb_strlen($note) < 5) {
+                    twJson(['ok' => false, 'message' => 'Please tell the student what to change (at least 5 characters).']);
+                }
+
                 $status = TW_STATUS[$col];
-                $id = (int)$taskRow['task_id'];
-                $q = $conn->prepare("UPDATE team_tasks SET status = ? WHERE task_id = ?");
-                $q->bind_param("si", $status, $id);
+                if ($who === 'student' && $assignee === '' && $col === 'progress') {
+                    $q = $conn->prepare("UPDATE team_tasks SET status = ?, assigned_to = ? WHERE task_id = ?");
+                    $q->bind_param("ssi", $status, $email, $id);
+                    $assignee = $email;
+                } else {
+                    $q = $conn->prepare("UPDATE team_tasks SET status = ? WHERE task_id = ?");
+                    $q->bind_param("si", $status, $id);
+                }
                 $q->execute();
+
+                // tell the other side
+                $title = '"' . $taskRow['title'] . '"';
+                $notify = [];   // [email, title, message]
+                if ($col === 'review') {
+                    $myName = $name;   // the student's real name from the member list
+                    foreach ($members as $m) { if ($m['email'] === $email) $myName = $m['name']; }
+                    $notify[] = [$team['organization_email'], 'Task Ready for Review',
+                                 $myName . ' finished the task ' . $title . ' in the team ' . $team['name'] . '. Please review it.'];
+                } elseif ($who === 'organization' && $col === 'done' && $assignee !== '') {
+                    $notify[] = [$assignee, 'Task Approved', 'The organization approved your task ' . $title . ' in the team ' . $team['name'] . '.'];
+                } elseif ($who === 'organization' && $from === 'review' && $assignee !== '') {
+                    $notify[] = [$assignee, 'Task Needs Changes', 'The organization sent back the task ' . $title . ' in the team ' . $team['name']
+                                 . ($note !== '' ? '. Note: ' . $note : '.')];
+                } elseif ($who === 'organization' && $from === 'done' && $assignee !== '') {
+                    $notify[] = [$assignee, 'Task Reopened', 'The organization reopened the task ' . $title . ' in the team ' . $team['name']
+                                 . ($note !== '' ? '. Note: ' . $note : '.')];
+                }
+                $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'team', 'Unread')");
+                foreach ($notify as [$to, $nTitle, $nMsg]) { $n->bind_param("sss", $to, $nTitle, $nMsg); $n->execute(); }
+                // every step is kept in the team chat (the task history the organization sees when it opens the task)
+                $step = [
+                    'progress' => $who === 'organization' ? ($from === 'done' ? 'Reopened: ' : 'Needs changes: ') . $note
+                                                          : ($from === 'review' ? 'Taken back from Review.' : 'Started.'),
+                    'review'   => 'Sent for review: ' . $note . ($link !== '' ? "\nLink: " . $link : ''),
+                    'done'     => 'Approved.' . ($note !== '' ? ' ' . $note : ''),
+                    'todo'     => 'Moved back to To Do.',
+                ][$col];
+                twAddMessage($conn, $teamId, $email, twTaskTag($id) . $step);
+
                 twRefreshStatus($conn, $teamId);
                 twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId)]);
+
+            case 'task_detail':
+                twJson(['ok' => true] + twTaskDetail($conn, $teamId, (int)$taskRow['task_id']));
 
             case 'delete_task':
                 // only the organization or the team leader
@@ -441,7 +588,7 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 $path     = 'Assets/Uploads/final_reports/' . $stored;
                 $original = mb_substr(basename($f['name']), 0, 255);
 
-                // one report per team: sending it again (after "changes requested") replaces the old one
+                // one report per team: sending it again (after it was sent back for changes) replaces the old one
                 $q = $conn->prepare("INSERT INTO team_final_reports (team_id, submitted_by, original_name, file_path, summary, status)
                                      VALUES (?, ?, ?, ?, ?, 'submitted')
                                      ON DUPLICATE KEY UPDATE submitted_by = VALUES(submitted_by), original_name = VALUES(original_name),

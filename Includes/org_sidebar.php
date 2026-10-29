@@ -1,5 +1,20 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+
+// unread notifications -> red number next to "Notifications" (same as the Student sidebar)
+$orgUnreadNotifications = 0;
+if (isset($conn) && function_exists('current_user') && !empty(current_user()['email'])) {
+    try {
+        $unreadStmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE Email = ? AND status = 'Unread'");
+        $sidebarEmail = current_user()['email'];
+        $unreadStmt->bind_param('s', $sidebarEmail);
+        $unreadStmt->execute();
+        $orgUnreadNotifications = (int)($unreadStmt->get_result()->fetch_row()[0] ?? 0);
+        $unreadStmt->close();
+    } catch (Throwable $e) {
+        $orgUnreadNotifications = 0;   // the sidebar still shows without the number
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -88,6 +103,9 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 <span class="material-symbols-outlined">notifications</span>
             </span>
             <span class="nav-text">Notifications</span>
+            <?php if ($orgUnreadNotifications > 0): ?>
+                <span class="org-nav-unread" aria-label="<?= $orgUnreadNotifications ?> unread notifications"><?= $orgUnreadNotifications > 99 ? '99+' : $orgUnreadNotifications ?></span>
+            <?php endif; ?>
         </a>
 
         <a href="settings.php"

@@ -67,126 +67,87 @@ include "../../Includes/dash_header.php";
                     </div>
                 </div>
 
-                <div class="rp-row">
-                <div class="rp-sec">
-                    <div class="rp-sec-title">Time period</div>
-                    <select name="period" id="rpPeriod" class="rp-input" aria-label="Time period">
-                        <?php foreach (RP_PERIODS as $k => $l): ?>
-                            <option value="<?= $k ?>" <?= rpSel($params['period'], $k) ?>><?= $h($l) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                    <div class="rp-two" id="rpCustom" <?= $params['period'] === 'custom' ? '' : 'hidden' ?> style="margin-top:8px;">
-                        <div><label class="rp-label" for="rpFrom">From</label>
-                            <input type="date" name="from" id="rpFrom" class="rp-input" value="<?= $h($params['from'] ?: $report['from']) ?>" max="<?= date('Y-m-d') ?>"></div>
-                        <div><label class="rp-label" for="rpTo">To</label>
-                            <input type="date" name="to" id="rpTo" class="rp-input" value="<?= $h($params['to'] ?: $report['to']) ?>" max="<?= date('Y-m-d') ?>"></div>
-                    </div>
-                    <div class="rp-error" id="rpDateErr"></div>
-
-                    <span class="rp-label">Show the trend by</span>
-                    <div class="rp-seg">
-                        <?php foreach (['auto' => 'Auto', 'day' => 'Day', 'week' => 'Week', 'month' => 'Month'] as $k => $l): ?>
-                            <label><input type="radio" name="group" value="<?= $k ?>" <?= $params['group'] === $k ? 'checked' : '' ?>><span><?= $l ?></span></label>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-
+                <!-- only the filters that matter for this report (see $show in Backend/Organization/reports.php) -->
                 <div class="rp-sec">
                     <div class="rp-sec-title">Filters</div>
-                    <div class="rp-filter-grid">
-
-                    <?php if ($show['team']): ?>
-                        <div class="rp-f"><label class="rp-label" for="rpTeam">Team</label>
-                        <select name="team" id="rpTeam" class="rp-input">
-                            <option value="">All teams</option>
-                            <?php foreach ($report['options']['team'] as $o): ?><option <?= rpSel($params['team'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
+                    <div class="rp-filters">
+                        <div class="rp-f"><label class="rp-label" for="rpPeriod">Time period</label>
+                        <select name="period" id="rpPeriod" class="rp-input">
+                            <?php foreach (RP_PERIODS as $k => $l): ?>
+                                <option value="<?= $k ?>" <?= rpSel($params['period'], $k) ?>><?= $h($l) ?></option>
+                            <?php endforeach; ?>
                         </select></div>
-                    <?php endif; ?>
 
-                    <?php if ($show['student']): ?>
-                        <div class="rp-f"><label class="rp-label" for="rpStudent">Student</label>
-                        <select name="student" id="rpStudent" class="rp-input">
-                            <option value="">All students</option>
-                            <?php foreach ($report['options']['student'] as $o): ?><option <?= rpSel($params['student'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
-                        </select></div>
-                    <?php endif; ?>
+                        <div class="rp-f rp-custom" id="rpCustom" <?= $params['period'] === 'custom' ? '' : 'hidden' ?>>
+                            <div><label class="rp-label" for="rpFrom">From</label>
+                                <input type="date" name="from" id="rpFrom" class="rp-input" value="<?= $h($params['from'] ?: $report['from']) ?>" max="<?= date('Y-m-d') ?>"></div>
+                            <div><label class="rp-label" for="rpTo">To</label>
+                                <input type="date" name="to" id="rpTo" class="rp-input" value="<?= $h($params['to'] ?: $report['to']) ?>" max="<?= date('Y-m-d') ?>"></div>
+                        </div>
 
-                    <div class="rp-f"><label class="rp-label" for="rpProject">Project</label>
-                    <select name="project" id="rpProject" class="rp-input">
-                        <option value="">All projects</option>
-                        <?php foreach ($report['options']['project'] as $o): ?><option <?= rpSel($params['project'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
-                    </select></div>
-
-                    <div class="rp-f"><label class="rp-label" for="rpCategory">Category</label>
-                    <select name="category" id="rpCategory" class="rp-input">
-                        <option value="">All categories</option>
-                        <?php foreach ($report['options']['category'] as $o): ?><option <?= rpSel($params['category'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
-                    </select></div>
-
-                    <?php if ($show['status']): ?>
-                        <div class="rp-f"><label class="rp-label" for="rpStatus"><?= $type === 'individual' ? 'Work status' : 'Status' ?></label>
-                        <select name="status" id="rpStatus" class="rp-input">
-                            <option value="">Any status</option>
-                            <?php foreach ($report['options']['status'] as $k => $l): ?><option value="<?= $h($k) ?>" <?= rpSel($params['status'], $k) ?>><?= $h($l) ?></option><?php endforeach; ?>
-                        </select></div>
-                    <?php endif; ?>
-
-                    <?php if ($show['band']): ?>
-                        <div class="rp-f"><label class="rp-label" for="rpBand">Progress</label>
-                        <select name="band" id="rpBand" class="rp-input">
-                            <option value="">Any progress</option>
-                            <option value="low" <?= rpSel($params['band'], 'low') ?>>Below 50% (need support)</option>
-                            <option value="mid" <?= rpSel($params['band'], 'mid') ?>>50% – 79%</option>
-                            <option value="high" <?= rpSel($params['band'], 'high') ?>>80% and above</option>
-                        </select></div>
-                    <?php endif; ?>
-
-                    <?php if ($show['rating']): ?>
-                        <div class="rp-f"><label class="rp-label" for="rpRating">Rating</label>
-                        <select name="rating" id="rpRating" class="rp-input">
-                            <option value="">Any rating</option>
-                            <option value="5" <?= rpSel($params['rating'], 5) ?>>5 stars only</option>
-                            <option value="4" <?= rpSel($params['rating'], 4) ?>>4 stars and above</option>
-                            <option value="3" <?= rpSel($params['rating'], 3) ?>>3 stars and above</option>
-                        </select></div>
-                    <?php endif; ?>
-                    </div>
-                </div>
-
-                <div class="rp-sec">
-                    <div class="rp-sec-title">Details in the table
-                        <span class="rp-links"><button type="button" class="rp-link" data-cols="all">All</button><button type="button" class="rp-link" data-cols="none">None</button></span>
-                    </div>
-                    <div class="rp-checks" id="rpCols">
-                        <?php foreach (RP_COLUMNS[$type] as $k => $l): ?>
-                            <label class="rp-check"><input type="checkbox" name="cols[]" value="<?= $k ?>" <?= isset($report['columns'][$k]) ? 'checked' : '' ?>><?= $h($l) ?></label>
-                        <?php endforeach; ?>
-                    </div>
-                    <div class="rp-error" id="rpColsErr"></div>
-
-                    <div class="rp-two" style="margin-top:12px;">
-                        <div><label class="rp-label" for="rpSort">Sort by</label>
-                            <select name="sort" id="rpSort" class="rp-input">
-                                <?php foreach (RP_COLUMNS[$type] as $k => $l): ?><option value="<?= $k ?>" <?= rpSel($params['sort'], $k) ?>><?= $h($l) ?></option><?php endforeach; ?>
+                        <?php if ($show['project']): ?>
+                            <div class="rp-f"><label class="rp-label" for="rpProject">Project</label>
+                            <select name="project" id="rpProject" class="rp-input">
+                                <option value="">All projects</option>
+                                <?php foreach ($report['options']['project'] as $o): ?><option <?= rpSel($params['project'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
                             </select></div>
-                        <div><label class="rp-label" for="rpDir">Order</label>
-                            <select name="dir" id="rpDir" class="rp-input">
-                                <option value="desc" <?= rpSel($params['dir'], 'desc') ?>>Newest / highest</option>
-                                <option value="asc" <?= rpSel($params['dir'], 'asc') ?>>Oldest / lowest</option>
+                        <?php endif; ?>
+
+                        <?php if ($show['team']): ?>
+                            <div class="rp-f"><label class="rp-label" for="rpTeam">Team</label>
+                            <select name="team" id="rpTeam" class="rp-input">
+                                <option value="">All teams</option>
+                                <?php foreach ($report['options']['team'] as $o): ?><option <?= rpSel($params['team'], $o) ?>><?= $h($o) ?></option><?php endforeach; ?>
                             </select></div>
+                        <?php endif; ?>
+
+                        <?php if ($show['status']): ?>
+                            <div class="rp-f"><label class="rp-label" for="rpStatus">Status</label>
+                            <select name="status" id="rpStatus" class="rp-input">
+                                <option value="">Any status</option>
+                                <?php foreach ($report['options']['status'] as $k => $l): ?><option value="<?= $h($k) ?>" <?= rpSel($params['status'], $k) ?>><?= $h($l) ?></option><?php endforeach; ?>
+                            </select></div>
+                        <?php endif; ?>
+
+                        <?php if ($show['rating']): ?>
+                            <div class="rp-f"><label class="rp-label" for="rpRating">Rating</label>
+                            <select name="rating" id="rpRating" class="rp-input">
+                                <option value="">Any rating</option>
+                                <option value="5" <?= rpSel($params['rating'], 5) ?>>5 stars only</option>
+                                <option value="4" <?= rpSel($params['rating'], 4) ?>>4 stars and above</option>
+                                <option value="3" <?= rpSel($params['rating'], 3) ?>>3 stars and above</option>
+                            </select></div>
+                        <?php endif; ?>
                     </div>
+                    <div class="rp-error" id="rpDateErr"></div>
                 </div>
 
-                <div class="rp-sec">
-                    <div class="rp-sec-title">Include in the download</div>
-                    <div class="rp-checks">
-                        <?php foreach (['cards' => 'Summary cards', 'charts' => 'Charts', 'table' => 'Table'] as $k => $l): ?>
-                            <label class="rp-check"><input type="checkbox" name="inc[]" value="<?= $k ?>" <?= in_array($k, $params['inc'], true) ? 'checked' : '' ?>><?= $l ?></label>
-                        <?php endforeach; ?>
+                <!-- extra choices for the table and the download (closed by default, so the page stays simple) -->
+                <details class="rp-more" <?= count($report['columns']) < count(RP_COLUMNS[$type]) || count($params['inc']) < 3 ? 'open' : '' ?>>
+                    <summary><span class="material-symbols-outlined">tune</span>Customize the table and download</summary>
+                    <div class="rp-more-body">
+                        <div class="rp-sec">
+                            <div class="rp-sec-title">Details in the table
+                                <span class="rp-links"><button type="button" class="rp-link" data-cols="all">All</button><button type="button" class="rp-link" data-cols="none">None</button></span>
+                            </div>
+                            <div class="rp-checks" id="rpCols">
+                                <?php foreach (RP_COLUMNS[$type] as $k => $l): ?>
+                                    <label class="rp-check"><input type="checkbox" name="cols[]" value="<?= $k ?>" <?= isset($report['columns'][$k]) ? 'checked' : '' ?>><?= $h($l) ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="rp-error" id="rpColsErr"></div>
+                        </div>
+                        <div class="rp-sec">
+                            <div class="rp-sec-title">Include in the PDF</div>
+                            <div class="rp-checks">
+                                <?php foreach (['cards' => 'Summary cards', 'charts' => 'Charts', 'table' => 'Table'] as $k => $l): ?>
+                                    <label class="rp-check"><input type="checkbox" name="inc[]" value="<?= $k ?>" <?= in_array($k, $params['inc'], true) ? 'checked' : '' ?>><?= $l ?></label>
+                                <?php endforeach; ?>
+                            </div>
+                            <div class="rp-error" id="rpIncErr"></div>
+                        </div>
                     </div>
-                    <div class="rp-error" id="rpIncErr"></div>
-                </div>
-                </div><!-- /rp-row -->
+                </details>
             </div>
 
             <div class="rp-builder-foot">

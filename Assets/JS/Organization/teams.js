@@ -93,6 +93,64 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
 
 
 /* =================================================================
+   TEAM DEADLINE AFTER THE DAY THE PROJECT ENDS (Create Team / Edit Team / Extend Deadline)
+   The day the project ends = Application Deadline + duration weeks. A later team deadline is
+   allowed only when the organization agrees to make the project longer (popup below):
+   the project's duration becomes the whole weeks up to the team deadline (max ORG_DATA.MAX_WEEKS).
+================================================================= */
+window.TMExtend = (function () {
+    const DAY = 86400000;
+    const toD = ymd => new Date(ymd + 'T00:00:00');
+    const toYmd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const nice = ymd => toD(ymd).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    const addWeeks = (ymd, w) => toYmd(new Date(toD(ymd).getTime() + w * 7 * DAY));
+
+    // the latest team deadline possible for this project (Application Deadline + MAX_WEEKS)
+    function latest(start) { return start ? addWeeks(start, ORG_DATA.MAX_WEEKS) : ''; }
+
+    /* null = the date is not after the day the project ends (nothing to change)
+       { tooLate } = after the longest possible project
+       { oldWeeks, weeks, end, oldEnd } = the project will be made longer          */
+    function info(start, weeks, end, date) {
+        if (!date || !end || !start || date <= end) return null;
+        if (date > latest(start)) return { tooLate: true, max: nice(latest(start)) };
+        const need = Math.ceil((toD(date) - toD(start)) / (7 * DAY));
+        const w = Math.min(ORG_DATA.MAX_WEEKS, Math.max(weeks + 1, need));
+        return { oldWeeks: weeks, weeks: w, oldEnd: nice(end), end: nice(addWeeks(start, w)) };
+    }
+
+    // the yellow note under the date box
+    function note(el, x) {
+        if (!el) return;
+        el.hidden = !x || x.tooLate;
+        if (x && !x.tooLate) {
+            el.innerHTML = 'This is after the project ends (' + x.oldEnd + '). The project will be made longer: '
+                         + x.oldWeeks + ' → <b>' + x.weeks + ' weeks</b>, ending on <b>' + x.end + '</b>.';
+        }
+    }
+
+    // "Make the project longer?" popup -> onOk() when the organization agrees
+    const modal = document.getElementById('tmExtendConfirm');
+    let onOk = null;
+    function confirm(x, ok) {
+        onOk = ok;
+        document.getElementById('tmExtendText').innerHTML =
+            '<p style="margin:0 0 10px;">The project ends on <b>' + x.oldEnd + '</b>. To keep this team deadline, the project\'s duration '
+            + 'will change from <b>' + x.oldWeeks + '</b> to <b>' + x.weeks + ' weeks</b>, so the project will end on <b>' + x.end + '</b>.</p>'
+            + '<p style="margin:0;color:#6b7280;font-size:13px;">Students see the new duration on the project page. Other teams of this project keep their own deadlines.</p>';
+        modal.classList.add('open');
+    }
+    if (modal) {
+        modal.querySelector('[data-extend-cancel]').addEventListener('click', () => { onOk = null; modal.classList.remove('open'); });
+        modal.querySelector('[data-extend-ok]').addEventListener('click', () => { modal.classList.remove('open'); const f = onOk; onOk = null; if (f) f(); });
+        modal.addEventListener('click', e => { if (e.target === modal) { onOk = null; modal.classList.remove('open'); } });
+    }
+
+    return { info, note, confirm, latest, nice };
+})();
+
+
+/* =================================================================
    SHARED FORM PARTS (used by Create Team and Edit Team)
    - member list with a Role box for every ticked student
 ================================================================= */
@@ -193,6 +251,12 @@ window.TMForm = (function () {
     const leaderEl  = document.getElementById('tmLeader');
     const deadlineEl= document.getElementById('tmDeadline');
     const dlHint    = document.getElementById('tmDeadlineHint');
+    const extendEl  = form.querySelector('[name="extend_project"]');
+    const extendNote= form.querySelector('[data-extend-note]');
+    const X = window.TMExtend;
+    // a date after the day the project ends -> the project will be made longer
+    const extendInfo = () => { const pr = currentProject(); return pr ? X.info(pr.start, pr.weeks, pr.deadline, deadlineEl.value) : null; };
+    const showExtend = () => { if (extendEl) extendEl.value = '0'; X.note(extendNote, extendInfo()); };
 
     const err = (key, msg) => { const el = form.querySelector('[data-err="' + key + '"]'); if (el) el.textContent = msg || ''; };
 
@@ -229,6 +293,7 @@ window.TMForm = (function () {
             infoEl.hidden = true;
             membersEl.innerHTML = '<div class="tm-members-empty">Select a project to see the students you accepted for it.</div>';
             deadlineEl.max = '';
+            showExtend();
             refresh();
             return;
         }
@@ -240,14 +305,16 @@ window.TMForm = (function () {
             (pr.skills.length ? `<span class="tm-info-chip"><span class="material-symbols-outlined">bolt</span>Skills: ${F.esc(pr.skills.join(', '))}</span>` : '');
         infoEl.hidden = false;
 
-        // team deadline: today ... the day the project ends
+        // team deadline: today ... the day the project ends (default).
+        // A later date is possible too: the project is then made longer (up to MAX_WEEKS).
         deadlineEl.min = TODAY;
-        deadlineEl.max = pr.deadline && pr.deadline >= TODAY ? pr.deadline : '';
+        deadlineEl.max = X.latest(pr.start);
         if (deadlineEl.value && ((deadlineEl.max && deadlineEl.value > deadlineEl.max) || deadlineEl.value < TODAY)) deadlineEl.value = '';
-        if (!deadlineEl.value && deadlineEl.max) deadlineEl.value = deadlineEl.max;   // default = the day the project ends
+        if (pr.deadline && pr.deadline >= TODAY) deadlineEl.value = pr.deadline;   // default = the day the project ends
         dlHint.textContent = pr.deadline_text
-            ? 'Pick a date from today up to the day the project ends (' + pr.deadline_text + ').'
+            ? 'By default the team works until the project ends (' + pr.deadline_text + '). Pick an earlier date, or a later one to make the project longer.'
             : 'Pick a date from today onwards.';
+        showExtend();
 
         const list = CANDIDATES[pr.id] || [];
         if (list.length) {
@@ -283,7 +350,7 @@ window.TMForm = (function () {
         if (role && !role.value.trim()) role.value = 'Team Leader';
     });
     nameEl.addEventListener('input', () => { err('name', ''); nameEl.classList.remove('invalid'); });
-    deadlineEl.addEventListener('change', () => { err('deadline', ''); deadlineEl.classList.remove('invalid'); });
+    deadlineEl.addEventListener('change', () => { err('deadline', ''); deadlineEl.classList.remove('invalid'); showExtend(); });
 
     form.addEventListener('submit', function (e) {
         let ok = true;
@@ -308,7 +375,16 @@ window.TMForm = (function () {
         const dl = deadlineEl.value;
         if (!dl) { err('deadline', 'Please pick a team deadline.'); deadlineEl.classList.add('invalid'); ok = false; }
         else if (dl < TODAY) { err('deadline', 'The deadline can’t be in the past.'); deadlineEl.classList.add('invalid'); ok = false; }
-        else if (deadlineEl.max && dl > deadlineEl.max) { err('deadline', 'The team deadline can’t be after the day the project ends.'); deadlineEl.classList.add('invalid'); ok = false; }
+        else {
+            const x = extendInfo();
+            if (x && x.tooLate) { err('deadline', 'A project can run up to ' + ORG_DATA.MAX_WEEKS + ' weeks, so the latest team deadline is ' + x.max + '.'); deadlineEl.classList.add('invalid'); ok = false; }
+            else if (ok && x && extendEl.value !== '1') {
+                // ask first: "Make the project longer?" -> then send the form
+                e.preventDefault();
+                X.confirm(x, () => { extendEl.value = '1'; form.submit(); });
+                return;
+            }
+        }
 
         if (!ok) {
             e.preventDefault();
@@ -334,11 +410,11 @@ window.TMForm = (function () {
     const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
     const pct = v => Math.max(0, Math.min(100, Number(v) || 0));
 
-    // Final report card: the file + summary from the team leader, and Accept / Request changes
+    // Final report card: the file + summary from the team leader, and Accept / Send back for changes
     const REPORT_STATE = {
         submitted:         ['Waiting for your review', 'wait'],
         accepted:          ['Accepted', 'ok'],
-        changes_requested: ['Changes requested', 'changes']
+        changes_requested: ['Sent back for changes', 'changes']
     };
     function reportCard(t, d) {
         const r = d.report;
@@ -359,11 +435,11 @@ window.TMForm = (function () {
             <h4><span class="material-symbols-outlined">description</span> Final Report <span class="tv-rep-badge ${st[1]}">${esc(st[0])}</span></h4>
             <div class="tv-rep-top">${file}<span class="tv-rep-by">Sent by ${esc(r.by)} on ${esc(r.submitted)}</span></div>
             <p class="tv-rep-summary">${esc(r.summary)}</p>
-            ${r.status === 'changes_requested' ? `<div class="tv-rep-note"><strong>You asked for changes${r.reviewed ? ' on ' + esc(r.reviewed) : ''}:</strong> ${esc(r.note)}<br><span>The team leader will send the report again.</span></div>` : ''}
+            ${r.status === 'changes_requested' ? `<div class="tv-rep-note"><strong>You sent it back${r.reviewed ? ' on ' + esc(r.reviewed) : ''}:</strong> ${esc(r.note)}<br><span>The team leader will fix the report and send it again.</span></div>` : ''}
             ${r.status === 'accepted' ? `<div class="tv-rep-done"><span class="material-symbols-outlined">verified</span>Accepted${r.reviewed ? ' on ' + esc(r.reviewed) : ''} – the team is completed.</div>` : ''}
             ${canReview ? `
             <div class="tv-rep-actions" id="tvRepActions">
-                <button type="button" class="tm-btn" id="tvRepChanges"><span class="material-symbols-outlined">edit_note</span>Request Changes</button>
+                <button type="button" class="tm-btn" id="tvRepChanges"><span class="material-symbols-outlined">undo</span>Send Back for Changes</button>
                 <button type="button" class="tm-btn solid" id="tvRepAccept"><span class="material-symbols-outlined">check_circle</span>Accept Report</button>
             </div>
             <div class="tv-rep-form" id="tvRepForm" hidden>
@@ -372,14 +448,15 @@ window.TMForm = (function () {
                 <div class="tm-err" id="tvRepErr"></div>
                 <div class="tv-rep-actions">
                     <button type="button" class="tm-btn" id="tvRepCancel">Cancel</button>
-                    <button type="button" class="tm-btn solid" id="tvRepSend"><span class="material-symbols-outlined">send</span>Send to Team</button>
+                    <button type="button" class="tm-btn solid" id="tvRepSend"><span class="material-symbols-outlined">undo</span>Send Back</button>
                 </div>
             </div>
-            <div class="tv-rep-hint">Accepting marks the team as <b>Completed</b> (and the project too, when all its teams are completed). This can’t be undone.</div>` : ''}
+            <div class="tv-rep-hint"><b>Accept</b> marks the team as Completed (and the project too, when all its teams are completed). This can’t be undone.
+                <b>Send back</b> lets the team leader fix the report and send it again.</div>` : ''}
         </div>`;
     }
 
-    // Accept (click twice) / Request changes (with a note) -> saved by teams.php (review_report)
+    // Accept (asks first in a popup) / Send back for changes (with a note) -> saved by teams.php (review_report)
     function wireReport(t) {
         const acc = document.getElementById('tvRepAccept');
         if (!acc) return;
@@ -390,16 +467,17 @@ window.TMForm = (function () {
             form.elements.namedItem('note').value = note || '';
             form.submit();
         };
-        let armed = null;
+        // "Accept the final report?" popup
+        const askModal = document.getElementById('tvAcceptModal');
+        const okBtn = document.getElementById('tvAcceptOk');
         acc.addEventListener('click', () => {
-            if (armed) { clearTimeout(armed); acc.disabled = true; send('accept'); return; }
-            acc.innerHTML = '<span class="material-symbols-outlined">check_circle</span>Click again to accept';
-            acc.classList.add('confirm');
-            armed = setTimeout(() => {
-                armed = null; acc.classList.remove('confirm');
-                acc.innerHTML = '<span class="material-symbols-outlined">check_circle</span>Accept Report';
-            }, 4000);
+            document.getElementById('tvAcceptTeam').textContent = t.name + ' · ' + t.project;
+            okBtn.disabled = false;
+            askModal.classList.add('open');
         });
+        okBtn.onclick = () => { okBtn.disabled = true; acc.disabled = true; send('accept'); };
+        askModal.querySelectorAll('[data-close-accept]').forEach(b => { b.onclick = () => askModal.classList.remove('open'); });
+        askModal.onclick = e => { if (e.target === askModal) askModal.classList.remove('open'); };
         const box = document.getElementById('tvRepForm'), btns = document.getElementById('tvRepActions');
         const note = document.getElementById('tvRepNote'), errEl = document.getElementById('tvRepErr');
         document.getElementById('tvRepChanges').addEventListener('click', () => { btns.hidden = true; box.hidden = false; note.focus(); });
@@ -818,7 +896,7 @@ window.TMForm = (function () {
                     <span class="tw-col-count">${items.length}</span>
                 </div>
                 ${items.length ? items.map(t => `
-                    <div class="tw-card ${t.col}" draggable="true" data-id="${esc(t.id)}">
+                    <div class="tw-card ${t.col}" draggable="${canDrag(t)}" data-id="${esc(t.id)}">
                         <button type="button" class="tw-kebab" data-menu="${esc(t.id)}" aria-label="Task options">⋯</button>
                         ${t.tag ? `<span class="tw-tag ${esc(t.tag)}">${esc(t.tag)}</span>` : ''}
                         <div class="tw-card-title">${esc(t.title)}</div>
@@ -829,6 +907,9 @@ window.TMForm = (function () {
                                 ${t.comments ? ' &nbsp;<span class="material-symbols-outlined">chat_bubble</span>' + Number(t.comments) : ''}</span>
                             ${t.who ? av(t.who) : ''}
                         </div>
+                        ${t.col === 'review' && isDbTeam() ? `<div class="tw-card-actions">
+                            <button type="button" class="tw-open-review" data-open-task="${esc(t.id)}"><span class="material-symbols-outlined">rate_review</span>Open &amp; Review</button>
+                        </div>` : ''}
                     </div>`).join('') : '<div class="tw-col-empty">No tasks</div>'}
             </div>`;
         }).join('');
@@ -841,16 +922,29 @@ window.TMForm = (function () {
         document.getElementById('twPending').textContent = (tasks.length - done) + ' pending';
     }
 
-    function moveTask(id, col) {
+    // What the organization can do (the same rules as TW_MOVES in Backend/TeamWorkspace.php).
+    // The students move their own tasks: Start (To Do -> In Progress) and Send for Review.
+    const ORG_MOVES = { review: ['done', 'progress'], done: ['progress'] };
+    const canMove = (t, col) => !isDbTeam() || (ORG_MOVES[t.col] || []).includes(col);
+    const canDrag = t => !isDbTeam() || !!ORG_MOVES[t.col];
+    function whyNot(t, col) {
+        if (col === 'done') return 'A task can be marked Done after the student sends it for Review.';
+        return 'Students move their own tasks (Start / Send for Review). You can approve or send back tasks in Review.';
+    }
+
+    function moveTask(id, col, note) {
         const t = tasks.find(x => String(x.id) === String(id));
         if (!t || t.col === col) return;
+        if (!canMove(t, col)) { if (window.tmToast) window.tmToast(whyNot(t, col)); return; }
+        // Review -> In Progress needs a note for the student first
+        if (isDbTeam() && t.col === 'review' && col === 'progress' && note === undefined) { openBack(t); return; }
         t.col = col;
         if (col === 'done' || col === 'review') t.progress = 100;
         if (col === 'progress' && !t.progress) t.progress = 10;
         if (col === 'todo') t.progress = 0;
         renderBoard();                                   // show it straight away
         if (isDbTeam()) {
-            api('move_task', { task_id: id, col: col }).then(res => {
+            api('move_task', { task_id: id, col: col, note: note || '' }).then(res => {
                 if (res.ok) setServerTasks(res.tasks); else showChatError(res.message);
                 renderBoard();
             });
@@ -881,6 +975,96 @@ window.TMForm = (function () {
         moveTask(e.dataTransfer.getData('text/plain'), col.dataset.col);
     });
 
+    // ---------- Task details: open a card to see what the student did, then Approve / Send back ----------
+    const detailModal = document.getElementById('twDetailModal');
+    const COL_LABEL = { todo: 'To Do', progress: 'In Progress', review: 'Review', done: 'Done' };
+    const linkify = url => /^https?:\/\//i.test(url) ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a>` : esc(url);
+    let detailId = null;
+
+    function openTaskDetail(id) {
+        const t = tasks.find(x => String(x.id) === String(id));
+        if (!t || !isDbTeam()) return;
+        detailId = t.id;
+        document.getElementById('twDetailTitle').textContent = t.title;
+        document.getElementById('twDetailSub').textContent = COL_LABEL[t.col] + (t.who ? ' · ' + t.who : ' · Not given to anyone yet');
+        document.getElementById('twDetailBody').innerHTML = '<div class="tw-d-empty">Loading…</div>';
+        document.getElementById('twDetailFoot').innerHTML = '';
+        detailModal.classList.add('open');
+
+        api('task_detail', { task_id: t.id }).then(res => {
+            if (!res.ok) { document.getElementById('twDetailBody').innerHTML = `<div class="tm-err">${esc(res.message)}</div>`; return; }
+            const tk = res.task || t, sub = res.submission;
+            const due = tk.due ? new Date(tk.due + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'No due date';
+            document.getElementById('twDetailBody').innerHTML = `
+                <div class="tw-d-grid">
+                    <div><span>Status</span><b>${esc(COL_LABEL[tk.col])}</b></div>
+                    <div><span>Student</span><b>${esc(tk.who || '—')}</b></div>
+                    <div><span>Due date</span><b>${esc(due)}</b></div>
+                </div>
+                ${tk.description ? `<div class="tw-d-sec"><h4>Task</h4><p>${esc(tk.description)}</p></div>` : ''}
+                <div class="tw-d-sec">
+                    <h4>What the student did</h4>
+                    ${sub ? `<div class="tw-d-sub">
+                                <p>${esc(sub.note)}</p>
+                                ${sub.link ? `<div class="tw-d-link"><span class="material-symbols-outlined">link</span>${linkify(sub.link)}</div>` : ''}
+                                <small>Sent by ${esc(sub.who)} · ${esc(sub.when)}</small>
+                             </div>`
+                          : '<div class="tw-d-empty">The student has not sent this task for review yet.</div>'}
+                </div>
+                <div class="tw-d-sec">
+                    <h4>Files shared by ${esc(tk.who || 'the student')}</h4>
+                    ${res.files.length ? res.files.map(f => `<a class="tw-d-file" href="../../${esc(f.path)}" target="_blank" rel="noopener">
+                            <span class="material-symbols-outlined">description</span><span>${esc(f.name)}</span><small>${esc(f.when)}</small></a>`).join('')
+                        : '<div class="tw-d-empty">No files shared yet.</div>'}
+                </div>
+                <div class="tw-d-sec">
+                    <h4>History</h4>
+                    ${res.history.length ? '<ul class="tw-d-hist">' + res.history.map(h => `<li><b>${esc(h.who)}</b> ${esc(h.text).replace(/\n/g, '<br>')}<small>${esc(h.when)}</small></li>`).join('') + '</ul>'
+                        : '<div class="tw-d-empty">Nothing yet.</div>'}
+                </div>`;
+            document.getElementById('twDetailFoot').innerHTML = tk.col === 'review'
+                ? `<button type="button" class="tm-btn" data-d-back><span class="material-symbols-outlined">undo</span>Send back</button>
+                   <button type="button" class="tm-btn solid" data-d-approve><span class="material-symbols-outlined">check</span>Approve</button>`
+                : '<button type="button" class="tm-btn solid" data-close-detail>Close</button>';
+        });
+    }
+    detailModal.addEventListener('click', e => {
+        if (e.target === detailModal || e.target.closest('[data-close-detail]')) { detailModal.classList.remove('open'); return; }
+        if (e.target.closest('[data-d-approve]')) { detailModal.classList.remove('open'); moveTask(detailId, 'done'); }
+        if (e.target.closest('[data-d-back]'))    { detailModal.classList.remove('open'); moveTask(detailId, 'progress'); }
+    });
+
+    // click a card (not its ⋯ menu) or "Open & Review" -> task details
+    board.addEventListener('click', e => {
+        if (e.target.closest('[data-menu]') || e.target.closest('.tw-menu')) return;
+        const open = e.target.closest('[data-open-task]');
+        const card = e.target.closest('.tw-card');
+        if (open) { e.stopPropagation(); openTaskDetail(open.dataset.openTask); }
+        else if (card && isDbTeam()) openTaskDetail(card.dataset.id);
+    });
+
+    // Send back popup: a short note for the student (also posted in the team chat)
+    const backModal = document.getElementById('twBackModal');
+    const backForm  = document.getElementById('twBackForm');
+    let backTask = null;
+    function openBack(t) {
+        backTask = t;
+        document.getElementById('twBackTitle').textContent = 'Task: ' + t.title;
+        document.getElementById('twBackNote').value = '';
+        document.getElementById('twBackErr').textContent = '';
+        backModal.classList.add('open');
+        setTimeout(() => document.getElementById('twBackNote').focus(), 50);
+    }
+    backModal.querySelectorAll('[data-close-back]').forEach(b => b.addEventListener('click', () => backModal.classList.remove('open')));
+    backModal.addEventListener('click', e => { if (e.target === backModal) backModal.classList.remove('open'); });
+    backForm.addEventListener('submit', e => {
+        e.preventDefault();
+        const note = document.getElementById('twBackNote').value.trim();
+        if (note.length < 5) { document.getElementById('twBackErr').textContent = 'Please tell the student what to change (at least 5 characters).'; return; }
+        backModal.classList.remove('open');
+        if (backTask) moveTask(backTask.id, 'progress', note);
+    });
+
     // ⋯ menu (move / delete) – also works on phones
     board.addEventListener('click', e => {
         const k = e.target.closest('[data-menu]');
@@ -891,13 +1075,18 @@ window.TMForm = (function () {
         const t = tasks.find(x => String(x.id) === id);
         const menu = document.createElement('div');
         menu.className = 'tw-menu';
-        menu.innerHTML = COLS.filter(c => c.key !== t.col).map(c =>
-            `<button type="button" data-move="${c.key}"><span class="material-symbols-outlined">arrow_forward</span>Move to ${c.label}</button>`).join('') +
+        const MOVE_LABEL = { done: ['check', 'Approve (Done)'], progress: [t.col === 'done' ? 'replay' : 'undo', t.col === 'done' ? 'Reopen task' : 'Send back'] };
+        const moves = isDbTeam() ? (ORG_MOVES[t.col] || []) : COLS.filter(c => c.key !== t.col).map(c => c.key);
+        menu.innerHTML = moves.map(k => {
+                const lb = isDbTeam() ? MOVE_LABEL[k] : ['arrow_forward', 'Move to ' + COLS.find(c => c.key === k).label];
+                return `<button type="button" data-move="${k}"><span class="material-symbols-outlined">${lb[0]}</span>${lb[1]}</button>`;
+            }).join('') +
+            (moves.length ? '' : '<div class="tw-menu-note">The student moves this task.</div>') +
             '<hr><button type="button" class="danger" data-del><span class="material-symbols-outlined">delete</span>Delete task</button>';
         menu.addEventListener('click', ev => {
             ev.stopPropagation();
             const mv = ev.target.closest('[data-move]');
-            if (mv) moveTask(id, mv.dataset.move);
+            if (mv) { menu.remove(); moveTask(id, mv.dataset.move, t.col === 'done' ? '' : undefined); return; }
             const del = ev.target.closest('[data-del]');
             if (del) {
                 // first click asks, second click deletes (no browser popup)
@@ -951,13 +1140,13 @@ window.TMForm = (function () {
         if (due && due < today) { document.getElementById('twTDueErr').textContent = 'The due date can’t be in the past.'; ok = false; }
         else if (due && teamDl && due > teamDl) { document.getElementById('twTDueErr').textContent = 'The due date can’t be after the team deadline.'; ok = false; }
         if (!ok) return;
-        const col = document.getElementById('twTCol').value;
+        const col = 'todo';                     // a new task always starts in To Do
 
         if (isDbTeam()) {                       // save on the server (the student gets a notification)
             const submitBtn = taskForm.querySelector('[type="submit"]');
             submitBtn.disabled = true;
             api('add_task', {
-                team_id: TEAMS[teamIndex].id, title: title, description: document.getElementById('twTDesc').value.trim(), col: col,
+                team_id: TEAMS[teamIndex].id, title: title, description: document.getElementById('twTDesc').value.trim(),
                 assignee: document.getElementById('twTWho').value, due: due
             }).then(res => {
                 submitBtn.disabled = false;
@@ -1087,22 +1276,35 @@ window.TMForm = (function () {
         }
         const d = e.target.closest('[data-del-file]');
         if (!d) return;
-        // first click asks, second click removes (no browser popup)
-        if (!d.classList.contains('confirm')) {
-            d.classList.add('confirm');
-            d.title = 'Click again to remove';
-            setTimeout(() => { d.classList.remove('confirm'); d.title = 'Remove'; }, 3000);
-            return;
-        }
+        // ask first in a popup (no browser popup), then remove
+        const f = files.find(x => String(x.id) === String(d.dataset.delFile));
+        delFileId = d.dataset.delFile;
+        document.getElementById('twFileDelName').textContent = f ? f.name : '';
+        document.getElementById('twFileDelErr').textContent = '';
+        document.getElementById('twFileDelOk').disabled = false;
+        fileDelModal.classList.add('open');
+    });
+
+    // "Remove this file?" popup
+    const fileDelModal = document.getElementById('twFileDelModal');
+    let delFileId = null;
+    const closeFileDel = () => { fileDelModal.classList.remove('open'); delFileId = null; };
+    fileDelModal.querySelectorAll('[data-close-filedel]').forEach(b => b.addEventListener('click', closeFileDel));
+    fileDelModal.addEventListener('click', e => { if (e.target === fileDelModal) closeFileDel(); });
+    document.getElementById('twFileDelOk').addEventListener('click', function () {
+        if (!delFileId) return;
+        const id = delFileId;
         if (isDbTeam()) {
-            api('delete_file', { file_id: d.dataset.delFile }).then(res => {
-                if (res.ok) { files = res.files; renderFiles(); }
-                else document.getElementById('twUploadErr').textContent = res.message;
+            this.disabled = true;
+            api('delete_file', { file_id: id }).then(res => {
+                if (res.ok) { files = res.files; renderFiles(); closeFileDel(); if (window.tmToast) window.tmToast('File removed'); }
+                else { document.getElementById('twFileDelErr').textContent = res.message; this.disabled = false; }
             });
         } else {
-            files = files.filter(f => f.id !== d.dataset.delFile);
+            files = files.filter(f => String(f.id) !== String(id));
             save(fileKey(), files);
             renderFiles();
+            closeFileDel();
         }
     });
 
@@ -1354,7 +1556,16 @@ window.TMForm = (function () {
     const editModal = document.getElementById('tmEditModal');
     const editForm  = document.getElementById('tmEditForm');
     const teDeadline = document.getElementById('teDeadline');
+    const teExtend   = editForm.querySelector('[name="extend_project"]');
+    const teNote     = editForm.querySelector('[data-extend-note]');
     let editing = -1, editOldDeadline = '';
+    // a date after the day the project ends -> the project will be made longer
+    const teInfo = () => {
+        const t = TEAMS[editing];
+        return t && teDeadline.value !== editOldDeadline
+            ? window.TMExtend.info(t.project_start_raw, t.project_weeks, t.project_deadline_raw, teDeadline.value) : null;
+    };
+    teDeadline.addEventListener('change', () => { teExtend.value = '0'; teErr('teErrDeadline', ''); window.TMExtend.note(teNote, teInfo()); });
 
     const teErr = (id, msg) => { document.getElementById(id).textContent = msg || ''; };
 
@@ -1371,9 +1582,12 @@ window.TMForm = (function () {
         editOldDeadline = isDb(t) ? (t.deadline_raw || '') : '';
         teDeadline.value = isDb(t) ? editOldDeadline : (o.deadline || '');
 
-        // deadline: today ... the day the project ends (the current deadline can always be kept)
+        // deadline: from today (the current deadline can always be kept); a date after the day
+        // the project ends is possible too -> the project is then made longer (up to MAX_WEEKS)
         teDeadline.min = editOldDeadline && editOldDeadline < TODAY ? editOldDeadline : TODAY;
-        teDeadline.max = t.project_deadline_raw && t.project_deadline_raw >= TODAY ? t.project_deadline_raw : '';
+        teDeadline.max = window.TMExtend.latest(t.project_start_raw);
+        teExtend.value = '0';
+        window.TMExtend.note(teNote, null);
 
         editModal.classList.add('open');
     }
@@ -1390,7 +1604,15 @@ window.TMForm = (function () {
         else if (name.length < 3) { teErr('teErrName', 'The team name must be at least 3 characters.'); ok = false; }
         if (!dl) { teErr('teErrDeadline', 'Please pick a team deadline.'); ok = false; }
         else if (dl !== editOldDeadline && dl < TODAY) { teErr('teErrDeadline', 'The deadline can’t be in the past.'); ok = false; }
-        else if (dl !== editOldDeadline && teDeadline.max && dl > teDeadline.max) { teErr('teErrDeadline', 'The team deadline can’t be after the day the project ends.'); ok = false; }
+        else {
+            const x = teInfo();
+            if (x && x.tooLate) { teErr('teErrDeadline', 'A project can run up to ' + ORG_DATA.MAX_WEEKS + ' weeks, so the latest team deadline is ' + x.max + '.'); ok = false; }
+            else if (ok && x && teExtend.value !== '1' && isDb(TEAMS[editing])) {
+                e.preventDefault();
+                window.TMExtend.confirm(x, () => { teExtend.value = '1'; editForm.submit(); });
+                return;
+            }
+        }
         if (!ok) { e.preventDefault(); return; }
 
         if (!isDb(TEAMS[editing])) {          // demo team -> save in the browser
@@ -1468,6 +1690,11 @@ window.TMForm = (function () {
 
         const minDate = new Date(today); minDate.setDate(minDate.getDate() + 1);
         const suggest = new Date((end && end > today ? end : today)); suggest.setDate(suggest.getDate() + 14);
+        // suggest a date up to the day the project ends (a later one makes the project longer)
+        if (t.project_deadline_raw && ymd(suggest) > t.project_deadline_raw && t.project_deadline_raw > (t.deadline_raw || '')) {
+            suggest.setTime(new Date(t.project_deadline_raw + 'T00:00:00').getTime());
+        }
+        const latestDl = window.TMExtend.latest(t.project_start_raw);
 
         body.innerHTML = `
             <div class="tr-alert">
@@ -1534,7 +1761,8 @@ window.TMForm = (function () {
                     <div class="tm-grid-2">
                         <div class="tm-field">
                             <label class="tm-f-label" for="trNewDate">New Deadline *</label>
-                            <input type="date" id="trNewDate" class="tm-input" min="${ymd(minDate)}" value="${ymd(suggest)}">
+                            <input type="date" id="trNewDate" class="tm-input" min="${ymd(minDate)}" max="${latestDl}" value="${ymd(suggest)}">
+                            <div class="tm-warn" id="trExtendNote" hidden></div>
                         </div>
                         <div class="tm-field">
                             <label class="tm-f-label">Current Deadline</label>
@@ -1567,20 +1795,33 @@ window.TMForm = (function () {
             close();
         });
 
-        // extend deadline
+        // extend deadline (a date after the day the project ends makes the project longer)
+        const trInfo = date => window.TMExtend.info(t.project_start_raw, t.project_weeks, t.project_deadline_raw, date);
+        const trDate = document.getElementById('trNewDate');
+        const showTr = () => window.TMExtend.note(document.getElementById('trExtendNote'), trInfo(trDate.value));
+        trDate.addEventListener('change', () => { document.getElementById('trErr').textContent = ''; showTr(); });
+        showTr();
+
         document.getElementById('trExtend').addEventListener('click', () => {
-            const date = document.getElementById('trNewDate').value;
+            const date = trDate.value;
             const reason = document.getElementById('trReason').value.trim();
             const err = document.getElementById('trErr');
             if (!date || date < ymd(minDate)) { err.textContent = 'Please pick a date after today.'; return; }
+            const x = trInfo(date);
+            if (x && x.tooLate) { err.textContent = 'A project can run up to ' + ORG_DATA.MAX_WEEKS + ' weeks, so the latest deadline is ' + x.max + '.'; return; }
             if (reason.length < 5) { err.textContent = 'Please write a short reason (at least 5 characters).'; return; }
 
             if (base.id !== null && base.id !== undefined) {       // database team -> save on the server
                 const f = document.getElementById('trExtendForm');
-                f.elements.namedItem('team_id').value = base.id;
-                f.elements.namedItem('deadline').value = date;
-                f.elements.namedItem('reason').value = reason;
-                f.submit();
+                const send = longer => {
+                    f.elements.namedItem('team_id').value = base.id;
+                    f.elements.namedItem('deadline').value = date;
+                    f.elements.namedItem('reason').value = reason;
+                    f.elements.namedItem('extend_project').value = longer ? '1' : '0';
+                    f.submit();
+                };
+                if (x) window.TMExtend.confirm(x, () => send(true));   // ask first: make the project longer?
+                else send(false);
                 return;
             }
             // demo team -> save in the browser + tell the team in chat
