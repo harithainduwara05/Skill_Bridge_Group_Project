@@ -6,12 +6,28 @@
             </span>
         </div>
         <div class="flash-content">
-            <div class="flash-title"><?= $flash['type'] === 'error' ? 'Action Failed' : 'Success!' ?></div>
+            <div class="flash-title"><?= !empty($flash['title']) ? htmlspecialchars($flash['title']) : ($flash['type'] === 'error' ? 'Action Failed' : 'Success!') ?></div>
             <div class="flash-msg"><?= htmlspecialchars($flash['message']) ?></div>
         </div>
-        <button class="flash-close" onclick="closeToast()" title="Dismiss" type="button">
+        <button class="flash-close" onclick="closeToast()" title="Dismiss" type="button" aria-label="Dismiss">
             <span class="material-symbols-outlined" style="font-size:18px;">close</span>
         </button>
         <div class="flash-progress"></div>
     </div>
+    <script>
+        function closeToast() {
+            var toast = document.getElementById('flashToast');
+            if (toast) {
+                toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+                setTimeout(function() {
+                    if (toast && toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+        setTimeout(function() {
+            closeToast();
+        }, 4500);
+    </script>
 <?php endif; ?>

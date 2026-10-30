@@ -40,10 +40,13 @@
                     </select>
                 </div>
 
-                <div class="user-info-notice" style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:11px 14px; font-size:12.5px; color:#166534; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;">
-                    <span class="material-symbols-outlined" style="font-size:20px; color:#16a34a; flex-shrink:0;">verified_user</span>
+                <div class="user-info-notice"
+                    style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:11px 14px; font-size:12.5px; color:#166534; margin-bottom:14px; display:flex; align-items:flex-start; gap:10px;">
+                    <span class="material-symbols-outlined"
+                        style="font-size:20px; color:#16a34a; flex-shrink:0;">verified_user</span>
                     <div>
-                        <strong>Passwordless Security:</strong> No password required. An activation email will be sent to the user instructing them to securely set their password via a 6-digit OTP code.
+                        <strong>Passwordless Security:</strong> No password required. An activation email will be sent
+                        to the user instructing them to securely set their password via a 6-digit OTP code.
                     </div>
                 </div>
 
@@ -53,8 +56,11 @@
                         <label>University / Institution <span style="color:#ef4444;">*</span></label>
                         <div class="univ-combobox" id="addUserUnivCombobox">
                             <div class="univ-combobox-input-wrap">
-                                <input type="text" class="univ-combobox-input" name="university_name" id="addUserUnivInput" placeholder="Select or type university name" autocomplete="off">
-                                <button type="button" class="univ-combobox-toggle" id="addUserUnivToggle" title="Toggle university list" tabindex="-1">
+                                <input type="text" class="univ-combobox-input" name="university_name"
+                                    id="addUserUnivInput" placeholder="Select or type university name"
+                                    autocomplete="off">
+                                <button type="button" class="univ-combobox-toggle" id="addUserUnivToggle"
+                                    title="Toggle university list" tabindex="-1">
                                     <span class="material-symbols-outlined">expand_more</span>
                                 </button>
                             </div>
@@ -68,8 +74,10 @@
                         <label>Faculty / Department</label>
                         <div class="univ-combobox" id="addUserFacCombobox">
                             <div class="univ-combobox-input-wrap">
-                                <input type="text" class="univ-combobox-input" name="faculty_name" id="addUserFacInput" placeholder="Select or type faculty name" autocomplete="off">
-                                <button type="button" class="univ-combobox-toggle" id="addUserFacToggle" title="Toggle faculty list" tabindex="-1">
+                                <input type="text" class="univ-combobox-input" name="faculty_name" id="addUserFacInput"
+                                    placeholder="Select or type faculty name" autocomplete="off">
+                                <button type="button" class="univ-combobox-toggle" id="addUserFacToggle"
+                                    title="Toggle faculty list" tabindex="-1">
                                     <span class="material-symbols-outlined">expand_more</span>
                                 </button>
                             </div>
@@ -125,18 +133,25 @@
         <form method="POST" action="" enctype="multipart/form-data">
             <input type="hidden" name="action" value="bulk_upload">
             <div class="user-modal-body">
-                <div class="user-info-notice" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#1e40af; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px;">
-                    <span class="material-symbols-outlined" style="font-size:22px; color:#2563eb; flex-shrink:0;">info</span>
+                <div class="user-info-notice"
+                    style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; font-size:12.5px; color:#1e40af; margin-bottom:16px; display:flex; align-items:flex-start; gap:10px;">
+                    <span class="material-symbols-outlined"
+                        style="font-size:22px; color:#2563eb; flex-shrink:0;">info</span>
                     <div>
-                        <strong>Institutional Bulk Onboarding:</strong> Select the institution and faculty providing the student roster. All imported accounts are created instantly in the database without sending individual emails. Students activate their accounts via <em>"Forgot Password / First-Time Setup"</em>.
+                        <strong>Institutional Bulk Onboarding:</strong> Select the institution and faculty providing the
+                        student roster. All imported accounts are created instantly in the database without sending
+                        individual emails. Students activate their accounts via <em>"Forgot Password / First-Time
+                            Setup"</em>.
                     </div>
                 </div>
 
                 <!-- Step 1: Institutional Target Selection -->
-                <div class="user-form-row" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
+                <div class="user-form-row"
+                    style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;">
                     <div class="user-form-group" style="margin-bottom:0;">
                         <label>University / Institution <span style="color:#ef4444;">*</span></label>
-                        <select name="bulk_university" id="bulkUniSelect" required style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#fff; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s;">
+                        <select name="bulk_university" id="bulkUniSelect" required
+                            style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#fff; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s;">
                             <option value="">-- Choose University --</option>
                             <?php foreach (array_keys($activeInstitutions) as $u): ?>
                                 <option value="<?= htmlspecialchars($u) ?>"><?= htmlspecialchars($u) ?></option>
@@ -145,34 +160,44 @@
                     </div>
                     <div class="user-form-group" style="margin-bottom:0;">
                         <label>Faculty / Department <span style="color:#ef4444;">*</span></label>
-                        <select name="bulk_faculty" id="bulkFacSelect" required disabled style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#f8fafc; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s; cursor:not-allowed;">
+                        <select name="bulk_faculty" id="bulkFacSelect" required disabled
+                            style="width:100%; padding:10px 12px; border:1.5px solid #cbd5e1; border-radius:10px; background:#f8fafc; font-size:13px; font-weight:500; color:#1e293b; outline:none; transition:border-color 0.2s; cursor:not-allowed;">
                             <option value="">-- Choose University first --</option>
                         </select>
                     </div>
                 </div>
 
                 <!-- Dynamic Domain Whitelist Notice -->
-                <div id="bulkDomainBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px; transition:all 0.25s ease;">
-                    <span class="material-symbols-outlined" id="bulkDomainIcon" style="font-size:22px; color:#64748b; flex-shrink:0;">domain_verification</span>
+                <div id="bulkDomainBox"
+                    style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-bottom:16px; display:flex; align-items:center; gap:10px; transition:all 0.25s ease;">
+                    <span class="material-symbols-outlined" id="bulkDomainIcon"
+                        style="font-size:22px; color:#64748b; flex-shrink:0;">domain_verification</span>
                     <div id="bulkDomainText" style="font-size:12.5px; line-height:1.4;">
-                        <span style="color:#64748b;">Please select a University and Faculty above to view the permitted student email domain.</span>
+                        <span style="color:#64748b;">Please select a University and Faculty above to view the permitted
+                            student email domain.</span>
                     </div>
                 </div>
 
                 <!-- Step 2: Upload CSV File -->
                 <div class="user-form-group">
                     <label>Student Roster CSV File <span style="color:#ef4444;">*</span></label>
-                    <input type="file" name="csv_file" accept=".csv" required class="user-file-input" style="padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; width:100%; background:#f8fafc; cursor:pointer;">
-                    <small style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">Supported format: .csv (UTF-8)</small>
+                    <input type="file" name="csv_file" accept=".csv" required class="user-file-input"
+                        style="padding:10px; border:1.5px dashed #cbd5e1; border-radius:10px; width:100%; background:#f8fafc; cursor:pointer;">
+                    <small style="color:#64748b; font-size:11.5px; margin-top:4px; display:block;">Supported format:
+                        .csv (UTF-8)</small>
                 </div>
 
                 <!-- Step 3: Template Download -->
-                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div
+                    style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; margin-top:14px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
                     <div>
-                        <strong style="font-size:12.5px; color:#1e293b; display:block;">Need the simplified template format?</strong>
-                        <span style="font-size:11.5px; color:#64748b;">Columns: <code>Name, Email, Degree, Academic_Year</code></span>
+                        <strong style="font-size:12.5px; color:#1e293b; display:block;">Need the simplified template
+                            format?</strong>
+                        <span style="font-size:11.5px; color:#64748b;">Columns:
+                            <code>Name, Email, Degree, Academic_Year</code></span>
                     </div>
-                    <a href="?action=download_sample_csv" class="btn-sample-download" style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none;">
+                    <a href="?action=download_sample_csv" class="btn-sample-download"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 12px; background:#fff; color:#2563eb; border:1px solid #bfdbfe; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none;">
                         <span class="material-symbols-outlined" style="font-size:16px;">download</span>
                         Download Sample CSV
                     </a>
@@ -201,7 +226,7 @@
         <form method="POST" action="">
             <input type="hidden" name="action" value="edit">
             <input type="hidden" name="email" id="editEmail">
-            
+
             <div class="user-modal-body">
                 <div class="user-form-group">
                     <label>Email Address (Read-only)</label>
@@ -309,10 +334,11 @@
             <input type="hidden" name="action" value="toggle_status">
             <input type="hidden" name="email" id="statusEmail">
             <input type="hidden" name="status" id="statusNewValue">
-            
+
             <div class="user-modal-body">
                 <div style="display:flex; gap:14px; align-items:flex-start;">
-                    <div id="statusIconWrap" style="width:42px; height:42px; border-radius:50%; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <div id="statusIconWrap"
+                        style="width:42px; height:42px; border-radius:50%; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <span class="material-symbols-outlined">sync</span>
                     </div>
                     <div>
@@ -320,7 +346,8 @@
                             Confirm Status Update
                         </p>
                         <p style="font-size: 13px; color:#64748b; margin:0; line-height:1.5;">
-                            Are you sure you want to <span id="statusActionText" style="font-weight:600;"></span> the account for:
+                            Are you sure you want to <span id="statusActionText" style="font-weight:600;"></span> the
+                            account for:
                             <br>
                             <strong id="statusUserDisplay" style="color:#111827;"></strong>
                         </p>
@@ -347,10 +374,11 @@
         <form method="POST" action="">
             <input type="hidden" name="action" value="delete">
             <input type="hidden" name="delete_email" id="deleteEmail">
-            
+
             <div class="user-modal-body">
                 <div style="display:flex; gap:14px; align-items:flex-start;">
-                    <div style="width:40px; height:40px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                    <div
+                        style="width:40px; height:40px; border-radius:50%; background:#fee2e2; color:#dc2626; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
                         <span class="material-symbols-outlined">warning</span>
                     </div>
                     <div>
@@ -359,7 +387,8 @@
                         </p>
                         <p style="font-size: 13px; color:#64748b; margin:0; line-height:1.5;">
                             User: <strong id="deleteUserDisplay" style="color:#111827;"></strong><br>
-                            This action cannot be undone. All profile records, projects, and applications linked to this account will be removed.
+                            This action cannot be undone. All profile records, projects, and applications linked to this
+                            account will be removed.
                         </p>
                     </div>
                 </div>

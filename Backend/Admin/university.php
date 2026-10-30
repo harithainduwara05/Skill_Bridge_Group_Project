@@ -72,11 +72,8 @@ $activeDomains   = $uniDB->getCountWhere("universityemails", "status", "Active")
 $holdDomains     = $uniDB->getCountWhere("universityemails", "status", "Hold");
 $totalStudents   = $uniDB->getCount("student");
 
-// Filter, Search, and Pagination
-$selectedStatus = $_GET['status'] ?? 'all';
-$searchQuery = trim($_GET['search'] ?? '');
-
-$uniResult = $uniDB->getAllUniversities($selectedStatus, $searchQuery);
+// Filter, Search, and Pagination (All fetched once for instant UI search & filtering)
+$uniResult = $uniDB->getAllUniversities('all', '');
 $allUniversities = [];
 if ($uniResult) {
     while ($r = $uniResult->fetch_assoc()) {
@@ -84,11 +81,11 @@ if ($uniResult) {
     }
 }
 $totFilteredUni = count($allUniversities);
+$totalRecords = $totFilteredUni;
+$pageUniversities = $allUniversities;
 
-// Pagination Setup (5 records per page)
+// Pagination Setup (5 records per page handled on frontend)
 $recordsPerPage = 5;
 $totalPages = ceil($totFilteredUni / $recordsPerPage);
-$currentPage = isset($_GET['page']) ? max(1, min(max(1, $totalPages), (int) $_GET['page'])) : 1;
-$offset = ($currentPage - 1) * $recordsPerPage;
-$pageUniversities = array_slice($allUniversities, $offset, $recordsPerPage);
+$currentPage = 1;
 ?>

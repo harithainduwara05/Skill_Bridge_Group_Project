@@ -1,44 +1,37 @@
 <div class="user-filter-bar">
-    <!-- Role Tabs -->
+    <!-- Role Tabs (Instant UI Switching) -->
     <div class="user-role-tabs">
-        <a href="?role=all&status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>" 
-            class="user-role-tab <?= $selectedRole === 'all' ? 'active' : '' ?>">
+        <button type="button" class="user-role-tab active" data-role="all">
             All Users <span class="tab-badge"><?= $stats['total'] ?></span>
-        </a>
-        <a href="?role=student&status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>" 
-            class="user-role-tab <?= $selectedRole === 'student' ? 'active' : '' ?>">
+        </button>
+        <button type="button" class="user-role-tab" data-role="student">
             Students <span class="tab-badge"><?= $stats['students'] ?></span>
-        </a>
-        <a href="?role=company&status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>" 
-            class="user-role-tab <?= $selectedRole === 'company' ? 'active' : '' ?>">
+        </button>
+        <button type="button" class="user-role-tab" data-role="company">
             Companies <span class="tab-badge"><?= $stats['companies'] ?></span>
-        </a>
-        <a href="?role=organization&status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>" 
-            class="user-role-tab <?= $selectedRole === 'organization' ? 'active' : '' ?>">
+        </button>
+        <button type="button" class="user-role-tab" data-role="organization">
             Organizations <span class="tab-badge"><?= $stats['organizations'] ?></span>
-        </a>
-        <a href="?role=admin&status=<?= urlencode($selectedStatus) ?>&search=<?= urlencode($searchQuery) ?>" 
-            class="user-role-tab <?= $selectedRole === 'admin' ? 'active' : '' ?>">
+        </button>
+        <button type="button" class="user-role-tab" data-role="admin">
             Admins <span class="tab-badge"><?= $stats['admins'] ?></span>
-        </a>
+        </button>
     </div>
 
-    <!-- Right search & dropdown -->
+    <!-- Right search & dropdown (Instant Real-time Filter) -->
     <div class="user-toolbar-right">
-        <form method="GET" action="" style="display:flex; gap:10px; align-items:center;">
-            <input type="hidden" name="role" value="<?= htmlspecialchars($selectedRole) ?>">
-            
-            <select name="status" class="user-select-filter" onchange="this.form.submit()">
-                <option value="all" <?= $selectedStatus === 'all' ? 'selected' : '' ?>>All Statuses</option>
-                <option value="Active" <?= $selectedStatus === 'Active' ? 'selected' : '' ?>>Active</option>
-                <option value="De-Active" <?= $selectedStatus === 'De-Active' ? 'selected' : '' ?>>De-Active</option>
-                <option value="Pending" <?= $selectedStatus === 'Pending' ? 'selected' : '' ?>>Pending</option>
+        <div style="display:flex; gap:10px; align-items:center;">
+            <select id="userStatusFilter" class="user-select-filter">
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="deactive">De-Active</option>
+                <option value="pending">Pending</option>
             </select>
 
             <div class="user-search-box">
                 <span class="material-symbols-outlined">search</span>
-                <input type="text" name="search" placeholder="Search name, email, org..." value="<?= htmlspecialchars($searchQuery) ?>">
+                <input type="text" id="userSearchInput" placeholder="Search name, email, org..." autocomplete="off">
             </div>
-        </form>
+        </div>
     </div>
 </div>

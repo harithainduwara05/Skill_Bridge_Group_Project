@@ -100,7 +100,7 @@ class ReportAnalyticsManagement extends AdminDB
 
     public function getHiringVelocityData(): array
     {
-        $sql = "SELECT DATE_FORMAT(applied_date, '%b %Y') AS m_label, COUNT(*) AS apps,
+        $sql = "SELECT DATE_FORMAT(MIN(applied_date), '%b %Y') AS m_label, COUNT(*) AS apps,
                        SUM(CASE WHEN LOWER(status) = 'accepted' THEN 1 ELSE 0 END) AS hired
                 FROM internship_applications WHERE applied_date IS NOT NULL
                 GROUP BY DATE_FORMAT(applied_date, '%Y-%m') ORDER BY MIN(applied_date) ASC";

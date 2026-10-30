@@ -1,4 +1,3 @@
-
 // ── Modals & Actions ─────────────────────────────────────────────────────────
 const addModal    = document.getElementById('addModal');
 const viewModal   = document.getElementById('viewModal');
@@ -329,3 +328,77 @@ if (document.readyState === 'loading') {
 } else {
     initUniversityComboboxes();
 }
+
+
+// ── Instant Frontend Table Filter & Real-Time Search Engine ─────────────────
+(function() {
+    const tableBody = document.querySelector('#univTable tbody');
+    const searchInput = document.getElementById('univSearchInput');
+    const statusFilter = document.getElementById('univStatusFilter');
+    const paginationInfo = document.getElementById('univPaginationInfo');
+    const paginationControls = document.getElementById('univPaginationControls');
+
+    if (!tableBody) return;
+
+    let currentPage = 1;
+    const PAGE_SIZE = 5;
+
+    function applyUniFilters(resetPage = true) {
+        if (resetPage) currentPage = 1;
+
+        const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        const selectedStatus = (statusFilter ? statusFilter.value : 'all').toLowerCase();
+
+        const rows = Array.from(tableBody.querySelectorAll('tr.univ-row'));
+        const matched = [];
+
+        rows.forEach(row => {
+            const status = (row.getAttribute('data-status') || '').toLowerCase();
+            const searchBlob = (row.getAttribute('data-search') || '').toLowerCase();
+
+            const matchStatus = (selectedStatus === 'all' || status === selectedStatus);
+            const matchSearch = !q || searchBlob.includes(q);
+
+            if (matchStatus && matchSearch) {
+                matched.push(row);
+            }
+        });
+
+        // Hide static PHP empty state if present
+        const staticEmpty = tableBody.querySelector('.table-empty-state');
+        if (staticEmpty) {
+            staticEmpty.closest('tr').style.display = 'none';
+        }
+
+        // Delegate pagination to AdminCore
+        AdminCore.paginate({
+            tableBody,
+            rows: matched,
+            pageSize: PAGE_SIZE,
+            currentPage,
+            infoEl: paginationInfo,
+            controlsEl: paginationControls,
+            onPageChange: (newPage) => {
+                currentPage = newPage;
+                applyUniFilters(false);
+            },
+            emptyIcon: 'school',
+            emptyMessage: 'No institutions found matching your criteria',
+            emptySubtext: 'Try adjusting your search query or selecting a different status.',
+            colspan: 7
+        });
+    }
+
+    // Real-time Search Input typing
+    if (searchInput) {
+        searchInput.addEventListener('input', () => applyUniFilters(true));
+    }
+
+    // Status Dropdown change
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => applyUniFilters(true));
+    }
+
+    // Initial page load filter run
+    applyUniFilters(true);
+})();

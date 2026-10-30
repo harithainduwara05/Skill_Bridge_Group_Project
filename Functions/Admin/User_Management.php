@@ -67,6 +67,10 @@ include "../../Includes/dash_header.php";
             <!-- Reusable Pagination Component -->
             <?php 
                 $entityLabel = 'users';
+                $paginationInfoId = 'userPaginationInfo';
+                $paginationControlsId = 'userPaginationControls';
+                $alwaysShow = true;
+                $perPage = 5;
                 include __DIR__ . "/Components/Common/Pagination.php";
             ?>
             <!-- EndHere -->

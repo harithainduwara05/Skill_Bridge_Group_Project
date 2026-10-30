@@ -60,14 +60,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $email         = trim($_POST['email'] ?? '');
         $role          = trim($_POST['role'] ?? '');
         $status        = trim($_POST['status'] ?? 'Active');
-        $orgName       = trim($_POST['organization_name'] ?? '');
         $contact       = trim($_POST['contact_number'] ?? '');
         $degree        = trim($_POST['degree'] ?? '');
-        $year          = trim($_POST['year'] ?? '');
+        $year          = trim($_POST['academic_year'] ?? '');
 
-        // If organization or company selected, fallback name appropriately
-        if (($role === 'company' || $role === 'organization') && empty($orgName)) {
-            $orgName = $name;
+        // Resolve Organization / University based on role
+        if ($role === 'student') {
+            $uniName = trim($_POST['university_name'] ?? '');
+            $facName = trim($_POST['faculty_name'] ?? '');
+            $orgName = (!empty($uniName) && !empty($facName)) ? ($uniName . ' - ' . $facName) : $uniName;
+        } else {
+            $orgName = trim($_POST['organization_name'] ?? '');
+            // If organization or company selected, fallback name appropriately
+            if (($role === 'company' || $role === 'organization') && empty($orgName)) {
+                $orgName = $name;
+            }
         }
 
         if (empty($name) || empty($email) || empty($role)) {
@@ -284,18 +291,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // FILTERS, STATS & PAGINATION
 $stats = $userDB->getUserManagementStats();
 
-$selectedRole   = $_GET['role'] ?? 'all';
-$selectedStatus = $_GET['status'] ?? 'all';
-$searchQuery    = trim($_GET['search'] ?? '');
+// Fetch all users for instant client-side searching and filtering
+$allUsers = $userDB->getAllUsersDetailed('all', 'all', '');
+$totalRecords = count($allUsers);
+$usersList = $allUsers;
 
-$allFilteredUsers = $userDB->getAllUsersDetailed($selectedRole, $selectedStatus, $searchQuery);
-$totalRecords = count($allFilteredUsers);
-
-// Pagination (Only 5 users per page)
+// Default pagination configuration (5 per page handled on frontend)
 $perPage = 5;
-$currentPageNum = max(1, intval($_GET['page'] ?? 1));
+$currentPageNum = 1;
 $totalPages = ceil($totalRecords / $perPage);
-$offset = ($currentPageNum - 1) * $perPage;
-$usersList = array_slice($allFilteredUsers, $offset, $perPage);
 $paginatedUsers = $usersList;
 ?>

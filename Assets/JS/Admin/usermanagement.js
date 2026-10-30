@@ -294,3 +294,92 @@ function openDeleteModal(email, name) {
     document.getElementById('deleteUserDisplay').innerText = `${name} (${email})`;
     openModal('deleteUserModal');
 }
+
+
+// ── Instant Frontend Table Filter & Real-Time Search Engine ─────────────────
+(function() {
+    const tableBody = document.querySelector('.data-table tbody');
+    const searchInput = document.getElementById('userSearchInput');
+    const statusFilter = document.getElementById('userStatusFilter');
+    const roleTabs = document.querySelectorAll('.user-role-tab');
+    const paginationInfo = document.getElementById('userPaginationInfo');
+    const paginationControls = document.getElementById('userPaginationControls');
+
+    if (!tableBody) return;
+
+    let currentRole = 'all';
+    let currentPage = 1;
+    const PAGE_SIZE = 5;
+
+    function applyUserFilters(resetPage = true) {
+        if (resetPage) currentPage = 1;
+
+        const q = (searchInput ? searchInput.value : '').toLowerCase().trim();
+        const selectedStatus = (statusFilter ? statusFilter.value : 'all').toLowerCase();
+
+        const rows = Array.from(tableBody.querySelectorAll('tr.user-row'));
+        const matched = [];
+
+        rows.forEach(row => {
+            const role = (row.getAttribute('data-role') || '').toLowerCase();
+            const status = (row.getAttribute('data-status') || '').toLowerCase();
+            const searchBlob = (row.getAttribute('data-search') || '').toLowerCase();
+
+            const matchRole = (currentRole === 'all' || role === currentRole);
+            const matchStatus = (selectedStatus === 'all' || status === selectedStatus);
+            const matchSearch = !q || searchBlob.includes(q);
+
+            if (matchRole && matchStatus && matchSearch) {
+                matched.push(row);
+            }
+        });
+
+        // Hide static PHP empty state if present
+        const staticEmpty = tableBody.querySelector('.table-empty-state');
+        if (staticEmpty) {
+            staticEmpty.closest('tr').style.display = 'none';
+        }
+
+        // Delegate pagination to AdminCore
+        AdminCore.paginate({
+            tableBody,
+            rows: matched,
+            pageSize: PAGE_SIZE,
+            currentPage,
+            infoEl: paginationInfo,
+            controlsEl: paginationControls,
+            onPageChange: (newPage) => {
+                currentPage = newPage;
+                applyUserFilters(false);
+            },
+            emptyIcon: 'person_search',
+            emptyMessage: 'No users found matching your criteria',
+            emptySubtext: 'Try adjusting your search keywords or switching role tabs.',
+            colspan: 6
+        });
+    }
+
+    // Role Tab click
+    roleTabs.forEach(tab => {
+        tab.addEventListener('click', function(e) {
+            e.preventDefault();
+            roleTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            currentRole = (this.getAttribute('data-role') || 'all').toLowerCase();
+            applyUserFilters(true);
+        });
+    });
+
+    // Real-time Search Input typing
+    if (searchInput) {
+        searchInput.addEventListener('input', () => applyUserFilters(true));
+    }
+
+    // Status Dropdown change
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => applyUserFilters(true));
+    }
+
+    // Initial page load filter run
+    applyUserFilters(true);
+})();
