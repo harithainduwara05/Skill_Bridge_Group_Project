@@ -243,14 +243,23 @@ function initProjectManagement() {
                 if (holdReasonEl)   holdReasonEl.textContent = holdReason || 'Issue reported. Organization has been given a grace period to clarify.';
                 if (holdDeadlineEl) holdDeadlineEl.textContent = `${holdDays} Days Left`;
                 if (holdRespBadge) {
+                    const holdRespWrap = document.getElementById('pmDetailHoldResponseWrap');
+                    const holdRespText = document.getElementById('pmDetailHoldResponseText');
                     if (teamResponse && teamResponse.trim() !== '') {
                         holdRespBadge.style.background = '#dcfce7';
                         holdRespBadge.style.color = '#15803d';
                         holdRespBadge.textContent = 'Organization Justification Submitted';
+                        if (holdRespWrap && holdRespText) {
+                            holdRespWrap.style.display = 'block';
+                            holdRespText.textContent = teamResponse;
+                        }
                     } else {
                         holdRespBadge.style.background = '#fbbf24';
                         holdRespBadge.style.color = '#78350f';
                         holdRespBadge.textContent = 'Awaiting Organization Response';
+                        if (holdRespWrap) {
+                            holdRespWrap.style.display = 'none';
+                        }
                     }
                 }
             }

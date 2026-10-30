@@ -110,13 +110,19 @@ class ProjectManagement extends AdminDB
         $statusClean = trim($status);
         $adminEmail = !empty($heldBy) ? $heldBy : 'skillbridge62@gmail.com';
 
+        // Ensure admin email exists to satisfy FK constraint fk_pml_admin
+        $chkAdmin = $this->runQuery("SELECT Email FROM admin WHERE LOWER(Email) = LOWER(?) LIMIT 1", "s", $adminEmail);
+        if (!$chkAdmin || $chkAdmin->num_rows === 0) {
+            $adminEmail = 'skillbridge62@gmail.com';
+        }
+
         if (strcasecmp($statusClean, 'Hold') === 0) {
             $ok = $this->runAction("UPDATE projects SET status = 'hold' WHERE id = ?", "i", $cleanId);
             if ($ok) {
                 $this->runAction(
-                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, 'Hold', ?, 'Open')",
+                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, 'Open')",
                     "isss",
-                    $cleanId, $adminEmail, $holdReason
+                    $cleanId, $adminEmail, 'Hold', $holdReason
                 );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
@@ -155,9 +161,9 @@ class ProjectManagement extends AdminDB
             $ok = $this->runAction("UPDATE projects SET status = ? WHERE id = ?", "si", strtolower($statusClean), $cleanId);
             if ($ok && strcasecmp($statusClean, 'Rejected') === 0) {
                 $this->runAction(
-                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, 'Rejected', ?, 'Open')",
+                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, 'Open')",
                     "isss",
-                    $cleanId, $adminEmail, $holdReason
+                    $cleanId, $adminEmail, 'Rejected', $holdReason
                 );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {

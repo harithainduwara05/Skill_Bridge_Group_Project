@@ -7,7 +7,7 @@ $projectManagement = new ProjectManagement($conn);
 $adminDB           = $projectManagement;
 
 $loggedInUser      = function_exists('current_user') ? current_user() : null;
-$currentAdminEmail = strtolower($loggedInUser['Email'] ?? $loggedInUser['email'] ?? 'admin@skillbridge.lk');
+$currentAdminEmail = strtolower($loggedInUser['Email'] ?? $loggedInUser['email'] ?? 'skillbridge62@gmail.com');
 $flash             = null;
 
 // Handle POST / AJAX Actions

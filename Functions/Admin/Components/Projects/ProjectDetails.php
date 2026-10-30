@@ -46,6 +46,12 @@
                     <span><strong>Grace Period:</strong> <span id="pmDetailHoldDeadline">7 Days Left</span></span>
                     <span id="pmDetailHoldRespBadge" style="font-size: 11.5px; background: #fbbf24; color: #78350f; padding: 2px 8px; border-radius: 4px; font-weight: 700;">Awaiting Organization Response</span>
                 </div>
+                <div id="pmDetailHoldResponseWrap" style="display: none; margin-top: 10px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;">
+                    <span style="font-size: 11.5px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 4px; margin-bottom: 3px;">
+                        <span class="material-symbols-outlined" style="font-size: 16px;">forum</span> Organization Response:
+                    </span>
+                    <p id="pmDetailHoldResponseText" style="font-size: 12.5px; color: #14532d; margin: 0; line-height: 1.45;"></p>
+                </div>
             </div>
 
             <!-- Status Banner 3: Permanent Rejected (When status is Rejected) -->
