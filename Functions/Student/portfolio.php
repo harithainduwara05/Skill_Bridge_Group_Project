@@ -31,39 +31,67 @@ function portfolioEsc(?string $value): string{
     return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** Returns a stored filename only, never a path supplied by the browser. */
-function portfolioUpload(string $field, string $type): ?string{
-    if (!isset($_FILES[$field]) || $_FILES[$field]['error'] === UPLOAD_ERR_NO_FILE) {
+/** Save a validated certificate or project upload and return its generated filename. */
+function portfolioUpload(string $field, string $type): ?string
+{
+    if (!isset($_FILES[$field])) {
         return null;
     }
 
     $file = $_FILES[$field];
-    if ($file['error'] !== UPLOAD_ERR_OK || $file['size'] > 5 * 1024 * 1024 || $file['size'] < 1) {
-        throw new InvalidArgumentException('The uploaded file must be smaller than 5 MB.');
+    if (!is_array($file) || is_array($file['error'] ?? null)) {
+        throw new InvalidArgumentException('Please select one file only.');
     }
 
-    if (!is_uploaded_file($file['tmp_name'])) {
-        throw new InvalidArgumentException('Invalid upload.');
+    $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+    if ($error === UPLOAD_ERR_NO_FILE) {
+        return null;
     }
 
-    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    $errors = [
+        UPLOAD_ERR_INI_SIZE => 'The file exceeds the server upload_max_filesize setting.',
+        UPLOAD_ERR_FORM_SIZE => 'The file exceeds the form upload size limit.',
+        UPLOAD_ERR_PARTIAL => 'The file was only partially uploaded. Please try again.',
+        UPLOAD_ERR_NO_TMP_DIR => 'The server upload temporary directory is missing.',
+        UPLOAD_ERR_CANT_WRITE => 'The server could not write the uploaded file.',
+        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.'
+    ];
+    if ($error !== UPLOAD_ERR_OK) {
+        throw new InvalidArgumentException($errors[$error] ?? 'File upload failed.');
+    }
+
+    $maxBytes = 5 * 1024 * 1024;
+    $size = (int) ($file['size'] ?? 0);
+    if ($size < 1 || $size > $maxBytes) {
+        throw new InvalidArgumentException('Choose a file larger than 0 bytes and no more than 5 MB.');
+    }
+
+    $temp = (string) ($file['tmp_name'] ?? '');
+    if ($temp === '' || !is_uploaded_file($temp)) {
+        throw new InvalidArgumentException('The selected file was not uploaded correctly.');
+    }
+
     $allowed = $type === 'certificate'
-        ? ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'application/pdf' => 'pdf']
+        ? ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp']
         : ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
-    if (!isset($allowed[$mime])) {
-        throw new InvalidArgumentException('Unsupported file type.');
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($temp);
+    if (!is_string($mime) || !isset($allowed[$mime])) {
+        throw new InvalidArgumentException('Select a PDF, JPG, PNG or WebP file.');
     }
 
     $folder = __DIR__ . '/../../Assets/Images/Student/Portfolio/';
     if (!is_dir($folder) && !mkdir($folder, 0755, true) && !is_dir($folder)) {
-        throw new RuntimeException('Upload directory is unavailable.');
+        throw new RuntimeException('Unable to create the portfolio upload folder.');
+    }
+    if (!is_writable($folder)) {
+        throw new RuntimeException('The portfolio upload folder is not writable.');
     }
 
-    $name = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
-    if (!move_uploaded_file($file['tmp_name'], $folder . $name)) {
-        throw new RuntimeException('Could not store uploaded file.');
+    $filename = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
+    if (!move_uploaded_file($temp, $folder . $filename)) {
+        throw new RuntimeException('The server could not save the uploaded file.');
     }
-    return $name;
+    return $filename;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -72,6 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit('Invalid form token. Refresh the page and try again.');
     }
 
+    $newUpload = null;
     try {
         $action = (string) ($_POST['action'] ?? '');
 
@@ -79,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($action === 'save_project') {
             $data = $_POST;
             $data['project_image'] = portfolioUpload('project_image', 'project');
+            $newUpload = $data['project_image'];
             $data['technologies'] = array_filter(array_map('trim', explode(',', (string) ($_POST['technologies'] ?? ''))));
             $repo->saveProject($email, $data, $id ?: null);
 
@@ -99,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $data = $_POST;
 
             $data['certificate_file'] = portfolioUpload('certificate_file', 'certificate');
+            $newUpload = $data['certificate_file'];
 
             $repo->saveCertificate($email, $data, $id ?: null);
 
@@ -111,6 +142,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new InvalidArgumentException('Unknown action or invalid record ID.');
         }
     } catch (Throwable $exception) {
+        if ($newUpload !== null) {
+            $path = __DIR__ . '/../../Assets/Images/Student/Portfolio/' . basename($newUpload);
+            if (is_file($path)) {
+                unlink($path);
+            }
+        }
         // Do not expose SQL exceptions to the browser.
 
         $_SESSION['portfolio_error'] = $exception instanceof InvalidArgumentException
@@ -119,7 +156,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             : 'Unable to save the request. Check the database migration and server logs.';
 
-        error_log('Portfolio: ' . $exception->getMessage());
+        $errorReference = strtoupper(bin2hex(random_bytes(4)));
+        error_log('Portfolio [' . $errorReference . '] ' . $action . ': ' . $exception->getMessage());
+        if (!($exception instanceof InvalidArgumentException)) {
+            $_SESSION['portfolio_error'] = 'Unable to save the request. Error reference: ' . $errorReference;
+        }
     }
 
     header('Location: portfolio.php', true, 303);
@@ -419,7 +460,8 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <p class="portfolio-field-hint">List the skills demonstrated by this certificate.</p>
             <label>Credential ID<input name="credential_id" maxlength="150"></label>
             <label>Credential URL<input name="credential_url" type="url"></label>
-            <label>Certificate File (PDF or image)<input name="certificate_file" type="file" accept="application/pdf,image/jpeg,image/png,image/webp"></label>
+            <label>Certificate File (PDF or image)<input name="certificate_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></label>
+            <p class="portfolio-field-hint">Maximum 5 MB. Supported: PDF, JPG, PNG, WebP. When editing, leave empty to keep the existing file.</p>
         </div>
         <div class="modal-footer"><button type="submit" class="save-btn">Save Certificate</button></div>
     </form>

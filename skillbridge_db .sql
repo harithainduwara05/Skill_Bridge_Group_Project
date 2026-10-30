@@ -495,9 +495,9 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`notification_id`, `Email`, `title`, `message`, `type`, `status`, `created_at`) VALUES
-(1, '2024is058@stu.ucsc.cmb.ac.lk', 'Application Shortlisted', 'Congratulations! Your application for UI/UX Designer Intern has been shortlisted.', 'application', 'Read', '2026-08-26 04:30:00'),
-(2, '2024is058@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project \"Smart Campus Energy Monitor\".', 'project', 'Unread', '2026-09-01 09:00:00'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Application Accepted', 'Global Retail has accepted your application for Backend Developer Intern!', 'application', 'Read', '2026-08-24 10:50:00'),
+(1, '2024is078@stu.ucsc.cmb.ac.lk', 'Application Shortlisted', 'Congratulations! Your application for UI/UX Designer Intern has been shortlisted.', 'application', 'Read', '2026-08-26 04:30:00'),
+(2, '2024is078@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project "Smart Campus Energy Monitor".', 'project', 'Unread', '2026-09-01 09:00:00'),
+(3, '2024is078@stu.ucsc.cmb.ac.lk', 'Application Accepted', 'Global Retail has accepted your application for Backend Developer Intern!', 'application', 'Read', '2026-08-24 10:50:00'),
 (4, 'hr@company.com', 'New Candidate Application', 'Haritha Induwara has applied for the Mobile Application Developer Intern position.', 'candidate', 'Unread', '2026-08-29 03:45:00'),
 (5, 'careers@virtusa.com', 'Profile Verification Complete', 'Your company profile has been verified by SkillBridge Administration.', 'system', 'Read', '2026-08-21 05:30:00'),
 (6, 'skillbridge62@gmail.com', 'New Organization Registration', 'Organization \"IEEE Student Branch UCSC\" has registered and is pending review.', 'admin', 'Unread', '2026-09-02 03:15:00'),
@@ -952,7 +952,7 @@ INSERT INTO `skills` (`skill_id`, `Email`, `skill_name`, `category`, `level`, `i
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 'React', 'Frontend', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
 (2, '2024is058@stu.ucsc.cmb.ac.lk', 'PHP', 'Backend', 'Expert', 3, 95, '2026-09-22 08:00:00'),
 (3, '2024is058@stu.ucsc.cmb.ac.lk', 'MySQL', 'Database', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
-(4, '2024is058@stu.ucsc.cmb.ac.lk', 'Docker', 'Cloud & DevOps', 'Intermediate', 1, 60, '2026-09-22 08:00:00'),
+(4, '2024is078@stu.ucsc.cmb.ac.lk', 'Docker', 'Cloud & DevOps', 'Intermediate', 1, 60, '2026-09-22 08:00:00'),
 (5, '2024is078@stu.ucsc.cmb.ac.lk', 'Python', 'Programming', 'Expert', 3, 95, '2026-09-22 08:00:00'),
 (6, '2024is078@stu.ucsc.cmb.ac.lk', 'Flutter', 'Mobile Development', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
 (7, '2024is078@stu.ucsc.cmb.ac.lk', 'PyTorch', 'AI & Machine Learning', 'Intermediate', 1, 60, '2026-09-22 08:00:00'),

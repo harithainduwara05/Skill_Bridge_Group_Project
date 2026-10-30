@@ -1,9 +1,4 @@
 <?php
-/**
- * Student portfolio persistence; all reads and writes are scoped to the logged-in student.
- * Requires Student 3NF migration and student_internal_portfolio_overrides table.
- * All write methods require the authenticated student's email from the caller.
- */
 final class StudentPortfolioRepository
 {
     private mysqli $db;
@@ -70,35 +65,46 @@ final class StudentPortfolioRepository
 
     private function replaceTechnologies(int $projectId, array $technologies): void
     {
-        $clear = $this->db->prepare('DELETE FROM student_portfolio_project_technologies WHERE portfolio_project_id = ?');
-        $clear->bind_param('i', $projectId);
-        $clear->execute();
-        $clear->close();
+        $delete = $this->db->prepare('DELETE FROM student_portfolio_project_technologies WHERE portfolio_project_id = ?');
+        $delete->bind_param('i', $projectId);
+        $delete->execute();
+        $delete->close();
 
+        $insert = $this->db->prepare('INSERT IGNORE INTO student_technologies (technology_name) VALUES (?)');
+        $lookup = $this->db->prepare('SELECT technology_id FROM student_technologies WHERE technology_name = ? LIMIT 1');
+        $link = $this->db->prepare('INSERT INTO student_portfolio_project_technologies (portfolio_project_id, technology_id) VALUES (?, ?)');
         $seen = [];
-        foreach ($technologies as $technology) {
-            if (!is_scalar($technology)) {
-                continue;
+
+        try {
+            foreach ($technologies as $technology) {
+                if (!is_string($technology)) {
+                    continue;
+                }
+                $name = trim($technology);
+                if ($name === '' || strlen($name) > 100) {
+                    continue;
+                }
+                $key = strtolower($name);
+                if (isset($seen[$key])) {
+                    continue;
+                }
+                $seen[$key] = true;
+
+                $insert->bind_param('s', $name);
+                $insert->execute();
+                $lookup->bind_param('s', $name);
+                $lookup->execute();
+                $technologyId = $lookup->get_result()->fetch_column();
+                if (!$technologyId) {
+                    throw new RuntimeException('Could not resolve portfolio technology.');
+                }
+                $technologyId = (int) $technologyId;
+                $link->bind_param('ii', $projectId, $technologyId);
+                $link->execute();
             }
-            $name = trim((string) $technology);
-            if ($name === '' || strlen($name) > 100) {
-                continue;
-            }
-            $key = function_exists('mb_strtolower') ? mb_strtolower($name) : strtolower($name);
-            if (isset($seen[$key])) {
-                continue;
-            }
-            $seen[$key] = true;
-            $insertTech = $this->db->prepare('INSERT INTO student_technologies (technology_name) VALUES (?)
-                ON DUPLICATE KEY UPDATE technology_id = LAST_INSERT_ID(technology_id)');
-            $insertTech->bind_param('s', $name);
-            $insertTech->execute();
-            $techId = (int) $this->db->insert_id;
-            $insertTech->close();
-            $link = $this->db->prepare('INSERT INTO student_portfolio_project_technologies (portfolio_project_id, technology_id)
-                VALUES (?, ?)');
-            $link->bind_param('ii', $projectId, $techId);
-            $link->execute();
+        } finally {
+            $insert->close();
+            $lookup->close();
             $link->close();
         }
     }
@@ -195,14 +201,17 @@ final class StudentPortfolioRepository
     {
         $sql = "SELECT sp.student_project_id, p.id AS organization_project_id,
                        p.title AS original_title, p.description AS original_description,
-                       p.tech_stack, p.status AS original_status, p.company,
+                       p.status AS original_status, org.Name AS company,
+                       COALESCE((SELECT GROUP_CONCAT(ps.skill_name ORDER BY ps.skill_name SEPARATOR ', ')
+                           FROM project_skills ps WHERE ps.project_id = p.id), '') AS tech_stack,
                        sp.role, sp.progress, sp.status AS student_status,
-                       o.display_title, o.display_description, o.hidden
+                       ov.display_title, ov.display_description, ov.hidden
                 FROM student_projects sp
                 INNER JOIN projects p ON p.id = sp.project_id
-                LEFT JOIN student_internal_portfolio_overrides o
-                    ON o.student_project_id = sp.student_project_id AND o.student_email = sp.Email
-                WHERE sp.Email = ? AND (o.hidden IS NULL OR o.hidden = 0)
+                LEFT JOIN organization org ON org.Email = p.organization_email
+                LEFT JOIN student_internal_portfolio_overrides ov
+                    ON ov.student_project_id = sp.student_project_id AND ov.student_email = sp.Email
+                WHERE sp.Email = ? AND (ov.hidden IS NULL OR ov.hidden = 0)
                 ORDER BY sp.student_project_id DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param('s', $email);
@@ -270,12 +279,22 @@ final class StudentPortfolioRepository
     public function certificates(string $email): array
     {
         $stmt = $this->db->prepare('SELECT certificate_id, certificate_name, issuer, certificate_file,
-                status, issue_date, expiration_date, credential_id, credential_url
-                FROM certificates WHERE Email = ? ORDER BY certificate_id DESC');
+            status, issue_date, expiration_date, credential_id, credential_url
+            FROM certificates WHERE Email = ? ORDER BY certificate_id DESC');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
+        $skillsStmt = $this->db->prepare('SELECT skill_name FROM student_certificate_skills
+            WHERE certificate_id = ? ORDER BY skill_name');
+        foreach ($rows as &$row) {
+            $id = (int) $row['certificate_id'];
+            $skillsStmt->bind_param('i', $id);
+            $skillsStmt->execute();
+            $row['skills'] = array_column($skillsStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'skill_name');
+        }
+        unset($row);
+        $skillsStmt->close();
         return $rows;
     }
 
@@ -288,11 +307,12 @@ final class StudentPortfolioRepository
         $credentialId = trim((string) ($data['credential_id'] ?? ''));
         $url = trim((string) ($data['credential_url'] ?? ''));
         $file = trim((string) ($data['certificate_file'] ?? '')) ?: null;
+        $skillsText = trim((string) ($data['skills'] ?? ''));
         if ($file !== null && ($file !== basename($file) || strlen($file) > 255)) {
             throw new InvalidArgumentException('Invalid certificate filename.');
         }
         if (strlen($name) < 2 || strlen($name) > 150 || strlen($issuer) < 2 || strlen($issuer) > 150 || strlen($credentialId) > 150) {
-            throw new InvalidArgumentException('Certificate name and issuer are required (2–150 characters).');
+            throw new InvalidArgumentException('Certificate name and issuer must be 2–150 characters.');
         }
         foreach ([$issue, $expiration] as $date) {
             if ($date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || DateTimeImmutable::createFromFormat('!Y-m-d', $date)?->format('Y-m-d') !== $date)) {
@@ -305,29 +325,59 @@ final class StudentPortfolioRepository
         if (strlen($url) > 500 || ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)))) {
             throw new InvalidArgumentException('Invalid credential URL.');
         }
+        if (strlen($skillsText) > 1500) {
+            throw new InvalidArgumentException('Skills field is too long.');
+        }
+        $skills = [];
+        foreach (explode(',', $skillsText) as $skill) {
+            $skill = trim($skill);
+            if ($skill === '') {
+                continue;
+            }
+            if (strlen($skill) > 100) {
+                throw new InvalidArgumentException('Each skill must be 100 characters or fewer.');
+            }
+            $skills[strtolower($skill)] = $skill;
+        }
         if ($id !== null && !$this->ownsCertificate($email, $id)) {
             throw new RuntimeException('Certificate not found or access denied.');
         }
-        if ($id === null) {
-            $stmt = $this->db->prepare('INSERT INTO certificates
-                (Email, certificate_name, issuer, certificate_file, status, issue_date, expiration_date, credential_id, credential_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-            $status = 'Pending';
-            $stmt->bind_param('sssssssss', $email, $name, $issuer, $file, $status, $issue, $expiration, $credentialId, $url);
-            $stmt->execute();
-            $id = (int) $this->db->insert_id;
-        } else {
-            $stmt = $this->db->prepare('UPDATE certificates SET certificate_name = ?, issuer = ?,
-                certificate_file = COALESCE(?, certificate_file), issue_date = ?, expiration_date = ?,
-                credential_id = ?, credential_url = ? WHERE certificate_id = ? AND Email = ?');
-            $stmt->bind_param('sssssssis', $name, $issuer, $file, $issue, $expiration, $credentialId, $url, $id, $email);
-            $stmt->execute();
-            if ($stmt->affected_rows === 0 && !$this->ownsCertificate($email, $id)) {
-                throw new RuntimeException('Certificate not found.');
+        $this->db->begin_transaction();
+        try {
+            if ($id === null) {
+                $stmt = $this->db->prepare('INSERT INTO certificates
+                    (Email, certificate_name, issuer, certificate_file, status, issue_date, expiration_date, credential_id, credential_url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
+                $status = 'Pending';
+                $stmt->bind_param('sssssssss', $email, $name, $issuer, $file, $status, $issue, $expiration, $credentialId, $url);
+                $stmt->execute();
+                $id = (int) $this->db->insert_id;
+            } else {
+                $stmt = $this->db->prepare('UPDATE certificates SET certificate_name = ?, issuer = ?,
+                    certificate_file = COALESCE(?, certificate_file), issue_date = ?, expiration_date = ?,
+                    credential_id = ?, credential_url = ? WHERE certificate_id = ? AND Email = ?');
+                $stmt->bind_param('sssssssis', $name, $issuer, $file, $issue, $expiration, $credentialId, $url, $id, $email);
+                $stmt->execute();
             }
+            $stmt->close();
+            $clear = $this->db->prepare('DELETE FROM student_certificate_skills WHERE certificate_id = ?');
+            $clear->bind_param('i', $id);
+            $clear->execute();
+            $clear->close();
+            if ($skills) {
+                $insert = $this->db->prepare('INSERT INTO student_certificate_skills (certificate_id, skill_name) VALUES (?, ?)');
+                foreach ($skills as $skill) {
+                    $insert->bind_param('is', $id, $skill);
+                    $insert->execute();
+                }
+                $insert->close();
+            }
+            $this->db->commit();
+            return $id;
+        } catch (Throwable $exception) {
+            $this->db->rollback();
+            throw $exception;
         }
-        $stmt->close();
-        return $id;
     }
 
     public function ownsCertificate(string $email, int $id): bool
