@@ -23,15 +23,17 @@ if (empty($_SESSION['student_portfolio_csrf'])) {
 
 $csrf = $_SESSION['student_portfolio_csrf'];
 
-function portfolioJson(array $data): string{
+function portfolioJson(array $data): string {
     return json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR);
 }
 
-function portfolioEsc(?string $value): string{
+function portfolioEsc(?string $value): string {
     return htmlspecialchars($value ?? '', ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
 
-/** Save a validated certificate or project upload and return its generated filename. */
+/** 
+ * Save a validated certificate or project upload and return its relative storage path.
+ */
 function portfolioUpload(string $field, string $type): ?string
 {
     if (!isset($_FILES[$field])) {
@@ -49,18 +51,18 @@ function portfolioUpload(string $field, string $type): ?string
     }
 
     $errors = [
-        UPLOAD_ERR_INI_SIZE => 'The file exceeds the server upload_max_filesize setting.',
-        UPLOAD_ERR_FORM_SIZE => 'The file exceeds the form upload size limit.',
-        UPLOAD_ERR_PARTIAL => 'The file was only partially uploaded. Please try again.',
+        UPLOAD_ERR_INI_SIZE   => 'The file exceeds the server upload_max_filesize setting.',
+        UPLOAD_ERR_FORM_SIZE  => 'The file exceeds the form upload size limit.',
+        UPLOAD_ERR_PARTIAL    => 'The file was only partially uploaded. Please try again.',
         UPLOAD_ERR_NO_TMP_DIR => 'The server upload temporary directory is missing.',
         UPLOAD_ERR_CANT_WRITE => 'The server could not write the uploaded file.',
-        UPLOAD_ERR_EXTENSION => 'A PHP extension stopped the file upload.'
+        UPLOAD_ERR_EXTENSION  => 'A PHP extension stopped the file upload.'
     ];
     if ($error !== UPLOAD_ERR_OK) {
         throw new InvalidArgumentException($errors[$error] ?? 'File upload failed.');
     }
 
-    $maxBytes = 5 * 1024 * 1024;
+    $maxBytes = 5 * 1024 * 1024; // 5 MB limit
     $size = (int) ($file['size'] ?? 0);
     if ($size < 1 || $size > $maxBytes) {
         throw new InvalidArgumentException('Choose a file larger than 0 bytes and no more than 5 MB.');
@@ -71,27 +73,32 @@ function portfolioUpload(string $field, string $type): ?string
         throw new InvalidArgumentException('The selected file was not uploaded correctly.');
     }
 
-    $allowed = $type === 'certificate'
+    $allowed = ($type === 'certificate')
         ? ['application/pdf' => 'pdf', 'image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp']
         : ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+
     $mime = (new finfo(FILEINFO_MIME_TYPE))->file($temp);
     if (!is_string($mime) || !isset($allowed[$mime])) {
         throw new InvalidArgumentException('Select a PDF, JPG, PNG or WebP file.');
     }
 
-    $folder = __DIR__ . '/../../Assets/Images/Student/Portfolio/';
+    // Set destination folder paths
+    $folderName = ($type === 'certificate') ? 'Certificate/' : 'Portfolio/';
+    $folder = __DIR__ . '/../../Assets/Images/Student/' . $folderName;
+
     if (!is_dir($folder) && !mkdir($folder, 0755, true) && !is_dir($folder)) {
-        throw new RuntimeException('Unable to create the portfolio upload folder.');
+        throw new RuntimeException('Unable to create the portfolio upload folder: ' . $folder);
     }
     if (!is_writable($folder)) {
-        throw new RuntimeException('The portfolio upload folder is not writable.');
+        throw new RuntimeException('The portfolio upload folder is not writable: ' . $folder);
     }
 
     $filename = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
     if (!move_uploaded_file($temp, $folder . $filename)) {
         throw new RuntimeException('The server could not save the uploaded file.');
     }
-    return $filename;
+
+    return 'Assets/Images/Student/' . $folderName . $filename;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -103,8 +110,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newUpload = null;
     try {
         $action = (string) ($_POST['action'] ?? '');
-
         $id = filter_var($_POST['id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
         if ($action === 'save_project') {
             $data = $_POST;
             $data['project_image'] = portfolioUpload('project_image', 'project');
@@ -127,7 +134,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['portfolio_notice'] = 'Organization project removed from your portfolio only.';
         } elseif ($action === 'save_certificate') {
             $data = $_POST;
-
             $data['certificate_file'] = portfolioUpload('certificate_file', 'certificate');
             $newUpload = $data['certificate_file'];
 
@@ -143,35 +149,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } catch (Throwable $exception) {
         if ($newUpload !== null) {
-            $path = __DIR__ . '/../../Assets/Images/Student/Portfolio/' . basename($newUpload);
+            $path = __DIR__ . '/../../' . $newUpload;
             if (is_file($path)) {
-                unlink($path);
+                @unlink($path);
             }
         }
-        // Do not expose SQL exceptions to the browser.
 
-        $_SESSION['portfolio_error'] = $exception instanceof InvalidArgumentException
-
-            ? $exception->getMessage()
-
-            : 'Unable to save the request. Check the database migration and server logs.';
-
-        $errorReference = strtoupper(bin2hex(random_bytes(4)));
-        error_log('Portfolio [' . $errorReference . '] ' . $action . ': ' . $exception->getMessage());
-        if (!($exception instanceof InvalidArgumentException)) {
-            $_SESSION['portfolio_error'] = 'Unable to save the request. Error reference: ' . $errorReference;
-        }
+        // Output actual error for complete transparency during testing
+        $_SESSION['portfolio_error'] = $exception->getMessage();
+        error_log('Portfolio Error: ' . $exception->getMessage());
     }
 
     header('Location: portfolio.php', true, 303);
-
     exit;
 }
 
 $page = max(1, (int) ($_GET['page'] ?? 1));
 $perPage = 6;
-// Keep the page renderable if the database upgrade has not yet been installed.
-// The detailed database error is written to the PHP error log.
 $databaseError = null;
 $summary = ['projects' => 0, 'certificates' => 0, 'views' => 0];
 $internalProjects = [];
@@ -190,8 +184,7 @@ try {
     $certificates = $repo->certificates($email);
 } catch (Throwable $exception) {
     error_log('SkillBridge Portfolio database read failed: ' . $exception->getMessage());
-
-    $databaseError = 'Portfolio data could not be loaded. Confirm the Student Portfolio database migrations have been imported.';
+    $databaseError = 'Portfolio data could not be loaded: ' . $exception->getMessage();
 }
 
 $notice = $_SESSION['portfolio_notice'] ?? null;
@@ -199,11 +192,9 @@ $error = $_SESSION['portfolio_error'] ?? null;
 unset($_SESSION['portfolio_notice'], $_SESSION['portfolio_error']);
 $pageTitle = 'My Portfolio | SkillBridge';
 $extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/portfolio.css">'
-
-    . '<link rel="stylesheet" href="https\://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">';
+    . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">';
 
 include __DIR__ . '/../../Includes/student_sidebar.php';
-
 include __DIR__ . '/../../Includes/dash_header.php';
 
 ?>
@@ -227,7 +218,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 $databaseError ? ['message' => $databaseError, 'error' => true] : null
             ]) as $toast): ?>
                 <div class="portfolio-toast <?= $toast['error'] ? 'is-error' : 'is-success' ?>"
-                     role="<?= $toast['error'] ? 'alert' : 'status' ?>" data-timeout="<?= $toast['error'] ? 7000 : 4500 ?>">
+                     role="<?= $toast['error'] ? 'alert' : 'status' ?>" data-timeout="<?= $toast['error'] ? 8000 : 4500 ?>">
                     <i class="fa-solid <?= $toast['error'] ? 'fa-circle-exclamation' : 'fa-circle-check' ?>" aria-hidden="true"></i>
                     <span><?= portfolioEsc($toast['message']) ?></span>
                     <button type="button" class="portfolio-toast-close" aria-label="Dismiss notification">&times;</button>
@@ -237,9 +228,18 @@ include __DIR__ . '/../../Includes/dash_header.php';
     <?php endif; ?>
 
     <section class="portfolio-stats" aria-label="Portfolio statistics">
-        <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-folder-open"></i></div><div><span>Projects</span><h2><?= $summary['projects'] ?></h2><p>Portfolio projects</p></div></div>
-        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-certificate"></i></div><div><span>Certificates</span><h2><?= $summary['certificates'] ?></h2><p>Professional credentials</p></div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-eye"></i></div><div><span>Profile Views</span><h2><?= $summary['views'] ?></h2><p>Recorded public views</p></div></div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-folder-open"></i></div>
+            <div><span>Projects</span><h2><?= $summary['projects'] ?></h2><p>Portfolio projects</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fa-solid fa-certificate"></i></div>
+            <div><span>Certificates</span><h2><?= $summary['certificates'] ?></h2><p>Professional credentials</p></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-eye"></i></div>
+            <div><span>Profile Views</span><h2><?= $summary['views'] ?></h2><p>Recorded public views</p></div>
+        </div>
     </section>
 
     <section class="portfolio-section">
@@ -248,78 +248,92 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <?php if ($page === 1): foreach ($internalProjects as $project): ?>
                 <article class="project-card">
                     <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
-                        <div class="project-image"><div class="portfolio-empty-image"><i class="fa-solid fa-people-group"></i></div></div>
-
+                        <div class="project-image">
+                            <div class="portfolio-empty-image"><i class="fa-solid fa-people-group"></i></div>
+                        </div>
                         <div class="project-content">
                             <span class="portfolio-source">SkillBridge organization project</span>
                             <h3><?= portfolioEsc($project['title']) ?></h3>
                             <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
                             <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
-                            <div class="tags"><?php foreach ($project['technologies'] as $technology): ?><span><?= portfolioEsc($technology) ?></span><?php endforeach; ?></div>
+                            <div class="tags">
+                                <?php foreach ($project['technologies'] as $technology): ?>
+                                    <span><?= portfolioEsc($technology) ?></span>
+                                <?php endforeach; ?>
+                            </div>
                             <p class="portfolio-small"><?= portfolioEsc($project['company']) ?> · <?= portfolioEsc($project['project_status']) ?></p>
                         </div>
                     </button>
                     <div class="project-links portfolio-card-actions">
-                        <button type="button" class="edit-btn" title="Edit portfolio display" onclick='portfolioEditInternal(<?= portfolioJson($project) ?>)'><i class="fa-solid fa-pen"></i></button>
+                        <button type="button" class="edit-btn" title="Edit portfolio display" onclick='portfolioEditInternal(<?= portfolioJson($project) ?>)'>
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
                         <form method="post" onsubmit="return confirm('Remove this project from your portfolio? The original project will remain unchanged.')">
                             <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
                             <input type="hidden" name="action" value="hide_internal">
                             <input type="hidden" name="id" value="<?= (int) $project['student_project_id'] ?>">
-                            <button class="delete-btn" title="Remove from my portfolio" type="submit"><i class="fa-solid fa-trash"></i></button>
+                            <button class="delete-btn" title="Remove from my portfolio" type="submit">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </form>
                     </div>
                 </article>
-
             <?php endforeach; endif; ?>
+            
             <?php foreach ($projects as $project): ?>
                 <?php
                 $filename = basename((string) ($project['project_image'] ?? ''));
                 $image = '';
                 if ($filename !== '') {
-                    // Support both uploaded files and existing legacy portfolio images.
-                    foreach (['Assets/Images/Student/Portfolio/', 'Assets/Images/UI/portfolio/', 'Assets/Images/Student/'] as $dir) {
-                        if (is_file(__DIR__ . '/../../' . $dir . $filename)) {
-                            $image = '../../' . $dir . rawurlencode($filename);
-                            break;
-                        }
-                    }
+                    $image = '../../' . portfolioEsc($project['project_image']);
                 }
                 ?>
-
                 <article class="project-card">
                     <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project + ['source' => 'external', 'id' => $project['portfolio_project_id']]) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
-                    <div class="project-image">
-                        <?php if ($image): ?><img src="<?= portfolioEsc($image) ?>" alt="Project cover" loading="lazy"><?php else: ?><div class="portfolio-empty-image"><i class="fa-solid fa-folder-open"></i></div><?php endif; ?>
-                    </div>
-
-                    <div class="project-content">
-                        <span class="portfolio-source">Personal project</span>
-                        <h3><?= portfolioEsc($project['title']) ?></h3>
-                        <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
+                        <div class="project-image">
+                            <?php if ($image): ?>
+                                <img src="<?= portfolioEsc($image) ?>" alt="Project cover" loading="lazy">
+                            <?php else: ?>
+                                <div class="portfolio-empty-image"><i class="fa-solid fa-folder-open"></i></div>
+                            <?php endif; ?>
+                        </div>
+                        <div class="project-content">
+                            <span class="portfolio-source">Personal project</span>
+                            <h3><?= portfolioEsc($project['title']) ?></h3>
+                            <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
                             <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
-                        <div class="tags"><?php foreach ($project['technologies'] as $technology): ?><span><?= portfolioEsc($technology) ?></span><?php endforeach; ?></div>
-                        <p class="portfolio-small"><?= portfolioEsc($project['project_status']) ?></p>
-                    </div>
+                            <div class="tags">
+                                <?php foreach ($project['technologies'] as $technology): ?>
+                                    <span><?= portfolioEsc($technology) ?></span>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="portfolio-small"><?= portfolioEsc($project['project_status']) ?></p>
+                        </div>
                     </button>
 
                     <div class="project-content portfolio-card-actions">
                         <div class="project-links">
-                            <button type="button" class="edit-btn" title="Edit project" onclick='portfolioEditProject(<?= json_encode($project, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'><i class="fa-solid fa-pen"></i></button>
-                            <form method="post" onsubmit="return confirm('Delete this project?')">
+                            <button type="button" class="edit-btn" title="Edit project" onclick='portfolioEditProject(<?= json_encode($project, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <form method="post" onsubmit="return confirm('Delete this project? The associated image will also be removed.')">
                                 <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
                                 <input type="hidden" name="action" value="delete_project">
                                 <input type="hidden" name="id" value="<?= (int) $project['portfolio_project_id'] ?>">
-                                <button type="submit" class="delete-btn" title="Delete project"><i class="fa-solid fa-trash"></i></button>
+                                <button type="submit" class="delete-btn" title="Delete project">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
                             </form>
                         </div>
                     </div>
                 </article>
-
             <?php endforeach; ?>
-
         </div>
 
-        <?php if (!$projects && !$internalProjects): ?><p class="portfolio-empty">No portfolio projects yet. Add your first project.</p><?php endif; ?>
+        <?php if (!$projects && !$internalProjects): ?>
+            <p class="portfolio-empty">No portfolio projects yet. Add your first project.</p>
+        <?php endif; ?>
+
         <?php if ($pageCount > 1): ?>
             <nav class="portfolio-pagination" aria-label="Portfolio pagination">
                 <?php for ($i = 1; $i <= $pageCount; $i++): ?>
@@ -333,40 +347,21 @@ include __DIR__ . '/../../Includes/dash_header.php';
         <div class="section-title"><h2>Licenses & Certifications</h2></div>
         <div class="certificate-grid">
             <?php foreach ($certificates as $certificate): ?>
-                <?php $fileUrl = '';
-                $storedName = basename((string) ($certificate['certificate_file'] ?? ''));
-
-                if ($storedName !== '') {
-                    foreach (['Portfolio', 'Certificates', ''] as $folder) {
-                        $relative = 'Assets/Images/Student/' . ($folder !== '' ? $folder . '/' : '') . $storedName;
-
-                        if (is_file(__DIR__ . '/../../' . $relative)) {
-                            $fileUrl = '../../Assets/Images/Student/' . ($folder !== '' ? $folder . '/' : '') . rawurlencode($storedName);
-
-                            break;
-                        }
-                    }
-                } ?>
-
-                <?php $certificate['preview_url'] = $fileUrl ?: null; ?>
-
+                <?php 
+                $fileUrl = '';
+                if (!empty($certificate['certificate_file'])) {
+                    $fileUrl = '../../' . portfolioEsc($certificate['certificate_file']);
+                } 
+                $certificate['preview_url'] = $fileUrl ?: null; 
+                ?>
                 <article class="certificate-card">
-                    <button
-                        type="button"
-                        class="portfolio-card-open"
-                        onclick='portfolioViewCertificate(<?= portfolioJson($certificate) ?>)'
-                        aria-label="View <?= portfolioEsc($certificate['certificate_name']) ?> certificate"
-                    >
+                    <button type="button" class="portfolio-card-open" onclick='portfolioViewCertificate(<?= portfolioJson($certificate) ?>)' aria-label="View <?= portfolioEsc($certificate['certificate_name']) ?> certificate">
                         <div class="certificate-image">
                             <?php if ($fileUrl && str_ends_with(strtolower(parse_url($fileUrl, PHP_URL_PATH) ?? ''), '.pdf')): ?>
                                 <div class="certificate-pdf-thumb">
-                                    <iframe
-                                        src="<?= portfolioEsc($fileUrl) ?>#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH"
-                                        title="Certificate first-page PDF preview"
-                                        loading="lazy"
-                                        tabindex="-1"
-                                        aria-hidden="true"
-                                    ></iframe>
+                                    <iframe src="<?= portfolioEsc($fileUrl) ?>#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH"
+                                            title="Certificate first-page PDF preview"
+                                            loading="lazy" tabindex="-1" aria-hidden="true"></iframe>
                                     <span class="certificate-pdf-label"><i class="fa-solid fa-file-pdf"></i> PDF certificate</span>
                                 </div>
                             <?php elseif ($fileUrl): ?>
@@ -397,43 +392,44 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         </div>
                     </button>
                     <div class="certificate-actions">
-                        <button
-                            type="button"
-                            class="edit-btn"
-                            title="Edit certificate"
-                            aria-label="Edit certificate"
-                            onclick='portfolioEditCertificate(<?= portfolioJson($certificate) ?>)'
-                        ><i class="fa-solid fa-pen"></i></button>
-                        <form method="post" onsubmit="return confirm('Delete this certificate?')">
+                        <button type="button" class="edit-btn" title="Edit certificate" aria-label="Edit certificate"
+                                onclick='portfolioEditCertificate(<?= portfolioJson($certificate) ?>)'>
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <form method="post" onsubmit="return confirm('Delete this certificate? The associated file will also be removed.')">
                             <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
                             <input type="hidden" name="action" value="delete_certificate">
                             <input type="hidden" name="id" value="<?= (int) $certificate['certificate_id'] ?>">
-                            <button type="submit" class="delete-btn" title="Delete certificate" aria-label="Delete certificate"><i class="fa-solid fa-trash"></i></button>
+                            <button type="submit" class="delete-btn" title="Delete certificate" aria-label="Delete certificate">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
                         </form>
                     </div>
                 </article>
-
             <?php endforeach; ?>
-
         </div>
 
-        <?php if (!$certificates): ?><p class="portfolio-empty">No certificates uploaded yet.</p><?php endif; ?>
-
+        <?php if (!$certificates): ?>
+            <p class="portfolio-empty">No certificates uploaded yet.</p>
+        <?php endif; ?>
     </section>
-
 </main>
 
+<!-- Project Modal -->
 <div class="modal" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
     <form class="modal-box" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
         <input type="hidden" name="action" value="save_project">
         <input type="hidden" name="id" value="">
-        <div class="modal-header"><h2 id="projectModalTitle">Add Project</h2><button type="button" class="close" onclick="portfolioClose('projectModal')" aria-label="Close">×</button></div>
+        <div class="modal-header">
+            <h2 id="projectModalTitle">Add Project</h2>
+            <button type="button" class="close" onclick="portfolioClose('projectModal')" aria-label="Close">×</button>
+        </div>
         <div class="modal-content">
             <label>Project Name<input name="title" type="text" maxlength="150" required></label>
             <label>Description<textarea name="description" maxlength="10000"></textarea></label>
             <label>Skills Used (comma-separated)<input name="technologies" type="text" placeholder="PHP, React, MySQL"></label>
-            <label>Project URL<input name="repository_url" type="url" placeholder="https\://github.com/..."></label>
+            <label>Project URL<input name="repository_url" type="url" placeholder="https://github.com/..."></label>
             <label>Project Image<input name="project_image" type="file" accept="image/jpeg,image/png,image/webp"></label>
             <label>Project Status<select name="project_status"><option>Completed</option><option selected>Currently Working</option></select></label>
             <label>Start Date<input name="start_date" type="date"></label>
@@ -443,12 +439,16 @@ include __DIR__ . '/../../Includes/dash_header.php';
     </form>
 </div>
 
+<!-- Certificate Modal -->
 <div class="modal" id="certificateModal" role="dialog" aria-modal="true" aria-labelledby="certificateModalTitle">
     <form class="modal-box" method="post" enctype="multipart/form-data">
         <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
         <input type="hidden" name="action" value="save_certificate">
         <input type="hidden" name="id" value="">
-        <div class="modal-header"><h2 id="certificateModalTitle">Add Certificate</h2><button type="button" class="close" onclick="portfolioClose('certificateModal')" aria-label="Close">×</button></div>
+        <div class="modal-header">
+            <h2 id="certificateModalTitle">Add Certificate</h2>
+            <button type="button" class="close" onclick="portfolioClose('certificateModal')" aria-label="Close">×</button>
+        </div>
         <div class="modal-content">
             <label>Certificate Name<input name="certificate_name" maxlength="150" required></label>
             <label>Issuing Organization<input name="issuer" maxlength="150" required></label>
@@ -467,29 +467,38 @@ include __DIR__ . '/../../Includes/dash_header.php';
     </form>
 </div>
 
+<!-- Project View Modal -->
 <div class="modal" id="projectViewModal" role="dialog" aria-modal="true" aria-labelledby="projectViewTitle">
-
     <div class="modal-box portfolio-detail">
-
-        <div class="modal-header"><h2 id="projectViewTitle">Project Details</h2><button class="close" type="button" onclick="portfolioClose('projectViewModal')">×</button></div>
-
+        <div class="modal-header">
+            <h2 id="projectViewTitle">Project Details</h2>
+            <button class="close" type="button" onclick="portfolioClose('projectViewModal')">×</button>
+        </div>
         <div class="modal-content" id="projectViewContent"></div>
     </div>
 </div>
 
+<!-- Certificate View Modal -->
 <div class="modal" id="certificateViewModal" role="dialog" aria-modal="true" aria-labelledby="certificateViewTitle">
     <div class="modal-box portfolio-detail">
-        <div class="modal-header"><h2 id="certificateViewTitle">Certificate Details</h2><button class="close" type="button" onclick="portfolioClose('certificateViewModal')">×</button></div>
+        <div class="modal-header">
+            <h2 id="certificateViewTitle">Certificate Details</h2>
+            <button class="close" type="button" onclick="portfolioClose('certificateViewModal')">×</button>
+        </div>
         <div class="modal-content" id="certificateViewContent"></div>
     </div>
 </div>
 
+<!-- Internal Project Edit Modal -->
 <div class="modal" id="internalEditModal" role="dialog" aria-modal="true" aria-labelledby="internalEditTitle">
     <form class="modal-box" method="post">
         <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
         <input type="hidden" name="action" value="save_internal">
         <input type="hidden" name="id" value="">
-        <div class="modal-header"><h2 id="internalEditTitle">Edit Portfolio Display</h2><button class="close" type="button" onclick="portfolioClose('internalEditModal')">×</button></div>
+        <div class="modal-header">
+            <h2 id="internalEditTitle">Edit Portfolio Display</h2>
+            <button class="close" type="button" onclick="portfolioClose('internalEditModal')">×</button>
+        </div>
         <div class="modal-content">
             <p>These edits affect your portfolio only, not the organization's project.</p>
             <label>Portfolio title<input name="title" maxlength="150" required></label>
@@ -500,15 +509,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
 </div>
 
 <script>
-
 function portfolioText(value) { return document.createTextNode(String(value ?? '')); }
-function portfolioField(label, value) {
-    const p = document.createElement('p');
-    const strong = document.createElement('strong');
-    strong.textContent = label + ': ';
-    p.append(strong, portfolioText(value || 'Not specified'));
-    return p;
-}
 
 function portfolioDetailRow(label, value) {
     const row = document.createElement('div');
@@ -590,17 +591,13 @@ function portfolioViewProject(project) {
     modal.style.display = 'flex';
     area.scrollTop = 0;
 }
+
 function portfolioEditInternal(project) {
     const modal = document.getElementById('internalEditModal');
-
     const form = modal.querySelector('form');
-
     form.elements.id.value = project.id;
-
     form.elements.title.value = project.title || '';
-
     form.elements.description.value = project.description || '';
-
     modal.style.display = 'flex';
 }
 
@@ -742,6 +739,5 @@ for (const modal of document.querySelectorAll('.modal')) {
 document.addEventListener('keydown', event => {
     if (event.key === 'Escape') document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
 });
-
 </script>
 <?php include __DIR__ . '/../../Includes/dash_footer.php'; ?>

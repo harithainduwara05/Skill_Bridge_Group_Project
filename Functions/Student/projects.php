@@ -75,7 +75,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             ?>
             <article class="project-card" data-category="<?= projectEsc($project['category_name']) ?>" data-difficulty="<?= projectEsc($project['difficulty']) ?>">
                 <div class="project-image">
-                    <img src="../../Assets/Images/UI/projects/<?= projectEsc($projectImage) ?>" alt="" loading="lazy">
+                    <img src="../../Assets/Images/Student/Projects/<?= projectEsc($projectImage) ?>" alt="" loading="lazy">
                     <span class="difficulty"><?= projectEsc($project['difficulty']) ?></span>
                 </div>
                 <div class="project-content">

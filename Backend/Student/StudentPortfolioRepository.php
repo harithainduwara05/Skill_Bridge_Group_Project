@@ -119,12 +119,11 @@ final class StudentPortfolioRepository
         $end = trim((string) ($data['end_date'] ?? '')) ?: null;
         $image = trim((string) ($data['project_image'] ?? '')) ?: null;
         $technologyNames = $data['technologies'] ?? [];
+        
         if (!is_array($technologyNames) || count($technologyNames) > 40) {
             throw new InvalidArgumentException('Invalid technology list.');
         }
-        if ($image !== null && ($image !== basename($image) || strlen($image) > 255)) {
-            throw new InvalidArgumentException('Invalid project image filename.');
-        }
+        
         if (strlen($title) < 2 || strlen($title) > 150 || strlen($description) > 10000) {
             throw new InvalidArgumentException('Enter a valid project title (2–150 characters) and description.');
         }
@@ -142,7 +141,7 @@ final class StudentPortfolioRepository
         if ($start !== null && $end !== null && $end < $start) {
             throw new InvalidArgumentException('Project end date must be after the start date.');
         }
-        // Reject ownership violations before updating any technology links.
+        
         if ($id !== null && !$this->ownsProject($email, $id)) {
             throw new RuntimeException('Project not found or access denied.');
         }
@@ -157,6 +156,21 @@ final class StudentPortfolioRepository
                 $stmt->execute();
                 $id = (int) $this->db->insert_id;
             } else {
+                if (!empty($image)) {
+                    $stmtOld = $this->db->prepare('SELECT project_image FROM student_portfolio_projects WHERE portfolio_project_id = ?');
+                    $stmtOld->bind_param('i', $id);
+                    $stmtOld->execute();
+                    $oldImage = $stmtOld->get_result()->fetch_column();
+                    $stmtOld->close();
+                    
+                    if (!empty($oldImage) && $oldImage !== $image) {
+                        $oldPath = __DIR__ . '/../../' . $oldImage;
+                        if (is_file($oldPath)) {
+                            @unlink($oldPath);
+                        }
+                    }
+                }
+
                 $stmt = $this->db->prepare('UPDATE student_portfolio_projects SET title = ?, description = ?,
                     repository_url = ?, project_image = COALESCE(?, project_image), project_status = ?, start_date = ?, end_date = ?
                     WHERE portfolio_project_id = ? AND student_email = ?');
@@ -188,15 +202,32 @@ final class StudentPortfolioRepository
 
     public function deleteProject(string $email, int $id): bool
     {
+        $stmt = $this->db->prepare('SELECT project_image FROM student_portfolio_projects WHERE portfolio_project_id = ? AND student_email = ?');
+        $stmt->bind_param('is', $id, $email);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) {
+            return false;
+        }
+
         $stmt = $this->db->prepare('DELETE FROM student_portfolio_projects WHERE portfolio_project_id = ? AND student_email = ?');
         $stmt->bind_param('is', $id, $email);
         $stmt->execute();
         $deleted = $stmt->affected_rows > 0;
         $stmt->close();
+
+        if ($deleted && !empty($row['project_image'])) {
+            $filePath = __DIR__ . '/../../' . $row['project_image'];
+            if (is_file($filePath)) {
+                @unlink($filePath);
+            }
+        }
+
         return $deleted;
     }
 
-    /** Student-owned organization project records, with optional portfolio-only overrides. */
     public function internalProjects(string $email): array
     {
         $sql = "SELECT sp.student_project_id, p.id AS organization_project_id,
@@ -211,7 +242,9 @@ final class StudentPortfolioRepository
                 LEFT JOIN organization org ON org.Email = p.organization_email
                 LEFT JOIN student_internal_portfolio_overrides ov
                     ON ov.student_project_id = sp.student_project_id AND ov.student_email = sp.Email
-                WHERE sp.Email = ? AND (ov.hidden IS NULL OR ov.hidden = 0)
+                WHERE sp.Email = ? 
+                  AND (ov.hidden IS NULL OR ov.hidden = 0)
+                  AND (LOWER(sp.status) = 'completed' OR LOWER(p.status) = 'completed')
                 ORDER BY sp.student_project_id DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param('s', $email);
@@ -232,7 +265,6 @@ final class StudentPortfolioRepository
         return $rows;
     }
 
-    /** Only changes this student's portfolio presentation, never the shared project. */
     public function editInternalPresentation(string $email, int $id, string $title, string $description): void
     {
         $title = trim($title);
@@ -279,22 +311,34 @@ final class StudentPortfolioRepository
     public function certificates(string $email): array
     {
         $stmt = $this->db->prepare('SELECT certificate_id, certificate_name, issuer, certificate_file,
-            status, issue_date, expiration_date, credential_id, credential_url
+            issue_date, expiration_date, credential_id, credential_url
             FROM certificates WHERE Email = ? ORDER BY certificate_id DESC');
         $stmt->bind_param('s', $email);
         $stmt->execute();
         $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
         $stmt->close();
-        $skillsStmt = $this->db->prepare('SELECT skill_name FROM student_certificate_skills
-            WHERE certificate_id = ? ORDER BY skill_name');
-        foreach ($rows as &$row) {
-            $id = (int) $row['certificate_id'];
-            $skillsStmt->bind_param('i', $id);
-            $skillsStmt->execute();
-            $row['skills'] = array_column($skillsStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'skill_name');
+
+        $skillsTableCheck = $this->db->query("SHOW TABLES LIKE 'student_certificate_skills'");
+        $hasSkillsTable = $skillsTableCheck && $skillsTableCheck->num_rows > 0;
+
+        if ($hasSkillsTable) {
+            $skillsStmt = $this->db->prepare('SELECT skill_name FROM student_certificate_skills
+                WHERE certificate_id = ? ORDER BY skill_name');
+            foreach ($rows as &$row) {
+                $id = (int) $row['certificate_id'];
+                $skillsStmt->bind_param('i', $id);
+                $skillsStmt->execute();
+                $row['skills'] = array_column($skillsStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'skill_name');
+            }
+            unset($row);
+            $skillsStmt->close();
+        } else {
+            foreach ($rows as &$row) {
+                $row['skills'] = [];
+            }
+            unset($row);
         }
-        unset($row);
-        $skillsStmt->close();
+
         return $rows;
     }
 
@@ -308,11 +352,9 @@ final class StudentPortfolioRepository
         $url = trim((string) ($data['credential_url'] ?? ''));
         $file = trim((string) ($data['certificate_file'] ?? '')) ?: null;
         $skillsText = trim((string) ($data['skills'] ?? ''));
-        if ($file !== null && ($file !== basename($file) || strlen($file) > 255)) {
-            throw new InvalidArgumentException('Invalid certificate filename.');
-        }
+        
         if (strlen($name) < 2 || strlen($name) > 150 || strlen($issuer) < 2 || strlen($issuer) > 150 || strlen($credentialId) > 150) {
-            throw new InvalidArgumentException('Certificate name and issuer must be 2–150 characters.');
+            throw new InvalidArgumentException('Certificate name, issuer, and credential ID must be valid lengths.');
         }
         foreach ([$issue, $expiration] as $date) {
             if ($date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || DateTimeImmutable::createFromFormat('!Y-m-d', $date)?->format('Y-m-d') !== $date)) {
@@ -346,13 +388,27 @@ final class StudentPortfolioRepository
         try {
             if ($id === null) {
                 $stmt = $this->db->prepare('INSERT INTO certificates
-                    (Email, certificate_name, issuer, certificate_file, status, issue_date, expiration_date, credential_id, credential_url)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-                $status = 'Pending';
-                $stmt->bind_param('sssssssss', $email, $name, $issuer, $file, $status, $issue, $expiration, $credentialId, $url);
+                    (Email, certificate_name, issuer, certificate_file, issue_date, expiration_date, credential_id, credential_url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('ssssssss', $email, $name, $issuer, $file, $issue, $expiration, $credentialId, $url);
                 $stmt->execute();
                 $id = (int) $this->db->insert_id;
             } else {
+                if (!empty($file)) {
+                    $stmtOld = $this->db->prepare('SELECT certificate_file FROM certificates WHERE certificate_id = ?');
+                    $stmtOld->bind_param('i', $id);
+                    $stmtOld->execute();
+                    $oldFile = $stmtOld->get_result()->fetch_column();
+                    $stmtOld->close();
+                    
+                    if (!empty($oldFile) && $oldFile !== $file) {
+                        $oldPath = __DIR__ . '/../../' . $oldFile;
+                        if (is_file($oldPath)) {
+                            @unlink($oldPath);
+                        }
+                    }
+                }
+
                 $stmt = $this->db->prepare('UPDATE certificates SET certificate_name = ?, issuer = ?,
                     certificate_file = COALESCE(?, certificate_file), issue_date = ?, expiration_date = ?,
                     credential_id = ?, credential_url = ? WHERE certificate_id = ? AND Email = ?');
@@ -360,17 +416,21 @@ final class StudentPortfolioRepository
                 $stmt->execute();
             }
             $stmt->close();
-            $clear = $this->db->prepare('DELETE FROM student_certificate_skills WHERE certificate_id = ?');
-            $clear->bind_param('i', $id);
-            $clear->execute();
-            $clear->close();
-            if ($skills) {
-                $insert = $this->db->prepare('INSERT INTO student_certificate_skills (certificate_id, skill_name) VALUES (?, ?)');
-                foreach ($skills as $skill) {
-                    $insert->bind_param('is', $id, $skill);
-                    $insert->execute();
+
+            $skillsTableCheck = $this->db->query("SHOW TABLES LIKE 'student_certificate_skills'");
+            if ($skillsTableCheck && $skillsTableCheck->num_rows > 0) {
+                $clear = $this->db->prepare('DELETE FROM student_certificate_skills WHERE certificate_id = ?');
+                $clear->bind_param('i', $id);
+                $clear->execute();
+                $clear->close();
+                if ($skills) {
+                    $insert = $this->db->prepare('INSERT INTO student_certificate_skills (certificate_id, skill_name) VALUES (?, ?)');
+                    foreach ($skills as $skill) {
+                        $insert->bind_param('is', $id, $skill);
+                        $insert->execute();
+                    }
+                    $insert->close();
                 }
-                $insert->close();
             }
             $this->db->commit();
             return $id;
@@ -392,11 +452,29 @@ final class StudentPortfolioRepository
 
     public function deleteCertificate(string $email, int $id): bool
     {
+        $stmt = $this->db->prepare('SELECT certificate_file FROM certificates WHERE certificate_id = ? AND Email = ?');
+        $stmt->bind_param('is', $id, $email);
+        $stmt->execute();
+        $row = $stmt->get_result()->fetch_assoc();
+        $stmt->close();
+
+        if (!$row) {
+            return false;
+        }
+
         $stmt = $this->db->prepare('DELETE FROM certificates WHERE certificate_id = ? AND Email = ?');
         $stmt->bind_param('is', $id, $email);
         $stmt->execute();
         $deleted = $stmt->affected_rows > 0;
         $stmt->close();
+
+        if ($deleted && !empty($row['certificate_file'])) {
+            $filePath = __DIR__ . '/../../' . $row['certificate_file'];
+            if (is_file($filePath)) {
+                @unlink($filePath);
+            }
+        }
+
         return $deleted;
     }
 }
