@@ -36,7 +36,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
 
     if (isset($success)) {
         if ($isAjax) {
-            header('Content-Type: application/json');
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            header('Content-Type: application/json; charset=utf-8');
             echo json_encode(['success' => $success, 'message' => $msg]);
             exit();
         }

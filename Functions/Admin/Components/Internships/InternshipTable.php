@@ -1,7 +1,7 @@
 <div class="im-table-responsive">
     <table class="data-table im-table">
-                    <?php 
-                        $TableColumns = ["ID", "POSITION", "COMPANY", "INDUSTRY", "REQUIRED SKILLS", "APPLICATIONS", "DEADLINE", "STATUS", "ACTIONS"];
+                    <?php
+                        $TableColumns = ["ID", "COMPANY","POSITION" ,  "APPLICATIONS", "DEADLINE","STATUS", "ACTIONS"];
                         include dirname(__DIR__) . "/Common/TableHeder.php";
                     ?>
                     <tbody id="imTableBody">
@@ -92,24 +92,13 @@
                             data-duration="<?= $modeDisplay ?>"
                             data-reason="<?= $adminReason ?>"
                             data-company-action="<?= $companyAction ?>"
-                            data-terminate-reason="<?= $terminateReason ?>">
+                            data-terminate-reason="<?= $terminateReason ?>"
+                            data-deadline="<?= $deadlineFormatted ?>"
+                            data-apps="<?= $appsCount ?>">
                             <td class="im-internship-id"><?= $formattedId ?></td>
-                            <td>
-                                <div class="im-position-meta">
-                                    <span class="im-position-title"><?= $title ?></span>
-                                    <span class="im-position-type"><?= $modeDisplay ?></span>
-                                </div>
-                            </td>
                             <td class="im-company-name"><?= $company ?></td>
                             <td>
                                 <span class="im-industry-badge <?= $indClass ?>"><?= $industry ?></span>
-                            </td>
-                            <td>
-                                <div class="im-skills-stack">
-                                    <?php foreach (array_slice($skillsArr, 0, 3) as $sk): ?>
-                                        <span class="im-skill-tag"><?= htmlspecialchars($sk) ?></span>
-                                    <?php endforeach; ?>
-                                </div>
                             </td>
                             <td class="im-applications-count"><?= $appsCount ?></td>
                             <td class="im-deadline-date"><?= $deadlineFormatted ?></td>

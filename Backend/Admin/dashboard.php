@@ -11,8 +11,9 @@ $uniDB       = new UniversityManagement($conn);
 // Handle Dismiss Complaint Action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'dismiss') {
     $complaintId = intval($_POST['complaint_id'] ?? 0);
-    if ($complaintId > 0) {
-        $complaintDB->dismissComplaint($complaintId);
+    $reason = trim($_POST['dismiss_reason'] ?? $_POST['reason'] ?? 'Resolved by Administrator via Quick Action.');
+    if ($complaintId > 0 && !empty($reason)) {
+        $complaintDB->updateComplaintStatus($complaintId, 'DISMISSED', $reason);
     }
     echo "<script>window.location.href = 'dashboard.php';</script>";
     exit();

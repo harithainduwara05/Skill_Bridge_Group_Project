@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>SkillBridge - Automated Test Execution Evidence Report</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg); color: var(--text-dark); padding: 30px 20px; line-height: 1.5; }
+        .container { max-width: 1100px; margin: 0 auto; }
+        .header { background: var(--card-bg); padding: 28px; border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); margin-bottom: 24px; }
+        .header h1 { font-size: 24px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+        .header p { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+        .meta-strip { display: flex; flex-wrap: wrap; gap: 20px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); }
+        .meta-strip span strong { color: var(--text-dark); }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .kpi-card { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); text-align: center; }
+        .kpi-val { font-size: 28px; font-weight: 800; margin-top: 4px; }
+        .kpi-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); }
+        .text-blue { color: var(--primary); }
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+
+        .progress-bar-wrap { background: #e2e8f0; border-radius: 999px; height: 10px; width: 100%; margin-bottom: 24px; overflow: hidden; }
+        .progress-bar-fill { background: var(--success); height: 100%; width: 100%; transition: width 0.3s; }
+
+        .card { background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border); box-shadow: 0 2px 4px rgba(0,0,0,0.03); overflow: hidden; }
+        .card-header { padding: 18px 24px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px; }
+        th { background: #f1f5f9; padding: 12px 18px; font-weight: 700; color: #475569; border-bottom: 1px solid var(--border); }
+        td { padding: 14px 18px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        tr:hover td { background: #f8fafc; }
+        
+        .badge { padding: 4px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; }
+        .badge-pass { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .badge-fail { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+        .suite-pill { background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 6px; font-size: 11.5px; font-weight: 600; }
+        .error-box { background: #fff1f2; border: 1px solid #fecdd3; border-radius: 6px; padding: 8px; margin-top: 6px; font-size: 12px; color: #9f1239; font-family: monospace; }
+        .footer { text-align: center; margin-top: 30px; font-size: 13px; color: var(--text-muted); }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h1>🎓 SkillBridge - Automated Testing Evidence Report</h1>
+            <p>Official automated test execution results log for academic verification and viva assessment.</p>
+            <div class='meta-strip'>
+                <span><strong>Execution Date:</strong> 2026-11-02 23:01:55</span>
+                <span><strong>Target Environment:</strong> TiDB Cloud AWS MySQL 8.0 & PHP 8.2.12</span>
+                <span><strong>Platform:</strong> WINNT (XAMPP Server)</span>
+                <span><strong>Status:</strong> <strong style='color:var(--success);'>READY FOR SUBMISSION</strong></span>
+            </div>
+        </div>
+
+        <div class='kpi-grid'>
+            <div class='kpi-card'>
+                <div class='kpi-lbl'>Total Tests</div>
+                <div class='kpi-val text-blue'>24</div>
+            </div>
+            <div class='kpi-card'>
+                <div class='kpi-lbl'>Passed Tests</div>
+                <div class='kpi-val text-green'>24</div>
+            </div>
+            <div class='kpi-card'>
+                <div class='kpi-lbl'>Failed Tests</div>
+                <div class='kpi-val text-red'>0</div>
+            </div>
+            <div class='kpi-card'>
+                <div class='kpi-lbl'>Success Rate</div>
+                <div class='kpi-val text-green'>100%</div>
+            </div>
+            <div class='kpi-card'>
+                <div class='kpi-lbl'>Execution Time</div>
+                <div class='kpi-val'>3102.56 ms</div>
+            </div>
+        </div>
+
+        <div class='progress-bar-wrap'>
+            <div class='progress-bar-fill'></div>
+        </div>
+
+        <div class='card'>
+            <div class='card-header'>
+                <span>Detailed Test Case Executions</span>
+                <span style='font-size:12px; color:var(--text-muted); font-weight:normal;'>100% Automated Coverage</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th style='width:120px;'>Test ID</th>
+                        <th style='width:150px;'>Suite</th>
+                        <th>Test Scenario / Assertion</th>
+                        <th style='width:110px;'>Duration</th>
+                        <th style='width:100px;'>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    
+                <tr>
+                    <td><strong>TC_AUTH_01</strong></td>
+                    <td><span class='suite-pill'>Authentication</span></td>
+                    <td>Verify Admin credentials exist in admin table</td>
+                    <td>0.4 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_AUTH_02</strong></td>
+                    <td><span class='suite-pill'>Security Guard</span></td>
+                    <td>Unauthorized session guard prevents access</td>
+                    <td>0 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_AUTH_03</strong></td>
+                    <td><span class='suite-pill'>Authentication</span></td>
+                    <td>Verify Organization credentials exist in DB</td>
+                    <td>0.2 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_AUTH_04</strong></td>
+                    <td><span class='suite-pill'>Authentication</span></td>
+                    <td>Verify Student account exists in student table</td>
+                    <td>0.22 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_AUTH_05</strong></td>
+                    <td><span class='suite-pill'>Authentication</span></td>
+                    <td>Verify Company account exists in company table</td>
+                    <td>0.25 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_PROJ_01</strong></td>
+                    <td><span class='suite-pill'>Project Moderation</span></td>
+                    <td>Place project on Hold and assert log insertion</td>
+                    <td>14.56 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_PROJ_02</strong></td>
+                    <td><span class='suite-pill'>Project Moderation</span></td>
+                    <td>Verify hold response retrieval in project dataset</td>
+                    <td>12.79 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_PROJ_03</strong></td>
+                    <td><span class='suite-pill'>Validation Guard</span></td>
+                    <td>Empty reason validation handles gracefully</td>
+                    <td>0 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_USER_01</strong></td>
+                    <td><span class='suite-pill'>User Management</span></td>
+                    <td>Verify university faculties domains exist for student FK</td>
+                    <td>0.35 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_USER_02</strong></td>
+                    <td><span class='suite-pill'>Database Integrity</span></td>
+                    <td>Foreign key constraint definition verified on student.domain</td>
+                    <td>2.03 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_USER_03</strong></td>
+                    <td><span class='suite-pill'>User Management</span></td>
+                    <td>Preloaded users dataset contains all required search attributes</td>
+                    <td>0.84 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_REP_01</strong></td>
+                    <td><span class='suite-pill'>Analytics</span></td>
+                    <td>Hiring velocity query executes without ONLY_FULL_GROUP_BY error</td>
+                    <td>0.63 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_REP_02</strong></td>
+                    <td><span class='suite-pill'>Dashboard KPI</span></td>
+                    <td>Verify Admin dashboard KPI metrics match database counts</td>
+                    <td>3.91 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_ORG_01</strong></td>
+                    <td><span class='suite-pill'>Organization</span></td>
+                    <td>Verify Organization dashboard KPI stat cards counts</td>
+                    <td>0.98 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_ORG_02</strong></td>
+                    <td><span class='suite-pill'>Organization</span></td>
+                    <td>Verify zero-teams state is handled cleanly in query</td>
+                    <td>0.45 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_ORG_03</strong></td>
+                    <td><span class='suite-pill'>Organization</span></td>
+                    <td>Status badge mapping normalizes project status values</td>
+                    <td>0 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_STUD_01</strong></td>
+                    <td><span class='suite-pill'>Student Actor</span></td>
+                    <td>Retrieve student profile details and university enrollment</td>
+                    <td>0.49 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_STUD_02</strong></td>
+                    <td><span class='suite-pill'>Student Actor</span></td>
+                    <td>Verify student project browsing excludes Hold/Rejected projects</td>
+                    <td>36.15 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_STUD_03</strong></td>
+                    <td><span class='suite-pill'>Student Actor</span></td>
+                    <td>Verify student internship applications query execution</td>
+                    <td>1.39 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_STUD_04</strong></td>
+                    <td><span class='suite-pill'>Student Actor</span></td>
+                    <td>Verify duplicate proposal application check guard</td>
+                    <td>1.69 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_COMP_01</strong></td>
+                    <td><span class='suite-pill'>Company Actor</span></td>
+                    <td>Retrieve verified company profile and details</td>
+                    <td>0.41 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_COMP_02</strong></td>
+                    <td><span class='suite-pill'>Company Actor</span></td>
+                    <td>Verify Company details integrity in database</td>
+                    <td>0.36 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_COMP_03</strong></td>
+                    <td><span class='suite-pill'>Company Actor</span></td>
+                    <td>Verify retrieval of company internship listings</td>
+                    <td>0.42 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                <tr>
+                    <td><strong>TC_COMP_04</strong></td>
+                    <td><span class='suite-pill'>Company Actor</span></td>
+                    <td>Verify retrieval of applicant submissions for company</td>
+                    <td>0.51 ms</td>
+                    <td><span class='badge badge-pass'>PASS</span></td>
+                </tr>
+            
+                </tbody>
+            </table>
+        </div>
+
+        <div class='footer'>
+            Generated automatically by <strong>SkillBridge Automated Test Runner</strong> &bull; Department of Information Systems
+        </div>
+    </div>
+</body>
+</html>

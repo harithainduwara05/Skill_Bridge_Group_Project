@@ -266,7 +266,7 @@ CREATE TABLE `internship_applications` (
   `selection_rationale` text DEFAULT NULL,
   `resume_file` varchar(255) DEFAULT NULL,
   `status` varchar(50) DEFAULT 'Pending',
-  `applied_date` date DEFAULT curdate()
+  `applied_date` date DEFAULT (curdate())
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

@@ -81,10 +81,12 @@ class AdminDB
 
     public function addNotification($email, $title, $message, $type = 'complaint')
     {
+        $maxRes = $this->runQuery("SELECT COALESCE(MAX(notification_id), 0) + 1 AS next_nid FROM notifications");
+        $nextNid = ($maxRes && $r = $maxRes->fetch_assoc()) ? (int)$r['next_nid'] : 1;
         return $this->runAction(
-            "INSERT INTO notifications (Email, title, message, type, status, created_at) VALUES (?, ?, ?, ?, 'Unread', CURRENT_TIMESTAMP)",
-            "ssss",
-            $email, $title, $message, $type
+            "INSERT INTO notifications (notification_id, Email, title, message, type, status, created_at) VALUES (?, ?, ?, ?, ?, 'Unread', CURRENT_TIMESTAMP)",
+            "issss",
+            $nextNid, $email, $title, $message, $type
         );
     }
 }

@@ -116,13 +116,16 @@ class ProjectManagement extends AdminDB
             $adminEmail = 'skillbridge62@gmail.com';
         }
 
+        $maxLogRes = $this->runQuery("SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM project_moderation_logs");
+        $nextLogId = ($maxLogRes && $maxRow = $maxLogRes->fetch_assoc()) ? (int)$maxRow['next_id'] : 1;
+
         if (strcasecmp($statusClean, 'Hold') === 0) {
             $ok = $this->runAction("UPDATE projects SET status = 'hold' WHERE id = ?", "i", $cleanId);
             if ($ok) {
                 $this->runAction(
-                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, 'Open')",
-                    "isss",
-                    $cleanId, $adminEmail, 'Hold', $holdReason
+                    "INSERT INTO project_moderation_logs (id, project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, ?, 'Open')",
+                    "iisss",
+                    $nextLogId, $cleanId, $adminEmail, 'Hold', $holdReason
                 );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {
@@ -161,9 +164,9 @@ class ProjectManagement extends AdminDB
             $ok = $this->runAction("UPDATE projects SET status = ? WHERE id = ?", "si", strtolower($statusClean), $cleanId);
             if ($ok && strcasecmp($statusClean, 'Rejected') === 0) {
                 $this->runAction(
-                    "INSERT INTO project_moderation_logs (project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, 'Open')",
-                    "isss",
-                    $cleanId, $adminEmail, 'Rejected', $holdReason
+                    "INSERT INTO project_moderation_logs (id, project_id, admin_email, action_type, reason, status) VALUES (?, ?, ?, ?, ?, 'Open')",
+                    "iisss",
+                    $nextLogId, $cleanId, $adminEmail, 'Rejected', $holdReason
                 );
                 $proj = $this->getProjectById($cleanId);
                 if (!empty($proj['organization_email'])) {

@@ -1,0 +1,54 @@
+name: SkillBridge CI - Automated Testing Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  run-automated-tests:
+    name: Execute 4-Actor Automated Test Suite
+    runs-on: ubuntu-latest
+
+    # Native MySQL 8.0 Container directly inside GitHub Actions
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+          MYSQL_DATABASE: skillbridge_db
+        ports:
+          - 3306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=5
+
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up PHP 8.2 with MySQLi
+      - name: Setup PHP Environment
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mysqli, pdo_mysql, mbstring, json, openssl
+          coverage: none
+
+      # Step 3: Import exact skillbridge_db .sql dump into native MySQL container
+      - name: Import Database SQL Dump
+        run: |
+          mysql -h 127.0.0.1 -u root -P 3306 skillbridge_db < "skillbridge_db .sql"
+
+      # Step 4: Run Pure PHP Automated Test Suite (All 4 Actors)
+      - name: Run Automated Tests
+        run: php tests/run_tests.php
+
+      # Step 5: Archive and Upload HTML Evidence Report as Artifact
+      - name: Upload Test Evidence Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SkillBridge-Test-Evidence-Report
+          path: tests/reports/test_report.html
+          retention-days: 14

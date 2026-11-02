@@ -343,8 +343,8 @@ function initInternshipManagement() {
         const status   = (row.getAttribute('data-status') || 'Active').toLowerCase();
         const duration = row.getAttribute('data-duration') || 'Full-time';
         const reason   = row.getAttribute('data-reason') || '';
-        const deadline = row.cells[6] ? row.cells[6].textContent.trim() : 'N/A';
-        const apps     = row.cells[5] ? row.cells[5].textContent.trim() : '0';
+        const deadline = row.getAttribute('data-deadline') || row.querySelector('.im-deadline-date')?.textContent.trim() || (row.cells[4] ? row.cells[4].textContent.trim() : 'N/A');
+        const apps     = row.getAttribute('data-apps') || row.querySelector('.im-applications-count')?.textContent.trim() || (row.cells[3] ? row.cells[3].textContent.trim() : '0');
 
         document.getElementById('imDetailId').textContent       = internshipId;
         document.getElementById('imDetailTitle').textContent    = position;

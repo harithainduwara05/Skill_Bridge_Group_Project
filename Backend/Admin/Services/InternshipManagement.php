@@ -83,10 +83,16 @@ class InternshipManagement extends AdminDB
         $item = $this->getInternshipById($cleanId);
         $compEmail = $item['company_email'] ?? '';
 
+        // Ensure admin email exists to satisfy FK constraint fk_iml_admin
+        $chkAdmin = $this->runQuery("SELECT Email FROM admin WHERE LOWER(Email) = LOWER(?) LIMIT 1", "s", $adminEmail);
+        if (!$chkAdmin || $chkAdmin->num_rows === 0) {
+            $adminEmail = 'skillbridge62@gmail.com';
+        }
+
         if (strcasecmp($statusClean, 'Suspended') === 0) {
             $ok = $this->runAction(
                 "INSERT INTO internship_moderation_logs (internship_id, admin_email, admin_reason, status) VALUES (?, ?, ?, 'Suspended')",
-                "isss",
+                "iss",
                 $cleanId, $adminEmail, $reason ?? 'Suspended by Administrator'
             );
             if ($ok && !empty($compEmail)) {
@@ -106,7 +112,7 @@ class InternshipManagement extends AdminDB
         } else {
             $ok = $this->runAction(
                 "INSERT INTO internship_moderation_logs (internship_id, admin_email, admin_reason, status) VALUES (?, ?, ?, ?)",
-                "isss",
+                "iss",
                 $cleanId, $adminEmail, $reason ?? 'Status updated by Administrator', $statusClean
             );
             if ($ok && !empty($compEmail) && strcasecmp($statusClean, 'Terminated') === 0) {

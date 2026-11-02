@@ -14,7 +14,15 @@
                 $hasComplaints = true;
                 $priorityClass = strtolower($complains[$i]['priority']);
                 ?>
-                <div class="complaint-item">
+                <div class="complaint-item"
+                    data-id="<?php echo $complains[$i]['id']; ?>"
+                    data-title="<?php echo htmlspecialchars($complains[$i]['title'] ?? '', ENT_QUOTES); ?>"
+                    data-desc="<?php echo htmlspecialchars($complains[$i]['discription'] ?? '', ENT_QUOTES); ?>"
+                    data-priority="<?php echo htmlspecialchars($complains[$i]['priority'] ?? 'HIGH', ENT_QUOTES); ?>"
+                    data-status="<?php echo htmlspecialchars($complains[$i]['status'] ?? 'PENDING', ENT_QUOTES); ?>"
+                    data-email="<?php echo htmlspecialchars($complains[$i]['email'] ?? 'Not specified', ENT_QUOTES); ?>"
+                    data-category="<?php echo htmlspecialchars($complains[$i]['category'] ?? 'Technical', ENT_QUOTES); ?>"
+                    data-date="<?php echo !empty($complains[$i]['create_at']) ? date('M d, Y h:i A', strtotime($complains[$i]['create_at'])) : 'Recent'; ?>">
                     <div class="complaint-meta">
                         <span class="complaint-id">#<?php echo $complains[$i]['id']; ?></span>
                         <span
@@ -27,12 +35,8 @@
                         <?php echo htmlspecialchars($complains[$i]['discription']); ?>
                     </div>
                     <div class="complaint-actions">
-                        <button class="btn-sm primary" type="button">Review</button>
-                        <form method="POST" style="display:inline-block;">
-                            <input type="hidden" name="action" value="dismiss">
-                            <input type="hidden" name="complaint_id" value="<?php echo $complains[$i]['id']; ?>">
-                            <button type="submit" class="btn-sm secondary">Dismiss</button>
-                        </form>
+                        <button class="btn-sm primary" type="button" onclick="openUrgentComplaintReview(this)">Review</button>
+                        <button type="button" class="btn-sm secondary" onclick="openUrgentComplaintDismiss(<?php echo $complains[$i]['id']; ?>, '<?php echo htmlspecialchars($complains[$i]['title'] ?? '', ENT_QUOTES); ?>')">Dismiss</button>
                     </div>
                 </div>
                 <?php
@@ -55,3 +59,6 @@
     <a href="complain.php" class="see-all-link">See all
         (<?php echo $complaintDB->getUndismissedComplaintCount(); ?>) complaints</a>
 </div>
+
+<?php require_once __DIR__ . '/DComplaintReviewModal.php'; ?>
+<?php require_once __DIR__ . '/DComplaintDismissModal.php'; ?>

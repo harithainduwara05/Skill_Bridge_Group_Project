@@ -1,6 +1,5 @@
-<!--Initialize Admin Environment: Auth Guard, 
-Backend Controller & Sidebar-->
 <?php
+ob_start();
 $backendPage = "Internship_Management.php";
 require_once __DIR__ . "/Components/Common/AdminInit.php";
 ?>
