@@ -53,32 +53,25 @@ INSERT INTO `admin` (`Name`, `Email`, `profile_image`, `contactNumber`) VALUES
 
 DROP TABLE IF EXISTS `certificates`;
 CREATE TABLE `certificates` (
-  `certificate_id` int(11) NOT NULL,
-  `Email` varchar(100) NOT NULL,
-  `certificate_name` varchar(150) DEFAULT NULL,
-  `issuer` varchar(150) DEFAULT NULL,
-  `certificate_file` varchar(255) DEFAULT NULL,
-  `issue_date` date DEFAULT NULL,
-  `status` varchar(20) DEFAULT 'Pending',
-  `verified_by` varchar(100) DEFAULT NULL,
-  `verified_at` datetime DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+  `certificate_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `Email` VARCHAR(100) NOT NULL,
+  `certificate_name` VARCHAR(150) DEFAULT NULL,
+  `issuer` VARCHAR(150) DEFAULT NULL,
+  `certificate_file` VARCHAR(255) DEFAULT NULL,
+  `issue_date` DATE DEFAULT NULL,
+  `expiration_date` DATE DEFAULT NULL,
+  `credential_id` VARCHAR(150) DEFAULT NULL,
+  `credential_url` VARCHAR(500) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `certificates`
 --
 
-INSERT INTO `certificates` (`certificate_id`, `Email`, `certificate_name`, `issuer`, `certificate_file`, `issue_date`, `status`, `verified_by`, `verified_at`, `created_at`) VALUES
-(1, '2024is058@stu.ucsc.cmb.ac.lk', 'AWS Certified Cloud Practitioner', 'Amazon Web Services', 'cert_aws_haritha.pdf', '2026-04-10', 'Approved', 'skillbridge62@gmail.com', '2026-08-20 10:00:00', '2026-08-20 09:30:00'),
-(2, '2024is058@stu.ucsc.cmb.ac.lk', 'Meta Front-End Developer Professional Certificate', 'Coursera - Meta', 'cert_meta_frontend.pdf', '2026-06-15', 'Approved', 'skillbridge62@gmail.com', '2026-08-20 10:15:00', '2026-08-20 09:30:00'),
-(3, '2024is001@stu.ucsc.cmb.ac.lk', 'Deep Learning Specialization', 'DeepLearning.AI', 'cert_deeplearning.pdf', '2026-05-18', 'Approved', 'skillbridge62@gmail.com', '2026-08-21 11:00:00', '2026-08-21 09:00:00'),
-(4, '2024is015@stu.ucsc.cmb.ac.lk', 'Google UX Design Professional Certificate', 'Coursera - Google', 'cert_google_ux.pdf', '2026-05-20', 'Approved', 'skillbridge62@gmail.com', '2026-08-21 11:30:00', '2026-08-21 09:30:00'),
-(5, '2024is032@stu.ucsc.cmb.ac.lk', 'CompTIA Security+ Certification', 'CompTIA', 'cert_security_plus.pdf', '2026-07-01', 'Pending', NULL, NULL, '2026-08-22 08:00:00'),
-(6, '2024is044@stu.ucsc.cmb.ac.lk', 'Docker Certified Associate', 'Docker Inc.', 'cert_docker.pdf', '2026-06-25', 'Approved', 'skillbridge62@gmail.com', '2026-08-22 14:00:00', '2026-08-22 10:00:00'),
-(7, '2024is091@stu.ucsc.cmb.ac.lk', 'Associate Android Developer', 'Google', 'cert_android_sachini.pdf', '2026-07-10', 'Approved', 'skillbridge62@gmail.com', '2026-08-23 09:00:00', '2026-08-23 08:30:00'),
-(8, '2024is091@stu.ucsc.cmb.ac.lk', 'Flutter & Dart - The Complete Guide', 'Udemy', 'cert_flutter_sachini.pdf', '2026-07-28', 'Approved', 'skillbridge62@gmail.com', '2026-08-23 09:15:00', '2026-08-23 08:30:00');
-
+INSERT INTO `certificates` (`certificate_id`, `Email`, `certificate_name`, `issuer`, `certificate_file`, `issue_date`, `expiration_date`, `credential_id`, `credential_url`, `created_at`) VALUES
+(1, '2024is078@stu.ucsc.cmb.ac.lk', 'Google AI Essentials', 'Google', 'Assets/Images/Student/Certificate/Google AI Essentials Specialization.pdf', '2026-10-02', NULL, '02E3X2DDF5G9', 'https://www.coursera.org/account/accomplishments/specialization/02E3X2DDF5G9', '2026-11-02 09:30:00');
 -- --------------------------------------------------------
 
 --
@@ -1162,20 +1155,20 @@ CREATE TABLE `student_projects` (
 
 INSERT INTO `student_projects` (`student_project_id`, `Email`, `project_id`, `role`, `progress`, `status`) VALUES
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 1, 'Full-Stack Developer', 60, 'In Progress'),
-(2, '2024is058@stu.ucsc.cmb.ac.lk', 4, 'Backend Lead', 85, 'In Progress'),
+(2, '2024is078@stu.ucsc.cmb.ac.lk', 4, 'Backend Lead', 100, 'Completed'),
 (3, '2024is001@stu.ucsc.cmb.ac.lk', 1, 'ML Model Engineer', 75, 'In Progress'),
 (4, '2024is001@stu.ucsc.cmb.ac.lk', 3, 'Firmware Developer', 40, 'In Progress'),
-(5, '2024is015@stu.ucsc.cmb.ac.lk', 2, 'Lead UI Designer', 90, 'Completed'),
+(5, '2024is015@stu.ucsc.cmb.ac.lk', 2, 'Lead UI Designer', 100, 'Completed'),
 (6, '2024is032@stu.ucsc.cmb.ac.lk', 3, 'Network & Security Lead', 35, 'In Progress'),
 (7, '2024is044@stu.ucsc.cmb.ac.lk', 5, 'Backend & DevOps Engineer', 50, 'In Progress'),
 (26, '2024is058@stu.ucsc.cmb.ac.lk', 6, 'NLP Engineer', 10, 'In Progress'),
 (27, '2024is001@stu.ucsc.cmb.ac.lk', 6, 'Backend Developer', 10, 'In Progress'),
 (28, '2024is015@stu.ucsc.cmb.ac.lk', 6, 'UI Designer', 10, 'In Progress'),
 (29, '2024is001@stu.ucsc.cmb.ac.lk', 7, 'Flutter Developer', 15, 'In Progress'),
-(30, '2024is078@stu.ucsc.cmb.ac.lk', 7, 'Firebase Engineer', 15, 'In Progress'),
-(31, '2024is015@stu.ucsc.cmb.ac.lk', 8, 'Frontend Developer', 20, 'In Progress'),
+(30, '2024is078@stu.ucsc.cmb.ac.lk', 7, 'Firebase Engineer', 100, 'Completed'),
+(31, '2024is078@stu.ucsc.cmb.ac.lk', 8, 'Frontend Developer', 100, 'Completed'),
 (32, '2024is044@stu.ucsc.cmb.ac.lk', 8, 'UI Designer', 20, 'In Progress'),
-(33, '2024is058@stu.ucsc.cmb.ac.lk', 9, 'Backend Developer', 100, 'Completed'),
+(33, '2024is078@stu.ucsc.cmb.ac.lk', 9, 'Backend Developer', 100, 'Completed'),
 (34, '2024is001@stu.ucsc.cmb.ac.lk', 9, 'Frontend Developer', 100, 'Completed'),
 (35, '2024is044@stu.ucsc.cmb.ac.lk', 9, 'DB Engineer', 100, 'Completed'),
 (38, '2024is058@stu.ucsc.cmb.ac.lk', 12, 'Mobile Developer', 5, 'In Progress');
@@ -1526,7 +1519,6 @@ INSERT INTO `user` (`Email`, `password`, `role`, `status`, `verification_code`, 
 
 --
 -- Stand-in structure for view `v_internships_full`
--- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_internships_full`;
 CREATE TABLE `v_internships_full` (
@@ -1566,7 +1558,6 @@ CREATE TABLE `v_internships_full` (
 
 --
 -- Stand-in structure for view `v_projects_full`
--- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_projects_full`;
 CREATE TABLE `v_projects_full` (
@@ -1594,7 +1585,6 @@ CREATE TABLE `v_projects_full` (
 
 --
 -- Stand-in structure for view `v_student_profile_full`
--- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_student_profile_full`;
 CREATE TABLE `v_student_profile_full` (
@@ -1618,7 +1608,6 @@ CREATE TABLE `v_student_profile_full` (
 
 --
 -- Stand-in structure for view `v_student_proposals_full`
--- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_student_proposals_full`;
 CREATE TABLE `v_student_proposals_full` (
@@ -1644,7 +1633,6 @@ CREATE TABLE `v_student_proposals_full` (
 
 --
 -- Stand-in structure for view `v_student_skills_computed`
--- (See below for the actual view)
 --
 DROP VIEW IF EXISTS `v_student_skills_computed`;
 CREATE TABLE `v_student_skills_computed` (
@@ -1658,6 +1646,8 @@ CREATE TABLE `v_student_skills_computed` (
 ,`level` varchar(12)
 ,`percentage` int(2)
 );
+
+-- --------------------------------------------------------
 
 -- --------------------------------------------------------
 
@@ -1718,14 +1708,6 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`Email`);
-
---
--- Indexes for table `certificates`
---
-ALTER TABLE `certificates`
-  ADD PRIMARY KEY (`certificate_id`),
-  ADD KEY `Email` (`Email`),
-  ADD KEY `idx_cert_verified_by` (`verified_by`);
 
 --
 -- Indexes for table `company`
@@ -2313,8 +2295,7 @@ ALTER TABLE `admin`
 -- Constraints for table `certificates`
 --
 ALTER TABLE `certificates`
-  ADD CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`Email`) REFERENCES `student` (`Email`) ON DELETE CASCADE,
-  ADD CONSTRAINT `certificates_ibfk_2` FOREIGN KEY (`verified_by`) REFERENCES `admin` (`Email`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `certificates_ibfk_1` FOREIGN KEY (`Email`) REFERENCES `student` (`Email`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `company`

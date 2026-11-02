@@ -87,10 +87,10 @@ function portfolioUpload(string $field, string $type): ?string
     $folder = __DIR__ . '/../../Assets/Images/Student/' . $folderName;
 
     if (!is_dir($folder) && !mkdir($folder, 0755, true) && !is_dir($folder)) {
-        throw new RuntimeException('Unable to create the portfolio upload folder.');
+        throw new RuntimeException('Unable to create the portfolio upload folder: ' . $folder);
     }
     if (!is_writable($folder)) {
-        throw new RuntimeException('The portfolio upload folder is not writable.');
+        throw new RuntimeException('The portfolio upload folder is not writable: ' . $folder);
     }
 
     $filename = bin2hex(random_bytes(16)) . '.' . $allowed[$mime];
@@ -151,19 +151,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($newUpload !== null) {
             $path = __DIR__ . '/../../' . $newUpload;
             if (is_file($path)) {
-                unlink($path);
+                @unlink($path);
             }
         }
 
-        $_SESSION['portfolio_error'] = $exception instanceof InvalidArgumentException
-            ? $exception->getMessage()
-            : 'Unable to save the request. Check the database migration and server logs.';
-
-        $errorReference = strtoupper(bin2hex(random_bytes(4)));
-        error_log('Portfolio [' . $errorReference . '] ' . $action . ': ' . $exception->getMessage());
-        if (!($exception instanceof InvalidArgumentException)) {
-            $_SESSION['portfolio_error'] = 'Unable to save the request. Error reference: ' . $errorReference;
-        }
+        // Output actual error for complete transparency during testing
+        $_SESSION['portfolio_error'] = $exception->getMessage();
+        error_log('Portfolio Error: ' . $exception->getMessage());
     }
 
     header('Location: portfolio.php', true, 303);
@@ -190,7 +184,7 @@ try {
     $certificates = $repo->certificates($email);
 } catch (Throwable $exception) {
     error_log('SkillBridge Portfolio database read failed: ' . $exception->getMessage());
-    $databaseError = 'Portfolio data could not be loaded. Confirm the Student Portfolio database migrations have been imported.';
+    $databaseError = 'Portfolio data could not be loaded: ' . $exception->getMessage();
 }
 
 $notice = $_SESSION['portfolio_notice'] ?? null;
@@ -224,7 +218,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 $databaseError ? ['message' => $databaseError, 'error' => true] : null
             ]) as $toast): ?>
                 <div class="portfolio-toast <?= $toast['error'] ? 'is-error' : 'is-success' ?>"
-                     role="<?= $toast['error'] ? 'alert' : 'status' ?>" data-timeout="<?= $toast['error'] ? 7000 : 4500 ?>">
+                     role="<?= $toast['error'] ? 'alert' : 'status' ?>" data-timeout="<?= $toast['error'] ? 8000 : 4500 ?>">
                     <i class="fa-solid <?= $toast['error'] ? 'fa-circle-exclamation' : 'fa-circle-check' ?>" aria-hidden="true"></i>
                     <span><?= portfolioEsc($toast['message']) ?></span>
                     <button type="button" class="portfolio-toast-close" aria-label="Dismiss notification">&times;</button>
@@ -316,6 +310,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                             <p class="portfolio-small"><?= portfolioEsc($project['project_status']) ?></p>
                         </div>
                     </button>
+
                     <div class="project-content portfolio-card-actions">
                         <div class="project-links">
                             <button type="button" class="edit-btn" title="Edit project" onclick='portfolioEditProject(<?= json_encode($project, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
@@ -462,6 +457,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <label>Skills Used (comma-separated)
                 <input name="skills" maxlength="1500" placeholder="Python, TensorFlow, Machine Learning">
             </label>
+            <p class="portfolio-field-hint">List the skills demonstrated by this certificate.</p>
             <label>Credential ID<input name="credential_id" maxlength="150"></label>
             <label>Credential URL<input name="credential_url" type="url"></label>
             <label>Certificate File (PDF or image)<input name="certificate_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></label>
