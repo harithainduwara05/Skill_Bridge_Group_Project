@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/env_loader.php';
 
-$host     = $_ENV['DB_HOST'] ?? 'localhost';
-$user     = $_ENV['DB_USERNAME'] ?? 'root';
-$password = $_ENV['DB_PASSWORD'] ?? '';
-$dbname   = $_ENV['DB_DATABASE'] ?? 'skillbridge_db';
-$port     = !empty($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306;
+$host     = 'localhost'; // $_ENV['DB_HOST'] ?? 'localhost';
+$user     = 'root'; // $_ENV['DB_USERNAME'] ?? 'root';
+$password = ''; // $_ENV['DB_PASSWORD'] ?? '';
+$dbname   = 'skillbridge_db'; // $_ENV['DB_DATABASE'] ?? 'skillbridge_db';
+$port     = 3306; // !empty($_ENV['DB_PORT']) ? (int)$_ENV['DB_PORT'] : 3306;
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 try {
