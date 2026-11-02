@@ -42,6 +42,12 @@ jobs:
 
       # Step 4: Run Pure PHP Automated Test Suite (All 4 Actors)
       - name: Run Automated Tests
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USERNAME: root
+          DB_PASSWORD: ''
+          DB_DATABASE: skillbridge_db
         run: php tests/run_tests.php
 
       # Step 5: Archive and Upload HTML Evidence Report as Artifact

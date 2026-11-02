@@ -59,6 +59,18 @@ class TestFramework
                 }
             }
         }
+
+        // 3. Fallback to direct local / GitHub Actions MySQL container (127.0.0.1:3306)
+        if (!self::$db) {
+            try {
+                $ciConn = @new mysqli('127.0.0.1', 'root', '', 'skillbridge_db', 3306);
+                if (!$ciConn->connect_error) {
+                    self::$db = $ciConn;
+                }
+            } catch (\Throwable $e) {
+                // Suppress and report in tests
+            }
+        }
     }
 
     public static function getDb(): ?mysqli
