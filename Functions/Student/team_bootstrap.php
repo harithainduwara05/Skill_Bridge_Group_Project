@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../Config/db.php';
 require_once __DIR__ . '/../../Session/Session.php';
+require_once __DIR__ . '/../../Backend/TeamWorkspace.php';
 require_once __DIR__ . '/../../Backend/Student/StudentTeamRepository.php';
 
 require_role('student');

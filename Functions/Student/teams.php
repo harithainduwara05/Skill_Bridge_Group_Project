@@ -1,5 +1,15 @@
 <?php
 require_once __DIR__ . '/team_bootstrap.php';
+
+$requestedProjectId = (int) ($_GET['project_id'] ?? 0);
+if ($requestedProjectId > 0) {
+    $matchedTeam = $teamRepository->teamByProject($email, $requestedProjectId);
+    if ($matchedTeam) {
+        header('Location: view_team.php?id=' . (int) $matchedTeam['id']);
+        exit;
+    }
+}
+
 $teams = $teamRepository->teams($email);
 $activeTeams = array_filter($teams, static fn($team) => !in_array(strtolower((string) $team['status']), ['completed', 'complete', 'done'], true));
 $pageTitle = 'My Teams | SkillBridge';
@@ -33,7 +43,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <?php foreach ($teams as $team): ?>
                     <?php
                     $status = strtolower((string) $team['status']);
-                    $badge = in_array($status, ['completed', 'complete', 'done'], true) ? 'status-complete' : (in_array($status, ['delayed', 'atrisk', 'at_risk', 'blocked'], true) ? 'status-warning' : 'status-track');
+                    $badge = in_array($status, ['completed', 'complete', 'done'], true) ? 'status-complete' : (in_array($status, ['delayed', 'atrisk', 'at_risk', 'blocked', 'behind'], true) ? 'status-warning' : 'status-track');
                     ?>
                     <article class="student-team-card">
                         <div class="card-top">
@@ -67,4 +77,5 @@ include __DIR__ . '/../../Includes/dash_header.php';
         <?php endif; ?>
     </section>
 </main>
+<script src="../../Assets/JS/Student/teams.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/Student/teams.js') ?>"></script>
 <?php include __DIR__ . '/../../Includes/dash_footer.php'; ?>

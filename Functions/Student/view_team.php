@@ -1,7 +1,18 @@
 <?php
 require_once __DIR__ . '/team_bootstrap.php';
-$id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
-$team = $id ? $teamRepository->team($email, $id) : null;
+$id = (int) ($_GET['id'] ?? $_GET['team_id'] ?? 0);
+$projectId = (int) ($_GET['project_id'] ?? 0);
+
+$team = null;
+if ($id > 0) {
+    $team = $teamRepository->team($email, $id);
+} elseif ($projectId > 0) {
+    $team = $teamRepository->teamByProject($email, $projectId);
+    if ($team) {
+        $id = (int) $team['id'];
+    }
+}
+
 if (!$team) {
     http_response_code(404);
     exit('Team not found or you are not a member.');
@@ -34,7 +45,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <p><?= teamEsc(teamStatus((string) $team['status'])) ?></p>
         </div>
     </section>
-    <nav class="team-tabs"><a class="active" href="#overview">Overview</a><a href="#tasks">Tasks</a><a href="#members">Members</a><a href="team_workspace.php?id=<?= (int) $id ?>">Files &amp; Discussion</a></nav>
+    <nav class="team-tabs"><a class="active" href="#overview">Overview</a><a href="#tasks">Tasks</a><a href="#members">Members</a><a href="team_workspace.php?id=<?= (int) $id ?>">Files &amp; Discussion (Workspace)</a></nav>
     <section class="team-layout" id="overview">
         <div class="team-main">
             <div class="detail-card"><h2>About Project</h2><p><?= nl2br(teamEsc($team['project_description'])) ?></p></div>
@@ -51,11 +62,12 @@ include __DIR__ . '/../../Includes/dash_header.php';
         <aside class="team-sidebar" id="members">
             <div class="detail-card"><h2>Team Members</h2>
                 <?php foreach ($members as $member): ?>
-                    <div class="member-item"><span class="team-person-initial"><?= teamEsc(teamInitials((string) $member['name'])) ?></span><div><strong><?= teamEsc($member['name']) ?></strong><p><?= teamEsc($member['role'] ?: ((string) $member['Email'] === (string) $team['leader_email'] ? 'Team Leader' : 'Member')) ?></p></div></div>
+                    <div class="member-item"><span class="team-person-initial"><?= teamEsc(teamInitials((string) $member['name'])) ?></span><div><strong><?= teamEsc($member['name']) ?></strong><p><?= teamEsc($member['role'] ?: (strtolower((string) $member['Email']) === strtolower((string) $team['leader_email']) ? 'Team Leader' : 'Member')) ?></p></div></div>
                 <?php endforeach; ?>
             </div>
             <div class="detail-card activity-card"><h2>Organization</h2><p><?= teamEsc($team['organization_name']) ?></p><p>Your role: <?= teamEsc($team['member_role'] ?: 'Member') ?></p></div>
         </aside>
     </section>
 </main>
+<script src="../../Assets/JS/Student/view_team.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/Student/view_team.js') ?>"></script>
 <?php include __DIR__ . '/../../Includes/dash_footer.php'; ?>
