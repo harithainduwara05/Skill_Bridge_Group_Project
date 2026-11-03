@@ -73,6 +73,48 @@ function statusLabel($status) {
     return $labels[$status] ?? ucfirst($status);
 }
 
+// ---- Pending Projects: not live yet, waiting for the Admin (Reviewing) or for us (Hold) ----
+// Hold first (we must act), then the ones waiting the longest. The hold reason and our reply
+// come from the Admin's latest Hold in project_moderation_logs.
+$stmt = $conn->prepare("SELECT p.id, p.title, LOWER(p.status) AS status, p.posted_at,
+                                hl.reason AS hold_reason, hl.org_response, hl.created_at AS held_at
+                         FROM projects p
+                         LEFT JOIN project_moderation_logs hl ON hl.id =
+                              (SELECT MAX(l.id) FROM project_moderation_logs l
+                                WHERE l.project_id = p.id AND l.action_type = 'Hold')
+                         WHERE p.organization_email = ? AND LOWER(p.status) IN ('reviewing', 'hold')
+                         ORDER BY LOWER(p.status) = 'hold' DESC, p.posted_at ASC");
+$stmt->bind_param("s", $organization_email);
+$stmt->execute();
+$pendingProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$pendingReviewing = 0; $pendingHold = 0;
+foreach ($pendingProjects as &$pp) {
+    $isHold = $pp['status'] === 'hold';
+    $isHold ? $pendingHold++ : $pendingReviewing++;
+
+    // how long it has been waiting (since it was posted / put on hold)
+    $since = $isHold && !empty($pp['held_at']) ? $pp['held_at'] : $pp['posted_at'];
+    $days  = $since ? max(0, (int)floor((strtotime('today') - strtotime(date('Y-m-d', strtotime($since)))) / 86400)) : 0;
+    $pp['waiting'] = $days === 0 ? 'Today' : ($days === 1 ? '1 day' : $days . ' days');
+
+    if (!$isHold) {
+        $pp['note'] = 'Waiting for admin approval';
+        $pp['tone'] = 'review';
+    } elseif (trim((string)$pp['org_response']) !== '') {
+        $pp['note'] = 'Reply sent – waiting for the admin';
+        $pp['tone'] = 'replied';
+    } else {
+        $pp['note'] = 'Action needed: ' . (trim((string)$pp['hold_reason']) ?: 'see the admin\'s note');
+        $pp['tone'] = 'action';
+    }
+    $pp['link'] = 'manage_projects.php?' . http_build_query(['status' => $pp['status'], 'search' => $pp['title']]);
+}
+unset($pp);
+// the dashboard shows the first 4 (Hold first); "View All" opens Manage Projects with Status: Pending
+$pendingTotal    = count($pendingProjects);
+$pendingProjects = array_slice($pendingProjects, 0, 4);
+
 // ---- Team Progress (latest 3 teams from org_teams, same status / progress as the Teams page) ----
 orgRefreshTeamStatuses($conn, $organization_email);
 $stmt = $conn->prepare("SELECT t.id, t.name, t.deadline, t.status, p.title,

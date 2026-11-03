@@ -197,3 +197,45 @@
 .badge-status.draft::before { content: '●'; font-size: 8px; }
 .badge-status.published::before,
 .badge-status.accepted::before { content: '●'; font-size: 8px; }
+/* ---------- Pending Projects (Reviewing = waiting for the Admin, Hold = we must reply) ---------- */
+.pending-card { flex: 1 1 100%; }
+.pending-card .card-header { flex-wrap: wrap; gap: 8px; }
+.pending-counts { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pending-counts .btn-link { margin-left: 8px; }
+.pending-chip { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+.pending-chip.review { background: #eff6ff; color: #1d4ed8; }
+.pending-chip.hold   { background: #fefce8; color: #a16207; }
+
+.pending-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 10px; }
+.pending-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; border: 1px solid #e5e7eb; border-left-width: 4px; border-radius: 10px;
+    text-decoration: none; color: inherit; background: #fff;
+    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.pending-item:hover { box-shadow: 0 2px 8px rgba(15, 42, 74, 0.08); }
+.pending-item.review  { border-left-color: #3b82f6; }
+.pending-item.action  { border-left-color: #eab308; background: #fffdf5; }
+.pending-item.replied { border-left-color: #a3a3a3; }
+
+.pending-icon { font-size: 22px; width: 24px; overflow: hidden; flex-shrink: 0; }
+.pending-item.review .pending-icon  { color: #2563eb; }
+.pending-item.action .pending-icon  { color: #ca8a04; }
+.pending-item.replied .pending-icon { color: #6b7280; }
+
+.pending-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.pending-title { font-weight: 600; color: #0f2a4a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pending-note  { font-size: 12.5px; color: #6b7280; overflow: hidden; text-overflow: ellipsis;
+                 display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.pending-item.action .pending-note { color: #92400e; }
+
+.pending-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+.pending-wait { font-size: 11.5px; color: #9ca3af; }
+.pending-btn  { font-size: 12px; font-weight: 600; color: #fff; background: #0f2a4a; padding: 3px 10px; border-radius: 6px; }
+
+.pending-empty { display: flex; align-items: center; justify-content: center; gap: 8px; color: #6b7280; padding: 14px 0; margin: 0; }
+.pending-empty .material-symbols-outlined { color: #16a34a; }
+
+@media (max-width: 480px) {
+    .pending-list { grid-template-columns: 1fr; }
+}

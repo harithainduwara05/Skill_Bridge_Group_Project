@@ -101,6 +101,37 @@ function twRefreshStatus(mysqli $conn, int $teamId): void
     $q = $conn->prepare("UPDATE org_teams t SET t.status = " . TW_STATUS_SQL . " WHERE t.id = ?");
     $q->bind_param("i", $teamId);
     $q->execute();
+    twSyncProgress($conn, "t.id = ?", "i", $teamId);
+}
+
+/*
+| A member's progress (student_projects.progress) comes from the Kanban board:
+| the tasks given to that member that are Done / all tasks given to that member (0 when none).
+| When the organization accepts the final report it is set to 100 and the status to 'Completed',
+| so finished members are not changed here.
+*/
+const TW_PROGRESS_SQL = "
+    UPDATE student_projects sp
+    JOIN org_team_members m ON LOWER(m.Email) = LOWER(sp.Email)
+    JOIN org_teams t        ON t.id = m.team_id AND t.project_id = sp.project_id
+    JOIN projects p         ON p.id = t.project_id
+    SET sp.progress = COALESCE((
+            SELECT ROUND(100 * SUM(tt.status = 'Done') / COUNT(*))
+            FROM team_tasks tt
+            WHERE tt.team_id = t.id AND LOWER(tt.assigned_to) = LOWER(sp.Email)
+        ), 0)
+    WHERE sp.status <> 'Completed' AND ";
+
+/** $where picks the teams, e.g. "t.id = ?" or "p.organization_email = ?" */
+function twSyncProgress(mysqli $conn, string $where, string $type, $value): void
+{
+    try {
+        $q = $conn->prepare(TW_PROGRESS_SQL . $where);
+        $q->bind_param($type, $value);
+        $q->execute();
+    } catch (Throwable $e) {
+        // the saved progress stays as it was
+    }
 }
 
 /** The team's final report (or null if it was not sent yet). path = "Assets/Uploads/final_reports/..." */

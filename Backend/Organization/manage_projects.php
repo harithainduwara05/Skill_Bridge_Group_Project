@@ -368,7 +368,10 @@ if ($timeFilter === 'weekly')  $timeCutoff = strtotime('-7 days');
 if ($timeFilter === 'monthly') $timeCutoff = strtotime('-30 days');
 
 $filtered = array_values(array_filter($allProjects, function ($p) use ($statusFilter, $timeCutoff, $searchQuery) {
-    if ($statusFilter !== 'all' && $p['status'] !== $statusFilter) return false;
+    // "pending" = not live yet: waiting for the Admin (Reviewing) or for us (Hold) – the dashboard's "View All"
+    if ($statusFilter === 'pending') {
+        if (!in_array($p['status'], ['reviewing', 'hold'], true)) return false;
+    } elseif ($statusFilter !== 'all' && $p['status'] !== $statusFilter) return false;
     if ($timeCutoff !== null) {
         $postedTs = strtotime($p['posted_at'] ?? '');
         if ($postedTs === false || $postedTs < $timeCutoff) return false;

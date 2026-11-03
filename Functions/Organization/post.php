@@ -77,6 +77,10 @@ include "../../Includes/dash_header.php";
                                 <option value="<?= htmlspecialchars($cat) ?>" <?= $oldCategory === $cat ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <button type="button" class="add-cat-btn" id="addCategoryBtn">
+                            <span class="material-symbols-outlined">add</span>Add a new category
+                        </button>
+                        <div class="add-cat-done" id="addCategoryDone"></div>
                         <?= fieldError($errors, 'category') ?>
                     </div>
                 </div>
