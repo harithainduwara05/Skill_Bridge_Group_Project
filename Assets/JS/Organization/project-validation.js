@@ -150,3 +150,105 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+/*
+| "+ Add a new category" (Post Project / Edit Project)
+| Opens a small popup, the name is saved in project_categories by the same page
+| (Backend/Organization/org_db.php -> orgHandleAddCategory) and then chosen in the dropdown.
+| Same rules as the server: 2-40 characters, letters needed, no odd symbols.
+*/
+document.addEventListener('DOMContentLoaded', function () {
+    const btn    = document.getElementById('addCategoryBtn');
+    const select = document.querySelector('select[name="category"]');
+    const done   = document.getElementById('addCategoryDone');
+    if (!btn || !select) return;
+
+    const modal = document.createElement('div');
+    modal.className = 'add-cat-modal';
+    modal.innerHTML =
+        '<div class="add-cat-box" role="dialog" aria-modal="true" aria-labelledby="addCatTitle">' +
+            '<h3 id="addCatTitle">Add a new category</h3>' +
+            '<p class="add-cat-hint">Can\'t find a category that fits your project? Add it here. ' +
+            'It will be in the category list from now on.</p>' +
+            '<input type="text" class="form-input" id="addCatName" maxlength="40" placeholder="e.g. Game Development" autocomplete="off">' +
+            '<div class="add-cat-row"><small class="add-cat-err" id="addCatErr"></small><small class="add-cat-count" id="addCatCount">0 / 40</small></div>' +
+            '<div class="add-cat-actions">' +
+                '<button type="button" class="add-cat-cancel">Cancel</button>' +
+                '<button type="button" class="add-cat-save">Add Category</button>' +
+            '</div>' +
+        '</div>';
+    document.body.appendChild(modal);
+
+    const input = modal.querySelector('#addCatName');
+    const err   = modal.querySelector('#addCatErr');
+    const count = modal.querySelector('#addCatCount');
+    const save  = modal.querySelector('.add-cat-save');
+
+    function open() {
+        input.value = ''; err.textContent = ''; count.textContent = '0 / 40';
+        input.classList.remove('invalid');
+        modal.classList.add('open');
+        setTimeout(function () { input.focus(); }, 50);
+    }
+    function close() { modal.classList.remove('open'); btn.focus(); }
+
+    function check(name) {
+        if (name.length < 2)  return 'Please enter at least 2 characters.';
+        if (name.length > 40) return 'Please keep it to 40 characters or less.';
+        if (!/\p{L}/u.test(name)) return 'The category name must contain letters.';
+        if (!/^[\p{L}\p{N}][\p{L}\p{N} &\/+.,()\-]*$/u.test(name)) return 'Use only letters, numbers, spaces and & / + . , ( ) -';
+        return '';
+    }
+
+    // put the new name in the dropdown A-Z, with "Other" kept last
+    function addOption(name) {
+        const opts = Array.from(select.options).filter(o => o.value !== '');
+        const exists = opts.find(o => o.value.toLowerCase() === name.toLowerCase());
+        if (exists) return exists;
+        const opt = new Option(name, name);
+        const before = opts.find(o => o.value === 'Other' || o.value.localeCompare(name, undefined, { sensitivity: 'base' }) > 0);
+        select.insertBefore(opt, before || null);
+        return opt;
+    }
+
+    function submit() {
+        const name = input.value.replace(/\s+/g, ' ').trim();
+        const problem = check(name);
+        if (problem) { err.textContent = problem; input.classList.add('invalid'); return; }
+
+        save.disabled = true;
+        const fd = new FormData();
+        fd.append('action', 'add_category');
+        fd.append('name', name);
+        fetch(location.href, { method: 'POST', body: fd })
+            .then(r => r.json())
+            .then(function (res) {
+                save.disabled = false;
+                if (!res.ok) { err.textContent = res.message; input.classList.add('invalid'); return; }
+                const opt = addOption(res.name);
+                select.value = opt.value;
+                select.dispatchEvent(new Event('change', { bubbles: true }));
+                if (done) done.textContent = res.exists
+                    ? '"' + res.name + '" is already in the list, so it is selected.'
+                    : '"' + res.name + '" was added and selected.';
+                close();
+            })
+            .catch(function () {
+                save.disabled = false;
+                err.textContent = 'Something went wrong. Please try again.';
+            });
+    }
+
+    btn.addEventListener('click', open);
+    save.addEventListener('click', submit);
+    modal.querySelector('.add-cat-cancel').addEventListener('click', close);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    input.addEventListener('input', function () {
+        count.textContent = input.value.length + ' / 40';
+        err.textContent = ''; input.classList.remove('invalid');
+    });
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter')  { e.preventDefault(); submit(); }
+        if (e.key === 'Escape') { e.preventDefault(); close(); }
+    });
+    select.addEventListener('change', function () { if (done && !select.value) done.textContent = ''; });
+});

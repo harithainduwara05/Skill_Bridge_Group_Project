@@ -43,7 +43,7 @@ function tmFetch(mysqli $conn, string $sql, string $types = '', array $params = 
 // ---------------------------------------------------------------
 $tmProjects = tmFetch($conn,
     ORG_PROJECT_SELECT . " WHERE p.organization_email = ?
-       AND p.status IN ('open', 'reviewing', 'published', 'accepted', 'active', 'inprogress')
+       AND LOWER(p.status) IN ('published', 'accepted', 'active', 'inprogress')   -- approved by the Admin (Reviewing / Hold: no students yet)
      ORDER BY p.posted_at DESC", "s", [$organization_email]);
 
 $tmCandidates = [];   // project_id => [ {email, name, sub, skills[], team, team_id} ]

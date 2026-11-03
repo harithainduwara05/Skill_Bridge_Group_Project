@@ -24,11 +24,60 @@ const ORG_PROJECT_SELECT = "SELECT p.*, c.category_name AS category, o.Name AS c
 function orgCategories(mysqli $conn): array
 {
     $list = [];
-    $res = $conn->query("SELECT category_id, category_name FROM project_categories ORDER BY category_name");
+    // A–Z, with "Other" always last
+    $res = $conn->query("SELECT category_id, category_name FROM project_categories ORDER BY category_name = 'Other', category_name");
     foreach ($res->fetch_all(MYSQLI_ASSOC) as $row) {
         $list[(int)$row['category_id']] = $row['category_name'];
     }
     return $list;
+}
+
+/*
+| "+ Add a new category" on Post Project / Edit Project (fetch POST, action = add_category).
+| The organization adds a category that is missing from the list. It goes into project_categories,
+| so it is in the dropdown from now on (for every organization, and in the students' category filter).
+| A name that is already there (any capitals / spaces) is not added again: the existing one is returned.
+| Answers with JSON and stops, so call it before the page prints anything.
+*/
+const ORG_CATEGORY_MIN = 2;
+const ORG_CATEGORY_MAX = 40;
+
+function orgHandleAddCategory(mysqli $conn): void
+{
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST' || ($_POST['action'] ?? '') !== 'add_category') return;
+
+    $reply = function (array $data) { header('Content-Type: application/json'); echo json_encode($data); exit; };
+
+    // "  web   design " -> "web design"
+    $name = trim(preg_replace('/\s+/u', ' ', (string)($_POST['name'] ?? '')));
+    $len  = mb_strlen($name);
+
+    if ($len < ORG_CATEGORY_MIN || $len > ORG_CATEGORY_MAX) {
+        $reply(['ok' => false, 'message' => 'The category name must be ' . ORG_CATEGORY_MIN . ' to ' . ORG_CATEGORY_MAX . ' characters.']);
+    }
+    if (!preg_match('/\p{L}/u', $name)) {
+        $reply(['ok' => false, 'message' => 'The category name must contain letters.']);
+    }
+    if (!preg_match('/^[\p{L}\p{N}][\p{L}\p{N} &\/+.,()\-]*$/u', $name)) {
+        $reply(['ok' => false, 'message' => 'Use only letters, numbers, spaces and & / + . , ( ) -']);
+    }
+
+    try {
+        // already in the list? ("ai / ml" = "AI/ML")
+        $q = $conn->prepare("SELECT category_name FROM project_categories
+                             WHERE LOWER(REPLACE(category_name, ' ', '')) = LOWER(REPLACE(?, ' ', '')) LIMIT 1");
+        $q->bind_param("s", $name);
+        $q->execute();
+        $found = $q->get_result()->fetch_row();
+        if ($found) $reply(['ok' => true, 'exists' => true, 'name' => $found[0]]);
+
+        $q = $conn->prepare("INSERT INTO project_categories (category_name) VALUES (?)");
+        $q->bind_param("s", $name);
+        $q->execute();
+        $reply(['ok' => true, 'exists' => false, 'name' => $name]);
+    } catch (Throwable $e) {
+        $reply(['ok' => false, 'message' => 'The category could not be saved. Please try again.']);
+    }
 }
 
 /** category name -> category_id (null if the name is not in project_categories) */
@@ -83,4 +132,6 @@ function orgRefreshTeamStatuses(mysqli $conn, string $orgEmail): void
     } catch (Throwable $e) {
         // the page still loads with the saved status
     }
+    // each member's progress = their tasks that are Done (from the Kanban board)
+    twSyncProgress($conn, "p.organization_email = ?", "s", $orgEmail);
 }

@@ -88,7 +88,8 @@ include "../../Includes/dash_header.php";
 
             <select name="status" class="select-filter" onchange="this.form.submit()">
                 <option value="all" <?= (($_GET['status'] ?? 'all') == 'all') ? 'selected' : '' ?>>Status: All</option>
-                <option value="draft" <?= (($_GET['status'] ?? '') == 'draft') ? 'selected' : '' ?>>Draft</option>
+                <option value="pending" <?= (($_GET['status'] ?? '') == 'pending') ? 'selected' : '' ?>>Pending (Reviewing + Hold)</option>
+                <option value="draft" <?=(($_GET['status'] ?? '') == 'draft') ? 'selected' : '' ?>>Draft</option>
                 <option value="reviewing" <?= (($_GET['status'] ?? '') == 'reviewing') ? 'selected' : '' ?>>Reviewing</option>
                 <option value="published" <?= (($_GET['status'] ?? '') == 'published') ? 'selected' : '' ?>>Published</option>
                 <option value="inprogress" <?= (($_GET['status'] ?? '') == 'inprogress') ? 'selected' : '' ?>>Active</option>

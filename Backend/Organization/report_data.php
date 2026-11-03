@@ -59,7 +59,8 @@ const RP_COLUMNS = [
 const RP_DATE_FIELD = ['projects' => 'posted', 'teams' => 'created', 'individual' => 'joined', 'proposals' => 'submitted', 'feedback' => 'date'];
 
 const RP_STATUS = [
-    'projects'   => ['open' => 'Open', 'reviewing' => 'Reviewing', 'published' => 'Published', 'inprogress' => 'Active', 'hold' => 'Hold', 'completed' => 'Completed', 'draft' => 'Draft', 'rejected' => 'Rejected'],
+    // in the order a project goes through them
+    'projects'   => ['draft' => 'Draft', 'reviewing' => 'Reviewing', 'hold' => 'Hold', 'published' => 'Published', 'inprogress' => 'Active', 'completed' => 'Completed', 'rejected' => 'Rejected'],
     'teams'      => ['ontrack' => 'On Track', 'behind' => 'Behind Schedule', 'completed' => 'Completed'],
     'individual' => ['In Progress' => 'In Progress', 'Completed' => 'Completed', 'Not started' => 'Not started'],
     'proposals'  => ['pending' => 'Pending', 'accepted' => 'Accepted', 'rejected' => 'Rejected'],

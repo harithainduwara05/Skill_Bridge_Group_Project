@@ -7,6 +7,7 @@
 
 require_once __DIR__ . '/project_validation.php';
 require_once __DIR__ . '/org_db.php';
+orgHandleAddCategory($conn);   // "+ Add a new category" (answers with JSON)
 
 $user = current_user();
 $categories = orgCategories($conn);   // [category_id => name] for the Category dropdown
