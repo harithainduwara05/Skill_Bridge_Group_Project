@@ -6,7 +6,7 @@ try {
     $saved = $projectRepo->saved($projectEmail);
 } catch (Throwable $exception) {
     error_log('Student saved projects: ' . $exception->getMessage());
-    $error = 'Saved projects could not be loaded. Import the saved-projects SQL migration if needed.';
+    $error = 'Saved projects could not be loaded.';
 }
 $pageTitle = 'Saved Projects | SkillBridge';
 $extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">'
@@ -33,10 +33,13 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             $id = (int) $project['id'];
             $image = $images[($id - 1) % count($images)];
             $tags = array_filter(array_map('trim', explode(',', (string) ($project['technology_tags'] ?? ''))));
+            $isActiveWorking = (int) ($project['is_student_active'] ?? 0) === 1;
+            $isApplied = (int) ($project['is_student_applied'] ?? 0) === 1;
+            $teamId = (int) ($project['student_team_id'] ?? 0);
             ?>
             <article class="saved-project-card">
                 <div class="saved-image">
-                    <img src="../../Assets/Images/UI/projects/<?= projectEsc($image) ?>" alt="" loading="lazy">
+                    <img src="../../Assets/Images/Student/Projects/<?= projectEsc($image) ?>" alt="" loading="lazy">
                     <span><?= projectEsc($project['difficulty']) ?></span>
                 </div>
                 <div class="saved-content">
@@ -45,7 +48,14 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                     <p><?= projectEsc(mb_strimwidth((string) ($project['description'] ?? ''), 0, 165, '...')) ?></p>
                     <div class="saved-tags"><?php foreach (array_slice($tags, 0, 5) as $tag): ?><span><?= projectEsc($tag) ?></span><?php endforeach; ?></div>
                     <div class="saved-actions">
-                        <a class="btn-outline" href="view_project.php?id=<?= $id ?>">View Details</a>
+                        <?php if ($isActiveWorking): ?>
+                            <a class="btn-outline" href="<?= $teamId > 0 ? "view_team.php?id={$teamId}" : "teams.php?project_id={$id}" ?>">View Project</a>
+                        <?php else: ?>
+                            <a class="btn-outline" href="view_project.php?id=<?= $id ?>">View Details</a>
+                            <?php if (!$isApplied): ?>
+                                <a class="btn-primary" href="proposal.php?project_id=<?= $id ?>" style="height:42px;padding:0 14px;border-radius:9px;font-size:13px;">Apply Now</a>
+                            <?php endif; ?>
+                        <?php endif; ?>
                         <form method="post" action="project_action.php">
                             <input type="hidden" name="csrf" value="<?= projectEsc($projectCsrf) ?>">
                             <input type="hidden" name="project_id" value="<?= $id ?>">

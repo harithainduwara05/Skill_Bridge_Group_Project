@@ -1,11 +1,19 @@
 <?php
 require_once __DIR__ . '/project_bootstrap.php';
 $id = projectValidId($_GET['id'] ?? null);
-$project = $id ? $projectRepo->find($id) : null;
+$project = $id ? $projectRepo->find($id, $projectEmail) : null;
 if (!$project) {
     http_response_code(404);
     exit('Project not found or unavailable.');
 }
+
+$isActiveWorking = (int) ($project['is_student_active'] ?? 0) === 1;
+$teamId = (int) ($project['student_team_id'] ?? 0);
+if ($isActiveWorking) {
+    header('Location: ' . ($teamId > 0 ? "view_team.php?id={$teamId}" : "teams.php?project_id={$id}"));
+    exit;
+}
+
 $isSaved = in_array($id, $projectRepo->savedIds($projectEmail), true);
 $isApplied = $projectRepo->alreadyApplied($projectEmail, $id);
 $tags = array_filter(array_map('trim', explode(',', (string) ($project['technology_tags'] ?? ''))));

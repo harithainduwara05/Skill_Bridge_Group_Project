@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../Config/db.php';
 require_once __DIR__ . '/../../Session/Session.php';
 require_once __DIR__ . '/../../Backend/Student/StudentProjectRepository.php';
+require_once __DIR__ . '/../../Backend/Student/StudentTeamRepository.php';
 require_role('student');
 
 $projectUser = current_user();
@@ -13,6 +14,9 @@ if (!is_string($projectEmail) || $projectEmail === '') {
     exit('Student session is invalid.');
 }
 $projectRepo = new StudentProjectRepository($conn);
+$projectTeamRepo = new StudentTeamRepository($conn);
+$projectTeamRepo->ensureTeamsFromStudentProjects($projectEmail);
+
 if (empty($_SESSION['student_project_csrf'])) {
     $_SESSION['student_project_csrf'] = bin2hex(random_bytes(32));
 }

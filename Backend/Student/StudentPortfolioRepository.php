@@ -242,9 +242,21 @@ final class StudentPortfolioRepository
                 LEFT JOIN organization org ON org.Email = p.organization_email
                 LEFT JOIN student_internal_portfolio_overrides ov
                     ON ov.student_project_id = sp.student_project_id AND ov.student_email = sp.Email
-                WHERE sp.Email = ? 
+                WHERE LOWER(sp.Email) = LOWER(?)
+                  AND p.visibility = 'Public'
+                  AND LOWER(p.status) NOT IN ('hold', 'rejected', 'suspended', 'reviewing')
                   AND (ov.hidden IS NULL OR ov.hidden = 0)
-                  AND (LOWER(sp.status) = 'completed' OR LOWER(p.status) = 'completed')
+                  AND (
+                      LOWER(COALESCE(sp.status, '')) IN ('completed', 'complete', 'done')
+                      OR LOWER(COALESCE(p.status, '')) IN ('completed', 'complete', 'done')
+                      OR EXISTS (
+                          SELECT 1 FROM org_teams t
+                          JOIN org_team_members tm ON tm.team_id = t.id
+                          WHERE t.project_id = p.id
+                            AND LOWER(tm.Email) = LOWER(sp.Email)
+                            AND LOWER(COALESCE(t.status, '')) IN ('completed', 'complete', 'done')
+                      )
+                  )
                 ORDER BY sp.student_project_id DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->bind_param('s', $email);
