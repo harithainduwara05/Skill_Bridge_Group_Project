@@ -278,7 +278,7 @@ Personal Details
 <img
 id="profilePreview"
 src="<?= !empty($student['profile_image']) 
-? '../../Assets/Images/Profile/'.$student['profile_image']
+? (is_file(__DIR__ . '/../../Assets/Images/Student/Profile/' . basename((string)$student['profile_image'])) ? '../../Assets/Images/Student/Profile/' . rawurlencode(basename((string)$student['profile_image'])) : '../../Assets/Images/Student/' . rawurlencode(basename((string)$student['profile_image'])))
 : '../../Assets/Images/Profile/default.png'; ?>">
 
 
@@ -722,7 +722,7 @@ class="cv-document modern">
 <img
 id="previewPhoto"
 src="<?= !empty($student['profile_image'])
-? '../../Assets/Images/Profile/'.$student['profile_image']
+? (is_file(__DIR__ . '/../../Assets/Images/Student/Profile/' . basename((string)$student['profile_image'])) ? '../../Assets/Images/Student/Profile/' . rawurlencode(basename((string)$student['profile_image'])) : '../../Assets/Images/Student/' . rawurlencode(basename((string)$student['profile_image'])))
 : '../../Assets/Images/Profile/default.png'; ?>">
 
 

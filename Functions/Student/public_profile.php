@@ -61,8 +61,18 @@
         <div class="profile-top">
         <div class="avatar">
 
-        <?php if(!empty($student['profile_image'])){ ?>
-        <img src="../../Assets/Images/Student/<?= htmlspecialchars($student['profile_image']); ?>">
+        <?php
+        $pub_photo = !empty($student['profile_image']) ? basename((string)$student['profile_image']) : '';
+        $pub_photo_src = '';
+        if ($pub_photo !== '') {
+            if (is_file(__DIR__ . '/../../Assets/Images/Student/Profile/' . $pub_photo)) {
+                $pub_photo_src = '../../Assets/Images/Student/Profile/' . rawurlencode($pub_photo);
+            } elseif (is_file(__DIR__ . '/../../Assets/Images/Student/' . $pub_photo)) {
+                $pub_photo_src = '../../Assets/Images/Student/' . rawurlencode($pub_photo);
+            }
+        }
+        if ($pub_photo_src !== '') { ?>
+        <img src="<?= htmlspecialchars($pub_photo_src); ?>" alt="<?= htmlspecialchars($student['Name']); ?>">
         <?php }else{ ?>
 
         <div class="avatar-letter">
