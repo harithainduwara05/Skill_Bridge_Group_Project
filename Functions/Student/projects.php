@@ -57,8 +57,8 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             <label class="filter-label" for="statusFilter">Filters:</label>
             <select class="filter-select" id="statusFilter" name="filter_status">
                 <option value="all" <?= $filters['filter_status'] === 'all' ? 'selected' : '' ?>>Projects: All Projects</option>
-                <option value="active" <?= $filters['filter_status'] === 'active' ? 'selected' : '' ?>>Active Projects</option>
-                <option value="not_applied" <?= $filters['filter_status'] === 'not_applied' ? 'selected' : '' ?>>Not Applied Yet</option>
+                <option value="active" <?= $filters['filter_status'] === 'active' ? 'selected' : '' ?>>Projects: Active Projects</option>
+                <option value="not_applied" <?= $filters['filter_status'] === 'not_applied' ? 'selected' : '' ?>>Projects: Not Applied Yet</option>
             </select>
             <select class="filter-select" id="categoryFilter" name="category">
                 <option value="">Category: All</option>
@@ -85,7 +85,9 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             $projectImage = $images[($id - 1) % count($images)];
             $tags = array_filter(array_map('trim', explode(',', (string) ($project['technology_tags'] ?? ''))));
             $isActiveWorking = (int) ($project['is_student_active'] ?? 0) === 1;
+            $isCompleted = (int) ($project['is_student_completed'] ?? 0) === 1;
             $isApplied = (int) ($project['is_student_applied'] ?? 0) === 1;
+            $isSaved = in_array($id, $savedIds, true);
             $teamId = (int) ($project['student_team_id'] ?? 0);
 
             if ($isActiveWorking) {
@@ -104,6 +106,15 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                 <div class="project-image">
                     <img src="../../Assets/Images/Student/Projects/<?= projectEsc($projectImage) ?>" alt="" loading="lazy">
                     <span class="difficulty"><?= projectEsc($project['difficulty']) ?></span>
+                    <form method="post" action="project_action.php" class="project-save-top-form">
+                        <input type="hidden" name="csrf" value="<?= projectEsc($projectCsrf) ?>">
+                        <input type="hidden" name="project_id" value="<?= $id ?>">
+                        <input type="hidden" name="action" value="toggle_save">
+                        <input type="hidden" name="return_to" value="projects.php">
+                        <button type="submit" class="project-save-top-btn <?= $isSaved ? 'saved' : '' ?>" title="<?= $isSaved ? 'Remove from Saved' : 'Save Project' ?>" aria-label="<?= $isSaved ? 'Remove from Saved' : 'Save Project' ?>">
+                            <i class="fa-<?= $isSaved ? 'solid' : 'regular' ?> fa-bookmark"></i>
+                        </button>
+                    </form>
                 </div>
                 <div class="project-content">
                     <small><?= projectEsc($project['organization_name']) ?></small>
@@ -118,14 +129,21 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                     </div>
                     <div class="project-actions">
                         <?php if ($isActiveWorking): ?>
-                            <a href="<?= projectEsc($viewHref) ?>" class="btn-outline" style="width:100%;"><i class="fa-solid fa-eye"></i> View Project</a>
+                            <!-- Active Working Project: Only View Project button, redirects straight to Teams section -->
+                            <a href="<?= projectEsc($viewHref) ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
                         <?php else: ?>
+                            <!-- Bottom has ONLY View Project and Apply Now with equal proper width -->
                             <a href="view_project.php?id=<?= $id ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
-                            <?php if (in_array($id, $savedIds, true)): ?><span class="project-saved-label" title="Saved"><i class="fa-solid fa-bookmark"></i></span><?php endif; ?>
-                            <?php if (!$isApplied): ?>
+                            <?php if ($isCompleted): ?>
+                                <?php if ($teamId > 0): ?>
+                                    <a href="view_team.php?id=<?= $teamId ?>" class="btn-primary">Completed</a>
+                                <?php else: ?>
+                                    <span class="btn-applied-status">Completed</span>
+                                <?php endif; ?>
+                            <?php elseif (!$isApplied): ?>
                                 <a href="proposal.php?project_id=<?= $id ?>" class="btn-primary">Apply Now</a>
                             <?php else: ?>
-                                <span class="project-saved-label">Applied</span>
+                                <span class="btn-applied-status">Applied</span>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
