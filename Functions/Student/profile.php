@@ -26,6 +26,13 @@ $password_error = '';
 $password_success = '';
 $profile_error = '';
 
+// Ensure Assets/Images/Student/Profile directory exists and migrate any existing student profile images from Assets/Images/Student/
+$legacyFolder  = __DIR__ . '/../../Assets/Images/Student/';
+$profileFolder = __DIR__ . '/../../Assets/Images/Student/Profile/';
+if (!is_dir($profileFolder)) {
+    @mkdir($profileFolder, 0755, true);
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
         http_response_code(403);
@@ -61,9 +68,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$verified) {
                     $password_error = 'Current password is incorrect.';
                 } else {
-                    // Compatibility: the existing SkillBridge login may still require SHA-1.
-                    // Once Auth/login.php supports password_verify(), change this to:
-                    // $newHash = password_hash($new_password, PASSWORD_DEFAULT);
                     $newHash = $isLegacySha1 ? sha1($new_password) : password_hash($new_password, PASSWORD_DEFAULT);
                     $update = $conn->prepare('UPDATE user SET password = ? WHERE Email = ?');
                     $update->bind_param('ss', $newHash, $email);
@@ -122,7 +126,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $oldImage = $existing['profile_image'] ?? null;
         $image = $oldImage;
         $newFilePath = null;
-        $folder = __DIR__ . '/../../Assets/Images/Student/';
         if ($profile_error === '') {
             $remove = ($_POST['remove_profile_image'] ?? '') === '1';
             if ($remove) $image = null;
@@ -139,11 +142,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!isset($extensions[$mime]) || @getimagesize($upload['tmp_name']) === false) {
                         $profile_error = 'Upload a valid JPG, PNG or WebP image.';
                     } else {
-                        if (!is_dir($folder) && !mkdir($folder, 0755, true)) {
-                            $profile_error = 'Could not create the image folder.';
+                        if (!is_dir($profileFolder) && !mkdir($profileFolder, 0755, true)) {
+                            $profile_error = 'Could not create the Profile image folder.';
                         } else {
                             $image = 'profile_' . bin2hex(random_bytes(12)) . '.' . $extensions[$mime];
-                            $newFilePath = $folder . $image;
+                            $newFilePath = $profileFolder . $image;
                             if (!move_uploaded_file($upload['tmp_name'], $newFilePath)) {
                                 $profile_error = 'Image upload failed.';
                                 $newFilePath = null;
@@ -161,9 +164,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $update->close();
             if ($saved) {
                 if ($oldImage && $image !== $oldImage) {
-                    // Don't delete the application's shared placeholder image.
-                    $oldFilePath = $folder . basename($oldImage);
-                    if ($oldImage !== 'profile.webp' && is_file($oldFilePath)) @unlink($oldFilePath);
+                    $oldBase = basename($oldImage);
+                    if ($oldBase !== 'profile.webp') {
+                        if (is_file($profileFolder . $oldBase)) {
+                            @unlink($profileFolder . $oldBase);
+                        }
+                        if (is_file($legacyFolder . $oldBase)) {
+                            @unlink($legacyFolder . $oldBase);
+                        }
+                    }
                 }
                 header('Location: settings.php?success=1');
                 exit;
@@ -183,9 +192,17 @@ $student = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 if (!$student) exit('Student profile not found');
 
-function studentCount(mysqli $conn, string $table, string $email): int {
+// Automatically move existing student profile image from Assets/Images/Student/ into Assets/Images/Student/Profile/
+if (!empty($student['profile_image'])) {
+    $currentBase = basename((string) $student['profile_image']);
+    $inProfileDir = $profileFolder . $currentBase;
+    $inLegacyDir  = $legacyFolder . $currentBase;
+    if (!is_file($inProfileDir) && is_file($inLegacyDir)) {
+        @rename($inLegacyDir, $inProfileDir);
+    }
+}
 
-    // Called only with fixed table names below.
+function studentCount(mysqli $conn, string $table, string $email): int {
     $q = $conn->prepare("SELECT COUNT(*) AS total FROM `$table` WHERE Email = ?");
     $q->bind_param('s', $email);
     $q->execute();
@@ -195,29 +212,49 @@ function studentCount(mysqli $conn, string $table, string $email): int {
 }
 $skill_count = studentCount($conn, 'skills', $email);
 $certificate_count = studentCount($conn, 'certificates', $email);
-$project_count = 0; // Replace when your project tracking module is implemented.
+
+// Calculate completed projects count accurately
+$projQ = $conn->prepare(
+    "SELECT COUNT(DISTINCT sp.project_id) AS total
+     FROM student_projects sp
+     JOIN projects p ON p.id = sp.project_id
+     WHERE LOWER(sp.Email) = LOWER(?)
+       AND p.visibility = 'Public'
+       AND LOWER(p.status) NOT IN ('hold', 'rejected', 'suspended', 'reviewing')
+       AND (LOWER(COALESCE(sp.status, '')) IN ('completed', 'complete', 'done') OR LOWER(COALESCE(p.status, '')) IN ('completed', 'complete', 'done'))"
+);
+$project_count = 0;
+if ($projQ) {
+    $projQ->bind_param('s', $email);
+    $projQ->execute();
+    $project_count = (int) ($projQ->get_result()->fetch_assoc()['total'] ?? 0);
+    $projQ->close();
+}
+
 $completion = calculateProfileCompletion($student, $skill_count, $certificate_count, $project_count);
 
 function esc($value): string {
     return htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
-$photo = !empty($student['profile_image']) ? basename($student['profile_image']) : 'profile.webp';
-$photoSrc = '../../Assets/Images/Student/' . rawurlencode($photo);
+
+$photo = !empty($student['profile_image']) ? basename((string) $student['profile_image']) : '';
+$photoSrc = '';
+if ($photo !== '') {
+    if (is_file($profileFolder . $photo)) {
+        $photoSrc = '../../Assets/Images/Student/Profile/' . rawurlencode($photo) . '?v=' . filemtime($profileFolder . $photo);
+    } elseif (is_file($legacyFolder . $photo)) {
+        $photoSrc = '../../Assets/Images/Student/' . rawurlencode($photo) . '?v=' . filemtime($legacyFolder . $photo);
+    }
+}
+
 $pageTitle = 'My Profile | SkillBridge';
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/settings.css">' . "\n" .
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/settings.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Student/settings.css') . '">' . "\n" .
     '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">';
 
 include __DIR__ . '/../../Includes/student_sidebar.php';
 include __DIR__ . '/../../Includes/dash_header.php';
 ?>
 <div class="profile-container">
-    <?php if (isset($_GET['success'])): ?>
-        <p role="status" class="success-message">Profile updated successfully.</p>
-    <?php endif; ?>
-    <?php if ($profile_error): ?>
-        <p role="alert" class="error-message"><?= esc($profile_error) ?></p>
-    <?php endif; ?>
-
     <form class="profile-form" method="POST" enctype="multipart/form-data">
         <input type="hidden" name="csrf_token" value="<?= esc($csrfToken) ?>">
         <div class="profile-title">
@@ -234,7 +271,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
         <div class="profile-card">
             <div class="avatar">
                 <?php
-                $hasProfileImage = !empty($student['profile_image']);
+                $hasProfileImage = ($photoSrc !== '');
 
                 $studentName = trim($student['Name'] ?? '');
                 $firstLetter = $studentName !== ''
@@ -323,8 +360,6 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
     <div class="box security-box">
         <h2>Security &amp; Password</h2>
-        <?php if ($password_error): ?><p role="alert" class="error-message"><?= esc($password_error) ?></p><?php endif; ?>
-        <?php if ($password_success): ?><p role="status" class="success-message"><?= esc($password_success) ?></p><?php endif; ?>
         <form method="POST">
             <input type="hidden" name="csrf_token" value="<?= esc($csrfToken) ?>">
             <label for="studentCurrentPass">Current Password *</label>
@@ -361,7 +396,6 @@ include __DIR__ . '/../../Includes/dash_header.php';
 </div>
 
 <script>
-    
     function previewImage(event) {
         const image = document.getElementById("profilePreview");
         const initial = document.getElementById("profileInitial");
@@ -373,21 +407,54 @@ include __DIR__ . '/../../Includes/dash_header.php';
             initial.style.display = "none";
         }
     }
+
     function showToast(message, type) {
         const toast = document.createElement('div');
-        toast.className = 'toast ' + type;
+        toast.className = 'toast ' + (type || 'success');
         const icon = document.createElement('i');
         icon.className = 'fa-solid ' + (type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check');
         const span = document.createElement('span');
         span.textContent = message;
-        toast.append(icon, span);
-        document.body.appendChild(toast);
-        setTimeout(() => toast.classList.add('show'), 100);
-        setTimeout(() => {
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'toast-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.setAttribute('aria-label', 'Dismiss');
+        closeBtn.onclick = () => {
             toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        };
+        toast.append(icon, span, closeBtn);
+        document.body.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 50);
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 4000);
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        <?php if (isset($_GET['success'])): ?>
+            showToast('Profile updated successfully.', 'success');
+            if (window.history && window.history.replaceState) {
+                const url = new URL(window.location.href);
+                url.searchParams.delete('success');
+                window.history.replaceState({}, document.title, url.pathname + url.search);
+            }
+        <?php endif; ?>
+        <?php if ($profile_error !== ''): ?>
+            showToast(<?= json_encode($profile_error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>, 'error');
+        <?php endif; ?>
+        <?php if ($password_success !== ''): ?>
+            showToast(<?= json_encode($password_success, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>, 'success');
+        <?php endif; ?>
+        <?php if ($password_error !== ''): ?>
+            showToast(<?= json_encode($password_error, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>, 'error');
+        <?php endif; ?>
+    });
+
     function shareProfile() {
         const email = <?= json_encode((string)$email, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const base = <?= json_encode((string)($BASE_URL ?? '/Skill_Bridge_Group_Project')) ?>;
@@ -397,6 +464,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             .then(() => showToast('Public profile link copied successfully!', 'success'))
             .catch(() => showToast('Failed to copy profile link.', 'error'));
     }
+
     function removeProfileImage() {
         if (!confirm('Remove current profile image?')) return;
         const form = document.querySelector('form.profile-form');
@@ -407,6 +475,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
         }
         form.submit();
     }
+
     document.querySelectorAll('.password-field i').forEach(icon => {
         icon.addEventListener('mousedown', e => e.preventDefault());
         const toggle = () => {
@@ -418,6 +487,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
         icon.addEventListener('click', toggle);
         icon.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
     });
+
     const studNewPass = document.getElementById('studentNewPass');
     const studConfPass = document.getElementById('studentConfPass');
     const studPassMsg = document.getElementById('studentPassMatchMsg');

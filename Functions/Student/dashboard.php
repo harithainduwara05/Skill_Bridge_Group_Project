@@ -96,12 +96,16 @@
                 $profile_image = trim((string)($student['profile_image'] ?? ''));
                 $profile_image = basename(str_replace('\\', '/', $profile_image));
                 if ($profile_image !== '' && $profile_image !== '.' && $profile_image !== '..') {
-                    $student_img_file = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
-                    if (is_file($student_img_file)) {
-                        // Browser path is also relative to Functions/Student/.
+                    $profile_dir_file = __DIR__ . '/../../Assets/Images/Student/Profile/' . $profile_image;
+                    $legacy_dir_file  = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
+                    if (is_file($profile_dir_file)) {
+                        $student_img_src = '../../Assets/Images/Student/Profile/'
+                            . rawurlencode($profile_image)
+                            . '?v=' . filemtime($profile_dir_file);
+                    } elseif (is_file($legacy_dir_file)) {
                         $student_img_src = '../../Assets/Images/Student/'
                             . rawurlencode($profile_image)
-                            . '?v=' . filemtime($student_img_file);
+                            . '?v=' . filemtime($legacy_dir_file);
                     }
                 }
                 $student_name = trim((string)($student['Name'] ?? ''));
