@@ -580,12 +580,35 @@ function portfolioViewProject(project) {
         link.textContent = 'View project repository ↗';
         area.append(link);
     }
+
     if (isInternal) {
+        // Find if this student has a team for this project, otherwise fallback to the general project view
+        const viewLink = project.team_id ? 'view_team.php?id=' + project.team_id : 'view_project.php?id=' + project.organization_project_id;
+        
+        const internalBtn = document.createElement('a');
+        internalBtn.className = 'btn-project';
+        internalBtn.style.display = 'inline-flex';
+        internalBtn.style.alignItems = 'center';
+        internalBtn.style.justifyContent = 'center';
+        internalBtn.style.gap = '8px';
+        internalBtn.style.marginTop = '20px';
+        internalBtn.style.padding = '12px 25px';
+        internalBtn.style.backgroundColor = '#ff8a00';
+        internalBtn.style.color = '#ffffff';
+        internalBtn.style.borderRadius = '8px';
+        internalBtn.style.fontWeight = '600';
+        internalBtn.style.fontSize = '14px';
+        internalBtn.style.textDecoration = 'none';
+        internalBtn.href = viewLink;
+        internalBtn.innerHTML = '<i class="fa-solid fa-eye"></i> View Project';
+        area.append(internalBtn);
+        
         const note = document.createElement('p');
         note.className = 'portfolio-detail-note';
         note.textContent = 'This is an organization-managed project. Your edits affect only how it appears in your portfolio.';
         area.append(note);
     }
+    
     document.getElementById('projectViewTitle').textContent = project.title || 'Project details';
     const modal = document.getElementById('projectViewModal');
     modal.style.display = 'flex';
