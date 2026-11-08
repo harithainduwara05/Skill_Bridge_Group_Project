@@ -236,7 +236,8 @@ final class StudentPortfolioRepository
                        COALESCE((SELECT GROUP_CONCAT(ps.skill_name ORDER BY ps.skill_name SEPARATOR ', ')
                            FROM project_skills ps WHERE ps.project_id = p.id), '') AS tech_stack,
                        sp.role, sp.progress, sp.status AS student_status,
-                       ov.display_title, ov.display_description, ov.hidden
+                       ov.display_title, ov.display_description, ov.hidden,
+                       (SELECT t.id FROM org_teams t JOIN org_team_members tm ON tm.team_id = t.id WHERE t.project_id = p.id AND LOWER(tm.Email) = LOWER(sp.Email) ORDER BY t.id DESC LIMIT 1) AS team_id
                 FROM student_projects sp
                 INNER JOIN projects p ON p.id = sp.project_id
                 LEFT JOIN organization org ON org.Email = p.organization_email
@@ -272,6 +273,7 @@ final class StudentPortfolioRepository
             $row['project_status'] = $row['student_status'] ?: $row['original_status'];
             $row['repository_url'] = null;
             $row['project_image'] = null;
+            $row['team_id'] = (int) ($row['team_id'] ?? 0);
         }
         unset($row);
         return $rows;

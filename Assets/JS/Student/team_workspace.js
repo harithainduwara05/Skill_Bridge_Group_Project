@@ -399,22 +399,24 @@ document.addEventListener("DOMContentLoaded", function () {
                         return;
                     }
                     const rep = res.report;
-                    if (rep && reportStatusBox) {
-                        reportStatusBox.innerHTML = `
-                            <div class="report-banner">
-                                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                                    <div>
-                                        <span class="status-track">${esc(rep.status.toUpperCase())}</span>
-                                        <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> ${esc(rep.name)}</h4>
-                                        <p style="margin:0;color:#667085;font-size:12px;">Submitted by ${esc(rep.by)} on ${esc(rep.submitted)}</p>
+                    if (rep) {
+                        const box = document.querySelector(".final-report-box");
+                        if (box) {
+                            box.innerHTML = `
+                                <div class="report-banner report-${esc(rep.status)}">
+                                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                                        <div>
+                                            <span class="status-track">${esc(rep.status.toUpperCase())}</span>
+                                            <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> ${esc(rep.name)}</h4>
+                                            <p style="margin:0;color:#667085;font-size:12px;">Submitted by ${esc(rep.by)} on ${esc(rep.submitted)}</p>
+                                        </div>
+                                        <a href="../../${esc(rep.path)}" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i> Download Report</a>
                                     </div>
-                                    <a href="../../${esc(rep.path)}" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i>&nbsp;Download Report</a>
+                                    <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> ${esc(rep.summary).replace(/\n/g, "<br>")}</p>
                                 </div>
-                                <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> ${esc(rep.summary).replace(/\n/g, "<br>")}</p>
-                            </div>
-                        `;
+                            `;
+                        }
                     }
-                    reportForm.hidden = true;
                     loadWorkspaceState();
                     showToast("Final report submitted for Organization review!");
                 })
