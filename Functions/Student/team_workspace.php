@@ -79,7 +79,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             </div>
             <div class="kanban-board" id="wsKanbanBoard">
                 <?php foreach ($taskGroups as $colKey => $group): ?>
-                    <div class="kanban-column" data-col="<?= teamEsc($colKey) ?>">
+                    <div class="kanban-column" data-col="<?= teamEsc($colKey) ?>"> 
                         <h3><?= teamEsc(strtoupper($group['title'])) ?> <span id="col-count-<?= teamEsc($colKey) ?>"><?= count($group['items']) ?></span></h3>
                         <div class="kanban-col-body" id="col-body-<?= teamEsc($colKey) ?>">
                             <?php foreach ($group['items'] as $task): ?>

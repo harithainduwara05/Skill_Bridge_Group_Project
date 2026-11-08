@@ -29,13 +29,10 @@
         die("Student profile not found");
     }
 
-    // Fetch accurate portfolio project count
-    $portfolioSummary = $studentManager->getPortfolioSummary($email);
-
-    // Dashboard counts
+    // Dashboard counts (FIXED from 0 to dynamically loading from database)
     $student['skills'] = $studentManager->getSkillCount($email);
     $student['certificates'] = $studentManager->getCertificateCount($email);
-    $student['projects'] = $portfolioSummary['total_projects'] ?? 0;
+    $student['projects'] = $studentManager->getProjectCount($email);
     $student['applications'] = $studentManager->getApplicationCount($email);
     $student['active_teams'] = $studentManager->getActiveTeamCount($email);
 
@@ -254,12 +251,25 @@
                 <a href="teams.php" class="view-all-btn">See All Projects</a>
             </div>
             <?php foreach($projects as $project){ ?>
+            <?php
+                $isCompleted = strtolower($project['status'] ?? '') === 'completed';
+                $teamId = (int)($project['team_id'] ?? 0);
+                $projectId = (int)($project['id'] ?? 0);
+                
+                // If they have a team, link straight to the workspace/team details.
+                // Otherwise, link to the general view project page.
+                if ($teamId > 0) {
+                    $viewLink = "view_team.php?id={$teamId}";
+                } else {
+                    $viewLink = "view_project.php?id={$projectId}";
+                }
+            ?>
             <div class="project-item">
                 <!-- COLUMN 1 : PROJECT LOGO -->
                 <div class="project-logo">
                     <?php
-                        $words = explode(" ",$project['title']);
-                        echo strtoupper(substr($words[0],0,1) . substr($words[1] ?? "",0,1));
+                        $words = explode(" ", $project['title']);
+                        echo strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[1] ?? "", 0, 1));
                     ?>
                 </div>
 
@@ -286,7 +296,7 @@
 
                 <!-- COLUMN 5 : ACTION -->
                 <div class="action-column">
-                    <a href="view_project.php?id=<?= (int)($project['id'] ?? 0) ?>" class="view-icon" title="View Project">
+                    <a href="<?= htmlspecialchars($viewLink) ?>" class="view-icon" title="View Project">
                         <i class="fa-solid fa-eye"></i>
                     </a>
                 </div>

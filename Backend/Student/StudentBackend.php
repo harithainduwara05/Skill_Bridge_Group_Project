@@ -137,14 +137,17 @@ class StudentManager
     public function getProjects(string $email): array
     {
         return $this->fetchAll(
-            'SELECT p.id, p.title, o.Name AS organization,
-                    sp.role AS team, sp.progress, sp.status
-             FROM student_projects AS sp
-             INNER JOIN projects AS p ON p.id = sp.project_id
-             LEFT JOIN organization AS o ON o.Email = p.organization_email
-             WHERE sp.Email = ?
+            "SELECT p.id, p.title, o.Name AS organization,
+                    sp.role AS team, sp.progress, sp.status,
+                    (SELECT t.id FROM org_teams t JOIN org_team_members tm ON tm.team_id = t.id WHERE t.project_id = p.id AND LOWER(tm.Email) = LOWER(sp.Email) ORDER BY t.id DESC LIMIT 1) AS team_id
+             FROM student_projects sp
+             INNER JOIN projects p ON p.id = sp.project_id
+             LEFT JOIN organization o ON o.Email = p.organization_email
+             WHERE LOWER(sp.Email) = LOWER(?)
+               AND p.visibility = 'Public'
+               AND LOWER(p.status) NOT IN ('hold', 'rejected', 'suspended', 'reviewing')
              ORDER BY sp.student_project_id DESC
-             LIMIT 2',
+             LIMIT 2",
             's',
             [$email]
         );
