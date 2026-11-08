@@ -79,7 +79,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             </div>
             <div class="kanban-board" id="wsKanbanBoard">
                 <?php foreach ($taskGroups as $colKey => $group): ?>
-                    <div class="kanban-column" data-col="<?= teamEsc($colKey) ?>"> 
+                    <div class="kanban-column" data-col="<?= teamEsc($colKey) ?>">
                         <h3><?= teamEsc(strtoupper($group['title'])) ?> <span id="col-count-<?= teamEsc($colKey) ?>"><?= count($group['items']) ?></span></h3>
                         <div class="kanban-col-body" id="col-body-<?= teamEsc($colKey) ?>">
                             <?php foreach ($group['items'] as $task): ?>
@@ -149,46 +149,56 @@ include __DIR__ . '/../../Includes/dash_header.php';
             </section>
 
             <!-- FINAL REPORT SUBMISSION SECTION -->
-            <section class="shared-assets final-report-section" style="margin-top:25px;">
+            <section class="final-report-section" style="margin-top:25px;">
                 <h2><i class="fa-solid fa-file-signature"></i> Final Report Submission</h2>
-                <div class="asset-files" style="padding:20px;">
-                    <div id="wsReportStatusBox">
-                        <?php if ($report): ?>
-                            <div class="report-banner report-<?= teamEsc($report['status']) ?>">
-                                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                                    <div>
-                                        <span class="status-track"><?= teamEsc(strtoupper(str_replace('_', ' ', (string) $report['status']))) ?></span>
-                                        <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> <?= teamEsc($report['name']) ?></h4>
-                                        <p style="margin:0;color:#667085;font-size:12px;">Submitted by <?= teamEsc($report['by']) ?> on <?= teamEsc($report['submitted']) ?></p>
-                                    </div>
-                                    <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i>&nbsp;Download Report</a>
+                <div class="final-report-box">
+                    
+                    <?php if ($report): ?>
+                        <div class="report-banner report-<?= teamEsc($report['status']) ?>">
+                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                                <div>
+                                    <span class="status-track"><?= teamEsc(strtoupper(str_replace('_', ' ', (string) $report['status']))) ?></span>
+                                    <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> <?= teamEsc($report['name']) ?></h4>
+                                    <p style="margin:0;color:#667085;font-size:12px;">Submitted by <?= teamEsc($report['by']) ?> on <?= teamEsc($report['submitted']) ?></p>
                                 </div>
-                                <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> <?= nl2br(teamEsc($report['summary'])) ?></p>
-                                <?php if (!empty($report['note'])): ?>
-                                    <div style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #f97316;border-radius:6px;font-size:13px;color:#9a3412;">
-                                        <strong>Organization Feedback:</strong> <?= nl2br(teamEsc($report['note'])) ?>
-                                    </div>
-                                <?php endif; ?>
+                                <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i> Download Report</a>
                             </div>
-                        <?php else: ?>
-                            <p style="margin:0 0 15px;color:#667085;font-size:13px;">When all project tasks are approved and marked as <strong>Done</strong>, the Team Leader can upload the final project report (PDF, DOC, DOCX, or ZIP) for organization review.</p>
-                        <?php endif; ?>
-                    </div>
+                            <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> <?= nl2br(teamEsc($report['summary'])) ?></p>
+                            <?php if (!empty($report['note'])): ?>
+                                <div style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #f97316;border-radius:6px;font-size:13px;color:#9a3412;">
+                                    <strong>Organization Feedback:</strong> <?= nl2br(teamEsc($report['note'])) ?>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
 
-                    <?php if (!empty($team['is_leader']) && (!$report || $report['status'] === 'changes_requested')): ?>
-                        <form id="wsReportForm" style="margin-top:16px;border-top:1px solid #e5e7eb;padding-top:16px;">
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block;font-weight:700;font-size:13px;color:#082544;margin-bottom:6px;">Final Report Document (.pdf, .doc, .docx, .zip - Max 10MB) *</label>
-                                <input type="file" id="wsReportFile" name="report" accept=".pdf,.doc,.docx,.zip" required style="width:100%;padding:8px;border:1px solid #d0d5dd;border-radius:8px;background:#fff;">
-                            </div>
-                            <div style="margin-bottom:12px;">
-                                <label style="display:block;font-weight:700;font-size:13px;color:#082544;margin-bottom:6px;">Project Summary (20 - 2000 characters) *</label>
-                                <textarea id="wsReportSummary" name="summary" rows="3" minlength="20" maxlength="2000" required placeholder="Summarize your team's final deliverables, repository links, and key outcomes..." style="width:100%;padding:10px;border:1px solid #d0d5dd;border-radius:8px;font-family:inherit;font-size:13px;"><?= teamEsc($report['summary'] ?? '') ?></textarea>
-                            </div>
-                            <button type="submit" class="workspace-new-task-btn" id="wsReportSubmitBtn"><i class="fa-solid fa-paper-plane"></i>&nbsp;<?= $report ? 'Resubmit Final Report' : 'Submit Final Report' ?></button>
+                    <?php if (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
+                        
+                        <p class="info-text">
+                            When all project tasks are approved and marked as <strong>Done</strong>, the Team Leader can upload the final project report (PDF, DOC, DOCX, or ZIP) for organization review.
+                        </p>
+                        <hr style="border:0;border-top:1px solid #e5e7eb;margin-bottom:20px;">
+
+                        <form id="wsReportForm">
+                            <label>Final Report Document (.pdf, .doc, .docx, .zip - Max 10MB) *</label>
+                            <input type="file" id="wsReportFile" name="report" accept=".pdf,.doc,.docx,.zip" required>
+
+                            <label>Project Summary (20 - 2000 characters) *</label>
+                            <textarea id="wsReportSummary" name="summary" minlength="20" maxlength="2000" required placeholder="Summarize your team's final deliverables, repository links, and key outcomes..."><?= teamEsc($report['summary'] ?? '') ?></textarea>
+
+                            <button type="submit" class="submit-report-btn" id="wsReportSubmitBtn">
+                                <i class="fa-solid fa-paper-plane"></i> <?= $report ? 'Resubmit Final Report' : 'Submit Final Report' ?>
+                            </button>
                         </form>
+
                     <?php elseif (empty($team['is_leader']) && (!$report || $report['status'] !== 'accepted')): ?>
-                        <p style="margin-top:12px;color:#667085;font-size:12px;"><i class="fa-solid fa-circle-info"></i> Only the Team Leader (<strong><?= teamEsc($team['leader_name']) ?></strong>) can submit the final report once all tasks are Done.</p>
+                        <p class="info-text" style="margin-bottom:0;"><i class="fa-solid fa-circle-info"></i> Only the Team Leader (<strong><?= teamEsc($team['leader_name']) ?></strong>) can submit the final report once all tasks are Done.</p>
+                    
+                    <?php elseif (!empty($team['is_leader']) && $pct < 100 && !$report): ?>
+                        <p class="info-text" style="margin-bottom:0;"><i class="fa-solid fa-circle-info"></i> When all project tasks are approved and marked as <strong>Done</strong>, the Team Leader can upload the final project report.</p>
+                        <div style="margin-top:16px;padding:14px;background:#fff8f1;border:1px dashed #ff8a00;border-radius:8px;color:#b45309;font-size:13px;">
+                            <i class="fa-solid fa-circle-exclamation"></i> <strong>Tasks Pending:</strong> Move all your tasks to <strong>Done</strong> (Currently <?= $pct ?>%) before submitting the Final Report.
+                        </div>
                     <?php endif; ?>
                 </div>
             </section>
