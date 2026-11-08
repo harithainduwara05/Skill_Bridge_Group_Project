@@ -29,10 +29,13 @@
         die("Student profile not found");
     }
 
+    // Fetch accurate portfolio project count
+    $portfolioSummary = $studentManager->getPortfolioSummary($email);
+
     // Dashboard counts
     $student['skills'] = $studentManager->getSkillCount($email);
     $student['certificates'] = $studentManager->getCertificateCount($email);
-    $student['projects'] = 0;
+    $student['projects'] = $portfolioSummary['total_projects'] ?? 0;
     $student['applications'] = $studentManager->getApplicationCount($email);
     $student['active_teams'] = $studentManager->getActiveTeamCount($email);
 
@@ -67,90 +70,72 @@
     <!-- HEADER -->
     <div class="header">
         <div>
-            <h1> Welcome back,<?php echo htmlspecialchars($student['Name']); ?> </h1>
+            <h1> Welcome back, <?php echo htmlspecialchars($student['Name']); ?> </h1>
             <p>Continue building your skills and career journey.</p>
         </div>
-        <a href="projects.php"class="post-btn">Browse Projects</a></div>
+        <a href="projects.php" class="post-btn">Browse Projects</a>
+    </div>
 
-        <!-- PROFILE + STATS -->
-        <div class="top-section">
-            <div class="profile-card">
-                <?php
-                // Use the same image directory as the Student Settings upload handler.
-                // This dashboard is expected to live in Functions/Student/.
-                if (!array_key_exists('profile_image', $student) && isset($conn)) {
-                    // Some getStudent() implementations omit profile_image.
-                    $photoQuery = $conn->prepare(
-                        "SELECT profile_image FROM student WHERE Email = ? LIMIT 1"
-                    );
-                    if ($photoQuery) {
-                        $photoQuery->bind_param('s', $email);
-                        $photoQuery->execute();
-                        $photoRow = $photoQuery->get_result()->fetch_assoc();
-                        $student['profile_image'] = $photoRow['profile_image'] ?? null;
-                        $photoQuery->close();
-                    }
+    <!-- PROFILE + STATS -->
+    <div class="top-section">
+        <div class="profile-card">
+            <?php
+            if (!array_key_exists('profile_image', $student) && isset($conn)) {
+                $photoQuery = $conn->prepare("SELECT profile_image FROM student WHERE Email = ? LIMIT 1");
+                if ($photoQuery) {
+                    $photoQuery->bind_param('s', $email);
+                    $photoQuery->execute();
+                    $photoRow = $photoQuery->get_result()->fetch_assoc();
+                    $student['profile_image'] = $photoRow['profile_image'] ?? null;
+                    $photoQuery->close();
                 }
+            }
 
-                $student_img_src = null;
-                $profile_image = trim((string)($student['profile_image'] ?? ''));
-                $profile_image = basename(str_replace('\\', '/', $profile_image));
-                if ($profile_image !== '' && $profile_image !== '.' && $profile_image !== '..') {
-                    $profile_dir_file = __DIR__ . '/../../Assets/Images/Student/Profile/' . $profile_image;
-                    $legacy_dir_file  = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
-                    if (is_file($profile_dir_file)) {
-                        $student_img_src = '../../Assets/Images/Student/Profile/'
-                            . rawurlencode($profile_image)
-                            . '?v=' . filemtime($profile_dir_file);
-                    } elseif (is_file($legacy_dir_file)) {
-                        $student_img_src = '../../Assets/Images/Student/'
-                            . rawurlencode($profile_image)
-                            . '?v=' . filemtime($legacy_dir_file);
-                    }
+            $student_img_src = null;
+            $profile_image = trim((string)($student['profile_image'] ?? ''));
+            $profile_image = basename(str_replace('\\', '/', $profile_image));
+            if ($profile_image !== '' && $profile_image !== '.' && $profile_image !== '..') {
+                $profile_dir_file = __DIR__ . '/../../Assets/Images/Student/Profile/' . $profile_image;
+                $legacy_dir_file  = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
+                if (is_file($profile_dir_file)) {
+                    $student_img_src = '../../Assets/Images/Student/Profile/' . rawurlencode($profile_image) . '?v=' . filemtime($profile_dir_file);
+                } elseif (is_file($legacy_dir_file)) {
+                    $student_img_src = '../../Assets/Images/Student/' . rawurlencode($profile_image) . '?v=' . filemtime($legacy_dir_file);
                 }
-                $student_name = trim((string)($student['Name'] ?? ''));
-                $student_initial = $student_name !== ''
-                    ? strtoupper(mb_substr($student_name, 0, 1)) : 'S';
-                ?>
-                <div class = "dashboard-avatar">
-                    <?php if(!empty($student_img_src)): ?>
-                        <img 
-                            src = "<?php echo htmlspecialchars($student_img_src, ENT_QUOTES, 'UTF-8'); ?>"
-                            alt = "<?php echo htmlspecialchars($student['Name'], ENT_QUOTES, 'UTF-8'); ?>"
-                            onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';"
-                        >
-                        <div class = "default-avatar-placeholder" style = "display:none;">
-                            <span><?php echo htmlspecialchars($student_initial); ?></span>
-                        </div>
-                    <?php else: ?>
-                        <div class = "default-avatar-placeholder">
-                            <span><?php echo htmlspecialchars($student_initial); ?></span>
-                        </div>
-                        <?php endif; ?>
+            }
+            $student_name = trim((string)($student['Name'] ?? ''));
+            $student_initial = $student_name !== '' ? strtoupper(mb_substr($student_name, 0, 1)) : 'S';
+            ?>
+            <div class="dashboard-avatar">
+                <?php if(!empty($student_img_src)): ?>
+                    <img src="<?php echo htmlspecialchars($student_img_src, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($student['Name'], ENT_QUOTES, 'UTF-8'); ?>" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                    <div class="default-avatar-placeholder" style="display:none;"><span><?php echo htmlspecialchars($student_initial); ?></span></div>
+                <?php else: ?>
+                    <div class="default-avatar-placeholder"><span><?php echo htmlspecialchars($student_initial); ?></span></div>
+                <?php endif; ?>
+            </div>
+            <div>
+                <h2><?php echo htmlspecialchars($student['Name']); ?></h2>
+                <p>
+                    <?php echo htmlspecialchars($student['degree']); ?> • Year <?php echo htmlspecialchars($student['year']); ?>
+                    <br>
+                    <?php echo htmlspecialchars($student['University']); ?>
+                </p>
+                <div class="profile-completion">
+                    <div class="completion-header">
+                        <span>Profile Completion</span>
+                        <strong><?php echo $completion; ?>%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width:<?php echo $completion; ?>%;"></div>
+                    </div>
                 </div>
-                <div>
-                    <h2><?php echo htmlspecialchars($student['Name']); ?></h2>
-                    <p>
-                        <?php echo htmlspecialchars($student['degree']); ?>• Year
-                        <?php echo htmlspecialchars($student['year']); ?>
-                        <br>
-                        <?php echo htmlspecialchars($student['University']); ?>
-                    </p>
-                    <div class="profile-completion">
-                        <div class="completion-header">
-                            <span>Profile Completion</span>
-                            <strong><?php echo $completion; ?>%</strong>
-                        </div>
-                        <div class="progress">
-                            <div class="progress-bar" style="width:<?php echo $completion; ?>%;"></div>
-                        </div>
-                    </div>
-                    <div class="profile-buttons">
-                    <a href = "settings.php" class="btn">Complete Profile</a>
-                    <a href = "./cv_builder.php" class="outline">View Public CV</a>
-                    </div>
+                <div class="profile-buttons">
+                    <a href="settings.php" class="btn">Complete Profile</a>
+                    <a href="./cv_builder.php" class="outline">View Public CV</a>
                 </div>
             </div>
+        </div>
 
         <!-- STATISTICS -->
         <div class="stats">
@@ -195,21 +180,16 @@
             </div>
             <div class="skills">
                 <?php foreach($skills as $skill){ ?>
-                
                 <div class="skill-card">
                     <h5><?php echo htmlspecialchars($skill['skill_name']); ?></h5>
                     <p><?php echo htmlspecialchars($skill['level']); ?></p>
                     <div class="progress">
                         <div style="width:
                             <?php
-                                if($skill['level']=="Expert")
-                                    {echo "95";}
-                                elseif($skill['level']=="Advanced")
-                                    {echo "85";}
-                                elseif($skill['level']=="Intermediate")
-                                    {echo "70";}
-                                else
-                                    {echo "50";}
+                                if($skill['level']=="Expert") {echo "95";}
+                                elseif($skill['level']=="Advanced") {echo "85";}
+                                elseif($skill['level']=="Intermediate") {echo "70";}
+                                else {echo "50";}
                             ?>%">
                         </div>
                     </div>
@@ -231,30 +211,20 @@
                     $type = strtolower(trim($notification['type'] ?? ''));
                     $title = strtolower($notification['title'] ?? '');
 
-                    if(
-                        $type == "application" || str_contains($title,"application")
-                    ){
+                    if($type == "application" || str_contains($title,"application")){
                         $iconClass = "blue";
                         $icon = "application.png";
-                    }
-                    elseif(
-                        $type == "project" || str_contains($title,"project")
-                    ){
+                    } elseif($type == "project" || str_contains($title,"project")){
                         $iconClass = "green";
                         $icon = "projects.svg";
-                    }
-                    elseif(
-                        $type == "skill" || str_contains($title,"skill")
-                    ){
+                    } elseif($type == "skill" || str_contains($title,"skill")){
                         $iconClass = "orange";
                         $icon = "skills.png";
-                    }
-                    else{
+                    } else {
                         $iconClass = "orange";
                         $icon = "notification.png";
                     }
                 ?>
-
                 <div class="update-icon <?php echo $iconClass; ?>">
                     <img src="../../Assets/Images/Icons/<?php echo $icon; ?>">
                 </div>
@@ -284,36 +254,20 @@
                 <a href="teams.php" class="view-all-btn">See All Projects</a>
             </div>
             <?php foreach($projects as $project){ ?>
-
             <div class="project-item">
-
                 <!-- COLUMN 1 : PROJECT LOGO -->
                 <div class="project-logo">
                     <?php
                         $words = explode(" ",$project['title']);
-                        echo strtoupper(
-                            substr($words[0],0,1) .
-                            substr($words[1] ?? "",0,1)
-                        );
-                        ?>
+                        echo strtoupper(substr($words[0],0,1) . substr($words[1] ?? "",0,1));
+                    ?>
                 </div>
 
                 <!-- COLUMN 2 : PROJECT DETAILS -->
                 <div class="project-details">
                     <h4><?php echo htmlspecialchars($project['title'] ?? ''); ?></h4>
-                    <p>Organization:
-                        <?php echo htmlspecialchars(
-                            $project['organization'] ??
-                            $project['company'] ??
-                            'N/A'); ?>
-                    </p>
-                    
-                    <p>Role:
-                        <?php echo htmlspecialchars(
-                        $project['team'] ??
-                        $project['role'] ??
-                        'N/A');?>
-                    </p>
+                    <p>Organization: <?php echo htmlspecialchars($project['organization'] ?? $project['company'] ?? 'N/A'); ?></p>
+                    <p>Role: <?php echo htmlspecialchars($project['team'] ?? $project['role'] ?? 'N/A');?></p>
                 </div>
 
                 <!-- COLUMN 3 : PROGRESS -->
@@ -325,23 +279,14 @@
                 <!-- COLUMN 4 : STATUS -->
                 <div class="status-column">
                     <span>Status</span>
-                    <div class="status 
-                        <?php echo strtolower(
-                            str_replace(
-                                ' ',
-                                '-',
-                                $project['status'] ?? ''
-                            )
-                        ); ?>">
-                        <?php echo htmlspecialchars(
-                            $project['status'] ?? ''
-                        ); ?>
+                    <div class="status <?php echo strtolower(str_replace(' ', '-', $project['status'] ?? '')); ?>">
+                        <?php echo htmlspecialchars($project['status'] ?? ''); ?>
                     </div>
                 </div>
 
                 <!-- COLUMN 5 : ACTION -->
                 <div class="action-column">
-                    <a href="#" class="view-icon" title="View Project">
+                    <a href="view_project.php?id=<?= (int)($project['id'] ?? 0) ?>" class="view-icon" title="View Project">
                         <i class="fa-solid fa-eye"></i>
                     </a>
                 </div>
@@ -350,13 +295,10 @@
         </div>
 
         <!-- Recommended -->
-
         <?php if(canApplyInternship($email)){ ?>
         <div class="recommended-box">
             <h2>Recommended For You</h2>
-
             <?php foreach($internships as $internship){ ?>
-
             <div class="intern-card">
                 <div class="intern-title">
                     <h3><?php echo htmlspecialchars($internship['title']); ?></h3>
@@ -364,11 +306,11 @@
                 </div>
                 <p><?php echo htmlspecialchars($internship['company']); ?></p>
                 <p><?php echo htmlspecialchars($internship['tech_tags']); ?></p>
-                <a href="view_internship.php" class="apply-btn">View Details</a>
+                <a href="view_internship.php?id=<?= (int)$internship['id'] ?>" class="apply-btn">View Details</a>
             </div>
-        <?php } ?>
+            <?php } ?>
         </div>
-    <?php } ?>
+        <?php } ?>
     </div>
 </div>
 

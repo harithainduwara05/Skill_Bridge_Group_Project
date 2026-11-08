@@ -119,7 +119,19 @@ class StudentManager
     // Internal organization projects assigned to the student (legacy method).
     public function getProjectCount(string $email): int
     {
-        return $this->count('SELECT COUNT(*) AS total FROM student_projects WHERE Email = ?', $email);
+        $rows = $this->fetchAll(
+            "SELECT COUNT(DISTINCT sp.project_id) AS total
+             FROM student_projects sp
+             JOIN projects p ON p.id = sp.project_id
+             WHERE LOWER(sp.Email) = LOWER(?)
+               AND p.visibility = 'Public'
+               AND LOWER(p.status) NOT IN ('hold', 'rejected', 'suspended', 'reviewing')
+               AND (LOWER(COALESCE(sp.status, '')) IN ('completed', 'complete', 'done') OR LOWER(COALESCE(p.status, '')) IN ('completed', 'complete', 'done')
+               OR EXISTS (SELECT 1 FROM org_teams t JOIN org_team_members tm ON tm.team_id = t.id WHERE t.project_id = p.id AND LOWER(tm.Email) = LOWER(sp.Email) AND LOWER(COALESCE(t.status, '')) IN ('completed', 'complete', 'done')))",
+            's',
+            [$email]
+        );
+        return (int) ($rows[0]['total'] ?? 0);
     }
 
     public function getProjects(string $email): array
@@ -142,12 +154,12 @@ class StudentManager
     {
         $rows = $this->fetchAll(
             "SELECT COUNT(DISTINCT t.id) AS total
-             FROM org_teams AS t
-             LEFT JOIN org_team_members AS m ON m.team_id = t.id AND m.Email = ?
-             WHERE (m.Email IS NOT NULL OR t.leader_email = ?)
-               AND t.status = 'ontrack'",
-            'ss',
-            [$email, $email]
+             FROM org_teams t
+             JOIN org_team_members m ON m.team_id = t.id
+             WHERE LOWER(m.Email) = LOWER(?)
+               AND LOWER(COALESCE(t.status, 'ontrack')) NOT IN ('completed', 'complete', 'done')",
+            's',
+            [$email]
         );
         return (int) ($rows[0]['total'] ?? 0);
     }
