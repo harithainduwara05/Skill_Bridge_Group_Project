@@ -263,7 +263,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <p>Manage your academic identity and professional presence.</p>
             </div>
             <div class="profile-actions">
-                <button type="button" class="share-btn" onclick="shareProfile()"><i class="fa-solid fa-share-nodes"></i> Share Profile</button>
+                <button type="button" class="share-btn" onclick="shareProfile()"> Public Profile</button>
                 <button type="submit" name="save_changes" value="1" class="save-btn"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
             </div>
         </div>
@@ -459,10 +459,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
         const email = <?= json_encode((string)$email, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>;
         const base = <?= json_encode((string)($BASE_URL ?? '/Skill_Bridge_Group_Project')) ?>;
         const url = window.location.origin + base + '/Functions/Student/public_profile.php?email=' + encodeURIComponent(email);
-        if (!navigator.clipboard) return showToast('Clipboard is not available.', 'error');
-        navigator.clipboard.writeText(url)
-            .then(() => showToast('Public profile link copied successfully!', 'success'))
-            .catch(() => showToast('Failed to copy profile link.', 'error'));
+        window.open(url, '_blank');
     }
 
     function removeProfileImage() {
