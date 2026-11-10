@@ -1650,6 +1650,58 @@ CREATE TABLE `v_student_skills_computed` (
 -- --------------------------------------------------------
 
 -- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `student_feedback` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `student_email` varchar(100) NOT NULL,
+  `project_id` int(11) NOT NULL,
+  `organization_email` varchar(100) NOT NULL,
+  `role` varchar(100) DEFAULT 'Team Member',
+  `rating` decimal(3,1) NOT NULL DEFAULT 5.0 CHECK (`rating` >= 1.0 AND `rating` <= 5.0),
+  `feedback_text` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `idx_student_email` (`student_email`),
+  KEY `idx_project_id` (`project_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT INTO `student_feedback` (`student_email`,`project_id`,`organization_email`,`role`,`rating`,`feedback_text`,`created_at`
+) VALUES
+(
+  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
+  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` ASC LIMIT 1), 1),
+  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
+  'Backend Developer',
+  5.0,
+  'Architected the core API endpoints and database schema for the Campus Event Management System. Code quality was production-ready and well-documented.',
+  '2026-10-15 10:30:00'
+),
+(
+  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
+  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` DESC LIMIT 1), 2),
+  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
+  'Full-Stack Developer',
+  4.9,
+  'Great initiative on the Portfolio Website Builder. Handled dynamic template rendering and state management with zero regressions during UAT.',
+  '2026-09-28 14:15:00'
+),
+(
+  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
+  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` ASC LIMIT 1), 1),
+  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
+  'Team Leader',
+  4.8,
+  'Led the sprint planning and code reviews effectively. Kept the entire student team aligned with our organization milestones and delivered the final report on time.',
+  '2026-08-19 09:00:00'
+),
+(
+  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
+  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` DESC LIMIT 1), 2),
+  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
+  'DevOps & Backend Engineer',
+  5.0,
+  'Containerized the application services and streamlined the deployment workflow. We would gladly select this student for future organization projects.',
+  '2026-07-11 16:45:00'
+);
 
 --
 -- Structure for view `v_internships_full`

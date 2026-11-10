@@ -71,16 +71,115 @@ while ($row = $res->fetch_assoc()) {
 }
 $q->close();
 
-// Record Profile View (skip if it's the student themselves viewing it, we can check session if available)
+// Fetch Feedback & Recommendations (safe across schemas)
+$feedbacks = [];
+$avg_rating = 0.0;
+$total_rating = 0.0;
+
+try {
+    $table_check = $conn->query("SHOW TABLES LIKE 'student_feedback'");
+    if ($table_check && $table_check->num_rows > 0) {
+        $fbColsRes = $conn->query("SHOW COLUMNS FROM `student_feedback`");
+        $fbCols = [];
+        while ($c = $fbColsRes->fetch_assoc()) {
+            $fbCols[strtolower($c['Field'])] = $c['Field'];
+        }
+        $hasRoleCol = isset($fbCols['role']);
+        $textCol = $fbCols['feedback_text'] ?? $fbCols['review'] ?? $fbCols['feedback'] ?? $fbCols['comment'] ?? 'feedback_text';
+        $roleSelect = $hasRoleCol ? "COALESCE(NULLIF(sf.`{$fbCols['role']}`, ''), sp.role, 'Team Member')" : "COALESCE(sp.role, 'Team Member')";
+
+        $q = $conn->prepare("
+            SELECT sf.rating, sf.`$textCol` AS feedback_text, sf.created_at,
+                   $roleSelect AS role,
+                   COALESCE(org.Name, sf.organization_email, 'Organization') AS company,
+                   COALESCE(p.title, 'SkillBridge Organization Project') AS project_title,
+                   NULL AS company_logo
+            FROM student_feedback sf
+            LEFT JOIN organization org ON LOWER(TRIM(sf.organization_email)) = LOWER(TRIM(org.Email))
+            LEFT JOIN projects p ON sf.project_id = p.id
+            LEFT JOIN student_projects sp ON sp.project_id = sf.project_id AND LOWER(TRIM(sp.Email)) = LOWER(TRIM(sf.student_email))
+            WHERE LOWER(TRIM(sf.student_email)) = LOWER(TRIM(?))
+            ORDER BY sf.created_at DESC, sf.id DESC
+        ");
+        if ($q) {
+            $q->bind_param("s", $email);
+            $q->execute();
+            $res = $q->get_result();
+            while ($row = $res->fetch_assoc()) {
+                $feedbacks[] = $row;
+                $total_rating += (float)$row['rating'];
+            }
+            $q->close();
+        }
+    }
+
+    if (empty($feedbacks)) {
+        foreach (['org_student_feedback', 'project_feedback', 'feedback'] as $altTable) {
+            $altCheck = $conn->query("SHOW TABLES LIKE '$altTable'");
+            if ($altCheck && $altCheck->num_rows > 0) {
+                $colsRes = $conn->query("SHOW COLUMNS FROM `$altTable`");
+                $cols = [];
+                while ($c = $colsRes->fetch_assoc()) {
+                    $cols[strtolower($c['Field'])] = $c['Field'];
+                }
+                $studentCol = $cols['student_email'] ?? $cols['email'] ?? null;
+                $ratingCol = $cols['rating'] ?? $cols['stars'] ?? $cols['score'] ?? null;
+                $textCol = $cols['feedback_text'] ?? $cols['feedback'] ?? $cols['comment'] ?? $cols['review'] ?? null;
+                $projCol = $cols['project_id'] ?? null;
+                $orgCol = $cols['organization_email'] ?? $cols['org_email'] ?? null;
+                $dateCol = $cols['created_at'] ?? $cols['submitted_at'] ?? $cols['date'] ?? null;
+
+                if ($studentCol && $ratingCol && $textCol) {
+                    $selProj = $projCol ? "LEFT JOIN projects p ON p.id = f.`$projCol`" : "";
+                    $selOrg = $orgCol ? "LEFT JOIN organization org ON LOWER(org.Email) = LOWER(f.`$orgCol`)" : "";
+                    $compExpr = $orgCol ? "COALESCE(org.Name, f.`$orgCol`, 'Organization')" : "'Organization'";
+                    $projExpr = $projCol ? "COALESCE(p.title, 'SkillBridge Project')" : "'SkillBridge Project'";
+                    $dateExpr = $dateCol ? "f.`$dateCol`" : "NOW()";
+
+                    $altSql = "SELECT f.`$ratingCol` AS rating, f.`$textCol` AS feedback_text,
+                                      $dateExpr AS created_at, 'Team Member' AS role,
+                                      $compExpr AS company, $projExpr AS project_title, NULL AS company_logo
+                               FROM `$altTable` f
+                               $selProj
+                               $selOrg
+                               WHERE LOWER(f.`$studentCol`) = LOWER(?)
+                               ORDER BY $dateExpr DESC";
+                    $stmt = $conn->prepare($altSql);
+                    if ($stmt) {
+                        $stmt->bind_param("s", $email);
+                        $stmt->execute();
+                        $res = $stmt->get_result();
+                        while ($row = $res->fetch_assoc()) {
+                            $feedbacks[] = $row;
+                            $total_rating += (float)$row['rating'];
+                        }
+                        $stmt->close();
+                        if (!empty($feedbacks)) break;
+                    }
+                }
+            }
+        }
+    }
+} catch (Throwable $e) {
+    error_log('Public profile feedback load error: ' . $e->getMessage());
+}
+
+if (count($feedbacks) > 0) {
+    $avg_rating = round($total_rating / count($feedbacks), 1);
+}
+
+// Record Profile View (skip if it's the student themselves viewing it)
 if (session_status() === PHP_SESSION_NONE) {
     session_name('skill_bridge_sess');
     session_start();
 }
 if (!isset($_SESSION['user']) || ($_SESSION['user']['Email'] ?? $_SESSION['user']['email'] ?? '') !== $email) {
     $q = $conn->prepare("INSERT INTO student_profile_views (student_email) VALUES (?)");
-    $q->bind_param("s", $email);
-    $q->execute();
-    $q->close();
+    if ($q) {
+        $q->bind_param("s", $email);
+        $q->execute();
+        $q->close();
+    }
 }
 
 $name = htmlspecialchars($student['Name'] ?? 'Unknown');
@@ -111,9 +210,12 @@ if ($rawPhoto !== '') {
 </head>
 <body>
     <div class="public-profile-container">
+        
+        <div class="card profile-header-card" style="position: relative;">
+            <button type="button" class="share-header-btn" onclick="sharePublicProfile()">
+                <i class="fa-solid fa-share-nodes"></i> Share Profile
+            </button>
 
-
-        <div class="card profile-header-card">
             <div class="avatar-container">
                 <?php if ($photoUrl): ?>
                     <img src="<?= htmlspecialchars($photoUrl) ?>" alt="<?= $name ?>">
@@ -121,9 +223,11 @@ if ($rawPhoto !== '') {
                     <div class="avatar-initials"><?= $initials ?></div>
                 <?php endif; ?>
             </div>
-            <div class="profile-info">
-                <h1><?= $name ?></h1>
-                <p class="subtitle">
+            <div class="profile-info" style="flex: 1;">
+                <div class="profile-name-row">
+                    <h1><?= $name ?></h1>
+                </div>
+                <p class="subtitle" style="margin-bottom: 12px;">
                     <?php if(!empty($student['degree'])): ?>
                         <?= htmlspecialchars($student['degree']) ?> 
                         <?= !empty($student['year']) ? '• Year ' . htmlspecialchars($student['year']) : '' ?>
@@ -131,6 +235,28 @@ if ($rawPhoto !== '') {
                     <?php endif; ?>
                     <?= htmlspecialchars($student['University'] ?? 'University not specified') ?>
                 </p>
+
+                <!-- Prominent Rating Badge (e.g., 4.9 out of 5) for Organizations / Outsiders -->
+                <div class="public-rating-banner">
+                    <span class="rating-stars">
+                        <?php 
+                        $display_rating = count($feedbacks) > 0 ? $avg_rating : 0.0;
+                        $full_stars = (int) floor($display_rating);
+                        $half_star = ($display_rating - $full_stars) >= 0.5 ? 1 : 0;
+                        $empty_stars = 5 - $full_stars - $half_star;
+                        
+                        echo str_repeat('<i class="fa-solid fa-star"></i>', $full_stars);
+                        if ($half_star) echo '<i class="fa-solid fa-star-half-stroke"></i>';
+                        echo str_repeat('<i class="fa-regular fa-star"></i>', $empty_stars);
+                        ?>
+                    </span>
+                    <?php if (count($feedbacks) > 0): ?>
+                        <strong class="rating-score-text"><?= number_format($avg_rating, 1) ?> out of 5</strong>
+                    <?php else: ?>
+                        <strong class="rating-score-text">No ratings yet</strong>
+                        <span class="rating-count-text">(0 out of 5)</span>
+                    <?php endif; ?>
+                </div>
                 
                 <div class="social-links">
                     <?php if (!empty($student['github'])): ?>
@@ -143,10 +269,6 @@ if ($rawPhoto !== '') {
                         <a href="<?= htmlspecialchars($student['website']) ?>" target="_blank" class="social-btn"><i class="fa-solid fa-globe"></i> Website</a>
                     <?php endif; ?>
                     <a href="mailto:<?= htmlspecialchars($student['Email']) ?>" class="social-btn"><i class="fa-regular fa-envelope"></i> Email</a>
-
-                    <button type="button" class="linkedin-outline-btn" style="background:#0f172a; color:#fff; border:none; padding:8px 16px; border-radius:8px;" onclick="sharePublicProfile()">
-                    <i class="fa-solid fa-share-nodes"></i> Share Profile
-                </button>
                 </div>
             </div>
         </div>
@@ -204,7 +326,7 @@ if ($rawPhoto !== '') {
         </div>
 
         <?php 
-        // Combine and limit to 5 projects max for display
+        // Combine all projects, show 5 initially, allow expanding all
         $all_projects = [];
         foreach ($internal_projects as $proj) {
             $proj['type'] = 'internal';
@@ -214,7 +336,6 @@ if ($rawPhoto !== '') {
             $proj['type'] = 'portfolio';
             $all_projects[] = $proj;
         }
-        $display_projects = array_slice($all_projects, 0, 5);
         ?>
 
         <?php if (!empty($all_projects)): ?>
@@ -224,7 +345,9 @@ if ($rawPhoto !== '') {
             </div>
             
             <div class="linkedin-projects-list">
-                <?php foreach ($display_projects as $proj): ?>
+                <?php foreach ($all_projects as $idx => $proj): 
+                    $projHiddenClass = $idx >= 5 ? 'pub-is-hidden extra-pub-project' : '';
+                ?>
                     <?php if ($proj['type'] === 'internal'): 
                         $techs = array_values(array_filter(array_map('trim', explode(',', (string)$proj['tech_stack']))));
                         $projData = [
@@ -246,7 +369,7 @@ if ($rawPhoto !== '') {
                             }
                         }
                     ?>
-                        <div class="linkedin-project-item">
+                        <div class="linkedin-project-item <?= $projHiddenClass ?>">
                             <div class="project-thumb">
                                 <div class="linkedin-project-image-placeholder">
                                     <?php if (!empty($proj['icon'])): ?>
@@ -279,7 +402,6 @@ if ($rawPhoto !== '') {
                         </div>
 
                     <?php else: 
-                        // Portfolio Project Block
                         $techQ = $conn->prepare("SELECT t.technology_name FROM student_technologies t JOIN student_portfolio_project_technologies pt ON pt.technology_id = t.technology_id WHERE pt.portfolio_project_id = ?");
                         $techQ->bind_param("i", $proj['portfolio_project_id']);
                         $techQ->execute();
@@ -309,7 +431,7 @@ if ($rawPhoto !== '') {
                             }
                         }
                     ?>
-                        <div class="linkedin-project-item">
+                        <div class="linkedin-project-item <?= $projHiddenClass ?>">
                             <div class="project-thumb">
                                 <div class="linkedin-project-image-placeholder">
                                     <?php if (!empty($proj['project_image'])): ?>
@@ -348,7 +470,9 @@ if ($rawPhoto !== '') {
                 
                 <?php if(count($all_projects) > 5): ?>
                     <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center;">
-                        <button type="button" class="view-internal-btn" style="font-size: 15px; color: #64748b; margin: 0;">Show all <?= count($all_projects) ?> projects <i class="fa-solid fa-arrow-right"></i></button>
+                        <button type="button" class="view-internal-btn" id="pubToggleProjBtn" onclick="togglePublicItems('extra-pub-project', 'pubToggleProjBtn', 'Show all <?= count($all_projects) ?> projects', 'Show less projects')" style="font-size: 15px; color: #64748b; margin: 0;">
+                            <span>Show all <?= count($all_projects) ?> projects</span> <i class="fa-solid fa-arrow-right"></i>
+                        </button>
                     </div>
                 <?php endif; ?>
             </div>
@@ -405,6 +529,82 @@ if ($rawPhoto !== '') {
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- REVIEWS & FEEDBACK SECTION -->
+        <div class="card feedback-card">
+            <div class="card-header-flex">
+                <h2>Reviews & Feedback (<?= count($feedbacks) ?>)</h2>
+                <?php if (count($feedbacks) > 0): ?>
+                    <span class="public-rating-pill">
+                        <i class="fa-solid fa-star" style="color:#f59e0b;"></i> <?= number_format($avg_rating, 1) ?> out of 5
+                    </span>
+                <?php endif; ?>
+            </div>
+            <?php if (!empty($feedbacks)): ?>
+                <div class="linkedin-projects-list">
+                    <?php foreach ($feedbacks as $idx => $fb): 
+                        $fbHiddenClass = $idx >= 3 ? 'pub-is-hidden extra-pub-feedback' : '';
+                    ?>
+                        <div class="linkedin-project-item <?= $fbHiddenClass ?>">
+                            <div class="project-thumb" style="width: 50px;">
+                                <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:50%; box-shadow:none; overflow:hidden;">
+                                    <?php if (!empty($fb['company_logo'])): ?>
+                                        <img src="../../Assets/Images/Organization/<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" onerror="this.style.display='none'">
+                                    <?php else: ?>
+                                        <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; border-radius:50%;">
+                                            <?= strtoupper(mb_substr($fb['company'], 0, 1)) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <div class="project-content">
+                                <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+                                    <div>
+                                        <h3 style="display:flex; align-items:center; gap:8px;">
+                                            <?= htmlspecialchars($fb['company']) ?>
+                                            <span style="font-size:12px; font-weight:500; color:#64748b; background:#f1f5f9; padding:2px 8px; border-radius:12px;">Organization</span>
+                                        </h3>
+                                        <p class="project-date" style="margin-bottom:6px;">
+                                            Project: <strong><?= htmlspecialchars($fb['project_title']) ?></strong> 
+                                            <?php if (!empty($fb['role'])): ?> &bull; Role: <?= htmlspecialchars($fb['role']) ?><?php endif; ?>
+                                            &bull; <?= date('M d, Y', strtotime($fb['created_at'])) ?>
+                                        </p>
+                                    </div>
+                                    <div style="display:inline-flex; align-items:center; gap:6px; background:#fffbeb; border:1px solid #fde68a; padding:4px 10px; border-radius:999px; font-size:13px; font-weight:700; color:#92400e;">
+                                        <span style="color:#f59e0b;">
+                                            <?php 
+                                            $r = (float)$fb['rating'];
+                                            $full = (int) floor($r);
+                                            $half = ($r - $full) >= 0.5 ? 1 : 0;
+                                            $empty = 5 - $full - $half;
+                                            echo str_repeat('<i class="fa-solid fa-star"></i>', $full);
+                                            if ($half) echo '<i class="fa-solid fa-star-half-stroke"></i>';
+                                            echo str_repeat('<i class="fa-regular fa-star"></i>', $empty);
+                                            ?>
+                                        </span>
+                                        <span><?= number_format($r, 1) ?> / 5</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="project-desc" style="font-style:italic; margin-top:8px; background:#f8fafc; padding:12px 14px; border-left:3px solid #0f766e; border-radius:0 8px 8px 0;">
+                                    "<?= nl2br(htmlspecialchars($fb['feedback_text'])) ?>"
+                                </p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+
+                    <?php if (count($feedbacks) > 3): ?>
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <button type="button" class="view-internal-btn" id="pubToggleFbBtn" onclick="togglePublicItems('extra-pub-feedback', 'pubToggleFbBtn', 'Show all <?= count($feedbacks) ?> reviews', 'Show less reviews')" style="font-size: 15px; color: #64748b; margin: 0;">
+                                <span>Show all <?= count($feedbacks) ?> reviews</span> <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php else: ?>
+                <p class="empty-text">No organization feedback or reviews yet.</p>
+            <?php endif; ?>
+        </div>
 
     </div>
 
@@ -468,6 +668,17 @@ if ($rawPhoto !== '') {
     </div>
 
     <script>
+        function togglePublicItems(itemClass, btnId, expandText, collapseText) {
+            const items = document.querySelectorAll('.' + itemClass);
+            const btn = document.getElementById(btnId);
+            if (!items.length || !btn) return;
+            const isHidden = items[0].classList.contains('pub-is-hidden');
+            items.forEach(el => el.classList.toggle('pub-is-hidden', !isHidden));
+            btn.innerHTML = isHidden
+                ? `<span>${collapseText}</span> <i class="fa-solid fa-arrow-up"></i>`
+                : `<span>${expandText}</span> <i class="fa-solid fa-arrow-right"></i>`;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('publicProjectModal');
             const closeBtn = document.getElementById('pubModalClose');
@@ -495,7 +706,7 @@ if ($rawPhoto !== '') {
             if (certModal) certModal.addEventListener('click', e => { if(e.target === certModal) { certModal.style.display = 'none'; certBody.innerHTML = ''; } });
 
             
-            document.querySelectorAll('.view-internal-btn').forEach(btn => {
+            document.querySelectorAll('.view-internal-btn[data-project]').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const data = JSON.parse(this.getAttribute('data-project'));
                     
@@ -546,7 +757,6 @@ if ($rawPhoto !== '') {
             }
         }
         
-        // Expose globally
         window.sharePublicProfile = sharePublicProfile;
     </script>
 </body>

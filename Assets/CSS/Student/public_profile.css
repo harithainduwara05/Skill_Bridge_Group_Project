@@ -604,3 +604,72 @@ body {
     border: none;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 }
+
+/* Share Profile Button Inside First Container & Rating Badge */
+.share-header-btn {
+    position: absolute;
+    top: 24px;
+    right: 28px;
+    background: #0f172a;
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+.share-header-btn:hover {
+    background: #1e293b;
+    transform: translateY(-1px);
+}
+.public-rating-banner {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    padding: 6px 14px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+    font-size: 14px;
+}
+.public-rating-banner .rating-stars {
+    color: #f59e0b;
+    display: inline-flex;
+    gap: 3px;
+}
+.public-rating-banner .rating-score-text {
+    color: #92400e;
+    font-weight: 800;
+}
+.public-rating-banner .rating-count-text {
+    color: #b45309;
+    font-size: 13px;
+}
+.public-rating-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    padding: 5px 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+}
+.pub-is-hidden {
+    display: none !important;
+}
+@media (max-width: 600px) {
+    .share-header-btn {
+        position: static;
+        align-self: flex-end;
+        margin-bottom: 8px;
+    }
+}

@@ -491,4 +491,89 @@ final class StudentPortfolioRepository
 
         return $deleted;
     }
+
+    public function feedbacks(string $email): array
+    {
+        $rows = [];
+        try {
+            // 1. Check dedicated student_feedback table
+            $check = $this->db->query("SHOW TABLES LIKE 'student_feedback'");
+            if ($check && $check->num_rows > 0) {
+                $fbColsRes = $this->db->query("SHOW COLUMNS FROM `student_feedback`");
+                $fbCols = [];
+                while ($c = $fbColsRes->fetch_assoc()) {
+                    $fbCols[strtolower($c['Field'])] = $c['Field'];
+                }
+                $hasRoleCol = isset($fbCols['role']);
+                $textCol = $fbCols['feedback_text'] ?? $fbCols['review'] ?? $fbCols['feedback'] ?? $fbCols['comment'] ?? 'feedback_text';
+                $roleSelect = $hasRoleCol ? "COALESCE(NULLIF(sf.`{$fbCols['role']}`, ''), sp.role, 'Team Member')" : "COALESCE(sp.role, 'Team Member')";
+
+                $sql = "SELECT sf.id, sf.rating, sf.`$textCol` AS feedback_text, sf.created_at,
+                               $roleSelect AS role,
+                               COALESCE(org.Name, sf.organization_email, 'Organization') AS company,
+                               COALESCE(p.title, 'SkillBridge Organization Project') AS project_title
+                        FROM student_feedback sf
+                        LEFT JOIN projects p ON p.id = sf.project_id
+                        LEFT JOIN organization org ON LOWER(TRIM(org.Email)) = LOWER(TRIM(sf.organization_email))
+                        LEFT JOIN student_projects sp ON sp.project_id = sf.project_id AND LOWER(TRIM(sp.Email)) = LOWER(TRIM(sf.student_email))
+                        WHERE LOWER(TRIM(sf.student_email)) = LOWER(TRIM(?))
+                        ORDER BY sf.created_at DESC, sf.id DESC";
+                $stmt = $this->db->prepare($sql);
+                if ($stmt) {
+                    $stmt->bind_param('s', $email);
+                    $stmt->execute();
+                    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                    $stmt->close();
+                }
+            }
+
+            // 2. Also check if organization module stores feedback in `project_feedback`, `org_feedback`, or `feedback`
+            if (empty($rows)) {
+                foreach (['org_student_feedback', 'project_feedback', 'feedback'] as $altTable) {
+                    $altCheck = $this->db->query("SHOW TABLES LIKE '$altTable'");
+                    if ($altCheck && $altCheck->num_rows > 0) {
+                        $colsRes = $this->db->query("SHOW COLUMNS FROM `$altTable`");
+                        $cols = [];
+                        while ($c = $colsRes->fetch_assoc()) {
+                            $cols[strtolower($c['Field'])] = $c['Field'];
+                        }
+                        $studentCol = $cols['student_email'] ?? $cols['email'] ?? null;
+                        $ratingCol = $cols['rating'] ?? $cols['stars'] ?? $cols['score'] ?? null;
+                        $textCol = $cols['feedback_text'] ?? $cols['feedback'] ?? $cols['comment'] ?? $cols['review'] ?? null;
+                        $projCol = $cols['project_id'] ?? null;
+                        $orgCol = $cols['organization_email'] ?? $cols['org_email'] ?? null;
+                        $dateCol = $cols['created_at'] ?? $cols['submitted_at'] ?? $cols['date'] ?? null;
+
+                        if ($studentCol && $ratingCol && $textCol) {
+                            $selProj = $projCol ? "LEFT JOIN projects p ON p.id = f.`$projCol`" : "";
+                            $selOrg = $orgCol ? "LEFT JOIN organization org ON LOWER(org.Email) = LOWER(f.`$orgCol`)" : "";
+                            $compExpr = $orgCol ? "COALESCE(org.Name, f.`$orgCol`, 'Organization')" : "'Organization'";
+                            $projExpr = $projCol ? "COALESCE(p.title, 'SkillBridge Project')" : "'SkillBridge Project'";
+                            $dateExpr = $dateCol ? "f.`$dateCol`" : "NOW()";
+
+                            $altSql = "SELECT f.`$ratingCol` AS rating, f.`$textCol` AS feedback_text,
+                                              $dateExpr AS created_at, 'Team Member' AS role,
+                                              $compExpr AS company, $projExpr AS project_title
+                                       FROM `$altTable` f
+                                       $selProj
+                                       $selOrg
+                                       WHERE LOWER(f.`$studentCol`) = LOWER(?)
+                                       ORDER BY $dateExpr DESC";
+                            $stmt = $this->db->prepare($altSql);
+                            if ($stmt) {
+                                $stmt->bind_param('s', $email);
+                                $stmt->execute();
+                                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                                $stmt->close();
+                                if (!empty($rows)) break;
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Throwable $e) {
+            error_log('Feedback query error: ' . $e->getMessage());
+        }
+        return $rows;
+    }
 }
