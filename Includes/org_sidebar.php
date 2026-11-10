@@ -15,6 +15,24 @@ if (isset($conn) && function_exists('current_user') && !empty(current_user()['em
         $orgUnreadNotifications = 0;   // the sidebar still shows without the number
     }
 }
+
+// new proposals (status pending = the organization has not accepted / rejected them yet)
+// -> number next to "Proposals", so the organization sees them without opening the page
+$orgPendingProposals = 0;
+if (isset($conn) && function_exists('current_user') && !empty(current_user()['email'])) {
+    try {
+        $pendStmt = $conn->prepare("SELECT COUNT(*) FROM project_proposals pp
+                                    JOIN projects p ON p.id = pp.project_id
+                                    WHERE p.organization_email = ? AND pp.status = 'pending'");
+        $sidebarEmail = current_user()['email'];
+        $pendStmt->bind_param('s', $sidebarEmail);
+        $pendStmt->execute();
+        $orgPendingProposals = (int)($pendStmt->get_result()->fetch_row()[0] ?? 0);
+        $pendStmt->close();
+    } catch (Throwable $e) {
+        $orgPendingProposals = 0;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,6 +89,9 @@ if (isset($conn) && function_exists('current_user') && !empty(current_user()['em
                 <span class="material-symbols-outlined">description</span>
             </span>
             <span class="nav-text">Proposals</span>
+            <?php if ($orgPendingProposals > 0): ?>
+                <span class="org-nav-unread" aria-label="<?= $orgPendingProposals ?> new proposals to review"><?= $orgPendingProposals > 99 ? '99+' : $orgPendingProposals ?></span>
+            <?php endif; ?>
         </a>
 
         <a href="teams.php"

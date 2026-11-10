@@ -293,6 +293,14 @@ include "../../Includes/dash_header.php";
                         <div class="tm-err" id="twTDueErr"></div>
                     </div>
                 </div>
+                <!-- files for the student (saved in team_files with this task's id) -->
+                <div class="tm-field" id="twTFileWrap" hidden>
+                    <label class="tm-f-label" for="twTFile">Attachments <span class="tm-opt">(optional)</span></label>
+                    <input type="file" id="twTFile" class="tm-input tw-t-file" multiple
+                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp,.zip,.fig,.mp4">
+                    <div class="tm-hint">Requirements, designs or sample data for this task. Up to 10MB each. The student sees them when they open the task.</div>
+                    <div class="tm-err" id="twTFileErr"></div>
+                </div>
             </div>
             <div class="tm-modal-foot">
                 <button type="button" class="tm-btn" data-close-task>Cancel</button>

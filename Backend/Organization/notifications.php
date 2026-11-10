@@ -50,13 +50,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // ---- "5 mins ago", "Yesterday", "Oct 12, 2026" ----
-function notifTimeAgo($datetime) {
+// $diff = seconds since the notification, counted by the database itself
+// (TIMESTAMPDIFF(... NOW())), so PHP's time zone and the database's time zone can be different
+// (XAMPP's PHP uses Europe/Berlin, the cloud database UTC) and the time is still right.
+function notifTimeAgo($datetime, $diff) {
     $ts = strtotime($datetime);
     if ($ts === false) return '';
-    $diff = time() - $ts;
+    $diff = max(0, (int)$diff);
     if ($diff < 60)     return 'Just now';
-    if ($diff < 3600)   return floor($diff / 60) . ' mins ago';
-    if ($diff < 86400)  return floor($diff / 3600) . ' hours ago';
+    if ($diff < 3600)   { $n = (int)floor($diff / 60);    return $n . ($n === 1 ? ' min ago'  : ' mins ago'); }
+    if ($diff < 86400)  { $n = (int)floor($diff / 3600);  return $n . ($n === 1 ? ' hour ago' : ' hours ago'); }
     if ($diff < 172800) return 'Yesterday';
     if ($diff < 604800) return floor($diff / 86400) . ' days ago';
     return date('M d, Y', $ts);
@@ -94,7 +97,8 @@ function notifStyle($title, $type) {
 }
 
 // ---- Load this organization's notifications (newest first) ----
-$nq = $conn->prepare("SELECT notification_id, title, message, type, status, created_at
+$nq = $conn->prepare("SELECT notification_id, title, message, type, status, created_at,
+                             TIMESTAMPDIFF(SECOND, created_at, NOW()) AS age_seconds
                       FROM notifications WHERE Email = ? ORDER BY created_at DESC, notification_id DESC");
 $nq->bind_param("s", $organization_email);
 $nq->execute();
@@ -109,7 +113,7 @@ foreach ($nq->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
         'id'       => (int)$row['notification_id'],
         'title'    => $row['title'] ?? '',
         'msg'      => $row['message'] ?? '',
-        'time'     => notifTimeAgo($row['created_at']),
+        'time'     => notifTimeAgo($row['created_at'], $row['age_seconds']),
         'read'     => $row['status'] !== 'Unread',
         'archived' => $row['status'] === 'Archived',
         'color'    => $color,

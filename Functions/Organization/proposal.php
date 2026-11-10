@@ -168,6 +168,17 @@ include "../../Includes/dash_header.php";
                                         <?= htmlspecialchars($p['name']) ?>
                                     </span>
 
+                                    <!-- rating from organizations' feedback (all projects) -->
+                                    <?php if ($p['rating_count'] > 0): ?>
+                                        <span class="pr-rating" title="Average rating from <?= (int)$p['rating_count'] ?> organization feedback<?= $p['rating_count'] == 1 ? '' : 's' ?>">
+                                            <span class="material-symbols-outlined">star</span>
+                                            <?= number_format($p['rating_avg'], 1) ?>
+                                            <small>(<?= (int)$p['rating_count'] ?>)</small>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="pr-rating none" title="This student has no feedback from an organization yet">No ratings yet</span>
+                                    <?php endif; ?>
+
                                 </div>
 
                                 <div class="pr-school">
@@ -274,63 +285,43 @@ include "../../Includes/dash_header.php";
                         <div>
 
                             <div class="pr-label">
-                                Portfolio Preview
+                                Portfolio
                             </div>
 
                             <?php
-                                $items   = $p['portfolio_items'];
+                                // the portfolio = the file (PDF / image) the student attached to THIS proposal.
+                                // (GitHub and other links are inside that file. The projects in the student's
+                                //  profile are shown on "View Profile".)
                                 $hasFile = $p['portfolio_type'] !== '';
                             ?>
-                            <?php if (!$hasFile && !$items): ?>
+                            <?php if (!$hasFile): ?>
                                 <div class="pr-portfolio-box" title="No portfolio">
                                     <span class="material-symbols-outlined">hide_image</span>
                                     <span class="pf-box-hint">No portfolio attached</span>
                                 </div>
-                            <?php else: ?>
+                            <?php else:
+                                // the saved file has a random name (0d8afeb...pdf) -> show / download it as "Lasith_Perera_Portfolio.pdf"
+                                $pfExt    = strtolower(pathinfo($p['portfolio'], PATHINFO_EXTENSION));
+                                $pfDlName = trim(preg_replace('/[^A-Za-z0-9]+/', '_', $p['name']), '_') . '_Portfolio.' . $pfExt;
+                                $pfDirect = $p['portfolio_type'] === 'zip';   // a ZIP can't be shown -> download
+                            ?>
                                 <div class="pf-list">
-                                    <div class="pf-list-note">
-                                        <?= $p['portfolio_picked'] ? 'Chosen by the student for this project' : 'From the student\'s profile' ?>
-                                    </div>
+                                    <div class="pf-list-note">Attached by the student</div>
 
-                                    <?php if ($hasFile): ?>
-                                        <!-- file attached to the proposal: PDF/image -> preview, ZIP -> download -->
-                                        <?php if ($p['portfolio_type'] === 'zip'): ?>
-                                            <a class="pf-item" href="<?= htmlspecialchars($p['portfolio']) ?>" download>
-                                        <?php else: ?>
-                                            <button type="button" class="pf-item" data-portfolio-open="<?= (int)$p['id'] ?>">
-                                        <?php endif; ?>
-                                            <span class="pf-thumb pf-thumb-file">
-                                                <span class="material-symbols-outlined"><?= ['pdf' => 'picture_as_pdf', 'image' => 'image', 'zip' => 'folder_zip'][$p['portfolio_type']] ?></span>
-                                            </span>
-                                            <span class="pf-item-text">
-                                                <strong><?= htmlspecialchars($p['portfolio_name']) ?></strong>
-                                                <small><?= $p['portfolio_type'] === 'zip' ? 'ZIP file · download' : 'Attached file · preview' ?></small>
-                                            </span>
-                                        <?= $p['portfolio_type'] === 'zip' ? '</a>' : '</button>' ?>
+                                    <!-- PDF / image -> preview popup (with Download), ZIP -> download -->
+                                    <?php if ($pfDirect): ?>
+                                        <a class="pf-item" href="<?= htmlspecialchars($p['portfolio']) ?>" download="<?= htmlspecialchars($pfDlName) ?>">
+                                    <?php else: ?>
+                                        <button type="button" class="pf-item" data-portfolio-open="<?= (int)$p['id'] ?>">
                                     <?php endif; ?>
-
-                                    <?php foreach ($items as $it): ?>
-                                        <!-- profile portfolio project -> preview popup with details + link -->
-                                        <button type="button" class="pf-item" data-portfolio-item="<?= (int)$p['id'] ?>:<?= (int)$it['id'] ?>">
-                                            <span class="pf-thumb">
-                                                <?php if ($it['image'] !== ''): ?>
-                                                    <img src="<?= htmlspecialchars($it['image']) ?>" alt="">
-                                                <?php else: ?>
-                                                    <span class="material-symbols-outlined"><?= $it['link_label'] === 'View on GitHub' ? 'code' : 'work' ?></span>
-                                                <?php endif; ?>
-                                            </span>
-                                            <span class="pf-item-text">
-                                                <strong><?= htmlspecialchars($it['title']) ?></strong>
-                                                <small><?= $it['link'] !== '' ? ($it['link_label'] === 'View on GitHub' ? 'GitHub project' : 'Project link') : 'Project' ?> · preview</small>
-                                            </span>
-                                        </button>
-                                    <?php endforeach; ?>
-
-                                    <?php if (!$p['portfolio_picked'] && $p['portfolio_count'] > count($items)): ?>
-                                        <button type="button" class="pf-more" data-portfolio-profile="<?= (int)$p['id'] ?>">
-                                            +<?= (int)$p['portfolio_count'] - count($items) ?> more in profile
-                                        </button>
-                                    <?php endif; ?>
+                                        <span class="pf-thumb pf-thumb-file">
+                                            <span class="material-symbols-outlined"><?= ['pdf' => 'picture_as_pdf', 'image' => 'image', 'zip' => 'folder_zip'][$p['portfolio_type']] ?></span>
+                                        </span>
+                                        <span class="pf-item-text">
+                                            <strong><?= htmlspecialchars($pfDlName) ?></strong>
+                                            <small><?= $p['portfolio_type'] === 'pdf' ? 'PDF file · preview' : ($p['portfolio_type'] === 'zip' ? 'ZIP file · download' : 'Image · preview') ?></small>
+                                        </span>
+                                    <?= $pfDirect ? '</a>' : '</button>' ?>
                                 </div>
                             <?php endif; ?>
 

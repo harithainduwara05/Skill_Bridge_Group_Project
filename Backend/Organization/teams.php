@@ -563,6 +563,22 @@ foreach (tmFetch($conn,
     $report = twReport($conn, (int)$row['id']);
     $doneCount = count(array_filter($teamTasks, fn($t) => $t['col'] === 'done'));
 
+    // what the team is doing now, from the Kanban board
+    // (the % counts only Done tasks = work the organization approved)
+    $reviewCount   = count(array_filter($teamTasks, fn($t) => $t['col'] === 'review'));
+    $workingCount  = count(array_filter($teamTasks, fn($t) => $t['col'] === 'progress'));
+    if (!$teamTasks) {
+        $taskPhase = 'Phase 1: Planning';                                    // no tasks yet
+    } elseif ($doneCount === count($teamTasks)) {
+        $taskPhase = 'All tasks done – waiting for the final report';
+    } elseif ($workingCount > 0 || $reviewCount > 0 || $doneCount > 0) {
+        // the students started -> In Progress; tasks sent for review are shown too,
+        // so the organization knows there is work to check before it is counted as Done
+        $taskPhase = 'In Progress' . ($reviewCount > 0 ? ' · ' . $reviewCount . ' to review' : '');
+    } else {
+        $taskPhase = 'Tasks given – not started yet';
+    }
+
     $time = 'No deadline'; $tone = 'ok'; $state = $row['status'] ?: 'ontrack';
     if ($state === 'completed') {
         $percent = 100;
@@ -584,7 +600,7 @@ foreach (tmFetch($conn,
         'phase' => $state === 'completed' ? 'Project Completed'
                  : ($report && $report['status'] === 'submitted' ? 'Final report sent – waiting for your review'
                  : ($report && $report['status'] === 'changes_requested' ? 'Final report sent back for changes'
-                 : ($percent > 0 ? 'In Progress' : 'Phase 1: Planning'))),
+                 : $taskPhase)),
         'percent' => $percent,
         // the final report is waiting for this organization
         'report_waiting' => $report && $report['status'] === 'submitted',

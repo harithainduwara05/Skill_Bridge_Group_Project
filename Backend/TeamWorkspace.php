@@ -63,6 +63,27 @@ const TW_STATUS = ['todo' => 'Todo', 'progress' => 'In Progress', 'review' => 'R
 // Task history lives in the team chat: every step is a message that starts with this tag
 function twTaskTag(int $taskId): string { return '[Task #' . $taskId . '] '; }
 
+/*
+| Task attachments: team_files.task_id (NULL = a general Shared Assets file, a number = a file of that task).
+| The column is added with:
+|   ALTER TABLE team_files ADD COLUMN task_id INT NULL AFTER team_id;
+|   ALTER TABLE team_files ADD CONSTRAINT fk_team_files_task FOREIGN KEY (task_id) REFERENCES team_tasks(task_id) ON DELETE SET NULL;
+| Until it is there, the workspace works as before (no attachments on tasks).
+*/
+function twHasTaskFiles(mysqli $conn): bool
+{
+    static $has = null;
+    if ($has === null) {
+        try {
+            $res = $conn->query("SHOW COLUMNS FROM team_files LIKE 'task_id'");
+            $has = $res && $res->num_rows > 0;
+        } catch (Throwable $e) {
+            $has = false;
+        }
+    }
+    return $has;
+}
+
 // Allowed moves: role => [from => [to, ...]]
 const TW_MOVES = [
     'student'      => ['todo' => ['progress'], 'progress' => ['review', 'todo'], 'review' => ['progress']],
@@ -197,8 +218,9 @@ function twMembers(mysqli $conn, array $team): array
 /** All tasks of a team, with the assignee's name. col = Kanban column (todo / progress / review / done) */
 function twTasks(mysqli $conn, int $teamId): array
 {
+    $fileCount = twHasTaskFiles($conn) ? "(SELECT COUNT(*) FROM team_files f WHERE f.task_id = t.task_id)" : "0";
     $q = $conn->prepare("SELECT t.task_id, t.title, t.description, t.status, LOWER(t.assigned_to) AS assignee,
-                                s.Name AS assignee_name, t.due_date
+                                s.Name AS assignee_name, t.due_date, $fileCount AS file_count
                          FROM team_tasks t LEFT JOIN student s ON LOWER(s.Email) = LOWER(t.assigned_to)
                          WHERE t.team_id = ? ORDER BY t.task_id");
     $q->bind_param("i", $teamId);
@@ -209,7 +231,7 @@ function twTasks(mysqli $conn, int $teamId): array
         $out[] = [
             'id' => (int)$t['task_id'], 'title' => $t['title'], 'description' => $t['description'] ?? '',
             'col' => $col, 'assignee' => $t['assignee'] ?? '', 'who' => $t['assignee_name'] ?? '',
-            'due' => $t['due_date'] ?? '',
+            'due' => $t['due_date'] ?? '', 'files' => (int)$t['file_count'],
             'progress' => ['todo' => 0, 'progress' => 50, 'review' => 100, 'done' => 100][$col],
         ];
     }
@@ -284,9 +306,26 @@ function twTaskDetail(mysqli $conn, int $teamId, int $taskId): array
         }
     }
 
-    // files the student shared in the team (Shared Assets), newest first
     $files = [];
-    if ($task && $task['assignee'] !== '') {
+    if (twHasTaskFiles($conn)) {
+        // the files attached to this task (by the organization or the students), newest first
+        $f = $conn->prepare("SELECT f.file_id, f.original_name, f.file_path, f.file_size, f.uploaded_at, LOWER(f.uploaded_by) AS email,
+                                    COALESCE(s.Name, o.Name, f.uploaded_by) AS who, u.role
+                             FROM team_files f
+                             LEFT JOIN user u         ON u.Email = f.uploaded_by
+                             LEFT JOIN student s      ON s.Email = f.uploaded_by
+                             LEFT JOIN organization o ON o.Email = f.uploaded_by
+                             WHERE f.team_id = ? AND f.task_id = ? ORDER BY f.file_id DESC");
+        $f->bind_param("ii", $teamId, $taskId);
+        $f->execute();
+        foreach ($f->get_result()->fetch_all(MYSQLI_ASSOC) as $r) {
+            $files[] = ['id' => (int)$r['file_id'], 'name' => $r['original_name'], 'path' => $r['file_path'],
+                        'size' => (int)$r['file_size'], 'who' => $r['who'], 'email' => $r['email'],
+                        'org' => ($r['role'] ?? '') === 'organization',
+                        'when' => date('M d, Y', strtotime($r['uploaded_at']))];
+        }
+    } elseif ($task && $task['assignee'] !== '') {
+        // no task_id column yet: the files the student shared in the team (Shared Assets), newest first
         $f = $conn->prepare("SELECT original_name, file_path, uploaded_at FROM team_files
                              WHERE team_id = ? AND LOWER(uploaded_by) = ? ORDER BY file_id DESC LIMIT 5");
         $f->bind_param("is", $teamId, $task['assignee']);
@@ -295,7 +334,8 @@ function twTaskDetail(mysqli $conn, int $teamId, int $taskId): array
             $files[] = ['name' => $r['original_name'], 'path' => $r['file_path'], 'when' => date('M d, Y', strtotime($r['uploaded_at']))];
         }
     }
-    return ['task' => $task, 'submission' => $submission, 'history' => $history, 'files' => $files];
+    return ['task' => $task, 'submission' => $submission, 'history' => $history, 'files' => $files,
+            'task_files' => twHasTaskFiles($conn)];
 }
 
 /**
@@ -304,11 +344,15 @@ function twTaskDetail(mysqli $conn, int $teamId, int $taskId): array
  */
 function twFiles(mysqli $conn, int $teamId, string $myEmail, bool $canDeleteAll): array
 {
+    // a task's file is also listed in Shared Assets, with the task's title
+    $task = twHasTaskFiles($conn) ? "f.task_id, tt.title AS task_title" : "NULL AS task_id, NULL AS task_title";
+    $join = twHasTaskFiles($conn) ? "LEFT JOIN team_tasks tt ON tt.task_id = f.task_id" : "";
     $q = $conn->prepare("SELECT f.file_id, f.original_name, f.file_path, f.file_size, f.uploaded_by, f.uploaded_at,
-                                COALESCE(s.Name, o.Name, f.uploaded_by) AS uploader
+                                COALESCE(s.Name, o.Name, f.uploaded_by) AS uploader, $task
                          FROM team_files f
                          LEFT JOIN student s      ON s.Email = f.uploaded_by
                          LEFT JOIN organization o ON o.Email = f.uploaded_by
+                         $join
                          WHERE f.team_id = ? ORDER BY f.file_id DESC");
     $q->bind_param("i", $teamId);
     $q->execute();
@@ -320,6 +364,7 @@ function twFiles(mysqli $conn, int $teamId, string $myEmail, bool $canDeleteAll)
             'size' => (int)$f['file_size'], 'by' => $mine ? 'You' : $f['uploader'],
             'when' => date('M d, Y', strtotime($f['uploaded_at'])),
             'can_delete' => $mine || $canDeleteAll,
+            'task_id' => $f['task_id'] !== null ? (int)$f['task_id'] : null, 'task' => $f['task_title'] ?? '',
         ];
     }
     return $out;
@@ -403,7 +448,8 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                         'messages'  => twMessages($conn, $teamId, (int)($_POST['after_id'] ?? 0), $email),
                         'report'    => twReport($conn, $teamId),
                         'status'    => $status,
-                        'is_leader' => $isLeader]);
+                        'is_leader' => $isLeader,
+                        'task_files' => twHasTaskFiles($conn)]);
 
             case 'send_message':
                 $text = trim($_POST['message'] ?? '');
@@ -440,6 +486,7 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                                      VALUES (?, ?, ?, ?, ?, ?)");
                 $q->bind_param("isssss", $teamId, $assignDb, $title, $descDb, $dueDb, $status);
                 $q->execute();
+                $newTaskId = (int)$conn->insert_id;   // the page uploads the task's files with this id
 
                 // tell the student who got the task (not when they gave it to themselves)
                 if ($assignee !== '' && $assignee !== $email) {
@@ -451,7 +498,7 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                     $n->execute();
                 }
                 twRefreshStatus($conn, $teamId);
-                twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId)]);
+                twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId), 'task_id' => $newTaskId]);
 
             case 'move_task':
                 $col  = $_POST['col'] ?? '';
@@ -539,6 +586,12 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                     twJson(['ok' => false, 'message' => 'Only the organization or the team leader can delete a task.']);
                 }
                 $id = (int)$taskRow['task_id'];
+                // the task's files stay in Shared Assets (also done by the foreign key, ON DELETE SET NULL)
+                if (twHasTaskFiles($conn)) {
+                    $q = $conn->prepare("UPDATE team_files SET task_id = NULL WHERE task_id = ?");
+                    $q->bind_param("i", $id);
+                    $q->execute();
+                }
                 $q = $conn->prepare("DELETE FROM team_tasks WHERE task_id = ?");
                 $q->bind_param("i", $id);
                 $q->execute();
@@ -549,10 +602,27 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 $files = $_FILES['files'] ?? null;
                 if (!$files || !is_array($files['name'])) twJson(['ok' => false, 'message' => 'Choose a file to upload.']);
 
+                // attach to a task of this team (optional)
+                $forTask = null;
+                if ((int)($_POST['task_id'] ?? 0) > 0) {
+                    if (!twHasTaskFiles($conn)) twJson(['ok' => false, 'message' => 'Files can’t be attached to tasks yet: the database needs the team_files.task_id column.']);
+                    $tid = (int)$_POST['task_id'];
+                    $q = $conn->prepare("SELECT task_id, title FROM team_tasks WHERE task_id = ? AND team_id = ?");
+                    $q->bind_param("ii", $tid, $teamId);
+                    $q->execute();
+                    $forTask = $q->get_result()->fetch_assoc();
+                    if (!$forTask) twJson(['ok' => false, 'message' => 'This task no longer exists.']);
+                    if ($team['status'] === 'completed') twJson(['ok' => false, 'message' => 'This team is completed, so its work can no longer be changed.']);
+                }
+
                 $dir = __DIR__ . '/../Assets/Uploads/team_files/';
                 if (!is_dir($dir)) mkdir($dir, 0775, true);
-                $ins = $conn->prepare("INSERT INTO team_files (team_id, uploaded_by, original_name, file_path, file_size, mime_type)
-                                       VALUES (?, ?, ?, ?, ?, ?)");
+                $ins = $forTask
+                    ? $conn->prepare("INSERT INTO team_files (team_id, task_id, uploaded_by, original_name, file_path, file_size, mime_type)
+                                      VALUES (?, ?, ?, ?, ?, ?, ?)")
+                    : $conn->prepare("INSERT INTO team_files (team_id, uploaded_by, original_name, file_path, file_size, mime_type)
+                                      VALUES (?, ?, ?, ?, ?, ?)");
+                $saved = [];
                 $errors = [];
                 foreach ($files['name'] as $i => $original) {
                     if ($files['error'][$i] === UPLOAD_ERR_NO_FILE) continue;
@@ -568,10 +638,21 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                     $path = 'Assets/Uploads/team_files/' . $stored;
                     $mime = mime_content_type($dir . $stored) ?: 'application/octet-stream';
                     $name = mb_substr(basename($original), 0, 255);
-                    $ins->bind_param("isssis", $teamId, $email, $name, $path, $size, $mime);
+                    if ($forTask) {
+                        $tid = (int)$forTask['task_id'];
+                        $ins->bind_param("iisssis", $teamId, $tid, $email, $name, $path, $size, $mime);
+                    } else {
+                        $ins->bind_param("isssis", $teamId, $email, $name, $path, $size, $mime);
+                    }
                     $ins->execute();
+                    $saved[] = $name;
                 }
-                twJson(['ok' => true, 'errors' => $errors, 'files' => twFiles($conn, $teamId, $email, $canDeleteAll)]);
+                // the task's history (and the team chat) shows the new file
+                if ($forTask && $saved) {
+                    twAddMessage($conn, $teamId, $email, twTaskTag((int)$forTask['task_id']) . 'Attached ' . implode(', ', $saved));
+                }
+                twJson(['ok' => true, 'errors' => $errors, 'files' => twFiles($conn, $teamId, $email, $canDeleteAll),
+                        'tasks' => $forTask ? twTasks($conn, $teamId) : null]);
 
             case 'delete_file':
                 if (!$canDeleteAll && strtolower($fileRow['uploaded_by']) !== $email) {

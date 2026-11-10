@@ -100,7 +100,7 @@ include "../../Includes/dash_header.php";
                 <?php else: ?>
                     <div class="pending-list">
                         <?php foreach ($pendingProjects as $pp): ?>
-                        <a class="pending-item <?= $pp['tone'] ?>" href="<?= htmlspecialchars($pp['link']) ?>">
+                        <a class="pending-item <?= $pp['tone'] ?>" href="<?= htmlspecialchars($pp['link']) ?>" title="<?= htmlspecialchars($pp['note']) ?>">
                             <span class="pending-icon material-symbols-outlined">
                                 <?= $pp['tone'] === 'review' ? 'hourglass_top' : ($pp['tone'] === 'replied' ? 'forward_to_inbox' : 'pause_circle') ?>
                             </span>
@@ -108,11 +108,13 @@ include "../../Includes/dash_header.php";
                                 <span class="pending-title"><?= htmlspecialchars($pp['title']) ?></span>
                                 <span class="pending-note"><?= htmlspecialchars($pp['note']) ?></span>
                             </span>
-                            <span class="pending-side">
-                                <span class="badge-status <?= htmlspecialchars($pp['status']) ?>"><?= htmlspecialchars(statusLabel($pp['status'])) ?></span>
-                                <span class="pending-wait"><?= htmlspecialchars($pp['waiting']) ?></span>
-                                <?php if ($pp['tone'] === 'action'): ?><span class="pending-btn">Respond</span><?php endif; ?>
-                            </span>
+                            <span class="badge-status <?= htmlspecialchars($pp['status']) ?>"><?= htmlspecialchars(statusLabel($pp['status'])) ?></span>
+                            <span class="pending-wait"><?= htmlspecialchars($pp['waiting']) ?></span>
+                            <?php if ($pp['tone'] === 'action'): ?>
+                                <span class="pending-btn">Respond</span>
+                            <?php else: ?>
+                                <span class="pending-go">View <span class="material-symbols-outlined">chevron_right</span></span>
+                            <?php endif; ?>
                         </a>
                         <?php endforeach; ?>
                     </div>

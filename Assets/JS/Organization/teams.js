@@ -719,10 +719,18 @@ window.TMForm = (function () {
 
     // server task -> the shape the board uses
     const fromServer = t => ({ id: String(t.id), title: t.title, tag: '', description: t.description || '', col: t.col,
-                               who: t.who || '', assignee: t.assignee || '', due: t.due || '', progress: t.progress, comments: 0 });
+                               who: t.who || '', assignee: t.assignee || '', due: t.due || '', progress: t.progress, comments: 0,
+                               files: Number(t.files) || 0 });
+    let taskFilesOn = false;     // team_files.task_id is in the database -> files can be attached to a task
+
+    // true when a task changed while the workspace was open (moved, added, deleted, approved...)
+    // -> the team cards (%, label, status) are made again by the server when going back
+    let boardChanged = false;
 
     function setServerTasks(list) {
-        taskCache[TEAMS[teamIndex].id] = list;
+        const id = TEAMS[teamIndex].id;
+        if (taskCache[id] !== undefined && JSON.stringify(taskCache[id]) !== JSON.stringify(list)) boardChanged = true;
+        taskCache[id] = list;
         tasks = list.map(fromServer);
     }
 
@@ -747,6 +755,7 @@ window.TMForm = (function () {
         const id = TEAMS[teamIndex].id;
         return api('load', { team_id: id, after_id: lastMsgId }).then(res => {
             if (!res.ok || !isDbTeam() || TEAMS[teamIndex].id !== id) return;
+            taskFilesOn = !!res.task_files;
             if (res.messages.length) { addServerMessages(res.messages); renderChat(); }
             // shared files (team_files) – also the ones the students uploaded
             if (JSON.stringify(res.files) !== JSON.stringify(files)) { files = res.files; renderFiles(); }
@@ -855,10 +864,25 @@ window.TMForm = (function () {
 
     function closeWorkspace() {
         stopPolling();
+        if (boardChanged) {
+            // reload the Teams page so every card shows the new progress; come back to the same place
+            try { sessionStorage.setItem('tmListScroll', String(listScroll)); } catch (e) {}
+            location.replace(location.pathname);
+            return;
+        }
         page.hidden = true;
         list.hidden = false;
         window.scrollTo(0, listScroll);
     }
+
+    // after that reload: back to where the list was
+    try {
+        const y = sessionStorage.getItem('tmListScroll');
+        if (y !== null) {
+            sessionStorage.removeItem('tmListScroll');
+            window.addEventListener('load', () => window.scrollTo(0, Number(y) || 0));
+        }
+    } catch (e) {}
 
     document.addEventListener('click', e => {
         const b = e.target.closest('[data-work-team]');
@@ -904,7 +928,8 @@ window.TMForm = (function () {
                         ${t.col === 'progress' ? `<div class="tw-card-bar"><span style="width:${Number(t.progress) || 0}%"></span></div>` : ''}
                         <div class="tw-card-foot">
                             <span class="left">${t.due ? '<span class="material-symbols-outlined">event</span>' + dueLabel(t) : ''}
-                                ${t.comments ? ' &nbsp;<span class="material-symbols-outlined">chat_bubble</span>' + Number(t.comments) : ''}</span>
+                                ${t.comments ? ' &nbsp;<span class="material-symbols-outlined">chat_bubble</span>' + Number(t.comments) : ''}
+                                ${t.files ? `<span class="tw-card-clip" title="${t.files} attachment${t.files === 1 ? '' : 's'}"><span class="material-symbols-outlined">attach_file</span>${t.files}</span>` : ''}</span>
                             ${t.who ? av(t.who) : ''}
                         </div>
                         ${t.col === 'review' && isDbTeam() ? `<div class="tw-card-actions">
@@ -1011,12 +1036,23 @@ window.TMForm = (function () {
                              </div>`
                           : '<div class="tw-d-empty">The student has not sent this task for review yet.</div>'}
                 </div>
-                <div class="tw-d-sec">
+                ${res.task_files ? `<div class="tw-d-sec">
+                    <h4>Attachments</h4>
+                    ${res.files.length ? res.files.map(f => `<a class="tw-d-file" href="../../${esc(f.path)}" target="_blank" rel="noopener">
+                            <span class="material-symbols-outlined">${f.org ? 'assignment' : 'description'}</span>
+                            <span class="tw-d-file-name">${esc(f.name)}<em>${f.org ? 'From you' : 'From ' + esc(f.who)}</em></span>
+                            <small>${esc(f.when)}</small></a>`).join('')
+                        : '<div class="tw-d-empty">No files attached to this task yet.</div>'}
+                    ${TEAMS[teamIndex].state !== 'completed' ? `<label class="tw-d-attach">
+                            <input type="file" multiple data-d-attach hidden>
+                            <span class="material-symbols-outlined">attach_file</span>Attach a file
+                        </label><div class="tm-err" id="twDetailFileErr"></div>` : ''}
+                </div>` : `<div class="tw-d-sec">
                     <h4>Files shared by ${esc(tk.who || 'the student')}</h4>
                     ${res.files.length ? res.files.map(f => `<a class="tw-d-file" href="../../${esc(f.path)}" target="_blank" rel="noopener">
                             <span class="material-symbols-outlined">description</span><span>${esc(f.name)}</span><small>${esc(f.when)}</small></a>`).join('')
                         : '<div class="tw-d-empty">No files shared yet.</div>'}
-                </div>
+                </div>`}
                 <div class="tw-d-sec">
                     <h4>History</h4>
                     ${res.history.length ? '<ul class="tw-d-hist">' + res.history.map(h => `<li><b>${esc(h.who)}</b> ${esc(h.text).replace(/\n/g, '<br>')}<small>${esc(h.when)}</small></li>`).join('') + '</ul>'
@@ -1028,6 +1064,17 @@ window.TMForm = (function () {
                 : '<button type="button" class="tm-btn solid" data-close-detail>Close</button>';
         });
     }
+    // "Attach a file" inside the task details
+    detailModal.addEventListener('change', e => {
+        const input = e.target.closest('[data-d-attach]');
+        if (!input || !input.files.length || !detailId) return;
+        const errEl = document.getElementById('twDetailFileErr');
+        errEl.textContent = 'Uploading…';
+        uploadToTask(detailId, input.files).then(errors => {
+            errEl.textContent = errors.join(' ');
+            if (!errors.length) openTaskDetail(detailId);   // show the new file in the list
+        });
+    });
     detailModal.addEventListener('click', e => {
         if (e.target === detailModal || e.target.closest('[data-close-detail]')) { detailModal.classList.remove('open'); return; }
         if (e.target.closest('[data-d-approve]')) { detailModal.classList.remove('open'); moveTask(detailId, 'done'); }
@@ -1119,6 +1166,8 @@ window.TMForm = (function () {
         // database teams have a Description (team_tasks.description); demo teams have a Type
         document.getElementById('twTDescWrap').hidden = !isDbTeam();
         document.getElementById('twTTagWrap').hidden = isDbTeam();
+        document.getElementById('twTFileWrap').hidden = !isDbTeam();   // always shown (uploads work once team_files.task_id exists)
+        document.getElementById('twTFileErr').textContent = '';
         taskModal.classList.add('open');
         setTimeout(() => document.getElementById('twTTitle').focus(), 50);
     });
@@ -1149,11 +1198,21 @@ window.TMForm = (function () {
                 team_id: TEAMS[teamIndex].id, title: title, description: document.getElementById('twTDesc').value.trim(),
                 assignee: document.getElementById('twTWho').value, due: due
             }).then(res => {
-                submitBtn.disabled = false;
-                if (!res.ok) { document.getElementById('twTErr').textContent = res.message; return; }
+                if (!res.ok) { submitBtn.disabled = false; document.getElementById('twTErr').textContent = res.message; return; }
                 setServerTasks(res.tasks);
                 renderBoard();
-                taskModal.classList.remove('open');
+                // then the attachments, one by one, with the new task's id
+                const picked = document.getElementById('twTFile').files;
+                if (!picked.length || !res.task_id) { submitBtn.disabled = false; taskModal.classList.remove('open'); return; }
+                document.getElementById('twTFileErr').textContent = 'Uploading the attachments…';
+                uploadToTask(res.task_id, picked).then(errors => {
+                    submitBtn.disabled = false;
+                    if (errors.length) {   // the task is saved; say which files did not go
+                        document.getElementById('twTFileErr').textContent = 'The task was added, but: ' + errors.join(' ');
+                        return;
+                    }
+                    taskModal.classList.remove('open');
+                });
             });
             return;
         }
@@ -1203,12 +1262,39 @@ window.TMForm = (function () {
                 <div class="tw-file-info">
                     <div class="tw-file-name" title="${esc(f.name)}">${esc(f.name)}</div>
                     <div class="tw-file-meta">${sizeText(f.size)} · ${esc(f.by)} · ${esc(f.when)}</div>
+                    ${f.task ? `<div class="tw-file-task"><span class="material-symbols-outlined">attach_file</span>Task: ${esc(f.task)}</div>` : ''}
                 </div>
                 <button type="button" class="tw-file-btn" data-open-file="${esc(f.id)}" ${canOpen ? '' : 'disabled'}
                         title="${canOpen ? 'Open / download' : 'Demo file'}"><span class="material-symbols-outlined">download</span></button>
                 ${canDelete ? `<button type="button" class="tw-file-btn danger" data-del-file="${esc(f.id)}" title="Remove"><span class="material-symbols-outlined">delete</span></button>` : ''}
             </div>`;
         }).join('') : '<div class="tw-files-empty">No files shared yet.</div>';
+    }
+
+    // upload files for one task (team_files.task_id), one file per request; resolves with the error messages
+    function uploadToTask(taskId, list) {
+        const errors = [];
+        let chain = Promise.resolve();
+        Array.from(list).forEach(file => {
+            chain = chain.then(() => {
+                if (file.size > 10 * 1024 * 1024) { errors.push(`"${file.name}" is larger than 10MB.`); return; }
+                const fd = new FormData();
+                fd.append('ws_action', 'upload_file');
+                fd.append('team_id', TEAMS[teamIndex].id);
+                fd.append('task_id', taskId);
+                fd.append('files[]', file);
+                return fetch('teams.php', { method: 'POST', body: fd })
+                    .then(r => r.json())
+                    .catch(() => ({ ok: false, message: `"${file.name}" could not be uploaded.` }))
+                    .then(res => {
+                        if (!res.ok) { errors.push(res.message); return; }
+                        errors.push(...(res.errors || []));
+                        files = res.files; renderFiles();
+                        if (res.tasks) { setServerTasks(res.tasks); renderBoard(); }
+                    });
+            });
+        });
+        return chain.then(() => errors);
     }
 
     function addFiles(list) {

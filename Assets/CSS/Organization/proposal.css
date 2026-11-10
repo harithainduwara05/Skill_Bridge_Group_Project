@@ -1081,3 +1081,43 @@
 .pr-more p { margin: 0; color: #6b7280; font-size: 13px; }
 .pr-more-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 22px; border: 1px solid #d1d5db; border-radius: 10px; background: #fff; color: #0f3a66; font-weight: 600; font-size: 14px; cursor: pointer; }
 .pr-more-btn:hover { background: #f3f4f6; }
+/* the PDF preview could not be loaded */
+.pv-error { color: #64748b; font-size: 14px; padding: 20px; text-align: center; }
+/* ---------- Student rating (feedback from organizations, project_feedback) ---------- */
+.pr-name-row { flex-wrap: wrap; }
+.pr-rating { display: inline-flex; align-items: center; gap: 2px; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+             background: #fef3c7; color: #92400e; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.pr-rating .material-symbols-outlined { font-size: 15px; color: #f59e0b; font-variation-settings: 'FILL' 1; }
+.pr-rating small { font-weight: 500; color: #a16207; margin-left: 1px; }
+.pr-rating.none { background: #f1f5f9; color: #64748b; font-weight: 600; }
+
+.pf-mini-rating strong { color: #b45309 !important; }
+
+.sp-stats { grid-template-columns: repeat(5, 1fr); }
+.sp-stat-icon.amber { background: #fef3c7; color: #d97706; }
+.sp-stat-icon.amber .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+
+.sp-stars { color: #f59e0b; letter-spacing: 1px; font-size: 15px; }
+.sp-stars .off { color: #e2e8f0; }
+.sp-rating-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
+.sp-rating-big { font-size: 34px; font-weight: 800; color: #0f2a4a; line-height: 1; }
+.sp-rating-sub { font-size: 12.5px; color: #64748b; margin-top: 2px; }
+.sp-comps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; margin-bottom: 16px; }
+.sp-comp { display: grid; grid-template-columns: 120px 1fr 32px; align-items: center; gap: 10px; font-size: 13px; }
+.sp-comp-label { color: #334155; font-weight: 600; }
+.sp-comp-val { text-align: right; font-weight: 700; color: #0f2a4a; }
+.sp-reviews { display: flex; flex-direction: column; gap: 10px; }
+.sp-review { border: 1px solid #e5e7eb; border-radius: 12px; padding: 12px 14px; background: #fafafa; }
+.sp-review-top { display: flex; justify-content: space-between; align-items: center; }
+.sp-review-date { font-size: 12px; color: #94a3b8; }
+.sp-review-meta { font-size: 12.5px; color: #475569; margin: 4px 0 6px; }
+.sp-review-text { margin: 0; font-size: 13.5px; color: #334155; line-height: 1.55; }
+
+@media (max-width: 1100px) { .sp-stats { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 700px)  { .sp-stats { grid-template-columns: repeat(2, 1fr); } .sp-comps { grid-template-columns: 1fr; } }
+
+/* ---------- Portfolio: GitHub account, technologies, status (student_portfolio_projects) ---------- */
+.pv-meta, .sp-card-meta { font-size: 12px; color: #64748b; margin: 2px 0 6px; }
+.pv-tech { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.pv-tech span { background: #eef2ff; color: #3730a3; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
+.sp-card-img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid #e5e7eb; }
