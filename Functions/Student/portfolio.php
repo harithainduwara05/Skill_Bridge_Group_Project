@@ -82,7 +82,6 @@ function portfolioUpload(string $field, string $type): ?string
         throw new InvalidArgumentException('Select a PDF, JPG, PNG or WebP file.');
     }
 
-    // Set destination folder paths
     $folderName = ($type === 'certificate') ? 'Certificate/' : 'Portfolio/';
     $folder = __DIR__ . '/../../Assets/Images/Student/' . $folderName;
 
@@ -155,7 +154,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Output actual error for complete transparency during testing
         $_SESSION['portfolio_error'] = $exception->getMessage();
         error_log('Portfolio Error: ' . $exception->getMessage());
     }
@@ -164,45 +162,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$page = max(1, (int) ($_GET['page'] ?? 1));
-$perPage = 6;
 $databaseError = null;
 $summary = ['projects' => 0, 'certificates' => 0, 'views' => 0];
 $internalProjects = [];
 $projects = [];
 $certificates = [];
-$pageCount = 1;
+$feedbacks = [];
 
 try {
     $summary = $repo->summary($email);
     $internalProjects = $repo->internalProjects($email);
     $summary['projects'] += count($internalProjects);
-    $externalCount = $repo->countProjects($email);
-    $pageCount = max(1, (int) ceil($externalCount / $perPage));
-    $page = min($page, $pageCount);
-    $projects = $repo->projects($email, $page, $perPage);
+    // Load up to 50 personal projects so "See All Projects" can toggle them cleanly
+    $projects = $repo->projects($email, 1, 50);
     $certificates = $repo->certificates($email);
+    $feedbacks = method_exists($repo, 'feedbacks') ? $repo->feedbacks($email) : [];
 } catch (Throwable $exception) {
     error_log('SkillBridge Portfolio database read failed: ' . $exception->getMessage());
     $databaseError = 'Portfolio data could not be loaded: ' . $exception->getMessage();
+}
+
+// Combine all projects into a unified array so we can display the first 3 and toggle the rest
+$allPortfolioProjects = [];
+foreach ($internalProjects as $proj) {
+    $proj['_card_type'] = 'internal';
+    $allPortfolioProjects[] = $proj;
+}
+foreach ($projects as $proj) {
+    $proj['_card_type'] = 'external';
+    $allPortfolioProjects[] = $proj;
+}
+$totalProjectsCount = count($allPortfolioProjects);
+$totalCertificatesCount = count($certificates);
+$totalFeedbacksCount = count($feedbacks);
+
+$avgRating = 0.0;
+if ($totalFeedbacksCount > 0) {
+    $sumRating = 0.0;
+    foreach ($feedbacks as $fb) {
+        $sumRating += (float) ($fb['rating'] ?? 0);
+    }
+    $avgRating = round($sumRating / $totalFeedbacksCount, 1);
 }
 
 $notice = $_SESSION['portfolio_notice'] ?? null;
 $error = $_SESSION['portfolio_error'] ?? null;
 unset($_SESSION['portfolio_notice'], $_SESSION['portfolio_error']);
 $pageTitle = 'My Portfolio | SkillBridge';
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/portfolio.css">'
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/portfolio.css?v=' . time() . '">'
     . '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">';
 
 include __DIR__ . '/../../Includes/student_sidebar.php';
 include __DIR__ . '/../../Includes/dash_header.php';
 
 ?>
+
 <main class="content portfolio-page">
     <section class="portfolio-header">
         <div>
             <h1>My Portfolio</h1>
-            <p>Showcase your projects, certificates, and professional achievements.</p>
+            <p>Showcase your projects, certificates, and organization reviews.</p>
         </div>
         <div class="portfolio-buttons">
             <button type="button" class="btn-project" onclick="portfolioOpen('projectModal')">+ Add Project</button>
@@ -242,119 +261,124 @@ include __DIR__ . '/../../Includes/dash_header.php';
         </div>
     </section>
 
+    <!-- ALL PROJECTS SECTION (3 Columns, Initial 3 Shown) -->
     <section class="portfolio-section">
         <div class="section-title"><h2>All Projects</h2></div>
-        <div class="project-grid">
-            <?php if ($page === 1): foreach ($internalProjects as $project): ?>
-                <article class="project-card">
-                    <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
-                        <div class="project-image">
-                            <div class="portfolio-empty-image"><i class="fa-solid fa-people-group"></i></div>
-                        </div>
-                        <div class="project-content">
-                            <span class="portfolio-source">SkillBridge organization project</span>
-                            <h3><?= portfolioEsc($project['title']) ?></h3>
-                            <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
-                            <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
-                            <div class="tags">
-                                <?php foreach ($project['technologies'] as $technology): ?>
-                                    <span><?= portfolioEsc($technology) ?></span>
-                                <?php endforeach; ?>
+        <div class="project-grid" id="portfolioProjectsGrid">
+            <?php foreach ($allPortfolioProjects as $idx => $project): ?>
+                <?php $hiddenClass = $idx >= 3 ? 'portfolio-is-hidden extra-project-card' : ''; ?>
+                <?php if ($project['_card_type'] === 'internal'): ?>
+                    <article class="project-card <?= $hiddenClass ?>">
+                        <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
+                            <div class="project-image">
+                                <div class="portfolio-empty-image"><i class="fa-solid fa-people-group"></i></div>
                             </div>
-                            <p class="portfolio-small"><?= portfolioEsc($project['company']) ?> · <?= portfolioEsc($project['project_status']) ?></p>
-                        </div>
-                    </button>
-                    <div class="project-links portfolio-card-actions">
-                        <button type="button" class="edit-btn" title="Edit portfolio display" onclick='portfolioEditInternal(<?= portfolioJson($project) ?>)'>
-                            <i class="fa-solid fa-pen"></i>
+                            <div class="project-content">
+                                <span class="portfolio-source">SkillBridge organization project</span>
+                                <h3><?= portfolioEsc($project['title']) ?></h3>
+                                <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
+                                <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+                                <div class="tags">
+                                    <?php foreach ($project['technologies'] as $technology): ?>
+                                        <span><?= portfolioEsc($technology) ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <p class="portfolio-small"><?= portfolioEsc($project['company']) ?> · <?= portfolioEsc($project['project_status']) ?></p>
+                            </div>
                         </button>
-                        <form method="post" onsubmit="return confirm('Remove this project from your portfolio? The original project will remain unchanged.')">
-                            <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
-                            <input type="hidden" name="action" value="hide_internal">
-                            <input type="hidden" name="id" value="<?= (int) $project['student_project_id'] ?>">
-                            <button class="delete-btn" title="Remove from my portfolio" type="submit">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
-                </article>
-            <?php endforeach; endif; ?>
-            
-            <?php foreach ($projects as $project): ?>
-                <?php
-                $filename = basename((string) ($project['project_image'] ?? ''));
-                $image = '';
-                if ($filename !== '') {
-                    $image = '../../' . portfolioEsc($project['project_image']);
-                }
-                ?>
-                <article class="project-card">
-                    <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project + ['source' => 'external', 'id' => $project['portfolio_project_id']]) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
-                        <div class="project-image">
-                            <?php if ($image): ?>
-                                <img src="<?= portfolioEsc($image) ?>" alt="Project cover" loading="lazy">
-                            <?php else: ?>
-                                <div class="portfolio-empty-image"><i class="fa-solid fa-folder-open"></i></div>
-                            <?php endif; ?>
-                        </div>
-                        <div class="project-content">
-                            <span class="portfolio-source">Personal project</span>
-                            <h3><?= portfolioEsc($project['title']) ?></h3>
-                            <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
-                            <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
-                            <div class="tags">
-                                <?php foreach ($project['technologies'] as $technology): ?>
-                                    <span><?= portfolioEsc($technology) ?></span>
-                                <?php endforeach; ?>
-                            </div>
-                            <p class="portfolio-small"><?= portfolioEsc($project['project_status']) ?></p>
-                        </div>
-                    </button>
-
-                    <div class="project-content portfolio-card-actions">
-                        <div class="project-links">
-                            <button type="button" class="edit-btn" title="Edit project" onclick='portfolioEditProject(<?= json_encode($project, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                        <div class="project-links portfolio-card-actions">
+                            <button type="button" class="edit-btn" title="Edit portfolio display" onclick='portfolioEditInternal(<?= portfolioJson($project) ?>)'>
                                 <i class="fa-solid fa-pen"></i>
                             </button>
-                            <form method="post" onsubmit="return confirm('Delete this project? The associated image will also be removed.')">
+                            <form method="post" onsubmit="return confirm('Remove this project from your portfolio? The original project will remain unchanged.')">
                                 <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
-                                <input type="hidden" name="action" value="delete_project">
-                                <input type="hidden" name="id" value="<?= (int) $project['portfolio_project_id'] ?>">
-                                <button type="submit" class="delete-btn" title="Delete project">
+                                <input type="hidden" name="action" value="hide_internal">
+                                <input type="hidden" name="id" value="<?= (int) $project['student_project_id'] ?>">
+                                <button class="delete-btn" title="Remove from my portfolio" type="submit">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </form>
                         </div>
-                    </div>
-                </article>
+                    </article>
+                <?php else: ?>
+                    <?php
+                    $filename = basename((string) ($project['project_image'] ?? ''));
+                    $image = '';
+                    if ($filename !== '') {
+                        $image = '../../' . portfolioEsc($project['project_image']);
+                    }
+                    ?>
+                    <article class="project-card <?= $hiddenClass ?>">
+                        <button type="button" class="portfolio-card-open" onclick='portfolioViewProject(<?= portfolioJson($project + ['source' => 'external', 'id' => $project['portfolio_project_id']]) ?>)' aria-label="View <?= portfolioEsc($project['title']) ?> details">
+                            <div class="project-image">
+                                <?php if ($image): ?>
+                                    <img src="<?= portfolioEsc($image) ?>" alt="Project cover" loading="lazy">
+                                <?php else: ?>
+                                    <div class="portfolio-empty-image"><i class="fa-solid fa-folder-open"></i></div>
+                                <?php endif; ?>
+                            </div>
+                            <div class="project-content">
+                                <span class="portfolio-source">Personal project</span>
+                                <h3><?= portfolioEsc($project['title']) ?></h3>
+                                <p class="portfolio-description-preview"><?= portfolioEsc($project['description']) ?></p>
+                                <span class="portfolio-see-more">See more <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></span>
+                                <div class="tags">
+                                    <?php foreach ($project['technologies'] as $technology): ?>
+                                        <span><?= portfolioEsc($technology) ?></span>
+                                    <?php endforeach; ?>
+                                </div>
+                                <p class="portfolio-small"><?= portfolioEsc($project['project_status']) ?></p>
+                            </div>
+                        </button>
+
+                        <div class="project-content portfolio-card-actions">
+                            <div class="project-links">
+                                <button type="button" class="edit-btn" title="Edit project" onclick='portfolioEditProject(<?= json_encode($project, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?>)'>
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <form method="post" onsubmit="return confirm('Delete this project? The associated image will also be removed.')">
+                                    <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
+                                    <input type="hidden" name="action" value="delete_project">
+                                    <input type="hidden" name="id" value="<?= (int) $project['portfolio_project_id'] ?>">
+                                    <button type="submit" class="delete-btn" title="Delete project">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </article>
+                <?php endif; ?>
             <?php endforeach; ?>
         </div>
 
-        <?php if (!$projects && !$internalProjects): ?>
+        <?php if (!$allPortfolioProjects): ?>
             <p class="portfolio-empty">No portfolio projects yet. Add your first project.</p>
         <?php endif; ?>
 
-        <?php if ($pageCount > 1): ?>
-            <nav class="portfolio-pagination" aria-label="Portfolio pagination">
-                <?php for ($i = 1; $i <= $pageCount; $i++): ?>
-                    <a class="page-number <?= $page === $i ? 'active' : '' ?>" href="?page=<?= $i ?>"><?= $i ?></a>
-                <?php endfor; ?>
-            </nav>
+        <?php if ($totalProjectsCount > 3): ?>
+            <div class="portfolio-show-all-wrap">
+                <button type="button" class="portfolio-show-all-btn" id="toggleProjectsBtn" onclick="togglePortfolioSection('extra-project-card', 'toggleProjectsBtn', 'See All Projects (<?= $totalProjectsCount ?>)', 'Show Less Projects')">
+                    <span>See All Projects (<?= $totalProjectsCount ?>)</span>
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>
+            </div>
         <?php endif; ?>
     </section>
 
+    <!-- LICENSES & CERTIFICATIONS SECTION (3 Columns, Initial 3 Shown) -->
     <section class="portfolio-section">
         <div class="section-title"><h2>Licenses & Certifications</h2></div>
-        <div class="certificate-grid">
-            <?php foreach ($certificates as $certificate): ?>
+        <div class="certificate-grid" id="portfolioCertificatesGrid">
+            <?php foreach ($certificates as $idx => $certificate): ?>
                 <?php 
+                $certHiddenClass = $idx >= 3 ? 'portfolio-is-hidden extra-certificate-card' : '';
                 $fileUrl = '';
                 if (!empty($certificate['certificate_file'])) {
                     $fileUrl = '../../' . portfolioEsc($certificate['certificate_file']);
                 } 
                 $certificate['preview_url'] = $fileUrl ?: null; 
                 ?>
-                <article class="certificate-card">
+                <article class="certificate-card <?= $certHiddenClass ?>">
                     <button type="button" class="portfolio-card-open" onclick='portfolioViewCertificate(<?= portfolioJson($certificate) ?>)' aria-label="View <?= portfolioEsc($certificate['certificate_name']) ?> certificate">
                         <div class="certificate-image">
                             <?php if ($fileUrl && str_ends_with(strtolower(parse_url($fileUrl, PHP_URL_PATH) ?? ''), '.pdf')): ?>
@@ -411,6 +435,101 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
         <?php if (!$certificates): ?>
             <p class="portfolio-empty">No certificates uploaded yet.</p>
+        <?php endif; ?>
+
+        <?php if ($totalCertificatesCount > 3): ?>
+            <div class="portfolio-show-all-wrap">
+                <button type="button" class="portfolio-show-all-btn" id="toggleCertificatesBtn" onclick="togglePortfolioSection('extra-certificate-card', 'toggleCertificatesBtn', 'Show All Certificates (<?= $totalCertificatesCount ?>)', 'Show Less Certificates')">
+                    <span>Show All Certificates (<?= $totalCertificatesCount ?>)</span>
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>
+            </div>
+        <?php endif; ?>
+    </section>
+
+    <!-- REVIEWS & FEEDBACK SECTION (3 Columns, Initial 3 Shown) -->
+    <section class="portfolio-section">
+        <div class="section-header-with-meta">
+            <div class="section-title" style="margin-bottom:0;"><h2>Reviews & Feedback</h2></div>
+            <?php if ($totalFeedbacksCount > 0): ?>
+                <div class="section-rating-summary">
+                    <span class="stars">
+                        <?php
+                        $full = (int) floor($avgRating);
+                        $half = ($avgRating - $full) >= 0.5 ? 1 : 0;
+                        $empty = 5 - $full - $half;
+                        echo str_repeat('<i class="fa-solid fa-star"></i>', $full);
+                        if ($half) echo '<i class="fa-solid fa-star-half-stroke"></i>';
+                        echo str_repeat('<i class="fa-regular fa-star"></i>', $empty);
+                        ?>
+                    </span>
+                    <span><?= number_format($avgRating, 1) ?> out of 5</span>
+                    <span style="color:#b45309;font-weight:500;">(<?= $totalFeedbacksCount ?> <?= $totalFeedbacksCount === 1 ? 'review' : 'reviews' ?>)</span>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($feedbacks): ?>
+            <div class="feedback-grid" id="portfolioFeedbacksGrid">
+                <?php foreach ($feedbacks as $idx => $fb): ?>
+                    <?php
+                    $fbHiddenClass = $idx >= 3 ? 'portfolio-is-hidden extra-feedback-card' : '';
+                    $compName = trim((string) ($fb['company'] ?? 'Organization'));
+                    $compInitials = strtoupper(substr($compName, 0, 2));
+                    $ratingVal = (float) ($fb['rating'] ?? 5.0);
+                    $fStars = (int) floor($ratingVal);
+                    $hStar = ($ratingVal - $fStars) >= 0.5 ? 1 : 0;
+                    $eStars = 5 - $fStars - $hStar;
+                    
+                    // Truncate text for brief preview card
+                    $briefText = mb_strimwidth((string) ($fb['feedback_text'] ?? ''), 0, 130, '...');
+                    ?>
+                    <article class="feedback-card <?= $fbHiddenClass ?>" onclick='portfolioViewFeedback(<?= portfolioJson($fb) ?>)' style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 10px 20px rgba(0,0,0,0.06)'" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 6px -1px rgba(0, 0, 0, 0.02)'">
+                        <div style="display: flex; flex-direction: column; gap: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
+                                <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #0f766e; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">
+                                        <?= portfolioEsc($compInitials) ?>
+                                    </div>
+                                    <div style="min-width: 0;">
+                                        <h3 style="margin: 0 0 2px; font-size: 16px; color: #0f172a; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= portfolioEsc($compName) ?>"><?= portfolioEsc($compName) ?></h3>
+                                        <p style="margin: 0; font-size: 13px; color: #64748b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= portfolioEsc((string) ($fb['project_title'] ?? 'SkillBridge Project')) ?>"><?= portfolioEsc((string) ($fb['project_title'] ?? 'SkillBridge Project')) ?></p>
+                                    </div>
+                                </div>
+                                <div style="display: inline-flex; align-items: center; gap: 4px; background: #fffbeb; border: 1px solid #fde68a; color: #b45309; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; flex-shrink: 0;">
+                                    <i class="fa-solid fa-star" style="color: #f59e0b;"></i> <?= number_format($ratingVal, 1) ?> / 5
+                                </div>
+                            </div>
+
+                            <div style="color: #f59e0b; font-size: 13px; display: flex; align-items: center; gap: 3px;">
+                                <?= str_repeat('<i class="fa-solid fa-star"></i>', $fStars) ?>
+                                <?= $hStar ? '<i class="fa-solid fa-star-half-stroke"></i>' : '' ?>
+                                <?= str_repeat('<i class="fa-regular fa-star"></i>', $eStars) ?>
+                            </div>
+
+                            <p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.6; background: #f8fafc; padding: 14px; border-radius: 10px; border-left: 3px solid #ff8a00; font-style: italic;">
+                                "<?= portfolioEsc($briefText) ?>"
+                            </p>
+                        </div>
+
+                        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px; color: #64748b; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                            <span><i class="fa-regular fa-user" style="margin-right: 4px;"></i> Role: <strong><?= portfolioEsc((string) ($fb['role'] ?? 'Team Member')) ?></strong></span>
+                            <span><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i> <?= !empty($fb['created_at']) ? date('M d, Y', strtotime((string) $fb['created_at'])) : 'Completed' ?></span>
+                        </div>
+                    </article>
+                <?php endforeach; ?>
+            </div>
+
+            <?php if ($totalFeedbacksCount > 3): ?>
+                <div class="portfolio-show-all-wrap">
+                    <button type="button" class="portfolio-show-all-btn" id="toggleFeedbacksBtn" onclick="togglePortfolioSection('extra-feedback-card', 'toggleFeedbacksBtn', 'Show All Reviews (<?= $totalFeedbacksCount ?>)', 'Show Less Reviews')">
+                        <span>Show All Reviews (<?= $totalFeedbacksCount ?>)</span>
+                        <i class="fa-solid fa-arrow-down"></i>
+                    </button>
+                </div>
+            <?php endif; ?>
+        <?php else: ?>
+            <p class="portfolio-empty">No organization reviews or feedback received yet. Complete organization projects to earn ratings.</p>
         <?php endif; ?>
     </section>
 </main>
@@ -509,6 +628,17 @@ include __DIR__ . '/../../Includes/dash_header.php';
 </div>
 
 <script>
+function togglePortfolioSection(cardClass, btnId, expandText, collapseText) {
+    const cards = document.querySelectorAll('.' + cardClass);
+    const btn = document.getElementById(btnId);
+    if (!cards.length || !btn) return;
+    const isHidden = cards[0].classList.contains('portfolio-is-hidden');
+    cards.forEach(card => card.classList.toggle('portfolio-is-hidden', !isHidden));
+    btn.innerHTML = isHidden
+        ? `<span>${collapseText}</span> <i class="fa-solid fa-arrow-up"></i>`
+        : `<span>${expandText}</span> <i class="fa-solid fa-arrow-down"></i>`;
+}
+
 function portfolioText(value) { return document.createTextNode(String(value ?? '')); }
 
 function portfolioDetailRow(label, value) {
@@ -582,7 +712,6 @@ function portfolioViewProject(project) {
     }
 
     if (isInternal) {
-        // Find if this student has a team for this project, otherwise fallback to the general project view
         const viewLink = project.team_id ? 'view_team.php?id=' + project.team_id : 'view_project.php?id=' + project.organization_project_id;
         
         const internalBtn = document.createElement('a');
@@ -740,6 +869,46 @@ function portfolioEditCertificate(certificate) {
     form.elements.id.value = certificate.certificate_id;
 }
 
+function portfolioViewFeedback(fb) {
+    const area = document.getElementById('feedbackViewContent');
+    area.replaceChildren();
+
+    const info = document.createElement('div');
+    info.className = 'portfolio-detail-info';
+    info.style.marginBottom = '20px';
+    info.append(portfolioDetailRow('Organization', fb.company));
+    info.append(portfolioDetailRow('Project', fb.project_title));
+    info.append(portfolioDetailRow('Role', fb.role || 'Team Member'));
+    info.append(portfolioDetailRow('Rating', Number(fb.rating || 5).toFixed(1) + ' / 5.0'));
+    if (fb.created_at) {
+        info.append(portfolioDetailRow('Date', new Date(fb.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })));
+    }
+    area.append(info);
+
+    const heading = document.createElement('h3');
+    heading.className = 'portfolio-detail-heading';
+    heading.textContent = 'Written feedback';
+    
+    const text = document.createElement('blockquote');
+    text.style.margin = '0';
+    text.style.color = '#334155';
+    text.style.fontSize = '15px';
+    text.style.lineHeight = '1.7';
+    text.style.background = '#f8fafc';
+    text.style.padding = '18px';
+    text.style.borderRadius = '10px';
+    text.style.borderLeft = '4px solid #ff8a00';
+    text.style.fontStyle = 'italic';
+    text.textContent = '"' + (fb.feedback_text || '') + '"';
+
+    area.append(heading, text);
+
+    document.getElementById('feedbackViewTitle').textContent = 'Feedback from ' + (fb.company || 'Organization');
+    const modal = document.getElementById('feedbackViewModal');
+    modal.style.display = 'flex';
+    area.scrollTop = 0;
+}
+
 document.querySelectorAll('.portfolio-toast').forEach(toast => {
     let timer;
     function dismiss() {
@@ -763,4 +932,16 @@ document.addEventListener('keydown', event => {
     if (event.key === 'Escape') document.querySelectorAll('.modal').forEach(modal => modal.style.display = 'none');
 });
 </script>
+
+<!-- Feedback View Modal -->
+<div class="modal" id="feedbackViewModal" role="dialog" aria-modal="true" aria-labelledby="feedbackViewTitle">
+    <div class="modal-box portfolio-detail" style="max-width: 600px;">
+        <div class="modal-header">
+            <h2 id="feedbackViewTitle">Organization Feedback</h2>
+            <button class="close" type="button" onclick="portfolioClose('feedbackViewModal')">×</button>
+        </div>
+        <div class="modal-content" id="feedbackViewContent"></div>
+    </div>
+</div>
+
 <?php include __DIR__ . '/../../Includes/dash_footer.php'; ?>
