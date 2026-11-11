@@ -80,14 +80,28 @@ function prPortfolioItem(array $pf): array
     $link = trim((string)($pf['project_link'] ?? ''));
     $link = preg_match('#^https?://#i', $link) ? $link : '';      // only real web links
 
-    // screenshot: only shown if the file really exists in one of the upload folders
+    // screenshot: only shown if the file really exists.
+    // The Student Portfolio page saves the full path (Assets/Images/Student/Portfolio/<file>);
+    // older rows have only the file name -> look in the upload folders.
     $image = '';
-    $img   = basename((string)($pf['image'] ?? ''));
-    foreach (['Assets/Uploads/portfolio/', 'Assets/Images/Student/portfolio/'] as $dir) {
-        if ($img !== '' && preg_match('/\.(png|jpe?g|webp|gif)$/i', $img) && is_file(__DIR__ . '/../../' . $dir . $img)) {
-            $image = '../../' . $dir . $img;
+    $raw   = ltrim(str_replace('\\', '/', trim((string)($pf['image'] ?? ''))), '/');
+    $img   = basename($raw);
+    $tries = strpos($raw, '/') !== false && strpos($raw, '..') === false ? [$raw] : [];
+    foreach (['Assets/Images/Student/Portfolio/', 'Assets/Uploads/portfolio/', 'Assets/Images/Student/portfolio/'] as $dir) {
+        $tries[] = $dir . $img;
+    }
+    foreach ($tries as $path) {
+        if ($img !== '' && preg_match('/\.(png|jpe?g|webp|gif)$/i', $img) && is_file(__DIR__ . '/../../' . $path)) {
+            $image = '../../' . $path;
             break;
         }
+    }
+
+    // "Sep 2026 - Present" / "Jun 2026 - Aug 2026"
+    $period = '';
+    if (!empty($pf['start_date'])) {
+        $period = date('M Y', strtotime($pf['start_date'])) . ' - '
+                . (!empty($pf['end_date']) ? date('M Y', strtotime($pf['end_date'])) : 'Present');
     }
 
     return [
@@ -97,6 +111,9 @@ function prPortfolioItem(array $pf): array
         'link'        => $link,
         'link_label'  => stripos($link, 'github.com') !== false ? 'View on GitHub' : 'Open project',
         'image'       => $image,
+        'status'      => $pf['project_status'] ?? '',            // Completed / Currently Working
+        'period'      => $period,
+        'tech'        => array_values(array_filter(array_map('trim', explode(',', (string)($pf['technologies'] ?? ''))))),
     ];
 }
 
@@ -157,6 +174,54 @@ function prFetchAll(mysqli $conn, string $sql, string $email): array
     }
 }
 
+/*
+| Student rating = the feedback that organizations gave (Feedback page -> project_feedback)
+| to the teams this student was a member of (org_team_members), from ANY organization.
+| So every organization can see how the student did before, on the proposal and on the profile.
+| (Feedback is given to the whole team, so each member of the team gets that rating.)
+*/
+function prStudentRating(mysqli $conn, string $email): array
+{
+    $rating = ['avg' => null, 'count' => 0, 'technical' => null, 'communication' => null,
+               'teamwork' => null, 'problem_solving' => null, 'reviews' => []];
+    try {
+        $q = $conn->prepare("SELECT COUNT(*) AS n, ROUND(AVG(f.rating), 1) AS avg_rating,
+                                    ROUND(AVG(f.technical), 1) AS technical, ROUND(AVG(f.communication), 1) AS communication,
+                                    ROUND(AVG(f.teamwork), 1) AS teamwork, ROUND(AVG(f.problem_solving), 1) AS problem_solving
+                             FROM project_feedback f
+                             JOIN org_team_members m ON m.team_id = f.team_id
+                             WHERE LOWER(m.Email) = LOWER(?)");
+        $q->bind_param("s", $email);
+        $q->execute();
+        $r = $q->get_result()->fetch_assoc();
+        if ($r && (int)$r['n'] > 0) {
+            $rating['count'] = (int)$r['n'];
+            $rating['avg']   = (float)$r['avg_rating'];
+            foreach (['technical', 'communication', 'teamwork', 'problem_solving'] as $k) $rating[$k] = (float)$r[$k];
+
+            // the latest 5 reviews: which organization, which project, the student's role, stars and summary
+            $q = $conn->prepare("SELECT f.rating, f.summary, f.created_at, p.title AS project, o.Name AS organization, m.role
+                                 FROM project_feedback f
+                                 JOIN org_team_members m  ON m.team_id = f.team_id
+                                 JOIN org_teams t         ON t.id = f.team_id
+                                 JOIN projects p          ON p.id = t.project_id
+                                 LEFT JOIN organization o ON o.Email = p.organization_email
+                                 WHERE LOWER(m.Email) = LOWER(?)
+                                 ORDER BY f.created_at DESC LIMIT 5");
+            $q->bind_param("s", $email);
+            $q->execute();
+            foreach ($q->get_result()->fetch_all(MYSQLI_ASSOC) as $rv) {
+                $rating['reviews'][] = ['rating' => (int)$rv['rating'], 'summary' => $rv['summary'],
+                                        'project' => $rv['project'], 'organization' => $rv['organization'] ?? '',
+                                        'role' => $rv['role'] ?? '', 'date' => date('M d, Y', strtotime($rv['created_at']))];
+            }
+        }
+    } catch (Throwable $e) {
+        // no rating shown
+    }
+    return $rating;
+}
+
 $projectDetails = [];   // title => details, for the "Applied project" box
 $studentProfiles = [];
 foreach ($proposals as &$prop) {
@@ -199,8 +264,18 @@ foreach ($proposals as &$prop) {
         'skills' => prFetchAll($conn, "SELECT skill_name, category, level, percentage
                                        FROM skills WHERE Email = ? ORDER BY percentage DESC, skill_name", $email),
 
-        'portfolio' => prFetchAll($conn, "SELECT portfolio_id, title, description, project_link, image
-                                          FROM portfolio WHERE Email = ? ORDER BY portfolio_id DESC", $email),
+        // the student's portfolio projects (Student -> Portfolio page saves them in student_portfolio_projects:
+        // repository link, screenshot, status, dates and the technologies used)
+        'portfolio' => prFetchAll($conn, "SELECT pp.portfolio_project_id AS portfolio_id, pp.title, pp.description,
+                                                 pp.repository_url AS project_link, pp.project_image AS image,
+                                                 pp.project_status, pp.start_date, pp.end_date,
+                                                 (SELECT GROUP_CONCAT(t.technology_name ORDER BY t.technology_name SEPARATOR ', ')
+                                                    FROM student_portfolio_project_technologies pt
+                                                    JOIN student_technologies t ON t.technology_id = pt.technology_id
+                                                   WHERE pt.portfolio_project_id = pp.portfolio_project_id) AS technologies
+                                          FROM student_portfolio_projects pp
+                                          WHERE pp.student_email = ?
+                                          ORDER BY pp.created_at DESC, pp.portfolio_project_id DESC", $email),
 
         'projects' => prFetchAll($conn, "SELECT p.title, o.Name AS company, c.category_name AS category,
                                                 sp.role, sp.progress, sp.status
@@ -213,7 +288,12 @@ foreach ($proposals as &$prop) {
 
         'certificates' => prFetchAll($conn, "SELECT certificate_name, issuer, status
                                              FROM certificates WHERE Email = ? ORDER BY certificate_id DESC", $email),
+
+        'rating' => prStudentRating($conn, $email),
     ];
+    // for the proposal card
+    $prop['rating_avg']   = $studentProfiles[$email]['rating']['avg'];
+    $prop['rating_count'] = $studentProfiles[$email]['rating']['count'];
 
     /*
     | "Portfolio Preview" projects (like Upwork / Handshake):
@@ -225,6 +305,7 @@ foreach ($proposals as &$prop) {
     $prop['portfolio_picked'] = count($picked) > 0;
     $prop['portfolio_count']  = count($all);
     $prop['portfolio_items']  = array_map('prPortfolioItem', $prop['portfolio_picked'] ? $picked : array_slice($all, 0, 3));
+    $studentProfiles[$email]['portfolio'] = array_map('prPortfolioItem', $all);   // same details in the profile
 }
 unset($prop);
 
@@ -238,6 +319,30 @@ unset($prop);
 | silent=1 -> only sync the status, no notification (used for old
 | decisions that were saved only in the browser).
 */
+/*
+| Portfolio PDF for the preview popup (AJAX, returns JSON).
+| The file is sent as text (base64) inside JSON, not as a .pdf link, so a download manager
+| (e.g. IDM catches every PDF the browser loads) can't take it away from the preview.
+| Only a proposal of THIS organization's projects ($proposals above) can be read.
+*/
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'portfolio_file') {
+    header('Content-Type: application/json');
+    $pid = (int)($_POST['proposal_id'] ?? 0);
+    $found = null;
+    foreach ($proposals as $pr) {
+        if ($pr['id'] === $pid) { $found = $pr; break; }
+    }
+    $file = ($found && $found['portfolio_type'] === 'pdf')
+          ? __DIR__ . '/../../' . substr($found['portfolio'], strlen('../../'))   // '../../Assets/...' -> real path
+          : '';
+    if ($file === '' || !is_file($file)) {
+        echo json_encode(['ok' => false, 'message' => 'The file was not found.']);
+        exit;
+    }
+    echo json_encode(['ok' => true, 'data' => base64_encode(file_get_contents($file))]);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'accept_proposal') {
     header('Content-Type: application/json');
 

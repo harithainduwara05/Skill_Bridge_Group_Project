@@ -530,6 +530,7 @@ function showFullProposal(id)
                 <div class="pf-sub muted"><span class="material-symbols-outlined">school</span>${e(sp.university || proposal.school)}</div>
             </div>
             <div class="pf-mini-stats">
+                <div class="pf-mini-rating"><strong>${sp.rating && sp.rating.count ? '&#9733; ' + Number(sp.rating.avg).toFixed(1) : '—'}</strong><span>Rating${sp.rating && sp.rating.count ? ' (' + sp.rating.count + ')' : ''}</span></div>
                 <div><strong>${(sp.skills || []).length}</strong><span>Skills</span></div>
                 <div><strong>${(sp.certificates || []).length}</strong><span>Certificates</span></div>
                 <div><strong>${(sp.portfolio || []).length}</strong><span>Portfolio</span></div>
@@ -643,8 +644,40 @@ function showProfile(id, pushHistory = true)
         image: '', github: '', linkedin: '', website: '', email: proposal.email,
         skills: [], portfolio: [], projects: [], certificates: []
     };
+    const rt = sp.rating || { avg: null, count: 0, reviews: [] };
 
     const e = escapeHtml;
+
+    // ---------- rating (feedback organizations gave to this student's teams) ----------
+    const stars = n => {
+        const full = Math.round(Number(n) || 0);
+        return '<span class="sp-stars">' + '&#9733;'.repeat(full) + '<span class="off">' + '&#9733;'.repeat(5 - full) + '</span></span>';
+    };
+    const compRows = [['Technical Skills', rt.technical], ['Communication', rt.communication],
+                      ['Teamwork', rt.teamwork], ['Problem-solving', rt.problem_solving]]
+        .map(([label, v]) => `
+            <div class="sp-comp">
+                <span class="sp-comp-label">${label}</span>
+                <div class="sp-bar"><span style="width:${Math.max(0, Math.min(100, (Number(v) || 0) / 5 * 100))}%"></span></div>
+                <span class="sp-comp-val">${v !== null && v !== undefined ? Number(v).toFixed(1) : '—'}</span>
+            </div>`).join('');
+    const reviewsHtml = (rt.reviews || []).map(rv => `
+            <div class="sp-review">
+                <div class="sp-review-top">
+                    ${stars(rv.rating)}
+                    <span class="sp-review-date">${e(rv.date)}</span>
+                </div>
+                <div class="sp-review-meta"><strong>${e(rv.organization || 'Organization')}</strong> · ${e(rv.project)}${rv.role ? ' · ' + e(rv.role) : ''}</div>
+                <p class="sp-review-text">${e(rv.summary)}</p>
+            </div>`).join('');
+    const ratingHtml = rt.count
+        ? `<div class="sp-rating-head">
+               <div class="sp-rating-big">${Number(rt.avg).toFixed(1)}</div>
+               <div>${stars(rt.avg)}<div class="sp-rating-sub">From ${rt.count} organization feedback${rt.count === 1 ? '' : 's'}</div></div>
+           </div>
+           <div class="sp-comps">${compRows}</div>
+           <div class="sp-reviews">${reviewsHtml}</div>`
+        : '<p class="sp-empty">No ratings yet. This student has not received feedback from an organization.</p>';
 
     // ---------- header ----------
     const avatar = sp.image
@@ -661,7 +694,9 @@ function showProfile(id, pushHistory = true)
         sp.github   ? `<a class="sp-social" href="${e(sp.github)}" target="_blank" rel="noopener">${GITHUB_SVG} GitHub</a>` : '',
         sp.linkedin ? `<a class="sp-social" href="${e(sp.linkedin)}" target="_blank" rel="noopener">${LINKEDIN_SVG} LinkedIn</a>` : '',
         sp.website  ? `<a class="sp-social" href="${e(sp.website)}" target="_blank" rel="noopener"><span class="material-symbols-outlined">language</span> Website</a>` : '',
-        sp.email    ? `<a class="sp-social" href="mailto:${e(sp.email)}"><span class="material-symbols-outlined">mail</span> Email</a>` : ''
+        sp.email    ? `<a class="sp-social" href="mailto:${e(sp.email)}"><span class="material-symbols-outlined">mail</span> Email</a>` : '',
+        // the student's own public profile page (Functions/Student/public_profile.php), in a new tab
+        sp.email    ? `<a class="sp-social sp-public" href="../Student/public_profile.php?email=${encodeURIComponent(sp.email)}" target="_blank" rel="noopener"><span class="material-symbols-outlined">open_in_new</span> Public Profile</a>` : ''
     ].join('');
 
     // ---------- skills ----------
@@ -681,11 +716,13 @@ function showProfile(id, pushHistory = true)
     const portfolioHtml = sp.portfolio.length
         ? sp.portfolio.map(pf => `
             <div class="sp-card">
-                <div class="sp-card-icon"><span class="material-symbols-outlined">code_blocks</span></div>
+                ${pf.image ? `<img class="sp-card-img" src="${e(pf.image)}" alt="">` : '<div class="sp-card-icon"><span class="material-symbols-outlined">code_blocks</span></div>'}
                 <div class="sp-card-body">
                     <div class="sp-card-title">${e(pf.title || 'Untitled project')}</div>
+                    ${pf.status || pf.period ? `<div class="sp-card-meta">${e([pf.status, pf.period].filter(Boolean).join(' · '))}</div>` : ''}
                     ${pf.description ? `<div class="sp-card-text">${e(pf.description)}</div>` : ''}
-                    ${pf.project_link ? `<a class="sp-card-link" href="${e(pf.project_link)}" target="_blank" rel="noopener">View project <span class="material-symbols-outlined">open_in_new</span></a>` : ''}
+                    ${(pf.tech || []).length ? `<div class="pv-tech">${pf.tech.map(t => `<span>${e(t)}</span>`).join('')}</div>` : ''}
+                    ${pf.link ? `<a class="sp-card-link" href="${e(pf.link)}" target="_blank" rel="noopener">${e(pf.link_label || 'View project')} <span class="material-symbols-outlined">open_in_new</span></a>` : ''}
                 </div>
             </div>`).join('')
         : '<p class="sp-empty">No portfolio projects yet.</p>';
@@ -742,6 +779,8 @@ function showProfile(id, pushHistory = true)
         </div>
 
         <div class="sp-stats">
+            <div class="sp-stat"><span class="sp-stat-icon amber"><span class="material-symbols-outlined">star</span></span>
+                <div><div class="sp-stat-label">Rating</div><div class="sp-stat-value">${rt.count ? Number(rt.avg).toFixed(1) : '—'}</div></div></div>
             <div class="sp-stat"><span class="sp-stat-icon blue"><span class="material-symbols-outlined">bolt</span></span>
                 <div><div class="sp-stat-label">Skills</div><div class="sp-stat-value">${sp.skills.length}</div></div></div>
             <div class="sp-stat"><span class="sp-stat-icon green"><span class="material-symbols-outlined">folder_special</span></span>
@@ -757,6 +796,11 @@ function showProfile(id, pushHistory = true)
             <h4><span class="material-symbols-outlined">person</span> About</h4>
             <p class="sp-bio">${e(sp.bio)}</p>
         </section>` : ''}
+
+        <section class="sp-section">
+            <h4><span class="material-symbols-outlined">star</span> Ratings from Organizations</h4>
+            ${ratingHtml}
+        </section>
 
         <section class="sp-section">
             <h4><span class="material-symbols-outlined">bolt</span> Skills</h4>
@@ -1018,19 +1062,39 @@ document.addEventListener('click', function (e) {
         const body = document.getElementById('pvBody');
         body.innerHTML = '';
         if (p.portfolio_type === 'pdf') {
+            // the PDF comes from the page's backend as text (base64 inside JSON) and is shown from a
+            // "blob:" address, so a download manager (e.g. IDM catches every PDF) can't take it away
             const frame = document.createElement('iframe');
-            frame.src = p.portfolio;
             frame.title = 'Portfolio preview';
             body.appendChild(frame);
+            const fd = new FormData();
+            fd.append('action', 'portfolio_file');
+            fd.append('proposal_id', p.id);
+            fetch(window.location.href, { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    const bin   = atob(res.data);                       // base64 -> bytes
+                    const bytes = new Uint8Array(bin.length);
+                    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+                    frame.dataset.blob = url;
+                    frame.src = url;
+                })
+                .catch(() => { body.innerHTML = '<p class="pv-error">The PDF could not be shown. Use Download to open it.</p>'; });
         } else {
             const img = document.createElement('img');
             img.src = p.portfolio;
             img.alt = 'Portfolio preview';
             body.appendChild(img);
         }
-        document.getElementById('pvName').textContent    = p.portfolio_name || 'Portfolio';
+        // a readable file name instead of the saved random one
+        const ext    = (p.portfolio.split('.').pop() || '').toLowerCase();
+        const dlName = String(p.name || 'Student').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '') + '_Portfolio.' + ext;
+        document.getElementById('pvName').textContent    = dlName;
         document.getElementById('pvStudent').textContent = (p.name || '') + ' · ' + (p.project || '');
         document.getElementById('pvDownload').href       = p.portfolio;
+        document.getElementById('pvDownload').setAttribute('download', dlName);
         document.getElementById('pvDownload').hidden     = false;
         document.getElementById('pvLink').hidden         = true;
         document.getElementById('pvBody').classList.remove('pv-project-mode');
@@ -1061,9 +1125,21 @@ document.addEventListener('click', function (e) {
         const h = document.createElement('h3');
         h.textContent = it.title;
         card.appendChild(h);
+        if (it.status || it.period) {
+            const meta = document.createElement('div');
+            meta.className = 'pv-meta';
+            meta.textContent = [it.status, it.period].filter(Boolean).join(' · ');
+            card.appendChild(meta);
+        }
         const d = document.createElement('p');
         d.textContent = it.description || 'The student did not add a description for this project.';
         card.appendChild(d);
+        if ((it.tech || []).length) {
+            const tags = document.createElement('div');
+            tags.className = 'pv-tech';
+            it.tech.forEach(t => { const s = document.createElement('span'); s.textContent = t; tags.appendChild(s); });
+            card.appendChild(tags);
+        }
         if (!it.link) {
             const n = document.createElement('p');
             n.className = 'pv-muted';
@@ -1091,7 +1167,11 @@ document.addEventListener('click', function (e) {
 
 // stop the PDF from staying loaded after the preview is closed
 document.querySelectorAll('[data-close-modal="portfolioModal"]').forEach(function (btn) {
-    btn.addEventListener('click', function () { document.getElementById('pvBody').innerHTML = ''; });
+    btn.addEventListener('click', function () {
+        const frame = document.querySelector('#pvBody iframe[data-blob]');
+        if (frame) URL.revokeObjectURL(frame.dataset.blob);   // free the PDF copy in memory
+        document.getElementById('pvBody').innerHTML = '';
+    });
 });
 
 

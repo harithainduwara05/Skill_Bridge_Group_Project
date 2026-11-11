@@ -154,8 +154,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'submi
         }
         $conn->commit();
 
+        // short message: the full feedback is in "Reviews & Feedback" on the student's profile
         fbNotifyTeam($conn, $teamId, 'New Project Feedback',
-            $orgName . ' gave your team ' . $d['rating'] . '/5 for "' . $project['title'] . '". Open your project to read the full feedback.');
+            $orgName . ' gave your team ' . $d['rating'] . '/5 for "' . $project['title'] . '". '
+            . 'You can read the full feedback in "Reviews & Feedback" on your profile.');
 
         header("Location: feedback.php?fb_saved=1");
     } catch (Throwable $e) {
