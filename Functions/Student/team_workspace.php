@@ -16,6 +16,8 @@ $files = twFiles($conn, (int) $id, $email, !empty($team['is_leader']));
 $messages = twMessages($conn, (int) $id, 0, $email);
 $report = twReport($conn, (int) $id);
 
+$isCompleted = strtolower((string) $team['status']) === 'completed';
+
 $taskGroups = [
     'todo' => ['title' => 'Todo', 'items' => []],
     'progress' => ['title' => 'In Progress', 'items' => []],
@@ -31,7 +33,7 @@ foreach ($tasks as $task) {
 $doneCount = count($taskGroups['done']['items']);
 $totalTasks = count($tasks);
 $pct = $totalTasks > 0 ? (int) round(($doneCount / $totalTasks) * 100) : (int) $team['progress'];
-if (strtolower((string) $team['status']) === 'completed') {
+if ($isCompleted) {
     $pct = 100;
 }
 
@@ -68,13 +70,25 @@ include __DIR__ . '/../../Includes/dash_header.php';
         </div>
     </section>
 
+    <?php if ($isCompleted): ?>
+        <div style="margin-bottom:20px;padding:16px 20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;display:flex;align-items:center;gap:12px;color:#166534;">
+            <i class="fa-solid fa-circle-check" style="font-size:22px;color:#22c55e;"></i>
+            <div>
+                <strong>Project Completed &amp; Final Report Accepted!</strong>
+                <p style="margin:2px 0 0;font-size:13px;color:#15803d;">This project team workspace is now in view-only mode. All tasks, submitted files, and final reports are locked for review.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <section class="workspace-layout">
         <div class="workspace-main">
             <!-- KANBAN BOARD -->
             <div class="kanban-header">
                 <h2><i class="fa-solid fa-table-columns"></i> Kanban Board</h2>
                 <div class="kanban-controls">
-                    <button type="button" class="workspace-new-task-btn" id="openNewTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+                    <?php if (!$isCompleted): ?>
+                        <button type="button" class="workspace-new-task-btn" id="openNewTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="kanban-board" id="wsKanbanBoard">
@@ -90,19 +104,21 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                         <small><i class="fa-regular fa-user"></i> <?= teamEsc($task['who'] ?: 'Unassigned') ?></small>
                                         <small><i class="fa-regular fa-calendar"></i> <?= !empty($task['due']) ? 'Due ' . teamEsc(teamDate($task['due'])) : 'No deadline' ?></small>
                                     </div>
-                                    <div class="task-card-actions">
-                                        <?php if ($colKey === 'todo'): ?>
-                                            <button type="button" class="task-act-btn primary" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Start</button>
-                                        <?php elseif ($colKey === 'progress'): ?>
-                                            <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="todo">To Do</button>
-                                            <button type="button" class="task-act-btn primary" data-review-task="<?= (int) $task['id'] ?>" data-task-title="<?= teamEsc($task['title']) ?>">Send for Review</button>
-                                        <?php elseif ($colKey === 'review'): ?>
-                                            <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Take Back</button>
-                                        <?php endif; ?>
-                                        <?php if (!empty($team['is_leader'])): ?>
-                                            <button type="button" class="task-act-btn danger" data-delete-task="<?= (int) $task['id'] ?>" title="Delete Task"><i class="fa-solid fa-trash"></i></button>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php if (!$isCompleted): ?>
+                                        <div class="task-card-actions">
+                                            <?php if ($colKey === 'todo'): ?>
+                                                <button type="button" class="task-act-btn primary" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Start</button>
+                                            <?php elseif ($colKey === 'progress'): ?>
+                                                <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="todo">To Do</button>
+                                                <button type="button" class="task-act-btn primary" data-review-task="<?= (int) $task['id'] ?>" data-task-title="<?= teamEsc($task['title']) ?>">Send for Review</button>
+                                            <?php elseif ($colKey === 'review'): ?>
+                                                <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Take Back</button>
+                                            <?php endif; ?>
+                                            <?php if (!empty($team['is_leader'])): ?>
+                                                <button type="button" class="task-act-btn danger" data-delete-task="<?= (int) $task['id'] ?>" title="Delete Task"><i class="fa-solid fa-trash"></i></button>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -114,7 +130,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <section class="shared-assets">
                 <h2><i class="fa-regular fa-folder-open"></i> Shared Assets</h2>
                 <div class="asset-layout">
-                    <div class="asset-files">
+                    <div class="asset-files" style="<?= $isCompleted ? 'width:100%;' : '' ?>">
                         <div class="asset-header">
                             <span>Team Files</span>
                             <span id="wsFilesCount"><?= count($files) ?> file(s)</span>
@@ -129,7 +145,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                     </div>
                                     <div class="asset-item-actions" style="margin-left:auto;display:flex;gap:8px;">
                                         <a href="../../<?= teamEsc($file['path']) ?>" download class="task-act-btn" title="Download"><i class="fa-solid fa-download"></i></a>
-                                        <?php if (!empty($file['can_delete'])): ?>
+                                        <?php if (!$isCompleted && !empty($file['can_delete'])): ?>
                                             <button type="button" class="task-act-btn danger" data-delete-file="<?= (int) $file['id'] ?>" title="Remove"><i class="fa-solid fa-trash"></i></button>
                                         <?php endif; ?>
                                     </div>
@@ -139,12 +155,14 @@ include __DIR__ . '/../../Includes/dash_header.php';
                             <?php endif; ?>
                         </div>
                     </div>
-                    <label class="upload-box" id="wsUploadBox" style="cursor:pointer;padding:20px;">
-                        <input type="file" id="wsFileInput" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.mp4,.fig">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <h4>Upload Shared Files</h4>
-                        <p>Click or drop files here (Max 10MB)</p>
-                    </label>
+                    <?php if (!$isCompleted): ?>
+                        <label class="upload-box" id="wsUploadBox" style="cursor:pointer;padding:20px;">
+                            <input type="file" id="wsFileInput" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.mp4,.fig">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h4>Upload Shared Files</h4>
+                            <p>Click or drop files here (Max 10MB)</p>
+                        </label>
+                    <?php endif; ?>
                 </div>
             </section>
 
@@ -172,7 +190,9 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         </div>
                     <?php endif; ?>
 
-                    <?php if (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
+                    <?php if ($isCompleted): ?>
+                        <p class="info-text" style="margin-bottom:0;"><i class="fa-solid fa-circle-check"></i> This project has been marked as completed and accepted. Final report submissions are now locked.</p>
+                    <?php elseif (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
                         
                         <p class="info-text">
                             When all project tasks are approved and marked as <strong>Done</strong>, the Team Leader can upload the final project report (PDF, DOC, DOCX, or ZIP) for organization review.

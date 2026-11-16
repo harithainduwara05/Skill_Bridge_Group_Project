@@ -19,14 +19,12 @@ $categories = $projects = $savedIds = [];
 $total = 0;
 
 try {
+    // Retrieve accurate stats directly from the repository query without overwriting active count
     $stats = $projectRepo->stats($projectEmail);
-    
-    // Ensure stats are correctly balanced so Active + Completed = Total
-    if (isset($stats['available'], $stats['completed'])) {
+    if (isset($stats['available'], $stats['active'], $stats['completed'])) {
         $stats['available'] = (int) $stats['available'];
+        $stats['active'] = (int) $stats['active'];
         $stats['completed'] = (int) $stats['completed'];
-        // Active projects represent the remaining working projects (Total minus Completed)
-        $stats['active'] = max(0, $stats['available'] - $stats['completed']);
     }
 
     $categories = $projectRepo->categories();
@@ -114,7 +112,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             $isSaved = in_array($id, $savedIds, true);
             $teamId = (int) ($project['student_team_id'] ?? 0);
 
-            if ($isActiveWorking) {
+            if ($isActiveWorking || $isCompleted) {
                 $viewHref = $teamId > 0 ? "view_team.php?id={$teamId}" : "teams.php?project_id={$id}";
             } else {
                 $viewHref = "view_project.php?id={$id}";
@@ -123,7 +121,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             <article class="project-card"
                      data-category="<?= projectEsc($project['category_name']) ?>"
                      data-difficulty="<?= projectEsc($project['difficulty']) ?>"
-                     <?php if ($isActiveWorking): ?>
+                     <?php if ($isActiveWorking || $isCompleted): ?>
                          onclick="if(!event.target.closest('a,button,form')){ window.location.href='<?= projectEsc($viewHref) ?>'; }"
                          style="cursor:pointer;"
                      <?php endif; ?>>
@@ -154,15 +152,11 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                     <div class="project-actions">
                         <?php if ($isActiveWorking): ?>
                             <a href="<?= projectEsc($viewHref) ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
+                        <?php elseif ($isCompleted): ?>
+                            <a href="<?= projectEsc($viewHref) ?>" class="btn-primary">Completed</a>
                         <?php else: ?>
                             <a href="view_project.php?id=<?= $id ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
-                            <?php if ($isCompleted): ?>
-                                <?php if ($teamId > 0): ?>
-                                    <a href="view_team.php?id=<?= $teamId ?>" class="btn-primary">Completed</a>
-                                <?php else: ?>
-                                    <span class="btn-applied-status">Completed</span>
-                                <?php endif; ?>
-                            <?php elseif (!$isApplied): ?>
+                            <?php if (!$isApplied): ?>
                                 <a href="proposal.php?project_id=<?= $id ?>" class="btn-primary">Apply Now</a>
                             <?php else: ?>
                                 <span class="btn-applied-status">Applied</span>

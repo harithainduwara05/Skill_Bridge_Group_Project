@@ -508,16 +508,27 @@ if ($rawPhoto !== '') {
                 <div class="linkedin-projects-list">
                     <?php foreach ($feedbacks as $idx => $fb): 
                         $fbHiddenClass = $idx >= 3 ? 'pub-is-hidden extra-pub-feedback' : '';
+                        
+                        // Fix for organization initials - taking up to 2 letters from words
+                        $compName = trim((string) ($fb['company'] ?? 'Organization'));
+                        $nameParts = explode(' ', $compName);
+                        $compInitials = strtoupper(mb_substr($nameParts[0], 0, 1));
+                        if (count($nameParts) > 1 && !empty($nameParts[1])) {
+                            $compInitials .= strtoupper(mb_substr($nameParts[1], 0, 1));
+                        } elseif (mb_strlen($compName) > 1) {
+                            $compInitials = strtoupper(mb_substr($compName, 0, 2));
+                        }
                     ?>
                         <div class="linkedin-project-item <?= $fbHiddenClass ?>">
                             <div class="project-thumb" style="width: 50px;">
-                                <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:50%; box-shadow:none; overflow:hidden;">
+                                <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:10px; box-shadow:none; overflow:hidden;">
                                     <?php if (!empty($fb['company_logo'])): ?>
                                         <!-- FIXED LOGO PATH -->
-                                        <img src="../../<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" onerror="this.style.display='none'">
+                                        <img src="../../<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
                                     <?php else: ?>
-                                        <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; border-radius:50%;">
-                                            <?= strtoupper(mb_substr($fb['company'], 0, 1)) ?>
+                                        <!-- FIXED FALLBACK INITIALS -->
+                                        <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px; border-radius:10px;">
+                                            <?= htmlspecialchars($compInitials) ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>

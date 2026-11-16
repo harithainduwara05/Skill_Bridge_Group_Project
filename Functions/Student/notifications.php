@@ -45,7 +45,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if ($type === null) {
                 throw new InvalidArgumentException('Notification is unavailable.');
             }
-            // Route only to known local Student pages; no URL is taken from the database.
+            // Route dynamically to the correct section based on notification type
             $routes = [
                 'project' => 'projects.php',
                 'team' => 'teams.php',

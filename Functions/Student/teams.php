@@ -38,14 +38,14 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
     <section class="invitation-section">
         <h2>Team Invitations</h2>
-        <div class="team-empty-state">No pending invitations. Team invitations are not recorded by the current Organization database.</div>
+        <div class="team-empty-state">No pending invitations.</div>
     </section>
 
     <section class="active-team-section">
         <div class="section-title tm-head-bar">
             <h2>Team Workspaces</h2>
 
-            <!-- Organization-style Filter Dropdown (All, On Track, Behind, Completed + Search + Sort) -->
+            <!-- Filter Dropdown (All, On Track, Behind, Completed) -->
             <div class="tm-filter-wrap">
                 <button type="button" class="tm-btn" id="tmFilterBtn" aria-expanded="false">
                     <i class="fa-solid fa-sliders"></i> Filter
@@ -55,7 +55,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <div class="tm-filter-panel" id="tmFilterPanel" hidden>
                     <div class="tm-filter-row">
                         <label class="tm-f-label" for="tmFilterSearch">Search</label>
-                        <input type="text" id="tmFilterSearch" class="tm-input" placeholder="Team, project, leader or skill">
+                        <input type="text" id="tmFilterSearch" class="tm-input" placeholder="Team, project, leader or member">
                     </div>
                     <div class="tm-filter-row">
                         <label class="tm-f-label">Status</label>
@@ -88,7 +88,8 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <?php $tmOrder = 0; foreach ($teams as $team): ?>
                     <?php
                     $rawStatus = strtolower((string) $team['status']);
-                    if (in_array($rawStatus, ['completed', 'complete', 'done'], true)) {
+                    $isCompleted = in_array($rawStatus, ['completed', 'complete', 'done'], true);
+                    if ($isCompleted) {
                         $stateKey = 'completed';
                         $badge = 'status-complete';
                     } elseif (in_array($rawStatus, ['delayed', 'atrisk', 'at_risk', 'blocked', 'behind'], true)) {
@@ -135,7 +136,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         <div class="deadline"><i class="fa-regular fa-calendar"></i> Deadline: <strong><?= teamEsc(teamDate($team['deadline'])) ?></strong></div>
                         <div class="card-buttons">
                             <a href="view_team.php?id=<?= (int) $team['id'] ?>">View Team</a>
-                            <a href="team_workspace.php?id=<?= (int) $team['id'] ?>">Workspace</a>
+                            <a href="team_workspace.php?id=<?= (int) $team['id'] ?>"><?= $isCompleted ? 'Completed Report' : 'Workspace' ?></a>
                         </div>
                     </article>
                 <?php endforeach; ?>
