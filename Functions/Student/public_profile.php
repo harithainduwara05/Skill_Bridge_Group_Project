@@ -71,94 +71,35 @@ while ($row = $res->fetch_assoc()) {
 }
 $q->close();
 
-// Fetch Feedback & Recommendations (safe across schemas)
+// Fetch Feedback & Recommendations from project_feedback schema
 $feedbacks = [];
 $avg_rating = 0.0;
 $total_rating = 0.0;
 
 try {
-    $table_check = $conn->query("SHOW TABLES LIKE 'student_feedback'");
-    if ($table_check && $table_check->num_rows > 0) {
-        $fbColsRes = $conn->query("SHOW COLUMNS FROM `student_feedback`");
-        $fbCols = [];
-        while ($c = $fbColsRes->fetch_assoc()) {
-            $fbCols[strtolower($c['Field'])] = $c['Field'];
+    $sql = "SELECT pf.id, pf.rating, pf.summary AS feedback_text, pf.created_at,
+                   COALESCE(tm.role, 'Team Member') AS role,
+                   COALESCE(org.Name, 'Organization') AS company,
+                   COALESCE(p.title, 'SkillBridge Project') AS project_title,
+                   org.logo AS company_logo
+            FROM project_feedback pf
+            INNER JOIN org_teams t ON t.id = pf.team_id
+            INNER JOIN org_team_members tm ON tm.team_id = t.id
+            INNER JOIN projects p ON p.id = t.project_id
+            LEFT JOIN organization org ON org.Email = p.organization_email
+            WHERE LOWER(TRIM(tm.Email)) = LOWER(TRIM(?))
+            ORDER BY pf.created_at DESC, pf.id DESC";
+
+    $q = $conn->prepare($sql);
+    if ($q) {
+        $q->bind_param("s", $email);
+        $q->execute();
+        $res = $q->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $feedbacks[] = $row;
+            $total_rating += (float)$row['rating'];
         }
-        $hasRoleCol = isset($fbCols['role']);
-        $textCol = $fbCols['feedback_text'] ?? $fbCols['review'] ?? $fbCols['feedback'] ?? $fbCols['comment'] ?? 'feedback_text';
-        $roleSelect = $hasRoleCol ? "COALESCE(NULLIF(sf.`{$fbCols['role']}`, ''), sp.role, 'Team Member')" : "COALESCE(sp.role, 'Team Member')";
-
-        $q = $conn->prepare("
-            SELECT sf.rating, sf.`$textCol` AS feedback_text, sf.created_at,
-                   $roleSelect AS role,
-                   COALESCE(org.Name, sf.organization_email, 'Organization') AS company,
-                   COALESCE(p.title, 'SkillBridge Organization Project') AS project_title,
-                   NULL AS company_logo
-            FROM student_feedback sf
-            LEFT JOIN organization org ON LOWER(TRIM(sf.organization_email)) = LOWER(TRIM(org.Email))
-            LEFT JOIN projects p ON sf.project_id = p.id
-            LEFT JOIN student_projects sp ON sp.project_id = sf.project_id AND LOWER(TRIM(sp.Email)) = LOWER(TRIM(sf.student_email))
-            WHERE LOWER(TRIM(sf.student_email)) = LOWER(TRIM(?))
-            ORDER BY sf.created_at DESC, sf.id DESC
-        ");
-        if ($q) {
-            $q->bind_param("s", $email);
-            $q->execute();
-            $res = $q->get_result();
-            while ($row = $res->fetch_assoc()) {
-                $feedbacks[] = $row;
-                $total_rating += (float)$row['rating'];
-            }
-            $q->close();
-        }
-    }
-
-    if (empty($feedbacks)) {
-        foreach (['org_student_feedback', 'project_feedback', 'feedback'] as $altTable) {
-            $altCheck = $conn->query("SHOW TABLES LIKE '$altTable'");
-            if ($altCheck && $altCheck->num_rows > 0) {
-                $colsRes = $conn->query("SHOW COLUMNS FROM `$altTable`");
-                $cols = [];
-                while ($c = $colsRes->fetch_assoc()) {
-                    $cols[strtolower($c['Field'])] = $c['Field'];
-                }
-                $studentCol = $cols['student_email'] ?? $cols['email'] ?? null;
-                $ratingCol = $cols['rating'] ?? $cols['stars'] ?? $cols['score'] ?? null;
-                $textCol = $cols['feedback_text'] ?? $cols['feedback'] ?? $cols['comment'] ?? $cols['review'] ?? null;
-                $projCol = $cols['project_id'] ?? null;
-                $orgCol = $cols['organization_email'] ?? $cols['org_email'] ?? null;
-                $dateCol = $cols['created_at'] ?? $cols['submitted_at'] ?? $cols['date'] ?? null;
-
-                if ($studentCol && $ratingCol && $textCol) {
-                    $selProj = $projCol ? "LEFT JOIN projects p ON p.id = f.`$projCol`" : "";
-                    $selOrg = $orgCol ? "LEFT JOIN organization org ON LOWER(org.Email) = LOWER(f.`$orgCol`)" : "";
-                    $compExpr = $orgCol ? "COALESCE(org.Name, f.`$orgCol`, 'Organization')" : "'Organization'";
-                    $projExpr = $projCol ? "COALESCE(p.title, 'SkillBridge Project')" : "'SkillBridge Project'";
-                    $dateExpr = $dateCol ? "f.`$dateCol`" : "NOW()";
-
-                    $altSql = "SELECT f.`$ratingCol` AS rating, f.`$textCol` AS feedback_text,
-                                      $dateExpr AS created_at, 'Team Member' AS role,
-                                      $compExpr AS company, $projExpr AS project_title, NULL AS company_logo
-                               FROM `$altTable` f
-                               $selProj
-                               $selOrg
-                               WHERE LOWER(f.`$studentCol`) = LOWER(?)
-                               ORDER BY $dateExpr DESC";
-                    $stmt = $conn->prepare($altSql);
-                    if ($stmt) {
-                        $stmt->bind_param("s", $email);
-                        $stmt->execute();
-                        $res = $stmt->get_result();
-                        while ($row = $res->fetch_assoc()) {
-                            $feedbacks[] = $row;
-                            $total_rating += (float)$row['rating'];
-                        }
-                        $stmt->close();
-                        if (!empty($feedbacks)) break;
-                    }
-                }
-            }
-        }
+        $q->close();
     }
 } catch (Throwable $e) {
     error_log('Public profile feedback load error: ' . $e->getMessage());
@@ -326,7 +267,6 @@ if ($rawPhoto !== '') {
         </div>
 
         <?php 
-        // Combine all projects, show 5 initially, allow expanding all
         $all_projects = [];
         foreach ($internal_projects as $proj) {
             $proj['type'] = 'internal';

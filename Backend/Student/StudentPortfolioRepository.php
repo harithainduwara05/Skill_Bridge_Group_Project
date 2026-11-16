@@ -6,6 +6,36 @@ final class StudentPortfolioRepository
     public function __construct(mysqli $db)
     {
         $this->db = $db;
+        $this->ensureCertificatesSchema();
+    }
+
+    private function ensureCertificatesSchema(): void
+    {
+        try {
+            $colsRes = $this->db->query("SHOW COLUMNS FROM `certificates`");
+            if (!$colsRes) {
+                return;
+            }
+            $existing = [];
+            while ($row = $colsRes->fetch_assoc()) {
+                $existing[strtolower($row['Field'])] = true;
+            }
+
+            if (!isset($existing['expiration_date'])) {
+                $this->db->query("ALTER TABLE `certificates` ADD COLUMN `expiration_date` DATE DEFAULT NULL AFTER `issue_date`");
+            }
+            if (!isset($existing['credential_id'])) {
+                $this->db->query("ALTER TABLE `certificates` ADD COLUMN `credential_id` VARCHAR(150) DEFAULT NULL AFTER `expiration_date`");
+            }
+            if (!isset($existing['credential_url'])) {
+                $this->db->query("ALTER TABLE `certificates` ADD COLUMN `credential_url` VARCHAR(500) DEFAULT NULL AFTER `credential_id`");
+            }
+            if (!isset($existing['created_at'])) {
+                $this->db->query("ALTER TABLE `certificates` ADD COLUMN `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP");
+            }
+        } catch (Throwable $e) {
+            error_log('ensureCertificatesSchema: ' . $e->getMessage());
+        }
     }
 
     public function summary(string $email): array
@@ -24,11 +54,6 @@ final class StudentPortfolioRepository
         $value = $stmt->get_result()->fetch_row()[0] ?? 0;
         $stmt->close();
         return (int) $value;
-    }
-
-    public function countProjects(string $email): int
-    {
-        return $this->scalar('SELECT COUNT(*) FROM student_portfolio_projects WHERE student_email = ?', $email);
     }
 
     public function projects(string $email, int $page = 1, int $perPage = 6): array
@@ -120,30 +145,48 @@ final class StudentPortfolioRepository
         $image = trim((string) ($data['project_image'] ?? '')) ?: null;
         $technologyNames = $data['technologies'] ?? [];
         
-        if (!is_array($technologyNames) || count($technologyNames) > 40) {
-            throw new InvalidArgumentException('Invalid technology list.');
-        }
-        
+        // Strict Data Limits
         if (strlen($title) < 2 || strlen($title) > 150 || strlen($description) > 10000) {
             throw new InvalidArgumentException('Enter a valid project title (2–150 characters) and description.');
         }
-        if ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true))) {
-            throw new InvalidArgumentException('Project link must be a valid HTTP(S) URL.');
-        }
-        if (strlen($url) > 500 || !in_array($status, ['Completed', 'Currently Working'], true)) {
-            throw new InvalidArgumentException('Invalid project URL or status.');
-        }
-        foreach ([$start, $end] as $date) {
-            if ($date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || DateTimeImmutable::createFromFormat('!Y-m-d', $date)?->format('Y-m-d') !== $date)) {
-                throw new InvalidArgumentException('Invalid project date.');
+
+        // Strict Date Verification based on logic
+        if ($status === 'Currently Working') {
+            if ($start === null) {
+                throw new InvalidArgumentException('Start date is required when currently working on a project.');
+            }
+            $end = null; // Enforce no end date
+        } elseif ($status === 'Completed') {
+            if ($start === null || $end === null) {
+                throw new InvalidArgumentException('Both start and end dates are required for completed projects.');
+            }
+            if ($end < $start) {
+                throw new InvalidArgumentException('The end date cannot be earlier than the start date.');
             }
         }
-        if ($start !== null && $end !== null && $end < $start) {
-            throw new InvalidArgumentException('Project end date must be after the start date.');
-        }
-        
-        if ($id !== null && !$this->ownsProject($email, $id)) {
-            throw new RuntimeException('Project not found or access denied.');
+
+        // Duplication Check
+        if ($id === null) {
+            $check = $this->db->prepare('SELECT portfolio_project_id FROM student_portfolio_projects WHERE student_email = ? AND LOWER(title) = LOWER(?)');
+            $check->bind_param('ss', $email, $title);
+            $check->execute();
+            if ($check->get_result()->num_rows > 0) {
+                $check->close();
+                throw new InvalidArgumentException('You have already added a project with this name.');
+            }
+            $check->close();
+        } else {
+            if (!$this->ownsProject($email, $id)) {
+                throw new RuntimeException('Project not found or access denied.');
+            }
+            $check = $this->db->prepare('SELECT portfolio_project_id FROM student_portfolio_projects WHERE student_email = ? AND LOWER(title) = LOWER(?) AND portfolio_project_id != ?');
+            $check->bind_param('ssi', $email, $title, $id);
+            $check->execute();
+            if ($check->get_result()->num_rows > 0) {
+                $check->close();
+                throw new InvalidArgumentException('Another project with this name already exists in your portfolio.');
+            }
+            $check->close();
         }
 
         $this->db->begin_transaction();
@@ -176,9 +219,6 @@ final class StudentPortfolioRepository
                     WHERE portfolio_project_id = ? AND student_email = ?');
                 $stmt->bind_param('sssssssis', $title, $description, $url, $image, $status, $start, $end, $id, $email);
                 $stmt->execute();
-                if ($stmt->affected_rows === 0 && !$this->ownsProject($email, $id)) {
-                    throw new RuntimeException('Project not found.');
-                }
             }
             $stmt->close();
             $this->replaceTechnologies($id, $technologyNames);
@@ -365,39 +405,39 @@ final class StudentPortfolioRepository
         $credentialId = trim((string) ($data['credential_id'] ?? ''));
         $url = trim((string) ($data['credential_url'] ?? ''));
         $file = trim((string) ($data['certificate_file'] ?? '')) ?: null;
-        $skillsText = trim((string) ($data['skills'] ?? ''));
         
-        if (strlen($name) < 2 || strlen($name) > 150 || strlen($issuer) < 2 || strlen($issuer) > 150 || strlen($credentialId) > 150) {
-            throw new InvalidArgumentException('Certificate name, issuer, and credential ID must be valid lengths.');
+        if (strlen($name) < 2 || strlen($name) > 150) {
+            throw new InvalidArgumentException('Enter a valid Certificate name.');
         }
-        foreach ([$issue, $expiration] as $date) {
-            if ($date !== null && (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || DateTimeImmutable::createFromFormat('!Y-m-d', $date)?->format('Y-m-d') !== $date)) {
-                throw new InvalidArgumentException('Invalid certificate date.');
-            }
-        }
+
         if ($issue !== null && $expiration !== null && $expiration < $issue) {
             throw new InvalidArgumentException('Expiration cannot be before issue date.');
         }
-        if (strlen($url) > 500 || ($url !== '' && (!filter_var($url, FILTER_VALIDATE_URL) || !in_array(parse_url($url, PHP_URL_SCHEME), ['http', 'https'], true)))) {
-            throw new InvalidArgumentException('Invalid credential URL.');
-        }
-        if (strlen($skillsText) > 1500) {
-            throw new InvalidArgumentException('Skills field is too long.');
-        }
-        $skills = [];
-        foreach (explode(',', $skillsText) as $skill) {
-            $skill = trim($skill);
-            if ($skill === '') {
-                continue;
+        
+        // Duplication Check
+        if ($id === null) {
+            $check = $this->db->prepare('SELECT certificate_id FROM certificates WHERE Email = ? AND LOWER(certificate_name) = LOWER(?)');
+            $check->bind_param('ss', $email, $name);
+            $check->execute();
+            if ($check->get_result()->num_rows > 0) {
+                $check->close();
+                throw new InvalidArgumentException('You have already added a certificate with this name.');
             }
-            if (strlen($skill) > 100) {
-                throw new InvalidArgumentException('Each skill must be 100 characters or fewer.');
+            $check->close();
+        } else {
+            if (!$this->ownsCertificate($email, $id)) {
+                throw new RuntimeException('Certificate not found or access denied.');
             }
-            $skills[strtolower($skill)] = $skill;
+            $check = $this->db->prepare('SELECT certificate_id FROM certificates WHERE Email = ? AND LOWER(certificate_name) = LOWER(?) AND certificate_id != ?');
+            $check->bind_param('ssi', $email, $name, $id);
+            $check->execute();
+            if ($check->get_result()->num_rows > 0) {
+                $check->close();
+                throw new InvalidArgumentException('Another certificate with this name already exists in your portfolio.');
+            }
+            $check->close();
         }
-        if ($id !== null && !$this->ownsCertificate($email, $id)) {
-            throw new RuntimeException('Certificate not found or access denied.');
-        }
+
         $this->db->begin_transaction();
         try {
             if ($id === null) {
@@ -430,22 +470,6 @@ final class StudentPortfolioRepository
                 $stmt->execute();
             }
             $stmt->close();
-
-            $skillsTableCheck = $this->db->query("SHOW TABLES LIKE 'student_certificate_skills'");
-            if ($skillsTableCheck && $skillsTableCheck->num_rows > 0) {
-                $clear = $this->db->prepare('DELETE FROM student_certificate_skills WHERE certificate_id = ?');
-                $clear->bind_param('i', $id);
-                $clear->execute();
-                $clear->close();
-                if ($skills) {
-                    $insert = $this->db->prepare('INSERT INTO student_certificate_skills (certificate_id, skill_name) VALUES (?, ?)');
-                    foreach ($skills as $skill) {
-                        $insert->bind_param('is', $id, $skill);
-                        $insert->execute();
-                    }
-                    $insert->close();
-                }
-            }
             $this->db->commit();
             return $id;
         } catch (Throwable $exception) {
@@ -496,80 +520,25 @@ final class StudentPortfolioRepository
     {
         $rows = [];
         try {
-            // 1. Check dedicated student_feedback table
-            $check = $this->db->query("SHOW TABLES LIKE 'student_feedback'");
-            if ($check && $check->num_rows > 0) {
-                $fbColsRes = $this->db->query("SHOW COLUMNS FROM `student_feedback`");
-                $fbCols = [];
-                while ($c = $fbColsRes->fetch_assoc()) {
-                    $fbCols[strtolower($c['Field'])] = $c['Field'];
-                }
-                $hasRoleCol = isset($fbCols['role']);
-                $textCol = $fbCols['feedback_text'] ?? $fbCols['review'] ?? $fbCols['feedback'] ?? $fbCols['comment'] ?? 'feedback_text';
-                $roleSelect = $hasRoleCol ? "COALESCE(NULLIF(sf.`{$fbCols['role']}`, ''), sp.role, 'Team Member')" : "COALESCE(sp.role, 'Team Member')";
-
-                $sql = "SELECT sf.id, sf.rating, sf.`$textCol` AS feedback_text, sf.created_at,
-                               $roleSelect AS role,
-                               COALESCE(org.Name, sf.organization_email, 'Organization') AS company,
-                               COALESCE(p.title, 'SkillBridge Organization Project') AS project_title
-                        FROM student_feedback sf
-                        LEFT JOIN projects p ON p.id = sf.project_id
-                        LEFT JOIN organization org ON LOWER(TRIM(org.Email)) = LOWER(TRIM(sf.organization_email))
-                        LEFT JOIN student_projects sp ON sp.project_id = sf.project_id AND LOWER(TRIM(sp.Email)) = LOWER(TRIM(sf.student_email))
-                        WHERE LOWER(TRIM(sf.student_email)) = LOWER(TRIM(?))
-                        ORDER BY sf.created_at DESC, sf.id DESC";
-                $stmt = $this->db->prepare($sql);
-                if ($stmt) {
-                    $stmt->bind_param('s', $email);
-                    $stmt->execute();
-                    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                    $stmt->close();
-                }
-            }
-
-            // 2. Also check if organization module stores feedback in `project_feedback`, `org_feedback`, or `feedback`
-            if (empty($rows)) {
-                foreach (['org_student_feedback', 'project_feedback', 'feedback'] as $altTable) {
-                    $altCheck = $this->db->query("SHOW TABLES LIKE '$altTable'");
-                    if ($altCheck && $altCheck->num_rows > 0) {
-                        $colsRes = $this->db->query("SHOW COLUMNS FROM `$altTable`");
-                        $cols = [];
-                        while ($c = $colsRes->fetch_assoc()) {
-                            $cols[strtolower($c['Field'])] = $c['Field'];
-                        }
-                        $studentCol = $cols['student_email'] ?? $cols['email'] ?? null;
-                        $ratingCol = $cols['rating'] ?? $cols['stars'] ?? $cols['score'] ?? null;
-                        $textCol = $cols['feedback_text'] ?? $cols['feedback'] ?? $cols['comment'] ?? $cols['review'] ?? null;
-                        $projCol = $cols['project_id'] ?? null;
-                        $orgCol = $cols['organization_email'] ?? $cols['org_email'] ?? null;
-                        $dateCol = $cols['created_at'] ?? $cols['submitted_at'] ?? $cols['date'] ?? null;
-
-                        if ($studentCol && $ratingCol && $textCol) {
-                            $selProj = $projCol ? "LEFT JOIN projects p ON p.id = f.`$projCol`" : "";
-                            $selOrg = $orgCol ? "LEFT JOIN organization org ON LOWER(org.Email) = LOWER(f.`$orgCol`)" : "";
-                            $compExpr = $orgCol ? "COALESCE(org.Name, f.`$orgCol`, 'Organization')" : "'Organization'";
-                            $projExpr = $projCol ? "COALESCE(p.title, 'SkillBridge Project')" : "'SkillBridge Project'";
-                            $dateExpr = $dateCol ? "f.`$dateCol`" : "NOW()";
-
-                            $altSql = "SELECT f.`$ratingCol` AS rating, f.`$textCol` AS feedback_text,
-                                              $dateExpr AS created_at, 'Team Member' AS role,
-                                              $compExpr AS company, $projExpr AS project_title
-                                       FROM `$altTable` f
-                                       $selProj
-                                       $selOrg
-                                       WHERE LOWER(f.`$studentCol`) = LOWER(?)
-                                       ORDER BY $dateExpr DESC";
-                            $stmt = $this->db->prepare($altSql);
-                            if ($stmt) {
-                                $stmt->bind_param('s', $email);
-                                $stmt->execute();
-                                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-                                $stmt->close();
-                                if (!empty($rows)) break;
-                            }
-                        }
-                    }
-                }
+            $sql = "SELECT pf.id, pf.rating, pf.summary AS feedback_text, pf.created_at,
+                           COALESCE(tm.role, 'Team Member') AS role,
+                           COALESCE(org.Name, 'Organization') AS company,
+                           COALESCE(p.title, 'SkillBridge Project') AS project_title,
+                           org.logo AS company_logo
+                    FROM project_feedback pf
+                    INNER JOIN org_teams t ON t.id = pf.team_id
+                    INNER JOIN org_team_members tm ON tm.team_id = t.id
+                    INNER JOIN projects p ON p.id = t.project_id
+                    LEFT JOIN organization org ON org.Email = p.organization_email
+                    WHERE LOWER(TRIM(tm.Email)) = LOWER(TRIM(?))
+                    ORDER BY pf.created_at DESC, pf.id DESC";
+            
+            $stmt = $this->db->prepare($sql);
+            if ($stmt) {
+                $stmt->bind_param('s', $email);
+                $stmt->execute();
+                $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+                $stmt->close();
             }
         } catch (Throwable $e) {
             error_log('Feedback query error: ' . $e->getMessage());

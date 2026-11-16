@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 29, 2026 at 07:26 PM
--- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- Generation Time: Nov 10, 2026 at 09:04 PM
+-- Server version: 10.11.16-MariaDB
+-- PHP Version: 8.5.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -18,10 +18,14 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `skillbridge_db`
+-- Database: `skillbridge_db` (made here, so the file can be imported with no database selected)
 --
 CREATE DATABASE IF NOT EXISTS `skillbridge_db` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE `skillbridge_db`;
+
+--
+-- Database: `skillbridge_db`
+--
 
 -- --------------------------------------------------------
 
@@ -29,7 +33,6 @@ USE `skillbridge_db`;
 -- Table structure for table `admin`
 --
 
-DROP TABLE IF EXISTS `admin`;
 CREATE TABLE `admin` (
   `Name` varchar(100) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -51,19 +54,17 @@ INSERT INTO `admin` (`Name`, `Email`, `profile_image`, `contactNumber`) VALUES
 -- Table structure for table `certificates`
 --
 
-DROP TABLE IF EXISTS `certificates`;
 CREATE TABLE `certificates` (
-  `certificate_id` INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `Email` VARCHAR(100) NOT NULL,
-  `certificate_name` VARCHAR(150) DEFAULT NULL,
-  `issuer` VARCHAR(150) DEFAULT NULL,
-  `certificate_file` VARCHAR(255) DEFAULT NULL,
-  `issue_date` DATE DEFAULT NULL,
-  `expiration_date` DATE DEFAULT NULL,
-  `credential_id` VARCHAR(150) DEFAULT NULL,
-  `credential_url` VARCHAR(500) DEFAULT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  KEY `Email` (`Email`)
+  `certificate_id` int(11) NOT NULL,
+  `Email` varchar(100) NOT NULL,
+  `certificate_name` varchar(150) DEFAULT NULL,
+  `issuer` varchar(150) DEFAULT NULL,
+  `certificate_file` varchar(255) DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `expiration_date` date DEFAULT NULL,
+  `credential_id` varchar(150) DEFAULT NULL,
+  `credential_url` varchar(500) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -72,13 +73,13 @@ CREATE TABLE `certificates` (
 
 INSERT INTO `certificates` (`certificate_id`, `Email`, `certificate_name`, `issuer`, `certificate_file`, `issue_date`, `expiration_date`, `credential_id`, `credential_url`, `created_at`) VALUES
 (1, '2024is078@stu.ucsc.cmb.ac.lk', 'Google AI Essentials', 'Google', 'Assets/Images/Student/Certificate/Google AI Essentials Specialization.pdf', '2026-10-02', NULL, '02E3X2DDF5G9', 'https://www.coursera.org/account/accomplishments/specialization/02E3X2DDF5G9', '2026-11-02 09:30:00');
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `company`
 --
 
-DROP TABLE IF EXISTS `company`;
 CREATE TABLE `company` (
   `Email` varchar(100) NOT NULL,
   `Name` varchar(100) NOT NULL,
@@ -107,7 +108,6 @@ INSERT INTO `company` (`Email`, `Name`, `companytype`, `contactPersonName`, `con
 -- Table structure for table `complain`
 --
 
-DROP TABLE IF EXISTS `complain`;
 CREATE TABLE `complain` (
   `id` int(11) NOT NULL,
   `email` varchar(100) NOT NULL,
@@ -145,7 +145,6 @@ INSERT INTO `complain` (`id`, `email`, `title`, `category`, `discription`, `prio
 -- Table structure for table `contact_messages`
 --
 
-DROP TABLE IF EXISTS `contact_messages`;
 CREATE TABLE `contact_messages` (
   `id` int(11) NOT NULL,
   `full_name` varchar(255) NOT NULL,
@@ -172,7 +171,6 @@ INSERT INTO `contact_messages` (`id`, `full_name`, `email`, `subject`, `message`
 -- Table structure for table `degrees`
 --
 
-DROP TABLE IF EXISTS `degrees`;
 CREATE TABLE `degrees` (
   `degree_id` int(11) NOT NULL,
   `domain` varchar(100) NOT NULL,
@@ -197,11 +195,20 @@ INSERT INTO `degrees` (`degree_id`, `domain`, `degree_name`, `total_years`) VALU
 -- Table structure for table `feedback_improvements`
 --
 
-DROP TABLE IF EXISTS `feedback_improvements`;
 CREATE TABLE `feedback_improvements` (
   `feedback_id` int(11) NOT NULL,
   `area` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `feedback_improvements`
+--
+
+INSERT INTO `feedback_improvements` (`feedback_id`, `area`) VALUES
+(1, 'Automated testing'),
+(2, 'Communication'),
+(2, 'Progress updates'),
+(3, 'Documentation');
 
 -- --------------------------------------------------------
 
@@ -209,7 +216,6 @@ CREATE TABLE `feedback_improvements` (
 -- Table structure for table `internships`
 --
 
-DROP TABLE IF EXISTS `internships`;
 CREATE TABLE `internships` (
   `id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
@@ -255,7 +261,6 @@ INSERT INTO `internships` (`id`, `title`, `company_email`, `industry_id`, `logo_
 -- Table structure for table `internship_applications`
 --
 
-DROP TABLE IF EXISTS `internship_applications`;
 CREATE TABLE `internship_applications` (
   `application_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -266,7 +271,7 @@ CREATE TABLE `internship_applications` (
   `selection_rationale` text DEFAULT NULL,
   `resume_file` varchar(255) DEFAULT NULL,
   `status` varchar(50) DEFAULT 'Pending',
-  `applied_date` date DEFAULT (curdate())
+  `applied_date` date DEFAULT curdate()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -288,7 +293,6 @@ INSERT INTO `internship_applications` (`application_id`, `Email`, `internship_id
 -- Table structure for table `internship_industries`
 --
 
-DROP TABLE IF EXISTS `internship_industries`;
 CREATE TABLE `internship_industries` (
   `industry_id` smallint(5) UNSIGNED NOT NULL,
   `industry_name` varchar(100) NOT NULL
@@ -312,7 +316,6 @@ INSERT INTO `internship_industries` (`industry_id`, `industry_name`) VALUES
 -- Table structure for table `internship_interviews`
 --
 
-DROP TABLE IF EXISTS `internship_interviews`;
 CREATE TABLE `internship_interviews` (
   `interview_id` int(11) NOT NULL,
   `application_id` int(11) NOT NULL,
@@ -338,7 +341,6 @@ INSERT INTO `internship_interviews` (`interview_id`, `application_id`, `intervie
 -- Table structure for table `internship_moderation_logs`
 --
 
-DROP TABLE IF EXISTS `internship_moderation_logs`;
 CREATE TABLE `internship_moderation_logs` (
   `id` int(11) NOT NULL,
   `internship_id` int(11) NOT NULL,
@@ -356,7 +358,6 @@ CREATE TABLE `internship_moderation_logs` (
 -- Table structure for table `internship_tech_tags`
 --
 
-DROP TABLE IF EXISTS `internship_tech_tags`;
 CREATE TABLE `internship_tech_tags` (
   `tag_id` int(10) UNSIGNED NOT NULL,
   `tag_name` varchar(100) NOT NULL
@@ -395,7 +396,6 @@ INSERT INTO `internship_tech_tags` (`tag_id`, `tag_name`) VALUES
 -- Table structure for table `internship_tech_tag_map`
 --
 
-DROP TABLE IF EXISTS `internship_tech_tag_map`;
 CREATE TABLE `internship_tech_tag_map` (
   `internship_id` int(11) NOT NULL,
   `tag_id` int(10) UNSIGNED NOT NULL
@@ -434,7 +434,6 @@ INSERT INTO `internship_tech_tag_map` (`internship_id`, `tag_id`) VALUES
 -- Table structure for table `master_skills`
 --
 
-DROP TABLE IF EXISTS `master_skills`;
 CREATE TABLE `master_skills` (
   `skill_id` int(11) NOT NULL,
   `category_id` int(11) DEFAULT NULL,
@@ -472,7 +471,6 @@ INSERT INTO `master_skills` (`skill_id`, `category_id`, `skill_name`) VALUES
 -- Table structure for table `notifications`
 --
 
-DROP TABLE IF EXISTS `notifications`;
 CREATE TABLE `notifications` (
   `notification_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -489,7 +487,7 @@ CREATE TABLE `notifications` (
 
 INSERT INTO `notifications` (`notification_id`, `Email`, `title`, `message`, `type`, `status`, `created_at`) VALUES
 (1, '2024is078@stu.ucsc.cmb.ac.lk', 'Application Shortlisted', 'Congratulations! Your application for UI/UX Designer Intern has been shortlisted.', 'application', 'Read', '2026-08-26 04:30:00'),
-(2, '2024is078@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project "Smart Campus Energy Monitor".', 'project', 'Unread', '2026-09-01 09:00:00'),
+(2, '2024is078@stu.ucsc.cmb.ac.lk', 'New Project Invitation', 'You have been invited to collaborate on the project \"Smart Campus Energy Monitor\".', 'project', 'Unread', '2026-09-01 09:00:00'),
 (3, '2024is078@stu.ucsc.cmb.ac.lk', 'Application Accepted', 'Global Retail has accepted your application for Backend Developer Intern!', 'application', 'Read', '2026-08-24 10:50:00'),
 (4, 'hr@company.com', 'New Candidate Application', 'Haritha Induwara has applied for the Mobile Application Developer Intern position.', 'candidate', 'Unread', '2026-08-29 03:45:00'),
 (5, 'careers@virtusa.com', 'Profile Verification Complete', 'Your company profile has been verified by SkillBridge Administration.', 'system', 'Read', '2026-08-21 05:30:00'),
@@ -498,7 +496,8 @@ INSERT INTO `notifications` (`notification_id`, `Email`, `title`, `message`, `ty
 (8, 'foss@sliit.lk', 'New Application Received', 'A student has applied for one of your organization projects.', 'candidate', 'Unread', '2026-09-24 20:31:41'),
 (9, 'foss@sliit.lk', 'New Team Member Joined', 'A new student has joined the Project Phoenix team.', 'team', 'Read', '2026-09-24 20:31:41'),
 (10, 'foss@sliit.lk', 'Project Progress Updated', 'The Smart Campus Energy Monitor team has submitted a new progress update.', 'project', 'Read', '2026-09-24 20:31:41'),
-(20, 'foss@sliit.lk', 'Project Put On Hold', 'Your project \"Smart Clinic Queue & Appointment System\" was put on hold by the Admin because it breaks 4 project posting rules. Open Manage Projects to see the reason and fix it.', 'project', 'Unread', '2026-09-24 09:29:29');
+(20, 'foss@sliit.lk', 'Project Put On Hold', 'Your project \"Smart Clinic Queue & Appointment System\" was put on hold by the Admin because it breaks 4 project posting rules. Open Manage Projects to see the reason and fix it.', 'project', 'Unread', '2026-09-24 09:29:29'),
+(80, 'foss@sliit.lk', 'Final Report Submitted', 'Sachini Wijesinghe sent the final report of the team \"Leaderboard Builders\" for \"FOSS Contributor Leaderboard\". Open the team to review it.', 'project', 'Unread', '2026-11-10 03:30:00');
 
 -- --------------------------------------------------------
 
@@ -506,7 +505,6 @@ INSERT INTO `notifications` (`notification_id`, `Email`, `title`, `message`, `ty
 -- Table structure for table `organization`
 --
 
-DROP TABLE IF EXISTS `organization`;
 CREATE TABLE `organization` (
   `Email` varchar(100) NOT NULL,
   `Name` varchar(100) NOT NULL,
@@ -538,7 +536,6 @@ INSERT INTO `organization` (`Email`, `Name`, `orgtype`, `contactPersonName`, `co
 -- Table structure for table `org_teams`
 --
 
-DROP TABLE IF EXISTS `org_teams`;
 CREATE TABLE `org_teams` (
   `id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -549,18 +546,53 @@ CREATE TABLE `org_teams` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `org_teams`
+--
+
+INSERT INTO `org_teams` (`id`, `project_id`, `name`, `leader_email`, `deadline`, `status`, `created_at`) VALUES
+(1, 4, 'Open Source Blood Donation Portal Team', '2024is078@stu.ucsc.cmb.ac.lk', '2026-10-30', 'completed', '2026-11-10 17:09:35'),
+(2, 7, 'Mobile Attendance Tracker Team', '2024is001@stu.ucsc.cmb.ac.lk', '2026-12-04', 'behind', '2026-11-10 17:09:35'),
+(3, 8, 'Portfolio Website Builder Team', '2024is044@stu.ucsc.cmb.ac.lk', '2026-10-18', 'completed', '2026-11-10 17:09:35'),
+(4, 9, 'Campus Event Management System Team', '2024is078@stu.ucsc.cmb.ac.lk', '2026-09-28', 'completed', '2026-11-10 17:09:36'),
+(5, 6, 'AI Chatbot for Student Support Team', '2024is058@stu.ucsc.cmb.ac.lk', '2026-12-09', 'ontrack', '2026-11-10 18:00:50'),
+(6, 5, 'Leaderboard Builders', '2024is091@stu.ucsc.cmb.ac.lk', '2026-12-20', 'ontrack', '2026-11-10 18:17:13'),
+(7, 2, 'Cloud Migration UI/UX Team', '2024is015@stu.ucsc.cmb.ac.lk', '2026-11-15', 'completed', '2026-11-10 19:05:07');
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `org_team_members`
 --
 
-DROP TABLE IF EXISTS `org_team_members`;
 CREATE TABLE `org_team_members` (
   `team_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
   `role` varchar(50) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `org_team_members`
+--
+
+INSERT INTO `org_team_members` (`team_id`, `Email`, `role`) VALUES
+(1, '2024is032@stu.ucsc.cmb.ac.lk', 'Security Engineer'),
+(1, '2024is058@stu.ucsc.cmb.ac.lk', 'Full-Stack Developer'),
+(1, '2024is078@stu.ucsc.cmb.ac.lk', 'Backend Lead'),
+(2, '2024is001@stu.ucsc.cmb.ac.lk', 'Flutter Developer'),
+(2, '2024is078@stu.ucsc.cmb.ac.lk', 'Firebase Engineer'),
+(3, '2024is015@stu.ucsc.cmb.ac.lk', 'UX Researcher'),
+(3, '2024is044@stu.ucsc.cmb.ac.lk', 'UI Designer'),
+(4, '2024is001@stu.ucsc.cmb.ac.lk', 'Frontend Developer'),
+(4, '2024is044@stu.ucsc.cmb.ac.lk', 'DB Engineer'),
+(4, '2024is078@stu.ucsc.cmb.ac.lk', 'Backend Developer'),
+(5, '2024is001@stu.ucsc.cmb.ac.lk', 'Backend Developer'),
+(5, '2024is032@stu.ucsc.cmb.ac.lk', 'Backend Engineer'),
+(5, '2024is058@stu.ucsc.cmb.ac.lk', 'NLP Engineer'),
+(5, '2024is078@stu.ucsc.cmb.ac.lk', 'UI Developer'),
+(6, '2024is044@stu.ucsc.cmb.ac.lk', 'Frontend Developer'),
+(6, '2024is091@stu.ucsc.cmb.ac.lk', 'Backend Developer'),
+(7, '2024is015@stu.ucsc.cmb.ac.lk', 'Lead UI Designer');
 
 -- --------------------------------------------------------
 
@@ -568,7 +600,6 @@ CREATE TABLE `org_team_members` (
 -- Table structure for table `portfolio`
 --
 
-DROP TABLE IF EXISTS `portfolio`;
 CREATE TABLE `portfolio` (
   `portfolio_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -599,7 +630,6 @@ INSERT INTO `portfolio` (`portfolio_id`, `Email`, `title`, `description`, `proje
 -- Table structure for table `projects`
 --
 
-DROP TABLE IF EXISTS `projects`;
 CREATE TABLE `projects` (
   `id` int(11) NOT NULL,
   `organization_email` varchar(100) NOT NULL,
@@ -627,17 +657,19 @@ INSERT INTO `projects` (`id`, `organization_email`, `category_id`, `title`, `ico
 (1, '2024is052@stu.ucsc.cmb.ac.lk', 6, 'AI Model Optimization', '📊', 'Optimizing large deep learning transformer models for edge devices and mobile browsers.', 'Learn quantization, model pruning, ONNX runtime optimization.', 'Production ready lightweight inference model with <50ms latency.', 'Intermediate', 12, 4, 'Any Year', '2026-10-20', 'Public', 'reviewing', '2026-08-17 13:46:49'),
 (2, '2024is052@stu.ucsc.cmb.ac.lk', 2, 'Cloud Migration UI/UX', '🎨', 'Modernizing legacy university student portal interfaces into accessible, responsive cloud UI.', 'Master accessible design principles (WCAG 2.1) and component library architecture.', 'Comprehensive Figma design system and React component kit.', 'Intermediate', 8, 2, 'Any Year', '2026-11-15', 'Public', 'reviewing', '2026-08-17 13:46:49'),
 (3, 'ieee@ucsc.cmb.ac.lk', 3, 'Smart Campus Energy Monitor', '⚡', 'Building IoT power meters across faculty computer labs to track and minimize electricity waste in real-time.', 'Gain hands-on experience with microcontroller programming, MQTT broker protocols, and sensor calibration.', 'Operational live campus energy dashboard and automated alert system for abnormal power surges.', 'Advanced', 16, 5, '3rd Year', '2026-12-10', 'Public', 'reviewing', '2026-08-25 08:30:00'),
-(4, 'rotaract@ucsc.cmb.ac.lk', 4, 'Open Source Blood Donation Portal', '❤️', 'A streamlined digital platform connecting volunteer blood donors with regional hospitals during critical shortages.', 'Build secure role-based portals, integrate SMS alerts, and implement geolocation search.', 'Fully tested web application deployed for nationwide donor registration drives.', 'Beginner', 8, 3, '1st Year', '2026-11-01', 'Public', 'reviewing', '2026-08-28 05:00:00'),
-(5, 'foss@sliit.lk', 5, 'FOSS Contributor Leaderboard', '🚀', 'Gamified leaderboard tracking pull requests, commits, and reviews of university students contributing to open source repositories.', 'Work with GraphQL APIs, asynchronous queue processing in Go, and modern frontend dashboards.', 'Automated ranking system used for annual Hacktoberfest and code sprint awards.', 'Intermediate', 12, 4, '2nd Year', '2026-11-25', 'Public', 'reviewing', '2026-09-01 10:30:00'),
+(4, 'rotaract@ucsc.cmb.ac.lk', 4, 'Open Source Blood Donation Portal', '❤️', 'A streamlined digital platform connecting volunteer blood donors with regional hospitals during critical shortages.', 'Build secure role-based portals, integrate SMS alerts, and implement geolocation search.', 'Fully tested web application deployed for nationwide donor registration drives.', 'Beginner', 8, 3, '1st Year', '2026-11-01', 'Public', 'completed', '2026-08-28 05:00:00'),
+(5, 'foss@sliit.lk', 5, 'FOSS Contributor Leaderboard', '🚀', 'Gamified leaderboard tracking pull requests, commits, and reviews of university students contributing to open source repositories.', 'Work with GraphQL APIs, asynchronous queue processing in Go, and modern frontend dashboards.', 'Automated ranking system used for annual Hacktoberfest and code sprint awards.', 'Intermediate', 12, 4, '2nd Year', '2026-11-25', 'Public', 'inprogress', '2026-09-01 10:30:00'),
 (6, 'foss@sliit.lk', 6, 'AI Chatbot for Student Support', '🤖', 'A conversational chatbot that answers common student queries about courses, deadlines and campus services.', 'Build intent-classification pipelines and integrate an NLP model into a live Flask backend.', 'A deployed chatbot handling FAQs for the student portal.', 'Intermediate', 8, 4, 'Any Year', '2026-10-14', 'Public', 'inprogress', '2026-09-23 04:30:00'),
 (7, 'foss@sliit.lk', 7, 'Mobile Attendance Tracker', '📱', 'A mobile app that lets lecturers mark attendance via QR code scans, synced live to Firebase.', 'Learn cross-platform Flutter development and real-time Firebase database sync.', 'A working attendance app tested in at least one live class.', 'Beginner', 8, 2, 'Any Year', '2026-10-09', 'Public', 'inprogress', '2026-09-22 04:30:00'),
-(8, 'foss@sliit.lk', 4, 'Portfolio Website Builder', '💼', 'A drag-and-drop builder that lets students generate a personal portfolio site from a template.', 'Practice component-driven React development and utility-first CSS with Tailwind.', 'A reusable portfolio template students can fork and deploy.', 'Beginner', 4, 3, 'Any Year', '2026-10-19', 'Public', 'inprogress', '2026-09-21 04:30:00'),
+(8, 'foss@sliit.lk', 4, 'Portfolio Website Builder', '💼', 'A drag-and-drop builder that lets students generate a personal portfolio site from a template.', 'Practice component-driven React development and utility-first CSS with Tailwind.', 'A reusable portfolio template students can fork and deploy.', 'Beginner', 4, 3, 'Any Year', '2026-10-19', 'Public', 'completed', '2026-09-21 04:30:00'),
 (9, 'foss@sliit.lk', 4, 'Campus Event Management System', '🎪', 'A system for clubs to publish campus events, manage RSVPs and check in attendees at the door.', 'Work with Laravel MVC structure, MySQL relational design, and RSVP/ticketing logic.', 'A working event registration and check-in system used for one real campus event.', 'Intermediate', 8, 3, '2nd Year', '2026-09-29', 'Public', 'completed', '2026-09-20 04:30:00'),
 (10, 'ieee@ucsc.cmb.ac.lk', 8, 'University Research Collaboration Platform', '🔬', 'A collaborative platform for university students and researchers to manage research projects, tasks, documents and team collaboration.', 'Learn REST API development, database design, authentication and collaborative system development.', 'Working research collaboration platform with project management and document sharing features.', 'Intermediate', 16, 4, '2nd Year', '2027-01-15', 'Public', 'reviewing', '2026-09-24 13:20:56'),
-(11, 'foss@sliit.lk', 3, 'Smart Agriculture Monitoring System', '🌱', 'An IoT-based agricultural monitoring system that collects soil moisture, temperature and humidity data and displays real-time information through a web dashboard.', 'Learn IoT sensor integration, MQTT communication, cloud data storage and real-time monitoring.', 'Functional smart agriculture monitoring system with a real-time sensor dashboard and automated alerts.', 'Advanced', 3, 6, 'Any Year', '2026-12-20', 'Public', 'reviewing', '2026-09-24 13:20:56'),
+(11, 'foss@sliit.lk', 3, 'Smart Agriculture Monitoring System', '🌱', 'An IoT-based agricultural monitoring system that collects soil moisture, temperature and humidity data and displays real-time information through a web dashboard.', 'Learn IoT sensor integration, MQTT communication, cloud data storage and real-time monitoring.', 'Functional smart agriculture monitoring system with a real-time sensor dashboard and automated alerts.', 'Advanced', 3, 6, 'Any Year', '2026-12-20', 'Public', 'published', '2026-09-24 13:20:56'),
 (12, 'foss@sliit.lk', 7, 'Campus Ride-Sharing App', '🚗', 'A carpooling app for students to share rides to and from campus.', 'Build a React Native app with live location tracking and a Node.js matching backend.', 'A working ride-matching prototype for campus commutes.', 'Intermediate', 8, 3, 'Any Year', '2026-11-05', 'Public', 'rejected', '2026-09-18 04:30:00'),
 (15, 'foss@sliit.lk', 10, 'Crypto Trading Signal Bot', '🤖', 'A bot that reads crypto market data and sends buy/sell signals to a Telegram group.', 'Working with REST APIs, basic data analysis, bot development.', 'A working Telegram bot that posts automated trading signals.', 'Intermediate', 6, 3, 'Any Year', '2026-11-30', 'Public', 'rejected', '2026-09-23 18:29:00'),
-(17, 'foss@sliit.lk', 11, 'Smart Clinic Queue & Appointment System', '🏥', 'We are partnering with Malabe Community Clinic to replace their paper token system with an online queue and appointment platform. Patients can book a time slot, get an SMS when their turn is close, and doctors can see the live queue on a dashboard.', 'Build a full-stack Laravel application, design a real-time queue system, integrate SMS notifications with Twilio, and create analytics dashboards with Chart.js.', 'A production-ready queue and appointment system deployed at the clinic.', 'Advanced', 12, 4, 'Year 3', '2026-11-15', 'Public', 'hold', '2026-09-21 18:29:00');
+(17, 'foss@sliit.lk', 11, 'Smart Clinic Queue & Appointment System', '🏥', 'We are partnering with Malabe Community Clinic to replace their paper token system with an online queue and appointment platform. Patients can book a time slot, get an SMS when their turn is close, and doctors can see the live queue on a dashboard.', 'Build a full-stack Laravel application, design a real-time queue system, integrate SMS notifications with Twilio, and create analytics dashboards with Chart.js.', 'A production-ready queue and appointment system deployed at the clinic.', 'Advanced', 12, 4, 'Year 3', '2026-11-15', 'Public', 'hold', '2026-09-21 18:29:00'),
+(22, 'foss@sliit.lk', 4, 'Library Seat Booking System', '?', 'Students at the UCSC library often walk around looking for a free seat, especially during exam weeks. This system shows which seats are free, lets students book a seat for a time slot and cancel it, and lets library staff mark seats that are not available.', 'Design a normalized MySQL database, build a PHP backend with role-based login, and create a responsive interface from Figma designs.', 'A working booking system with a live seat map, a staff page and a short user guide.', 'Intermediate', 8, 2, 'Year 3', '2026-12-05', 'Public', 'reviewing', '2026-11-08 05:00:00'),
+(23, 'foss@sliit.lk', 5, 'Open Source Bug Tracker for Student Projects', '?', 'Student teams often lose track of bugs in chats and spreadsheets. This open source tool lets a team report bugs, give them to a member, set a priority and close them when they are fixed, with a link to the GitHub commit.', 'Work with Git and GitHub in a team, build a REST API, write tests and deploy a small web app.', 'An open source bug tracker on GitHub with a README, tests and a demo site.', 'Beginner', 10, 3, 'Any Year', '2026-12-15', 'Public', 'reviewing', '2026-11-10 03:45:00');
 
 -- --------------------------------------------------------
 
@@ -645,7 +677,6 @@ INSERT INTO `projects` (`id`, `organization_email`, `category_id`, `title`, `ico
 -- Table structure for table `project_applications`
 --
 
-DROP TABLE IF EXISTS `project_applications`;
 CREATE TABLE `project_applications` (
   `id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -684,7 +715,6 @@ INSERT INTO `project_applications` (`id`, `project_id`, `Email`, `status`, `appl
 -- Table structure for table `project_categories`
 --
 
-DROP TABLE IF EXISTS `project_categories`;
 CREATE TABLE `project_categories` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL
@@ -711,7 +741,6 @@ INSERT INTO `project_categories` (`category_id`, `category_name`) VALUES
 -- Table structure for table `project_documents`
 --
 
-DROP TABLE IF EXISTS `project_documents`;
 CREATE TABLE `project_documents` (
   `id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -728,7 +757,6 @@ CREATE TABLE `project_documents` (
 -- Table structure for table `project_feedback`
 --
 
-DROP TABLE IF EXISTS `project_feedback`;
 CREATE TABLE `project_feedback` (
   `id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
@@ -741,13 +769,21 @@ CREATE TABLE `project_feedback` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `project_feedback`
+--
+
+INSERT INTO `project_feedback` (`id`, `team_id`, `rating`, `technical`, `communication`, `teamwork`, `problem_solving`, `summary`, `created_at`) VALUES
+(1, 4, 5, 4.5, 5.0, 5.0, 4.5, 'Great work! The event system is easy to use and every page worked in the demo. The team replied quickly and finished before the deadline.', '2026-10-01 04:30:00'),
+(2, 3, 4, 4.0, 3.5, 4.5, 4.0, 'Good portfolio builder with clean templates. The work was finished on time, but the team should send progress updates more often.', '2026-10-21 04:30:00'),
+(3, 1, 5, 5.0, 4.5, 5.0, 5.0, 'Excellent job. The donor search is fast and the security checks were done carefully. Hospitals in our trial found it very useful.', '2026-11-02 04:30:00');
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `project_moderation_logs`
 --
 
-DROP TABLE IF EXISTS `project_moderation_logs`;
 CREATE TABLE `project_moderation_logs` (
   `id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -773,7 +809,6 @@ INSERT INTO `project_moderation_logs` (`id`, `project_id`, `admin_email`, `actio
 -- Table structure for table `project_proposals`
 --
 
-DROP TABLE IF EXISTS `project_proposals`;
 CREATE TABLE `project_proposals` (
   `proposal_id` int(11) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -797,7 +832,12 @@ INSERT INTO `project_proposals` (`proposal_id`, `project_id`, `student_email`, `
 (1, 6, '2024is032@stu.ucsc.cmb.ac.lk', 'Context-Aware Campus FAQ Bot', 'AI Engineer', 'I am an information systems undergraduate experienced with Python NLP pipelines and conversational bots.', 'I will build an intent-matching Flask REST API integrating spaCy and SQLite caching with response times under 200ms.', 'portfolio_scanner.png', 'accepted', 'Great proposal! Welcome to the project. We will add you to a team soon.', '2026-09-25 18:00:00', '2026-09-26 17:11:57'),
 (2, 6, '2024is058@stu.ucsc.cmb.ac.lk', 'Conversational Assistant Integration', 'Backend Developer', 'Experienced full-stack developer eager to connect NLP models to scalable REST endpoints.', 'Design robust REST APIs in Flask with rate limiting and automated unit test suites.', 'portfolio_skillbridge.png', 'accepted', 'Solid backend architecture proposal.', '2026-09-22 09:15:00', '2026-09-23 04:30:00'),
 (3, 11, '2024is015@stu.ucsc.cmb.ac.lk', 'Sensor Dashboard Accessibility Redesign', 'UI/UX Designer', 'Specialized in UI/UX and design systems with WCAG 2.1 compliance experience.', 'Create a high-contrast responsive dashboard in Figma and React for real-time soil and temperature readings.', 'portfolio_fintech.png', 'rejected', 'Your skills don’t match the project requirements.', '2026-09-26 04:30:00', '2026-09-26 15:17:29'),
-(4, 3, '2024is058@stu.ucsc.cmb.ac.lk', 'Smart Lab Energy Monitor UI', 'Full-Stack Developer', 'Passionate about clean dashboard interfaces and live energy metric tracking.', 'Integrate MQTT stream with Node.js and Grafana visualization boards.', 'portfolio_skillbridge.png', 'pending', NULL, '2026-09-26 08:30:00', NULL);
+(4, 3, '2024is058@stu.ucsc.cmb.ac.lk', 'Smart Lab Energy Monitor UI', 'Full-Stack Developer', 'Passionate about clean dashboard interfaces and live energy metric tracking.', 'Integrate MQTT stream with Node.js and Grafana visualization boards.', 'portfolio_skillbridge.png', 'pending', NULL, '2026-09-26 08:30:00', NULL),
+(5, 11, '2024is078@stu.ucsc.cmb.ac.lk', 'Sensor Data Backend for Smart Farming', 'Backend Engineer', 'I am a third-year Information Systems student. I built the backends for the Campus Event Management System and the Blood Donation Portal on SkillBridge, and both teams got very good feedback.', 'I will design tables for farms, sensors and readings, build a PHP API that saves a reading every few minutes, and send an alert when the soil is too dry. I will test it with sample sensor data first.', NULL, 'pending', NULL, '2026-11-09 03:45:00', NULL),
+(6, 11, '2024is044@stu.ucsc.cmb.ac.lk', 'Easy Dashboard for Farmers', 'UI/UX Designer', 'I am a third-year Computer Science student. I designed the database and pages for two SkillBridge projects and I enjoy making data simple to read.', 'I will talk to two farmers, design a simple dashboard in Figma with big numbers and clear colours, and build it so it works well on a phone. Charts will show the soil and temperature for the last 7 days.', NULL, 'pending', NULL, '2026-11-10 03:10:00', NULL),
+(8, 6, '2024is078@stu.ucsc.cmb.ac.lk', 'Friendly Chat Window for Student Help', 'Frontend Developer', 'I am a third-year Information Systems student. I have built web pages and backends for three SkillBridge projects and I would like to make the chatbot easy to use.', 'I will design the chat window in Figma, build it with HTML, CSS and JavaScript, and connect it to the chatbot API so students get an answer in a few seconds.', NULL, 'accepted', 'Welcome to the team! Your work on our earlier projects was very good.', '2026-10-12 04:30:00', '2026-10-14 09:00:00'),
+(10, 5, '2024is044@stu.ucsc.cmb.ac.lk', 'Clear and Motivating Leaderboard Page', 'Frontend Developer', 'I designed the pages of two SkillBridge projects and I like making data easy to read.', 'I will show the top contributors with their points and a small chart, and make it work well on a phone.', NULL, 'accepted', 'Welcome to the team!', '2026-10-20 04:30:00', '2026-10-22 09:00:00'),
+(12, 5, '2024is091@stu.ucsc.cmb.ac.lk', 'GitHub Data and Points Backend', 'Backend Engineer', 'I am a third-year Software Engineering student. I use GitHub every day and I have built small APIs with PHP and MySQL.', 'I will read the contributions with the GitHub API, save them in MySQL and work out the points with clear rules.', NULL, 'accepted', 'Welcome to the team!', '2026-10-20 04:30:00', '2026-10-22 09:00:00');
 
 -- --------------------------------------------------------
 
@@ -805,7 +845,6 @@ INSERT INTO `project_proposals` (`proposal_id`, `project_id`, `student_email`, `
 -- Table structure for table `project_skills`
 --
 
-DROP TABLE IF EXISTS `project_skills`;
 CREATE TABLE `project_skills` (
   `project_id` int(11) NOT NULL,
   `skill_name` varchar(100) NOT NULL
@@ -887,7 +926,15 @@ INSERT INTO `project_skills` (`project_id`, `skill_name`) VALUES
 (17, 'HealthTech'),
 (17, 'Laravel'),
 (17, 'MySQL'),
-(17, 'Twilio SMS');
+(17, 'Twilio SMS'),
+(22, 'Figma'),
+(22, 'JavaScript'),
+(22, 'MySQL'),
+(22, 'PHP'),
+(23, 'Git'),
+(23, 'GitHub Actions'),
+(23, 'Node.js'),
+(23, 'REST API');
 
 -- --------------------------------------------------------
 
@@ -895,7 +942,6 @@ INSERT INTO `project_skills` (`project_id`, `skill_name`) VALUES
 -- Table structure for table `proposal_skills`
 --
 
-DROP TABLE IF EXISTS `proposal_skills`;
 CREATE TABLE `proposal_skills` (
   `proposal_id` int(11) NOT NULL,
   `skill_name` varchar(100) NOT NULL
@@ -917,7 +963,13 @@ INSERT INTO `proposal_skills` (`proposal_id`, `skill_name`) VALUES
 (3, 'UI/UX Research'),
 (4, 'Grafana'),
 (4, 'MQTT'),
-(4, 'Node.js');
+(4, 'Node.js'),
+(5, 'MySQL'),
+(5, 'PHP'),
+(5, 'REST API'),
+(6, 'Chart.js'),
+(6, 'Figma'),
+(6, 'JavaScript');
 
 -- --------------------------------------------------------
 
@@ -925,7 +977,6 @@ INSERT INTO `proposal_skills` (`proposal_id`, `skill_name`) VALUES
 -- Table structure for table `skills`
 --
 
-DROP TABLE IF EXISTS `skills`;
 CREATE TABLE `skills` (
   `skill_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -945,10 +996,10 @@ INSERT INTO `skills` (`skill_id`, `Email`, `skill_name`, `category`, `level`, `i
 (1, '2024is058@stu.ucsc.cmb.ac.lk', 'React', 'Frontend', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
 (2, '2024is058@stu.ucsc.cmb.ac.lk', 'PHP', 'Backend', 'Expert', 3, 95, '2026-09-22 08:00:00'),
 (3, '2024is058@stu.ucsc.cmb.ac.lk', 'MySQL', 'Database', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
-(4, '2024is078@stu.ucsc.cmb.ac.lk', 'Docker', 'Cloud & DevOps', 'Intermediate', 1, 60, '2026-09-22 08:00:00'),
-(5, '2024is078@stu.ucsc.cmb.ac.lk', 'Python', 'Programming', 'Expert', 3, 95, '2026-09-22 08:00:00'),
-(6, '2024is078@stu.ucsc.cmb.ac.lk', 'Flutter', 'Mobile Development', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
-(7, '2024is078@stu.ucsc.cmb.ac.lk', 'PyTorch', 'AI & Machine Learning', 'Intermediate', 1, 60, '2026-09-22 08:00:00'),
+(4, '2024is078@stu.ucsc.cmb.ac.lk', 'Docker', 'Cloud & DevOps', 'Beginner', 1, 40, '2026-09-22 08:00:00'),
+(5, '2024is078@stu.ucsc.cmb.ac.lk', 'Python', 'Programming', 'Intermediate', 3, 60, '2026-09-22 08:00:00'),
+(6, '2024is078@stu.ucsc.cmb.ac.lk', 'Flutter', 'Mobile Development', 'Intermediate', 2, 60, '2026-09-22 08:00:00'),
+(7, '2024is078@stu.ucsc.cmb.ac.lk', 'PyTorch', 'AI & Machine Learning', 'Beginner', 1, 40, '2026-09-22 08:00:00'),
 (8, '2024is015@stu.ucsc.cmb.ac.lk', 'Figma', 'Web Design', 'Expert', 3, 95, '2026-09-22 08:00:00'),
 (9, '2024is015@stu.ucsc.cmb.ac.lk', 'UI/UX Research', 'Web Design', 'Advanced', 2, 80, '2026-09-22 08:00:00'),
 (10, '2024is015@stu.ucsc.cmb.ac.lk', 'CSS / Sass', 'Frontend', 'Expert', 3, 95, '2026-09-22 08:00:00'),
@@ -967,7 +1018,6 @@ INSERT INTO `skills` (`skill_id`, `Email`, `skill_name`, `category`, `level`, `i
 -- Table structure for table `skill_categories`
 --
 
-DROP TABLE IF EXISTS `skill_categories`;
 CREATE TABLE `skill_categories` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) NOT NULL
@@ -993,7 +1043,6 @@ INSERT INTO `skill_categories` (`category_id`, `category_name`) VALUES
 -- Table structure for table `student`
 --
 
-DROP TABLE IF EXISTS `student`;
 CREATE TABLE `student` (
   `Email` varchar(100) NOT NULL,
   `domain` varchar(100) DEFAULT NULL,
@@ -1031,7 +1080,6 @@ INSERT INTO `student` (`Email`, `domain`, `degree_id`, `University`, `year`, `de
 -- Table structure for table `student_internal_portfolio_overrides`
 --
 
-DROP TABLE IF EXISTS `student_internal_portfolio_overrides`;
 CREATE TABLE `student_internal_portfolio_overrides` (
   `student_project_id` int(11) NOT NULL,
   `student_email` varchar(100) NOT NULL,
@@ -1057,7 +1105,6 @@ INSERT INTO `student_internal_portfolio_overrides` (`student_project_id`, `stude
 -- Table structure for table `student_portfolio_projects`
 --
 
-DROP TABLE IF EXISTS `student_portfolio_projects`;
 CREATE TABLE `student_portfolio_projects` (
   `portfolio_project_id` bigint(20) UNSIGNED NOT NULL,
   `student_email` varchar(100) NOT NULL,
@@ -1093,7 +1140,6 @@ INSERT INTO `student_portfolio_projects` (`portfolio_project_id`, `student_email
 -- Table structure for table `student_portfolio_project_technologies`
 --
 
-DROP TABLE IF EXISTS `student_portfolio_project_technologies`;
 CREATE TABLE `student_portfolio_project_technologies` (
   `portfolio_project_id` bigint(20) UNSIGNED NOT NULL,
   `technology_id` int(10) UNSIGNED NOT NULL
@@ -1105,7 +1151,6 @@ CREATE TABLE `student_portfolio_project_technologies` (
 -- Table structure for table `student_profile_views`
 --
 
-DROP TABLE IF EXISTS `student_profile_views`;
 CREATE TABLE `student_profile_views` (
   `view_id` bigint(20) UNSIGNED NOT NULL,
   `student_email` varchar(100) NOT NULL,
@@ -1139,7 +1184,6 @@ INSERT INTO `student_profile_views` (`view_id`, `student_email`, `viewed_at`) VA
 -- Table structure for table `student_projects`
 --
 
-DROP TABLE IF EXISTS `student_projects`;
 CREATE TABLE `student_projects` (
   `student_project_id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -1160,18 +1204,22 @@ INSERT INTO `student_projects` (`student_project_id`, `Email`, `project_id`, `ro
 (4, '2024is001@stu.ucsc.cmb.ac.lk', 3, 'Firmware Developer', 40, 'In Progress'),
 (5, '2024is015@stu.ucsc.cmb.ac.lk', 2, 'Lead UI Designer', 100, 'Completed'),
 (6, '2024is032@stu.ucsc.cmb.ac.lk', 3, 'Network & Security Lead', 35, 'In Progress'),
-(7, '2024is044@stu.ucsc.cmb.ac.lk', 5, 'Backend & DevOps Engineer', 50, 'In Progress'),
-(26, '2024is058@stu.ucsc.cmb.ac.lk', 6, 'NLP Engineer', 10, 'In Progress'),
-(27, '2024is001@stu.ucsc.cmb.ac.lk', 6, 'Backend Developer', 10, 'In Progress'),
-(28, '2024is015@stu.ucsc.cmb.ac.lk', 6, 'UI Designer', 10, 'In Progress'),
-(29, '2024is001@stu.ucsc.cmb.ac.lk', 7, 'Flutter Developer', 15, 'In Progress'),
-(30, '2024is078@stu.ucsc.cmb.ac.lk', 7, 'Firebase Engineer', 100, 'Completed'),
-(31, '2024is078@stu.ucsc.cmb.ac.lk', 8, 'Frontend Developer', 100, 'Completed'),
-(32, '2024is044@stu.ucsc.cmb.ac.lk', 8, 'UI Designer', 20, 'In Progress'),
+(26, '2024is058@stu.ucsc.cmb.ac.lk', 6, 'NLP Engineer', 100, 'In Progress'),
+(27, '2024is001@stu.ucsc.cmb.ac.lk', 6, 'Backend Developer', 0, 'In Progress'),
+(29, '2024is001@stu.ucsc.cmb.ac.lk', 7, 'Flutter Developer', 0, 'In Progress'),
+(30, '2024is078@stu.ucsc.cmb.ac.lk', 7, 'Firebase Engineer', 100, 'In Progress'),
+(32, '2024is044@stu.ucsc.cmb.ac.lk', 8, 'UI Designer', 100, 'Completed'),
 (33, '2024is078@stu.ucsc.cmb.ac.lk', 9, 'Backend Developer', 100, 'Completed'),
 (34, '2024is001@stu.ucsc.cmb.ac.lk', 9, 'Frontend Developer', 100, 'Completed'),
 (35, '2024is044@stu.ucsc.cmb.ac.lk', 9, 'DB Engineer', 100, 'Completed'),
-(38, '2024is058@stu.ucsc.cmb.ac.lk', 12, 'Mobile Developer', 5, 'In Progress');
+(38, '2024is058@stu.ucsc.cmb.ac.lk', 12, 'Mobile Developer', 5, 'In Progress'),
+(39, '2024is015@stu.ucsc.cmb.ac.lk', 8, 'UX Researcher', 100, 'Completed'),
+(40, '2024is032@stu.ucsc.cmb.ac.lk', 4, 'Security Engineer', 100, 'Completed'),
+(41, '2024is058@stu.ucsc.cmb.ac.lk', 4, 'Full-Stack Developer', 100, 'Completed'),
+(42, '2024is032@stu.ucsc.cmb.ac.lk', 6, 'Backend Engineer', 0, 'In Progress'),
+(46, '2024is078@stu.ucsc.cmb.ac.lk', 6, 'UI Developer', 100, 'In Progress'),
+(48, '2024is044@stu.ucsc.cmb.ac.lk', 5, 'Frontend Developer', 100, 'In Progress'),
+(50, '2024is091@stu.ucsc.cmb.ac.lk', 5, 'Backend Developer', 100, 'In Progress');
 
 -- --------------------------------------------------------
 
@@ -1179,7 +1227,6 @@ INSERT INTO `student_projects` (`student_project_id`, `Email`, `project_id`, `ro
 -- Table structure for table `student_resumes`
 --
 
-DROP TABLE IF EXISTS `student_resumes`;
 CREATE TABLE `student_resumes` (
   `resume_id` int(11) NOT NULL,
   `student_email` varchar(100) NOT NULL,
@@ -1205,7 +1252,6 @@ INSERT INTO `student_resumes` (`resume_id`, `student_email`, `template_type`, `r
 -- Table structure for table `student_resume_items`
 --
 
-DROP TABLE IF EXISTS `student_resume_items`;
 CREATE TABLE `student_resume_items` (
   `id` int(11) NOT NULL,
   `resume_id` int(11) NOT NULL,
@@ -1237,7 +1283,6 @@ INSERT INTO `student_resume_items` (`id`, `resume_id`, `item_type`, `item_refere
 -- Table structure for table `student_saved_internships`
 --
 
-DROP TABLE IF EXISTS `student_saved_internships`;
 CREATE TABLE `student_saved_internships` (
   `student_email` varchar(100) NOT NULL,
   `internship_id` int(11) NOT NULL,
@@ -1261,7 +1306,6 @@ INSERT INTO `student_saved_internships` (`student_email`, `internship_id`, `save
 -- Table structure for table `student_saved_projects`
 --
 
-DROP TABLE IF EXISTS `student_saved_projects`;
 CREATE TABLE `student_saved_projects` (
   `student_email` varchar(100) NOT NULL,
   `project_id` int(11) NOT NULL,
@@ -1285,7 +1329,6 @@ INSERT INTO `student_saved_projects` (`student_email`, `project_id`, `saved_at`)
 -- Table structure for table `student_skills`
 --
 
-DROP TABLE IF EXISTS `student_skills`;
 CREATE TABLE `student_skills` (
   `id` int(11) NOT NULL,
   `Email` varchar(100) NOT NULL,
@@ -1324,7 +1367,6 @@ INSERT INTO `student_skills` (`id`, `Email`, `skill_id`, `initial_experience`, `
 -- Table structure for table `student_technologies`
 --
 
-DROP TABLE IF EXISTS `student_technologies`;
 CREATE TABLE `student_technologies` (
   `technology_id` int(10) UNSIGNED NOT NULL,
   `technology_name` varchar(100) NOT NULL
@@ -1336,7 +1378,6 @@ CREATE TABLE `student_technologies` (
 -- Table structure for table `team_deadline_changes`
 --
 
-DROP TABLE IF EXISTS `team_deadline_changes`;
 CREATE TABLE `team_deadline_changes` (
   `change_id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
@@ -1352,10 +1393,10 @@ CREATE TABLE `team_deadline_changes` (
 -- Table structure for table `team_files`
 --
 
-DROP TABLE IF EXISTS `team_files`;
 CREATE TABLE `team_files` (
   `file_id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
+  `task_id` int(11) DEFAULT NULL,
   `uploaded_by` varchar(100) NOT NULL,
   `original_name` varchar(255) NOT NULL,
   `file_path` varchar(255) NOT NULL,
@@ -1370,7 +1411,6 @@ CREATE TABLE `team_files` (
 -- Table structure for table `team_final_reports`
 --
 
-DROP TABLE IF EXISTS `team_final_reports`;
 CREATE TABLE `team_final_reports` (
   `report_id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
@@ -1384,13 +1424,22 @@ CREATE TABLE `team_final_reports` (
   `reviewed_at` datetime DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `team_final_reports`
+--
+
+INSERT INTO `team_final_reports` (`report_id`, `team_id`, `submitted_by`, `original_name`, `file_path`, `summary`, `status`, `review_note`, `submitted_at`, `reviewed_at`) VALUES
+(1, 4, '2024is078@stu.ucsc.cmb.ac.lk', 'Campus_Event_Final_Report.pdf', 'Assets/Uploads/final_reports/sample_final_report.pdf', 'Clubs can post events and students can book and cancel a place. All pages were tested with 3 clubs.', 'accepted', NULL, '2026-09-27 04:30:00', '2026-09-29 15:00:00'),
+(2, 3, '2024is044@stu.ucsc.cmb.ac.lk', 'Portfolio_Builder_Final_Report.pdf', 'Assets/Uploads/final_reports/sample_final_report.pdf', 'Students choose one of three templates, add their projects and share a link to their portfolio.', 'accepted', NULL, '2026-10-17 05:30:00', '2026-10-19 16:00:00'),
+(3, 1, '2024is078@stu.ucsc.cmb.ac.lk', 'Blood_Donation_Portal_Final_Report.pdf', 'Assets/Uploads/final_reports/sample_final_report.pdf', 'Donors register, hospitals post requests and the portal finds donors by blood group and city.', 'accepted', NULL, '2026-10-29 04:00:00', '2026-10-31 14:00:00'),
+(4, 6, '2024is091@stu.ucsc.cmb.ac.lk', 'Leaderboard_Builders_Final_Report.pdf', 'Assets/Uploads/final_reports/sample_final_report.pdf', 'The leaderboard reads pull requests, reviews and issues from the FOSS repositories every hour, gives points and shows the top contributors of the month. All three tasks are done and tested.', 'submitted', NULL, '2026-11-10 03:30:00', NULL);
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `team_messages`
 --
 
-DROP TABLE IF EXISTS `team_messages`;
 CREATE TABLE `team_messages` (
   `message_id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
@@ -1405,7 +1454,6 @@ CREATE TABLE `team_messages` (
 -- Table structure for table `team_tasks`
 --
 
-DROP TABLE IF EXISTS `team_tasks`;
 CREATE TABLE `team_tasks` (
   `task_id` int(11) NOT NULL,
   `team_id` int(11) NOT NULL,
@@ -1417,13 +1465,36 @@ CREATE TABLE `team_tasks` (
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `team_tasks`
+--
+
+INSERT INTO `team_tasks` (`task_id`, `team_id`, `assigned_to`, `title`, `description`, `due_date`, `status`, `created_at`) VALUES
+(1, 4, '2024is044@stu.ucsc.cmb.ac.lk', 'Design the event database', 'Tables for events, clubs and registrations.', '2026-09-05', 'Done', '2026-11-10 18:02:30'),
+(2, 4, '2024is078@stu.ucsc.cmb.ac.lk', 'Event booking backend', 'Register for an event and cancel a booking.', '2026-09-15', 'Done', '2026-11-10 18:02:30'),
+(3, 4, '2024is001@stu.ucsc.cmb.ac.lk', 'Event pages', 'Event list, details page and the club admin page.', '2026-09-22', 'Done', '2026-11-10 18:02:30'),
+(4, 3, '2024is015@stu.ucsc.cmb.ac.lk', 'User research', 'Talk to 6 students about what a portfolio needs.', '2026-09-25', 'Done', '2026-11-10 18:02:30'),
+(5, 3, '2024is044@stu.ucsc.cmb.ac.lk', 'Portfolio templates', 'Three templates in Figma.', '2026-10-05', 'Done', '2026-11-10 18:02:30'),
+(6, 3, '2024is044@stu.ucsc.cmb.ac.lk', 'Template builder', 'Build the templates with React.', '2026-10-15', 'Done', '2026-11-10 18:02:30'),
+(7, 1, '2024is078@stu.ucsc.cmb.ac.lk', 'Donor and request API', 'Donor sign-up and blood request endpoints.', '2026-10-10', 'Done', '2026-11-10 18:02:30'),
+(8, 1, '2024is032@stu.ucsc.cmb.ac.lk', 'Security check', 'Login, roles and input checks.', '2026-10-20', 'Done', '2026-11-10 18:02:30'),
+(9, 1, '2024is058@stu.ucsc.cmb.ac.lk', 'Donor search page', 'Search donors by blood group and city.', '2026-10-25', 'Done', '2026-11-10 18:02:30'),
+(10, 5, '2024is058@stu.ucsc.cmb.ac.lk', 'Collect FAQ data', 'Questions and answers from the student help desk.', '2026-10-30', 'Done', '2026-11-10 18:02:30'),
+(11, 5, '2024is078@stu.ucsc.cmb.ac.lk', 'Chat window design', 'Figma design of the chat window.', '2026-11-05', 'Done', '2026-11-10 18:02:30'),
+(12, 5, '2024is001@stu.ucsc.cmb.ac.lk', 'Chatbot API', 'Flask API that answers a question.', '2026-11-25', 'In Progress', '2026-11-10 18:02:30'),
+(13, 5, '2024is032@stu.ucsc.cmb.ac.lk', 'Connect the chat to the API', 'Send the question and show the answer.', '2026-12-05', 'Todo', '2026-11-10 18:02:30'),
+(14, 2, '2024is078@stu.ucsc.cmb.ac.lk', 'Firebase setup', 'Project, login and the attendance collection.', '2026-10-20', 'Done', '2026-11-10 18:02:30'),
+(15, 2, '2024is001@stu.ucsc.cmb.ac.lk', 'QR code scanner', 'Scan the lecture QR code and save the attendance.', '2026-11-01', 'In Progress', '2026-11-10 18:02:30'),
+(16, 6, '2024is091@stu.ucsc.cmb.ac.lk', 'Collect GitHub contributions', 'Read pull requests and reviews from the FOSS repos.', '2026-11-02', 'Done', '2026-11-10 18:17:13'),
+(17, 6, '2024is091@stu.ucsc.cmb.ac.lk', 'Points and ranking rules', 'Points for a pull request, a review and an issue.', '2026-11-05', 'Done', '2026-11-10 18:17:13'),
+(18, 6, '2024is044@stu.ucsc.cmb.ac.lk', 'Leaderboard page', 'Top contributors this month with their points.', '2026-11-08', 'Done', '2026-11-10 18:17:13');
+
 -- --------------------------------------------------------
 
 --
 -- Table structure for table `universityemails`
 --
 
-DROP TABLE IF EXISTS `universityemails`;
 CREATE TABLE `universityemails` (
   `University` varchar(100) NOT NULL,
   `no` int(11) NOT NULL,
@@ -1452,7 +1523,6 @@ INSERT INTO `universityemails` (`University`, `no`, `faculty`, `emailEx`, `Statu
 -- Table structure for table `university_faculties`
 --
 
-DROP TABLE IF EXISTS `university_faculties`;
 CREATE TABLE `university_faculties` (
   `domain` varchar(100) NOT NULL,
   `University` varchar(150) NOT NULL,
@@ -1480,7 +1550,6 @@ INSERT INTO `university_faculties` (`domain`, `University`, `faculty`, `Location
 -- Table structure for table `user`
 --
 
-DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
   `Email` varchar(100) NOT NULL,
   `password` varchar(100) NOT NULL,
@@ -1519,8 +1588,8 @@ INSERT INTO `user` (`Email`, `password`, `role`, `status`, `verification_code`, 
 
 --
 -- Stand-in structure for view `v_internships_full`
+-- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `v_internships_full`;
 CREATE TABLE `v_internships_full` (
 `id` int(11)
 ,`title` varchar(255)
@@ -1558,8 +1627,8 @@ CREATE TABLE `v_internships_full` (
 
 --
 -- Stand-in structure for view `v_projects_full`
+-- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `v_projects_full`;
 CREATE TABLE `v_projects_full` (
 `id` int(11)
 ,`title` varchar(255)
@@ -1585,8 +1654,8 @@ CREATE TABLE `v_projects_full` (
 
 --
 -- Stand-in structure for view `v_student_profile_full`
+-- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `v_student_profile_full`;
 CREATE TABLE `v_student_profile_full` (
 `Email` varchar(100)
 ,`full_name` varchar(100)
@@ -1608,8 +1677,8 @@ CREATE TABLE `v_student_profile_full` (
 
 --
 -- Stand-in structure for view `v_student_proposals_full`
+-- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `v_student_proposals_full`;
 CREATE TABLE `v_student_proposals_full` (
 `proposal_id` int(11)
 ,`project_id` int(11)
@@ -1633,8 +1702,8 @@ CREATE TABLE `v_student_proposals_full` (
 
 --
 -- Stand-in structure for view `v_student_skills_computed`
+-- (See below for the actual view)
 --
-DROP VIEW IF EXISTS `v_student_skills_computed`;
 CREATE TABLE `v_student_skills_computed` (
 `id` int(11)
 ,`student_email` varchar(100)
@@ -1647,110 +1716,6 @@ CREATE TABLE `v_student_skills_computed` (
 ,`percentage` int(2)
 );
 
--- --------------------------------------------------------
-
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS `student_feedback` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `student_email` varchar(100) NOT NULL,
-  `project_id` int(11) NOT NULL,
-  `organization_email` varchar(100) NOT NULL,
-  `role` varchar(100) DEFAULT 'Team Member',
-  `rating` decimal(3,1) NOT NULL DEFAULT 5.0 CHECK (`rating` >= 1.0 AND `rating` <= 5.0),
-  `feedback_text` text NOT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`id`),
-  KEY `idx_student_email` (`student_email`),
-  KEY `idx_project_id` (`project_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT INTO `student_feedback` (`student_email`,`project_id`,`organization_email`,`role`,`rating`,`feedback_text`,`created_at`
-) VALUES
-(
-  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
-  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` ASC LIMIT 1), 1),
-  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
-  'Backend Developer',
-  5.0,
-  'Architected the core API endpoints and database schema for the Campus Event Management System. Code quality was production-ready and well-documented.',
-  '2026-10-15 10:30:00'
-),
-(
-  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
-  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` DESC LIMIT 1), 2),
-  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
-  'Full-Stack Developer',
-  4.9,
-  'Great initiative on the Portfolio Website Builder. Handled dynamic template rendering and state management with zero regressions during UAT.',
-  '2026-09-28 14:15:00'
-),
-(
-  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
-  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` ASC LIMIT 1), 1),
-  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
-  'Team Leader',
-  4.8,
-  'Led the sprint planning and code reviews effectively. Kept the entire student team aligned with our organization milestones and delivered the final report on time.',
-  '2026-08-19 09:00:00'
-),
-(
-  COALESCE((SELECT `Email` FROM `student` WHERE `Name` LIKE '%Lasith%' LIMIT 1), '2024is078@stu.ucsc.cmb.ac.lk'),
-  COALESCE((SELECT `id` FROM `projects` ORDER BY `id` DESC LIMIT 1), 2),
-  COALESCE((SELECT `Email` FROM `organization` LIMIT 1), 'foss@sliit.lk'),
-  'DevOps & Backend Engineer',
-  5.0,
-  'Containerized the application services and streamlined the deployment workflow. We would gladly select this student for future organization projects.',
-  '2026-07-11 16:45:00'
-);
-
---
--- Structure for view `v_internships_full`
---
-DROP TABLE IF EXISTS `v_internships_full`;
-
-DROP VIEW IF EXISTS `v_internships_full`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_internships_full`  AS SELECT `i`.`id` AS `id`, `i`.`title` AS `title`, `c`.`Name` AS `company_name`, `i`.`company_email` AS `company_email`, `c`.`location` AS `company_location`, `c`.`profile_img` AS `company_logo`, `ind`.`industry_name` AS `industry_name`, `i`.`logo_text` AS `logo_text`, `i`.`logo_style` AS `logo_style`, `i`.`duration_value` AS `duration_value`, `i`.`duration_unit` AS `duration_unit`, concat(`i`.`duration_value`,' ',`i`.`duration_unit`,if(`i`.`duration_value` > 1,'s','')) AS `duration_formatted`, `i`.`deadline_date` AS `deadline_date`, date_format(`i`.`deadline_date`,'%b %d, %Y') AS `deadline_formatted`, `i`.`description` AS `description`, `i`.`cover_image` AS `cover_image`, `i`.`academic_year` AS `academic_year`, `i`.`experience_level` AS `experience_level`, `i`.`vacancies` AS `vacancies`, `i`.`internship_type` AS `internship_type`, `i`.`work_mode` AS `work_mode`, `i`.`location` AS `location`, `i`.`start_date` AS `start_date`, `i`.`paid_status` AS `paid_status`, `i`.`stipend` AS `stipend`, `i`.`responsibilities` AS `responsibilities`, `i`.`benefits` AS `benefits`, `i`.`supporting_document` AS `supporting_document`, `i`.`created_at` AS `created_at`, (select group_concat(`t`.`tag_name` order by `t`.`tag_name` ASC separator ', ') from (`internship_tech_tag_map` `tm` join `internship_tech_tags` `t` on(`tm`.`tag_id` = `t`.`tag_id`)) where `tm`.`internship_id` = `i`.`id`) AS `tech_tags` FROM ((`internships` `i` left join `company` `c` on(`i`.`company_email` = `c`.`Email`)) left join `internship_industries` `ind` on(`i`.`industry_id` = `ind`.`industry_id`)) ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_projects_full`
---
-DROP TABLE IF EXISTS `v_projects_full`;
-
-DROP VIEW IF EXISTS `v_projects_full`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_projects_full`  AS SELECT `p`.`id` AS `id`, `p`.`title` AS `title`, `o`.`Name` AS `company_name`, `p`.`organization_email` AS `organization_email`, `p`.`icon` AS `icon`, `c`.`category_name` AS `category_name`, `p`.`difficulty` AS `difficulty`, `p`.`duration_weeks` AS `duration_weeks`, `p`.`members` AS `members`, `p`.`preferred_year` AS `preferred_year`, `p`.`deadline` AS `deadline`, `p`.`visibility` AS `visibility`, `p`.`status` AS `status`, `p`.`posted_at` AS `posted_at`, `p`.`description` AS `description`, `p`.`learning_objectives` AS `learning_objectives`, `p`.`expected_outcomes` AS `expected_outcomes`, (select group_concat(`project_skills`.`skill_name` separator ', ') from `project_skills` where `project_skills`.`project_id` = `p`.`id`) AS `skills` FROM ((`projects` `p` left join `organization` `o` on(`p`.`organization_email` = `o`.`Email`)) left join `project_categories` `c` on(`p`.`category_id` = `c`.`category_id`)) ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_student_profile_full`
---
-DROP TABLE IF EXISTS `v_student_profile_full`;
-
-DROP VIEW IF EXISTS `v_student_profile_full`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_profile_full`  AS SELECT `s`.`Email` AS `Email`, `s`.`Name` AS `full_name`, `s`.`year` AS `academic_year`, `d`.`degree_name` AS `degree_name`, `uf`.`faculty` AS `faculty_name`, `uf`.`University` AS `university_name`, `uf`.`Location` AS `campus_location`, `s`.`profile_image` AS `profile_image`, `s`.`bio` AS `bio`, `s`.`github` AS `github`, `s`.`linkedin` AS `linkedin`, `s`.`website` AS `website`, `u`.`status` AS `account_status`, `u`.`created_at` AS `registered_at` FROM (((`student` `s` join `user` `u` on(`s`.`Email` = `u`.`Email`)) left join `degrees` `d` on(`s`.`degree_id` = `d`.`degree_id`)) left join `university_faculties` `uf` on(`s`.`domain` = `uf`.`domain`)) ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_student_proposals_full`
---
-DROP TABLE IF EXISTS `v_student_proposals_full`;
-
-DROP VIEW IF EXISTS `v_student_proposals_full`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_proposals_full`  AS SELECT `pp`.`proposal_id` AS `proposal_id`, `pp`.`project_id` AS `project_id`, `p`.`title` AS `project_title`, `o`.`Name` AS `organization_name`, `pp`.`student_email` AS `student_email`, `s`.`Name` AS `student_name`, `pp`.`proposal_title` AS `proposal_title`, `pp`.`target_role` AS `target_role`, `pp`.`introduction` AS `introduction`, `pp`.`solution_approach` AS `solution_approach`, `pp`.`portfolio_attachment` AS `portfolio_attachment`, `pp`.`status` AS `proposal_status`, `pp`.`feedback_message` AS `feedback_message`, `pp`.`submitted_at` AS `submitted_at`, `pp`.`reviewed_at` AS `reviewed_at`, (select group_concat(`proposal_skills`.`skill_name` separator ', ') from `proposal_skills` where `proposal_skills`.`proposal_id` = `pp`.`proposal_id`) AS `technologies` FROM (((`project_proposals` `pp` join `projects` `p` on(`pp`.`project_id` = `p`.`id`)) join `organization` `o` on(`p`.`organization_email` = `o`.`Email`)) join `student` `s` on(`pp`.`student_email` = `s`.`Email`)) ;
-
--- --------------------------------------------------------
-
---
--- Structure for view `v_student_skills_computed`
---
-DROP TABLE IF EXISTS `v_student_skills_computed`;
-
-DROP VIEW IF EXISTS `v_student_skills_computed`;
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_skills_computed`  AS SELECT `ss`.`id` AS `id`, `ss`.`Email` AS `student_email`, `ms`.`skill_name` AS `skill_name`, `sc`.`category_name` AS `category_name`, `ss`.`initial_experience` AS `initial_experience`, `ss`.`created_at` AS `created_at`, `ss`.`initial_experience`+ timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) AS `total_experience_years`, CASE WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 1 THEN 'Beginner' WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 3 THEN 'Intermediate' WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 5 THEN 'Advanced' ELSE 'Expert' END AS `level`, CASE WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 1 THEN 40 WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 3 THEN 60 WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 5 THEN 80 ELSE 95 END AS `percentage` FROM ((`student_skills` `ss` join `master_skills` `ms` on(`ss`.`skill_id` = `ms`.`skill_id`)) left join `skill_categories` `sc` on(`ms`.`category_id` = `sc`.`category_id`)) ;
-
 --
 -- Indexes for dumped tables
 --
@@ -1760,6 +1725,13 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 ALTER TABLE `admin`
   ADD PRIMARY KEY (`Email`);
+
+--
+-- Indexes for table `certificates`
+--
+ALTER TABLE `certificates`
+  ADD PRIMARY KEY (`certificate_id`),
+  ADD KEY `Email` (`Email`);
 
 --
 -- Indexes for table `company`
@@ -2069,7 +2041,8 @@ ALTER TABLE `team_deadline_changes`
 ALTER TABLE `team_files`
   ADD PRIMARY KEY (`file_id`),
   ADD KEY `fk_tf_team` (`team_id`),
-  ADD KEY `fk_tf_user` (`uploaded_by`);
+  ADD KEY `fk_tf_user` (`uploaded_by`),
+  ADD KEY `fk_team_files_task` (`task_id`);
 
 --
 -- Indexes for table `team_final_reports`
@@ -2187,13 +2160,13 @@ ALTER TABLE `master_skills`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=80;
+  MODIFY `notification_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT for table `org_teams`
 --
 ALTER TABLE `org_teams`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `portfolio`
@@ -2205,13 +2178,13 @@ ALTER TABLE `portfolio`
 -- AUTO_INCREMENT for table `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
 
 --
 -- AUTO_INCREMENT for table `project_applications`
 --
 ALTER TABLE `project_applications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=55;
 
 --
 -- AUTO_INCREMENT for table `project_categories`
@@ -2229,7 +2202,7 @@ ALTER TABLE `project_documents`
 -- AUTO_INCREMENT for table `project_feedback`
 --
 ALTER TABLE `project_feedback`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `project_moderation_logs`
@@ -2241,7 +2214,7 @@ ALTER TABLE `project_moderation_logs`
 -- AUTO_INCREMENT for table `project_proposals`
 --
 ALTER TABLE `project_proposals`
-  MODIFY `proposal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `proposal_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `skills`
@@ -2259,7 +2232,7 @@ ALTER TABLE `skill_categories`
 -- AUTO_INCREMENT for table `student_portfolio_projects`
 --
 ALTER TABLE `student_portfolio_projects`
-  MODIFY `portfolio_project_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `portfolio_project_id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `student_profile_views`
@@ -2271,7 +2244,7 @@ ALTER TABLE `student_profile_views`
 -- AUTO_INCREMENT for table `student_projects`
 --
 ALTER TABLE `student_projects`
-  MODIFY `student_project_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
+  MODIFY `student_project_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `student_resumes`
@@ -2313,25 +2286,70 @@ ALTER TABLE `team_files`
 -- AUTO_INCREMENT for table `team_final_reports`
 --
 ALTER TABLE `team_final_reports`
-  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `report_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT for table `team_messages`
 --
 ALTER TABLE `team_messages`
-  MODIFY `message_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `message_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `team_tasks`
 --
 ALTER TABLE `team_tasks`
-  MODIFY `task_id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `task_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `universityemails`
 --
 ALTER TABLE `universityemails`
   MODIFY `no` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_internships_full`
+--
+DROP TABLE IF EXISTS `v_internships_full`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_internships_full`  AS SELECT `i`.`id` AS `id`, `i`.`title` AS `title`, `c`.`Name` AS `company_name`, `i`.`company_email` AS `company_email`, `c`.`location` AS `company_location`, `c`.`profile_img` AS `company_logo`, `ind`.`industry_name` AS `industry_name`, `i`.`logo_text` AS `logo_text`, `i`.`logo_style` AS `logo_style`, `i`.`duration_value` AS `duration_value`, `i`.`duration_unit` AS `duration_unit`, concat(`i`.`duration_value`,' ',`i`.`duration_unit`,if(`i`.`duration_value` > 1,'s','')) AS `duration_formatted`, `i`.`deadline_date` AS `deadline_date`, date_format(`i`.`deadline_date`,'%b %d, %Y') AS `deadline_formatted`, `i`.`description` AS `description`, `i`.`cover_image` AS `cover_image`, `i`.`academic_year` AS `academic_year`, `i`.`experience_level` AS `experience_level`, `i`.`vacancies` AS `vacancies`, `i`.`internship_type` AS `internship_type`, `i`.`work_mode` AS `work_mode`, `i`.`location` AS `location`, `i`.`start_date` AS `start_date`, `i`.`paid_status` AS `paid_status`, `i`.`stipend` AS `stipend`, `i`.`responsibilities` AS `responsibilities`, `i`.`benefits` AS `benefits`, `i`.`supporting_document` AS `supporting_document`, `i`.`created_at` AS `created_at`, (select group_concat(`t`.`tag_name` order by `t`.`tag_name` ASC separator ', ') from (`internship_tech_tag_map` `tm` join `internship_tech_tags` `t` on(`tm`.`tag_id` = `t`.`tag_id`)) where `tm`.`internship_id` = `i`.`id`) AS `tech_tags` FROM ((`internships` `i` left join `company` `c` on(`i`.`company_email` = `c`.`Email`)) left join `internship_industries` `ind` on(`i`.`industry_id` = `ind`.`industry_id`)) ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_projects_full`
+--
+DROP TABLE IF EXISTS `v_projects_full`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_projects_full`  AS SELECT `p`.`id` AS `id`, `p`.`title` AS `title`, `o`.`Name` AS `company_name`, `p`.`organization_email` AS `organization_email`, `p`.`icon` AS `icon`, `c`.`category_name` AS `category_name`, `p`.`difficulty` AS `difficulty`, `p`.`duration_weeks` AS `duration_weeks`, `p`.`members` AS `members`, `p`.`preferred_year` AS `preferred_year`, `p`.`deadline` AS `deadline`, `p`.`visibility` AS `visibility`, `p`.`status` AS `status`, `p`.`posted_at` AS `posted_at`, `p`.`description` AS `description`, `p`.`learning_objectives` AS `learning_objectives`, `p`.`expected_outcomes` AS `expected_outcomes`, (select group_concat(`project_skills`.`skill_name` separator ', ') from `project_skills` where `project_skills`.`project_id` = `p`.`id`) AS `skills` FROM ((`projects` `p` left join `organization` `o` on(`p`.`organization_email` = `o`.`Email`)) left join `project_categories` `c` on(`p`.`category_id` = `c`.`category_id`)) ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_student_profile_full`
+--
+DROP TABLE IF EXISTS `v_student_profile_full`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_profile_full`  AS SELECT `s`.`Email` AS `Email`, `s`.`Name` AS `full_name`, `s`.`year` AS `academic_year`, `d`.`degree_name` AS `degree_name`, `uf`.`faculty` AS `faculty_name`, `uf`.`University` AS `university_name`, `uf`.`Location` AS `campus_location`, `s`.`profile_image` AS `profile_image`, `s`.`bio` AS `bio`, `s`.`github` AS `github`, `s`.`linkedin` AS `linkedin`, `s`.`website` AS `website`, `u`.`status` AS `account_status`, `u`.`created_at` AS `registered_at` FROM (((`student` `s` join `user` `u` on(`s`.`Email` = `u`.`Email`)) left join `degrees` `d` on(`s`.`degree_id` = `d`.`degree_id`)) left join `university_faculties` `uf` on(`s`.`domain` = `uf`.`domain`)) ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_student_proposals_full`
+--
+DROP TABLE IF EXISTS `v_student_proposals_full`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_proposals_full`  AS SELECT `pp`.`proposal_id` AS `proposal_id`, `pp`.`project_id` AS `project_id`, `p`.`title` AS `project_title`, `o`.`Name` AS `organization_name`, `pp`.`student_email` AS `student_email`, `s`.`Name` AS `student_name`, `pp`.`proposal_title` AS `proposal_title`, `pp`.`target_role` AS `target_role`, `pp`.`introduction` AS `introduction`, `pp`.`solution_approach` AS `solution_approach`, `pp`.`portfolio_attachment` AS `portfolio_attachment`, `pp`.`status` AS `proposal_status`, `pp`.`feedback_message` AS `feedback_message`, `pp`.`submitted_at` AS `submitted_at`, `pp`.`reviewed_at` AS `reviewed_at`, (select group_concat(`proposal_skills`.`skill_name` separator ', ') from `proposal_skills` where `proposal_skills`.`proposal_id` = `pp`.`proposal_id`) AS `technologies` FROM (((`project_proposals` `pp` join `projects` `p` on(`pp`.`project_id` = `p`.`id`)) join `organization` `o` on(`p`.`organization_email` = `o`.`Email`)) join `student` `s` on(`pp`.`student_email` = `s`.`Email`)) ;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `v_student_skills_computed`
+--
+DROP TABLE IF EXISTS `v_student_skills_computed`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_student_skills_computed`  AS SELECT `ss`.`id` AS `id`, `ss`.`Email` AS `student_email`, `ms`.`skill_name` AS `skill_name`, `sc`.`category_name` AS `category_name`, `ss`.`initial_experience` AS `initial_experience`, `ss`.`created_at` AS `created_at`, `ss`.`initial_experience`+ timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) AS `total_experience_years`, CASE WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 1 THEN 'Beginner' WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 3 THEN 'Intermediate' WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 5 THEN 'Advanced' ELSE 'Expert' END AS `level`, CASE WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 1 THEN 40 WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 3 THEN 60 WHEN `ss`.`initial_experience` + timestampdiff(YEAR,`ss`.`created_at`,current_timestamp()) <= 5 THEN 80 ELSE 95 END AS `percentage` FROM ((`student_skills` `ss` join `master_skills` `ms` on(`ss`.`skill_id` = `ms`.`skill_id`)) left join `skill_categories` `sc` on(`ms`.`category_id` = `sc`.`category_id`)) ;
 
 --
 -- Constraints for dumped tables
@@ -2587,6 +2605,7 @@ ALTER TABLE `team_deadline_changes`
 -- Constraints for table `team_files`
 --
 ALTER TABLE `team_files`
+  ADD CONSTRAINT `fk_team_files_task` FOREIGN KEY (`task_id`) REFERENCES `team_tasks` (`task_id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_team_files_team` FOREIGN KEY (`team_id`) REFERENCES `org_teams` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `fk_team_files_user` FOREIGN KEY (`uploaded_by`) REFERENCES `user` (`Email`) ON DELETE CASCADE;
 
