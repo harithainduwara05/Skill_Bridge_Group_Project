@@ -19,8 +19,11 @@ if (!$team) {
 }
 $members = $teamRepository->members($email, (int) $id);
 $tasks = $teamRepository->tasks($email, (int) $id);
+$report = twReport($conn, (int) $id);
+$isCompleted = strtolower((string) $team['status']) === 'completed';
+
 $pageTitle = 'View Team | SkillBridge';
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/view_team.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Student/view_team.css') . '">';
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/view_team.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/view_team.css') . '">';
 include __DIR__ . '/../../Includes/student_sidebar.php';
 include __DIR__ . '/../../Includes/dash_header.php';
 ?>
@@ -45,13 +48,41 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <p><?= teamEsc(teamStatus((string) $team['status'])) ?></p>
         </div>
     </section>
-    <nav class="team-tabs"><a class="active" href="#overview">Overview</a><a href="#tasks">Tasks</a><a href="#members">Members</a><a href="team_workspace.php?id=<?= (int) $id ?>">Files &amp; Discussion (Workspace)</a></nav>
+    <nav class="team-tabs">
+        <a class="active" href="#overview">Overview</a>
+        <a href="#tasks">Tasks</a>
+        <a href="#members">Members</a>
+        <a href="team_workspace.php?id=<?= (int) $id ?>"><?= $isCompleted ? 'Completed Report' : 'Files &amp; Discussion (Workspace)' ?></a>
+    </nav>
     <section class="team-layout" id="overview">
         <div class="team-main">
             <div class="detail-card"><h2>About Project</h2><p><?= nl2br(teamEsc($team['project_description'])) ?></p></div>
             <div class="detail-card"><h2>Technology Stack</h2><div class="skill-list"><?php foreach ($team['technologies'] as $technology): ?><span><?= teamEsc($technology) ?></span><?php endforeach; ?></div></div>
+            
+            <?php if ($isCompleted && $report): ?>
+                <div class="detail-card" style="background:#f4fbf7; border:1px solid #d1fae5; border-radius:14px; padding:22px; box-shadow:0 2px 4px rgba(0,0,0,0.01);">
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                        <div style="display:flex; align-items:center; gap:14px;">
+                            <div style="width:42px; height:42px; border-radius:10px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div>
+                                <h3 style="margin:0 0 3px; font-size:16px; color:#0f2a4a; font-weight:750;">Final Completed Report</h3>
+                                <p style="margin:0; color:#475569; font-size:13px;">
+                                    <strong style="color:#0f2a4a;"><?= teamEsc($report['name']) ?></strong> &bull; Submitted on <?= teamEsc($report['submitted']) ?>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download style="display:inline-flex; align-items:center; gap:8px; background:#0f766e; color:#ffffff; padding:10px 18px; border-radius:8px; font-weight:600; font-size:13px; text-decoration:none; transition:background 0.2s;">
+                            <i class="fa-solid fa-download"></i> Download Final Report
+                        </a>
+                    </div>
+                    <p style="margin:14px 0 0; color:#334155; font-size:13.5px; line-height:1.6; background:#ffffff; padding:14px; border-radius:10px; border:1px solid #e2e8f0;"><?= nl2br(teamEsc($report['summary'])) ?></p>
+                </div>
+            <?php endif; ?>
+
             <div class="detail-card" id="tasks">
-                <div class="card-title-row"><h2>Current Tasks</h2><a href="team_workspace.php?id=<?= (int) $id ?>">Open Workspace</a></div>
+                <div class="card-title-row"><h2>Current Tasks</h2><a href="team_workspace.php?id=<?= (int) $id ?>"><?= $isCompleted ? 'View Workspace' : 'Open Workspace' ?></a></div>
                 <div class="task-preview">
                     <?php if ($tasks): foreach (array_slice($tasks, 0, 3) as $task): ?>
                         <div><span><?= teamEsc(strtoupper((string) $task['status'])) ?></span><h4><?= teamEsc($task['title']) ?></h4></div>

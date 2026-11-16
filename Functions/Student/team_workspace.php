@@ -75,7 +75,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <i class="fa-solid fa-circle-check" style="font-size:22px;color:#22c55e;"></i>
             <div>
                 <strong>Project Completed &amp; Final Report Accepted!</strong>
-                <p style="margin:2px 0 0;font-size:13px;color:#15803d;">This project team workspace is now in view-only mode. All tasks, submitted files, and final reports are locked for review.</p>
+                <p style="margin:2px 0 0;font-size:13px;color:#15803d;">This project team workspace is in view-only mode. All tasks, discussions, file sharing, and final report submissions are securely locked.</p>
             </div>
         </div>
     <?php endif; ?>
@@ -145,9 +145,6 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                     </div>
                                     <div class="asset-item-actions" style="margin-left:auto;display:flex;gap:8px;">
                                         <a href="../../<?= teamEsc($file['path']) ?>" download class="task-act-btn" title="Download"><i class="fa-solid fa-download"></i></a>
-                                        <?php if (!$isCompleted && !empty($file['can_delete'])): ?>
-                                            <button type="button" class="task-act-btn danger" data-delete-file="<?= (int) $file['id'] ?>" title="Remove"><i class="fa-solid fa-trash"></i></button>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endforeach; else: ?>
@@ -172,16 +169,24 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <div class="final-report-box">
                     
                     <?php if ($report): ?>
-                        <div class="report-banner report-<?= teamEsc($report['status']) ?>">
-                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                                <div>
-                                    <span class="status-track"><?= teamEsc(strtoupper(str_replace('_', ' ', (string) $report['status']))) ?></span>
-                                    <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> <?= teamEsc($report['name']) ?></h4>
-                                    <p style="margin:0;color:#667085;font-size:12px;">Submitted by <?= teamEsc($report['by']) ?> on <?= teamEsc($report['submitted']) ?></p>
+                        <div style="background:#f4fbf7; border:1px solid #d1fae5; border-radius:14px; padding:22px; box-shadow:0 2px 4px rgba(0,0,0,0.01);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:14px;">
+                                    <div style="width:42px; height:42px; border-radius:10px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="margin:0 0 3px; font-size:16px; color:#0f2a4a; font-weight:750;">Final Completed Report</h3>
+                                        <p style="margin:0; color:#475569; font-size:13px;">
+                                            <strong style="color:#0f2a4a;"><?= teamEsc($report['name']) ?></strong> &bull; Submitted on <?= teamEsc($report['submitted']) ?>
+                                        </p>
+                                    </div>
                                 </div>
-                                <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i> Download Report</a>
+                                <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download style="display:inline-flex; align-items:center; gap:8px; background:#0f766e; color:#ffffff; padding:10px 18px; border-radius:8px; font-weight:600; font-size:13px; text-decoration:none; transition:background 0.2s;">
+                                    <i class="fa-solid fa-download"></i> Download Final Report
+                                </a>
                             </div>
-                            <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> <?= nl2br(teamEsc($report['summary'])) ?></p>
+                            <p style="margin:14px 0 0; color:#334155; font-size:13.5px; line-height:1.6; background:#ffffff; padding:14px; border-radius:10px; border:1px solid #e2e8f0;"><?= nl2br(teamEsc($report['summary'])) ?></p>
                             <?php if (!empty($report['note'])): ?>
                                 <div style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #f97316;border-radius:6px;font-size:13px;color:#9a3412;">
                                     <strong>Organization Feedback:</strong> <?= nl2br(teamEsc($report['note'])) ?>
@@ -191,7 +196,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                     <?php endif; ?>
 
                     <?php if ($isCompleted): ?>
-                        <p class="info-text" style="margin-bottom:0;"><i class="fa-solid fa-circle-check"></i> This project has been marked as completed and accepted. Final report submissions are now locked.</p>
+                        <p class="info-text" style="margin-top:16px; margin-bottom:0;"><i class="fa-solid fa-circle-check"></i> This project has been completed and accepted. Report submissions are locked.</p>
                     <?php elseif (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
                         
                         <p class="info-text">
@@ -238,13 +243,19 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         <p><?= nl2br(teamEsc($message['text'])) ?></p>
                     </div>
                 <?php endforeach; else: ?>
-                    <p class="ws-empty-chat" style="color:#667085;text-align:center;margin-top:20px;">No team messages yet. Start the conversation!</p>
+                    <p class="ws-empty-chat" style="color:#667085;text-align:center;margin-top:20px;">No team messages yet.</p>
                 <?php endif; ?>
             </div>
-            <form class="workspace-chat-input" id="wsChatForm">
-                <input type="text" id="wsChatInput" placeholder="Write a message to your team..." maxlength="500" autocomplete="off" required>
-                <button type="submit" class="workspace-send-btn" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
-            </form>
+            <?php if (!$isCompleted): ?>
+                <form class="workspace-chat-input" id="wsChatForm">
+                    <input type="text" id="wsChatInput" placeholder="Write a message to your team..." maxlength="500" autocomplete="off" required>
+                    <button type="submit" class="workspace-send-btn" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            <?php else: ?>
+                <div style="padding:12px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;font-size:12.5px;color:#64748b;">
+                    <i class="fa-solid fa-lock"></i> Chat is locked because this project is completed.
+                </div>
+            <?php endif; ?>
         </aside>
     </section>
 </main>

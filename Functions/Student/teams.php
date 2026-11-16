@@ -45,7 +45,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
         <div class="section-title tm-head-bar">
             <h2>Team Workspaces</h2>
 
-            <!-- Filter Dropdown (All, On Track, Behind, Completed) -->
+            <!-- Organization-style Filter Dropdown -->
             <div class="tm-filter-wrap">
                 <button type="button" class="tm-btn" id="tmFilterBtn" aria-expanded="false">
                     <i class="fa-solid fa-sliders"></i> Filter
@@ -108,6 +108,8 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         implode(' ', $team['technologies'] ?? [])
                     );
                     $deadlineTs = !empty($team['deadline']) ? (int) strtotime((string) $team['deadline']) : 0;
+                    
+                    $report = twReport($conn, (int) $team['id']);
                     ?>
                     <article class="student-team-card"
                              data-state="<?= teamEsc($stateKey) ?>"
@@ -136,7 +138,11 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         <div class="deadline"><i class="fa-regular fa-calendar"></i> Deadline: <strong><?= teamEsc(teamDate($team['deadline'])) ?></strong></div>
                         <div class="card-buttons">
                             <a href="view_team.php?id=<?= (int) $team['id'] ?>">View Team</a>
-                            <a href="team_workspace.php?id=<?= (int) $team['id'] ?>"><?= $isCompleted ? 'Completed Report' : 'Workspace' ?></a>
+                            <?php if ($isCompleted && $report && !empty($report['path'])): ?>
+                                <a href="../../<?= teamEsc($report['path']) ?>" download style="background:#0f766e; color:#fff; border-color:#0f766e;">Completed Report</a>
+                            <?php else: ?>
+                                <a href="team_workspace.php?id=<?= (int) $team['id'] ?>">Workspace</a>
+                            <?php endif; ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
