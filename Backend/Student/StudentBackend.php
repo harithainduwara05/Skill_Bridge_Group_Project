@@ -136,7 +136,7 @@ class StudentManager
 
     public function getProjects(string $email): array
     {
-        return $this->fetchAll(
+        $projects = $this->fetchAll(
             "SELECT p.id, p.title, o.Name AS organization,
                     sp.role AS team, sp.progress, sp.status,
                     (SELECT t.id FROM org_teams t JOIN org_team_members tm ON tm.team_id = t.id WHERE t.project_id = p.id AND LOWER(tm.Email) = LOWER(sp.Email) ORDER BY t.id DESC LIMIT 1) AS team_id
@@ -151,6 +151,15 @@ class StudentManager
             's',
             [$email]
         );
+
+        foreach ($projects as &$proj) {
+            if (isset($proj['progress']) && (int)$proj['progress'] === 100) {
+                $proj['status'] = 'Completed';
+            }
+        }
+        unset($proj);
+
+        return $projects;
     }
 
     public function getActiveTeamCount(string $email): int

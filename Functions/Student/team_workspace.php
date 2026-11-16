@@ -16,6 +16,8 @@ $files = twFiles($conn, (int) $id, $email, !empty($team['is_leader']));
 $messages = twMessages($conn, (int) $id, 0, $email);
 $report = twReport($conn, (int) $id);
 
+$isCompleted = strtolower((string) $team['status']) === 'completed';
+
 $taskGroups = [
     'todo' => ['title' => 'Todo', 'items' => []],
     'progress' => ['title' => 'In Progress', 'items' => []],
@@ -31,7 +33,7 @@ foreach ($tasks as $task) {
 $doneCount = count($taskGroups['done']['items']);
 $totalTasks = count($tasks);
 $pct = $totalTasks > 0 ? (int) round(($doneCount / $totalTasks) * 100) : (int) $team['progress'];
-if (strtolower((string) $team['status']) === 'completed') {
+if ($isCompleted) {
     $pct = 100;
 }
 
@@ -68,13 +70,25 @@ include __DIR__ . '/../../Includes/dash_header.php';
         </div>
     </section>
 
+    <?php if ($isCompleted): ?>
+        <div style="margin-bottom:20px;padding:16px 20px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;display:flex;align-items:center;gap:12px;color:#166534;">
+            <i class="fa-solid fa-circle-check" style="font-size:22px;color:#22c55e;"></i>
+            <div>
+                <strong>Project Completed &amp; Final Report Accepted!</strong>
+                <p style="margin:2px 0 0;font-size:13px;color:#15803d;">This project team workspace is in view-only mode. All tasks, discussions, file sharing, and final report submissions are securely locked.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <section class="workspace-layout">
         <div class="workspace-main">
             <!-- KANBAN BOARD -->
             <div class="kanban-header">
                 <h2><i class="fa-solid fa-table-columns"></i> Kanban Board</h2>
                 <div class="kanban-controls">
-                    <button type="button" class="workspace-new-task-btn" id="openNewTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+                    <?php if (!$isCompleted): ?>
+                        <button type="button" class="workspace-new-task-btn" id="openNewTaskBtn"><i class="fa-solid fa-plus"></i> New Task</button>
+                    <?php endif; ?>
                 </div>
             </div>
             <div class="kanban-board" id="wsKanbanBoard">
@@ -90,19 +104,21 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                         <small><i class="fa-regular fa-user"></i> <?= teamEsc($task['who'] ?: 'Unassigned') ?></small>
                                         <small><i class="fa-regular fa-calendar"></i> <?= !empty($task['due']) ? 'Due ' . teamEsc(teamDate($task['due'])) : 'No deadline' ?></small>
                                     </div>
-                                    <div class="task-card-actions">
-                                        <?php if ($colKey === 'todo'): ?>
-                                            <button type="button" class="task-act-btn primary" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Start</button>
-                                        <?php elseif ($colKey === 'progress'): ?>
-                                            <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="todo">To Do</button>
-                                            <button type="button" class="task-act-btn primary" data-review-task="<?= (int) $task['id'] ?>" data-task-title="<?= teamEsc($task['title']) ?>">Send for Review</button>
-                                        <?php elseif ($colKey === 'review'): ?>
-                                            <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Take Back</button>
-                                        <?php endif; ?>
-                                        <?php if (!empty($team['is_leader'])): ?>
-                                            <button type="button" class="task-act-btn danger" data-delete-task="<?= (int) $task['id'] ?>" title="Delete Task"><i class="fa-solid fa-trash"></i></button>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php if (!$isCompleted): ?>
+                                        <div class="task-card-actions">
+                                            <?php if ($colKey === 'todo'): ?>
+                                                <button type="button" class="task-act-btn primary" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Start</button>
+                                            <?php elseif ($colKey === 'progress'): ?>
+                                                <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="todo">To Do</button>
+                                                <button type="button" class="task-act-btn primary" data-review-task="<?= (int) $task['id'] ?>" data-task-title="<?= teamEsc($task['title']) ?>">Send for Review</button>
+                                            <?php elseif ($colKey === 'review'): ?>
+                                                <button type="button" class="task-act-btn" data-move-task="<?= (int) $task['id'] ?>" data-target-col="progress">Take Back</button>
+                                            <?php endif; ?>
+                                            <?php if (!empty($team['is_leader'])): ?>
+                                                <button type="button" class="task-act-btn danger" data-delete-task="<?= (int) $task['id'] ?>" title="Delete Task"><i class="fa-solid fa-trash"></i></button>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             <?php endforeach; ?>
                         </div>
@@ -114,7 +130,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <section class="shared-assets">
                 <h2><i class="fa-regular fa-folder-open"></i> Shared Assets</h2>
                 <div class="asset-layout">
-                    <div class="asset-files">
+                    <div class="asset-files" style="<?= $isCompleted ? 'width:100%;' : '' ?>">
                         <div class="asset-header">
                             <span>Team Files</span>
                             <span id="wsFilesCount"><?= count($files) ?> file(s)</span>
@@ -129,9 +145,6 @@ include __DIR__ . '/../../Includes/dash_header.php';
                                     </div>
                                     <div class="asset-item-actions" style="margin-left:auto;display:flex;gap:8px;">
                                         <a href="../../<?= teamEsc($file['path']) ?>" download class="task-act-btn" title="Download"><i class="fa-solid fa-download"></i></a>
-                                        <?php if (!empty($file['can_delete'])): ?>
-                                            <button type="button" class="task-act-btn danger" data-delete-file="<?= (int) $file['id'] ?>" title="Remove"><i class="fa-solid fa-trash"></i></button>
-                                        <?php endif; ?>
                                     </div>
                                 </div>
                             <?php endforeach; else: ?>
@@ -139,12 +152,14 @@ include __DIR__ . '/../../Includes/dash_header.php';
                             <?php endif; ?>
                         </div>
                     </div>
-                    <label class="upload-box" id="wsUploadBox" style="cursor:pointer;padding:20px;">
-                        <input type="file" id="wsFileInput" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.mp4,.fig">
-                        <i class="fa-solid fa-cloud-arrow-up"></i>
-                        <h4>Upload Shared Files</h4>
-                        <p>Click or drop files here (Max 10MB)</p>
-                    </label>
+                    <?php if (!$isCompleted): ?>
+                        <label class="upload-box" id="wsUploadBox" style="cursor:pointer;padding:20px;">
+                            <input type="file" id="wsFileInput" multiple hidden accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg,.gif,.webp,.zip,.mp4,.fig">
+                            <i class="fa-solid fa-cloud-arrow-up"></i>
+                            <h4>Upload Shared Files</h4>
+                            <p>Click or drop files here (Max 10MB)</p>
+                        </label>
+                    <?php endif; ?>
                 </div>
             </section>
 
@@ -154,16 +169,24 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <div class="final-report-box">
                     
                     <?php if ($report): ?>
-                        <div class="report-banner report-<?= teamEsc($report['status']) ?>">
-                            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-                                <div>
-                                    <span class="status-track"><?= teamEsc(strtoupper(str_replace('_', ' ', (string) $report['status']))) ?></span>
-                                    <h4 style="margin:8px 0 4px;color:#082544;"><i class="fa-regular fa-file-lines"></i> <?= teamEsc($report['name']) ?></h4>
-                                    <p style="margin:0;color:#667085;font-size:12px;">Submitted by <?= teamEsc($report['by']) ?> on <?= teamEsc($report['submitted']) ?></p>
+                        <div style="background:#f4fbf7; border:1px solid #d1fae5; border-radius:14px; padding:22px; box-shadow:0 2px 4px rgba(0,0,0,0.01);">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+                                <div style="display:flex; align-items:center; gap:14px;">
+                                    <div style="width:42px; height:42px; border-radius:10px; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;">
+                                        <i class="fa-solid fa-circle-check"></i>
+                                    </div>
+                                    <div>
+                                        <h3 style="margin:0 0 3px; font-size:16px; color:#0f2a4a; font-weight:750;">Final Completed Report</h3>
+                                        <p style="margin:0; color:#475569; font-size:13px;">
+                                            <strong style="color:#0f2a4a;"><?= teamEsc($report['name']) ?></strong> &bull; Submitted on <?= teamEsc($report['submitted']) ?>
+                                        </p>
+                                    </div>
                                 </div>
-                                <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download class="workspace-filter-btn" style="text-decoration:none;"><i class="fa-solid fa-download"></i> Download Report</a>
+                                <a href="../../<?= teamEsc($report['path']) ?>" target="_blank" download style="display:inline-flex; align-items:center; gap:8px; background:#0f766e; color:#ffffff; padding:10px 18px; border-radius:8px; font-weight:600; font-size:13px; text-decoration:none; transition:background 0.2s;">
+                                    <i class="fa-solid fa-download"></i> Download Final Report
+                                </a>
                             </div>
-                            <p style="margin:12px 0 0;color:#344054;font-size:13px;line-height:1.5;"><strong>Summary:</strong> <?= nl2br(teamEsc($report['summary'])) ?></p>
+                            <p style="margin:14px 0 0; color:#334155; font-size:13.5px; line-height:1.6; background:#ffffff; padding:14px; border-radius:10px; border:1px solid #e2e8f0;"><?= nl2br(teamEsc($report['summary'])) ?></p>
                             <?php if (!empty($report['note'])): ?>
                                 <div style="margin-top:10px;padding:10px 12px;background:#fff7ed;border-left:3px solid #f97316;border-radius:6px;font-size:13px;color:#9a3412;">
                                     <strong>Organization Feedback:</strong> <?= nl2br(teamEsc($report['note'])) ?>
@@ -172,7 +195,9 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         </div>
                     <?php endif; ?>
 
-                    <?php if (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
+                    <?php if ($isCompleted): ?>
+                        <p class="info-text" style="margin-top:16px; margin-bottom:0;"><i class="fa-solid fa-circle-check"></i> This project has been completed and accepted. Report submissions are locked.</p>
+                    <?php elseif (!empty($team['is_leader']) && ($pct === 100) && (!$report || $report['status'] === 'changes_requested' || $report['status'] === 'draft')): ?>
                         
                         <p class="info-text">
                             When all project tasks are approved and marked as <strong>Done</strong>, the Team Leader can upload the final project report (PDF, DOC, DOCX, or ZIP) for organization review.
@@ -218,13 +243,19 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         <p><?= nl2br(teamEsc($message['text'])) ?></p>
                     </div>
                 <?php endforeach; else: ?>
-                    <p class="ws-empty-chat" style="color:#667085;text-align:center;margin-top:20px;">No team messages yet. Start the conversation!</p>
+                    <p class="ws-empty-chat" style="color:#667085;text-align:center;margin-top:20px;">No team messages yet.</p>
                 <?php endif; ?>
             </div>
-            <form class="workspace-chat-input" id="wsChatForm">
-                <input type="text" id="wsChatInput" placeholder="Write a message to your team..." maxlength="500" autocomplete="off" required>
-                <button type="submit" class="workspace-send-btn" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
-            </form>
+            <?php if (!$isCompleted): ?>
+                <form class="workspace-chat-input" id="wsChatForm">
+                    <input type="text" id="wsChatInput" placeholder="Write a message to your team..." maxlength="500" autocomplete="off" required>
+                    <button type="submit" class="workspace-send-btn" aria-label="Send"><i class="fa-solid fa-paper-plane"></i></button>
+                </form>
+            <?php else: ?>
+                <div style="padding:12px;background:#f8fafc;border-top:1px solid #e2e8f0;text-align:center;font-size:12.5px;color:#64748b;">
+                    <i class="fa-solid fa-lock"></i> Chat is locked because this project is completed.
+                </div>
+            <?php endif; ?>
         </aside>
     </section>
 </main>

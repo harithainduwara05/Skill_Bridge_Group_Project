@@ -29,7 +29,7 @@
         die("Student profile not found");
     }
 
-    // Dashboard counts (FIXED from 0 to dynamically loading from database)
+    // Dashboard counts
     $student['skills'] = $studentManager->getSkillCount($email);
     $student['certificates'] = $studentManager->getCertificateCount($email);
     $student['projects'] = $studentManager->getProjectCount($email);
@@ -252,12 +252,15 @@
             </div>
             <?php foreach($projects as $project){ ?>
             <?php
-                $isCompleted = strtolower($project['status'] ?? '') === 'completed';
+                $progressVal = (int)($project['progress'] ?? 0);
+                $statusVal = trim((string)($project['status'] ?? ''));
+                if ($progressVal === 100) {
+                    $statusVal = 'Completed';
+                }
+                
                 $teamId = (int)($project['team_id'] ?? 0);
                 $projectId = (int)($project['id'] ?? 0);
                 
-                // If they have a team, link straight to the workspace/team details.
-                // Otherwise, link to the general view project page.
                 if ($teamId > 0) {
                     $viewLink = "view_team.php?id={$teamId}";
                 } else {
@@ -283,14 +286,14 @@
                 <!-- COLUMN 3 : PROGRESS -->
                 <div class="progress-column">
                     <span>Progress</span>
-                    <strong><?php echo $project['progress'] ?? 0; ?>%</strong>
+                    <strong><?php echo $progressVal; ?>%</strong>
                 </div>
 
                 <!-- COLUMN 4 : STATUS -->
                 <div class="status-column">
                     <span>Status</span>
-                    <div class="status <?php echo strtolower(str_replace(' ', '-', $project['status'] ?? '')); ?>">
-                        <?php echo htmlspecialchars($project['status'] ?? ''); ?>
+                    <div class="status <?php echo strtolower(str_replace(' ', '-', $statusVal)); ?>">
+                        <?php echo htmlspecialchars($statusVal); ?>
                     </div>
                 </div>
 
@@ -304,7 +307,7 @@
         <?php } ?>
         </div>
 
-        <!-- Recommended -->
+        <!-- Recommended Internships -->
         <?php if(canApplyInternship($email)){ ?>
         <div class="recommended-box">
             <h2>Recommended For You</h2>

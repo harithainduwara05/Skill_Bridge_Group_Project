@@ -17,8 +17,16 @@ $error = null;
 $stats = ['available' => 0, 'active' => 0, 'completed' => 0];
 $categories = $projects = $savedIds = [];
 $total = 0;
+
 try {
+    // Retrieve accurate stats directly from the repository query without overwriting active count
     $stats = $projectRepo->stats($projectEmail);
+    if (isset($stats['available'], $stats['active'], $stats['completed'])) {
+        $stats['available'] = (int) $stats['available'];
+        $stats['active'] = (int) $stats['active'];
+        $stats['completed'] = (int) $stats['completed'];
+    }
+
     $categories = $projectRepo->categories();
     $total = $projectRepo->count($filters, $projectEmail);
     $page = min($page, max(1, (int) ceil($total / $limit)));
@@ -28,6 +36,7 @@ try {
     error_log('Student projects listing: ' . $exception->getMessage());
     $error = 'Projects could not be loaded. Check your database connection and schema.';
 }
+
 $pageTitle = 'Explore Projects | SkillBridge';
 $extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">'
     . '<link rel="stylesheet" href="../../Assets/CSS/Student/projects.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Student/projects.css') . '">';
@@ -45,13 +54,25 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             <a href="save_project.php" class="btn-secondary"><i class="fa-solid fa-bookmark"></i> Saved Projects</a>
         </div>
     </section>
+
     <?php projectRenderToast(projectToast()); ?>
     <?php if ($error): ?><p class="project-alert" role="alert"><?= projectEsc($error) ?></p><?php endif; ?>
+
     <section class="project-stats">
-        <div class="stat-card"><div class="stat-icon blue"><i class="fa-solid fa-folder-open"></i></div><div><span>Total Projects</span><h2><?= (int) $stats['available'] ?></h2></div></div>
-        <div class="stat-card"><div class="stat-icon orange"><i class="fa-solid fa-spinner"></i></div><div><span>Active Projects</span><h2><?= (int) $stats['active'] ?></h2></div></div>
-        <div class="stat-card"><div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div><div><span>Completed Projects</span><h2><?= (int) $stats['completed'] ?></h2></div></div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-folder-open"></i></div>
+            <div><span>Total Projects</span><h2><?= (int) $stats['available'] ?></h2></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="fa-solid fa-spinner"></i></div>
+            <div><span>Active Projects</span><h2><?= (int) $stats['active'] ?></h2></div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+            <div><span>Completed Projects</span><h2><?= (int) $stats['completed'] ?></h2></div>
+        </div>
     </section>
+
     <form class="project-toolbar" method="get" action="projects.php">
         <div class="filter-group">
             <label class="filter-label" for="statusFilter">Filters:</label>
@@ -78,6 +99,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             <a class="clear-filter" href="projects.php"><i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters</a>
         </div>
     </form>
+
     <section class="projects-grid">
         <?php foreach ($projects as $project): ?>
             <?php
@@ -90,7 +112,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             $isSaved = in_array($id, $savedIds, true);
             $teamId = (int) ($project['student_team_id'] ?? 0);
 
-            if ($isActiveWorking) {
+            if ($isActiveWorking || $isCompleted) {
                 $viewHref = $teamId > 0 ? "view_team.php?id={$teamId}" : "teams.php?project_id={$id}";
             } else {
                 $viewHref = "view_project.php?id={$id}";
@@ -99,7 +121,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             <article class="project-card"
                      data-category="<?= projectEsc($project['category_name']) ?>"
                      data-difficulty="<?= projectEsc($project['difficulty']) ?>"
-                     <?php if ($isActiveWorking): ?>
+                     <?php if ($isActiveWorking || $isCompleted): ?>
                          onclick="if(!event.target.closest('a,button,form')){ window.location.href='<?= projectEsc($viewHref) ?>'; }"
                          style="cursor:pointer;"
                      <?php endif; ?>>
@@ -129,18 +151,12 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                     </div>
                     <div class="project-actions">
                         <?php if ($isActiveWorking): ?>
-                            <!-- Active Working Project: Only View Project button, redirects straight to Teams section -->
                             <a href="<?= projectEsc($viewHref) ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
+                        <?php elseif ($isCompleted): ?>
+                            <a href="<?= projectEsc($viewHref) ?>" class="btn-primary">Completed</a>
                         <?php else: ?>
-                            <!-- Bottom has ONLY View Project and Apply Now with equal proper width -->
                             <a href="view_project.php?id=<?= $id ?>" class="btn-outline"><i class="fa-solid fa-eye"></i> View Project</a>
-                            <?php if ($isCompleted): ?>
-                                <?php if ($teamId > 0): ?>
-                                    <a href="view_team.php?id=<?= $teamId ?>" class="btn-primary">Completed</a>
-                                <?php else: ?>
-                                    <span class="btn-applied-status">Completed</span>
-                                <?php endif; ?>
-                            <?php elseif (!$isApplied): ?>
+                            <?php if (!$isApplied): ?>
                                 <a href="proposal.php?project_id=<?= $id ?>" class="btn-primary">Apply Now</a>
                             <?php else: ?>
                                 <span class="btn-applied-status">Applied</span>
@@ -151,7 +167,9 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
             </article>
         <?php endforeach; ?>
     </section>
+
     <?php if (!$projects): ?><p class="project-empty">No matching projects found.</p><?php endif; ?>
+    
     <?php $pages = max(1, (int) ceil($total / $limit)); ?>
     <?php if ($pages > 1): ?>
         <nav class="pagination" aria-label="Project pages">

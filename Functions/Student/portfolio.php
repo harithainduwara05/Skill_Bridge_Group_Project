@@ -171,12 +171,53 @@ $feedbacks = [];
 
 try {
     $summary = $repo->summary($email);
-    $internalProjects = $repo->internalProjects($email);
+    
+    // FETCH & DEDUPLICATE INTERNAL PROJECTS
+    $rawInternal = $repo->internalProjects($email);
+    $seenInt = [];
+    foreach ($rawInternal as $proj) {
+        $key = ($proj['student_project_id'] ?? null) ? 'id_' . $proj['student_project_id'] : 'title_' . strtolower(trim($proj['title'] ?? ''));
+        if (!isset($seenInt[$key])) {
+            $seenInt[$key] = true;
+            $internalProjects[] = $proj;
+        }
+    }
+
     $summary['projects'] += count($internalProjects);
-    // Load up to 50 personal projects so "See All Projects" can toggle them cleanly
-    $projects = $repo->projects($email, 1, 50);
-    $certificates = $repo->certificates($email);
-    $feedbacks = method_exists($repo, 'feedbacks') ? $repo->feedbacks($email) : [];
+    
+    // FETCH & DEDUPLICATE EXTERNAL PROJECTS
+    $rawProjects = $repo->projects($email, 1, 50);
+    $seenExt = [];
+    foreach ($rawProjects as $proj) {
+        $key = ($proj['portfolio_project_id'] ?? null) ? 'id_' . $proj['portfolio_project_id'] : 'title_' . strtolower(trim($proj['title'] ?? ''));
+        if (!isset($seenExt[$key])) {
+            $seenExt[$key] = true;
+            $projects[] = $proj;
+        }
+    }
+
+    // FETCH & DEDUPLICATE CERTIFICATES
+    $rawCerts = $repo->certificates($email);
+    $seenCerts = [];
+    foreach ($rawCerts as $cert) {
+        $key = ($cert['certificate_id'] ?? null) ? 'id_' . $cert['certificate_id'] : 'name_' . strtolower(trim($cert['certificate_name'] ?? ''));
+        if (!isset($seenCerts[$key])) {
+            $seenCerts[$key] = true;
+            $certificates[] = $cert;
+        }
+    }
+
+    // FETCH & DEDUPLICATE FEEDBACK
+    $rawFb = method_exists($repo, 'feedbacks') ? $repo->feedbacks($email) : [];
+    $seenFb = [];
+    foreach ($rawFb as $fb) {
+        $key = ($fb['id'] ?? null) ? 'id_' . $fb['id'] : 'text_' . md5($fb['feedback_text'] ?? '');
+        if (!isset($seenFb[$key])) {
+            $seenFb[$key] = true;
+            $feedbacks[] = $fb;
+        }
+    }
+
 } catch (Throwable $exception) {
     error_log('SkillBridge Portfolio database read failed: ' . $exception->getMessage());
     $databaseError = 'Portfolio data could not be loaded: ' . $exception->getMessage();
@@ -249,11 +290,11 @@ include __DIR__ . '/../../Includes/dash_header.php';
     <section class="portfolio-stats" aria-label="Portfolio statistics">
         <div class="stat-card">
             <div class="stat-icon blue"><i class="fa-solid fa-folder-open"></i></div>
-            <div><span>Projects</span><h2><?= $summary['projects'] ?></h2><p>Portfolio projects</p></div>
+            <div><span>Projects</span><h2><?= count($allPortfolioProjects) ?></h2><p>Portfolio projects</p></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon orange"><i class="fa-solid fa-certificate"></i></div>
-            <div><span>Certificates</span><h2><?= $summary['certificates'] ?></h2><p>Professional credentials</p></div>
+            <div><span>Certificates</span><h2><?= $totalCertificatesCount ?></h2><p>Professional credentials</p></div>
         </div>
         <div class="stat-card">
             <div class="stat-icon green"><i class="fa-solid fa-eye"></i></div>
@@ -488,8 +529,12 @@ include __DIR__ . '/../../Includes/dash_header.php';
                         <div style="display: flex; flex-direction: column; gap: 12px;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
                                 <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #0f766e; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0;">
-                                        <?= portfolioEsc($compInitials) ?>
+                                    <div style="width: 44px; height: 44px; border-radius: 10px; background: #0f766e; color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; flex-shrink: 0; overflow: hidden;">
+                                        <?php if (!empty($fb['company_logo'])): ?>
+                                            <img src="../../<?= portfolioEsc($fb['company_logo']) ?>" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+                                        <?php else: ?>
+                                            <?= portfolioEsc($compInitials) ?>
+                                        <?php endif; ?>
                                     </div>
                                     <div style="min-width: 0;">
                                         <h3 style="margin: 0 0 2px; font-size: 16px; color: #0f172a; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="<?= portfolioEsc($compName) ?>"><?= portfolioEsc($compName) ?></h3>
@@ -536,7 +581,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
 <!-- Project Modal -->
 <div class="modal" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
-    <form class="modal-box" method="post" enctype="multipart/form-data">
+    <form class="modal-box" method="post" id="projectForm" enctype="multipart/form-data">
         <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
         <input type="hidden" name="action" value="save_project">
         <input type="hidden" name="id" value="">
@@ -550,11 +595,20 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <label>Skills Used (comma-separated)<input name="technologies" type="text" placeholder="PHP, React, MySQL"></label>
             <label>Project URL<input name="repository_url" type="url" placeholder="https://github.com/..."></label>
             <label>Project Image<input name="project_image" type="file" accept="image/jpeg,image/png,image/webp"></label>
-            <label>Project Status<select name="project_status"><option>Completed</option><option selected>Currently Working</option></select></label>
-            <label>Start Date<input name="start_date" type="date"></label>
-            <label>End Date<input name="end_date" type="date"></label>
+            <label>Project Status
+                <select name="project_status" id="projectStatusSelect">
+                    <option value="Completed">Completed</option>
+                    <option value="Currently Working" selected>Currently Working</option>
+                </select>
+            </label>
+            <label>Start Date <span style="color:red; font-weight:bold;">*</span>
+                <input name="start_date" id="projectStartDate" type="date" required>
+            </label>
+            <label id="projectEndDateLabel" style="display:none;">End Date <span style="color:red; font-weight:bold;">*</span>
+                <input name="end_date" id="projectEndDate" type="date">
+            </label>
         </div>
-        <div class="modal-footer"><button type="submit" class="save-btn">Save Project</button></div>
+        <div class="modal-footer"><button type="submit" class="save-btn" id="saveProjectBtn">Save Project</button></div>
     </form>
 </div>
 
@@ -628,6 +682,55 @@ include __DIR__ . '/../../Includes/dash_header.php';
 </div>
 
 <script>
+// --- Dynamic Date Rules for Projects ---
+const pForm = document.getElementById('projectForm');
+const pStatus = document.getElementById('projectStatusSelect');
+const pStart = document.getElementById('projectStartDate');
+const pEnd = document.getElementById('projectEndDate');
+const pEndLabel = document.getElementById('projectEndDateLabel');
+
+function updateProjectDateRules() {
+    if (!pStatus || !pStart || !pEnd) return;
+    
+    if (pStatus.value === 'Completed') {
+        pStart.required = true;
+        pEnd.required = true;
+        pEndLabel.style.display = 'block';
+    } else {
+        pStart.required = true;
+        pEnd.required = false;
+        pEnd.value = '';
+        pEndLabel.style.display = 'none';
+    }
+}
+
+if (pStatus) pStatus.addEventListener('change', updateProjectDateRules);
+if (pStart) {
+    pStart.addEventListener('change', function() {
+        if (this.value) {
+            pEnd.min = this.value; // Prevent picking an end date earlier than the start date
+            if (pEnd.value && pEnd.value < this.value) {
+                pEnd.value = ''; // Reset invalid end date automatically
+            }
+        } else {
+            pEnd.min = '';
+        }
+    });
+}
+
+if (pForm) {
+    pForm.addEventListener('submit', function(e) {
+        if (pStatus.value === 'Completed' && pStart.value && pEnd.value) {
+            if (pEnd.value < pStart.value) {
+                e.preventDefault();
+                alert("The End Date cannot be earlier than the Start Date.");
+                pEnd.focus();
+            }
+        }
+    });
+}
+// ----------------------------------------
+
 function togglePortfolioSection(cardClass, btnId, expandText, collapseText) {
     const cards = document.querySelectorAll('.' + cardClass);
     const btn = document.getElementById(btnId);
@@ -839,6 +942,11 @@ function portfolioOpen(id) {
     modal.querySelector('[name="id"]').value = '';
     modal.querySelector('h2').textContent = id === 'projectModal' ? 'Add Project' : 'Add Certificate';
     modal.style.display = 'flex';
+    
+    // Apply initial dynamic rules based on defaults
+    if (id === 'projectModal') {
+        updateProjectDateRules();
+    }
 }
 
 function portfolioClose(id) {
@@ -851,10 +959,20 @@ function portfolioEditProject(project) {
     modal.querySelector('h2').textContent = 'Edit Project';
     const form = modal.querySelector('form');
     for (const name of ['title', 'description', 'repository_url', 'project_status', 'start_date', 'end_date']) {
-        form.elements[name].value = project[name] || '';
+        if (form.elements[name]) {
+            form.elements[name].value = project[name] || '';
+        }
     }
     form.elements.id.value = project.portfolio_project_id;
     form.elements.technologies.value = (project.technologies || []).join(', ');
+    
+    // Update display and validation rules based on current status
+    updateProjectDateRules();
+    
+    // Ensure date restrictions apply correctly when editing
+    if (project.start_date) {
+        document.getElementById('projectEndDate').min = project.start_date;
+    }
 }
 
 function portfolioEditCertificate(certificate) {
@@ -876,6 +994,19 @@ function portfolioViewFeedback(fb) {
     const info = document.createElement('div');
     info.className = 'portfolio-detail-info';
     info.style.marginBottom = '20px';
+    
+    // Add Logo to Modal Info if exists
+    if (fb.company_logo) {
+        const logoImg = document.createElement('img');
+        logoImg.src = '../../' + fb.company_logo;
+        logoImg.style.width = '60px';
+        logoImg.style.height = '60px';
+        logoImg.style.borderRadius = '8px';
+        logoImg.style.objectFit = 'cover';
+        logoImg.style.marginBottom = '10px';
+        area.append(logoImg);
+    }
+    
     info.append(portfolioDetailRow('Organization', fb.company));
     info.append(portfolioDetailRow('Project', fb.project_title));
     info.append(portfolioDetailRow('Role', fb.role || 'Team Member'));

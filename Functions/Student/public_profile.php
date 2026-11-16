@@ -30,19 +30,26 @@ while ($row = $res->fetch_assoc()) {
 }
 $q->close();
 
-// Fetch portfolios
+// Fetch portfolios (with deduplication by portfolio_project_id or title)
 $portfolios = [];
+$seenPortfolioIds = [];
 $q = $conn->prepare("SELECT * FROM student_portfolio_projects WHERE student_email=? ORDER BY start_date DESC");
 $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $portfolios[] = $row;
+    $pid = $row['portfolio_project_id'] ?? null;
+    $pkey = $pid ? 'id_' . $pid : 'title_' . strtolower(trim($row['title'] ?? ''));
+    if (!isset($seenPortfolioIds[$pkey])) {
+        $seenPortfolioIds[$pkey] = true;
+        $portfolios[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Internal Projects (Completed)
+// Fetch Internal Projects (Completed, with deduplication)
 $internal_projects = [];
+$seenInternalIds = [];
 $q = $conn->prepare("
     SELECT sp.student_project_id, p.title, p.description, org.Name AS company, sp.role, p.icon, sp.progress, p.status,
            (SELECT GROUP_CONCAT(ps.skill_name ORDER BY ps.skill_name SEPARATOR ', ') FROM project_skills ps WHERE ps.project_id = p.id) AS tech_stack
@@ -56,109 +63,67 @@ $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $internal_projects[] = $row;
+    $spId = $row['student_project_id'] ?? null;
+    $skey = $spId ? 'id_' . $spId : 'title_' . strtolower(trim($row['title'] ?? ''));
+    if (!isset($seenInternalIds[$skey])) {
+        $seenInternalIds[$skey] = true;
+        $internal_projects[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Certificates
+// Fetch Certificates (with deduplication)
 $certificates = [];
+$seenCertIds = [];
 $q = $conn->prepare("SELECT * FROM certificates WHERE Email=? ORDER BY issue_date DESC");
 $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $certificates[] = $row;
+    $cid = $row['certificate_id'] ?? null;
+    $ckey = $cid ? 'id_' . $cid : 'name_' . strtolower(trim($row['certificate_name'] ?? ''));
+    if (!isset($seenCertIds[$ckey])) {
+        $seenCertIds[$ckey] = true;
+        $certificates[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Feedback & Recommendations (safe across schemas)
+// Fetch Feedback & Recommendations from project_feedback schema (with deduplication by feedback id)
 $feedbacks = [];
+$seenFbIds = [];
 $avg_rating = 0.0;
 $total_rating = 0.0;
 
 try {
-    $table_check = $conn->query("SHOW TABLES LIKE 'student_feedback'");
-    if ($table_check && $table_check->num_rows > 0) {
-        $fbColsRes = $conn->query("SHOW COLUMNS FROM `student_feedback`");
-        $fbCols = [];
-        while ($c = $fbColsRes->fetch_assoc()) {
-            $fbCols[strtolower($c['Field'])] = $c['Field'];
-        }
-        $hasRoleCol = isset($fbCols['role']);
-        $textCol = $fbCols['feedback_text'] ?? $fbCols['review'] ?? $fbCols['feedback'] ?? $fbCols['comment'] ?? 'feedback_text';
-        $roleSelect = $hasRoleCol ? "COALESCE(NULLIF(sf.`{$fbCols['role']}`, ''), sp.role, 'Team Member')" : "COALESCE(sp.role, 'Team Member')";
+    $sql = "SELECT pf.id, pf.rating, pf.summary AS feedback_text, pf.created_at,
+                   COALESCE(tm.role, 'Team Member') AS role,
+                   COALESCE(org.Name, 'Organization') AS company,
+                   COALESCE(p.title, 'SkillBridge Project') AS project_title,
+                   org.logo AS company_logo
+            FROM project_feedback pf
+            INNER JOIN org_teams t ON t.id = pf.team_id
+            INNER JOIN org_team_members tm ON tm.team_id = t.id
+            INNER JOIN projects p ON p.id = t.project_id
+            LEFT JOIN organization org ON org.Email = p.organization_email
+            WHERE LOWER(TRIM(tm.Email)) = LOWER(TRIM(?))
+            ORDER BY pf.created_at DESC, pf.id DESC";
 
-        $q = $conn->prepare("
-            SELECT sf.rating, sf.`$textCol` AS feedback_text, sf.created_at,
-                   $roleSelect AS role,
-                   COALESCE(org.Name, sf.organization_email, 'Organization') AS company,
-                   COALESCE(p.title, 'SkillBridge Organization Project') AS project_title,
-                   NULL AS company_logo
-            FROM student_feedback sf
-            LEFT JOIN organization org ON LOWER(TRIM(sf.organization_email)) = LOWER(TRIM(org.Email))
-            LEFT JOIN projects p ON sf.project_id = p.id
-            LEFT JOIN student_projects sp ON sp.project_id = sf.project_id AND LOWER(TRIM(sp.Email)) = LOWER(TRIM(sf.student_email))
-            WHERE LOWER(TRIM(sf.student_email)) = LOWER(TRIM(?))
-            ORDER BY sf.created_at DESC, sf.id DESC
-        ");
-        if ($q) {
-            $q->bind_param("s", $email);
-            $q->execute();
-            $res = $q->get_result();
-            while ($row = $res->fetch_assoc()) {
+    $q = $conn->prepare($sql);
+    if ($q) {
+        $q->bind_param("s", $email);
+        $q->execute();
+        $res = $q->get_result();
+        while ($row = $res->fetch_assoc()) {
+            $fbid = $row['id'] ?? null;
+            $fbkey = $fbid ? 'id_' . $fbid : 'text_' . md5($row['feedback_text'] ?? '');
+            if (!isset($seenFbIds[$fbkey])) {
+                $seenFbIds[$fbkey] = true;
                 $feedbacks[] = $row;
                 $total_rating += (float)$row['rating'];
             }
-            $q->close();
         }
-    }
-
-    if (empty($feedbacks)) {
-        foreach (['org_student_feedback', 'project_feedback', 'feedback'] as $altTable) {
-            $altCheck = $conn->query("SHOW TABLES LIKE '$altTable'");
-            if ($altCheck && $altCheck->num_rows > 0) {
-                $colsRes = $conn->query("SHOW COLUMNS FROM `$altTable`");
-                $cols = [];
-                while ($c = $colsRes->fetch_assoc()) {
-                    $cols[strtolower($c['Field'])] = $c['Field'];
-                }
-                $studentCol = $cols['student_email'] ?? $cols['email'] ?? null;
-                $ratingCol = $cols['rating'] ?? $cols['stars'] ?? $cols['score'] ?? null;
-                $textCol = $cols['feedback_text'] ?? $cols['feedback'] ?? $cols['comment'] ?? $cols['review'] ?? null;
-                $projCol = $cols['project_id'] ?? null;
-                $orgCol = $cols['organization_email'] ?? $cols['org_email'] ?? null;
-                $dateCol = $cols['created_at'] ?? $cols['submitted_at'] ?? $cols['date'] ?? null;
-
-                if ($studentCol && $ratingCol && $textCol) {
-                    $selProj = $projCol ? "LEFT JOIN projects p ON p.id = f.`$projCol`" : "";
-                    $selOrg = $orgCol ? "LEFT JOIN organization org ON LOWER(org.Email) = LOWER(f.`$orgCol`)" : "";
-                    $compExpr = $orgCol ? "COALESCE(org.Name, f.`$orgCol`, 'Organization')" : "'Organization'";
-                    $projExpr = $projCol ? "COALESCE(p.title, 'SkillBridge Project')" : "'SkillBridge Project'";
-                    $dateExpr = $dateCol ? "f.`$dateCol`" : "NOW()";
-
-                    $altSql = "SELECT f.`$ratingCol` AS rating, f.`$textCol` AS feedback_text,
-                                      $dateExpr AS created_at, 'Team Member' AS role,
-                                      $compExpr AS company, $projExpr AS project_title, NULL AS company_logo
-                               FROM `$altTable` f
-                               $selProj
-                               $selOrg
-                               WHERE LOWER(f.`$studentCol`) = LOWER(?)
-                               ORDER BY $dateExpr DESC";
-                    $stmt = $conn->prepare($altSql);
-                    if ($stmt) {
-                        $stmt->bind_param("s", $email);
-                        $stmt->execute();
-                        $res = $stmt->get_result();
-                        while ($row = $res->fetch_assoc()) {
-                            $feedbacks[] = $row;
-                            $total_rating += (float)$row['rating'];
-                        }
-                        $stmt->close();
-                        if (!empty($feedbacks)) break;
-                    }
-                }
-            }
-        }
+        $q->close();
     }
 } catch (Throwable $e) {
     error_log('Public profile feedback load error: ' . $e->getMessage());
@@ -236,7 +201,7 @@ if ($rawPhoto !== '') {
                     <?= htmlspecialchars($student['University'] ?? 'University not specified') ?>
                 </p>
 
-                <!-- Prominent Rating Badge (e.g., 4.9 out of 5) for Organizations / Outsiders -->
+                <!-- Prominent Rating Badge -->
                 <div class="public-rating-banner">
                     <span class="rating-stars">
                         <?php 
@@ -326,7 +291,6 @@ if ($rawPhoto !== '') {
         </div>
 
         <?php 
-        // Combine all projects, show 5 initially, allow expanding all
         $all_projects = [];
         foreach ($internal_projects as $proj) {
             $proj['type'] = 'internal';
@@ -544,15 +508,27 @@ if ($rawPhoto !== '') {
                 <div class="linkedin-projects-list">
                     <?php foreach ($feedbacks as $idx => $fb): 
                         $fbHiddenClass = $idx >= 3 ? 'pub-is-hidden extra-pub-feedback' : '';
+                        
+                        // Fix for organization initials - taking up to 2 letters from words
+                        $compName = trim((string) ($fb['company'] ?? 'Organization'));
+                        $nameParts = explode(' ', $compName);
+                        $compInitials = strtoupper(mb_substr($nameParts[0], 0, 1));
+                        if (count($nameParts) > 1 && !empty($nameParts[1])) {
+                            $compInitials .= strtoupper(mb_substr($nameParts[1], 0, 1));
+                        } elseif (mb_strlen($compName) > 1) {
+                            $compInitials = strtoupper(mb_substr($compName, 0, 2));
+                        }
                     ?>
                         <div class="linkedin-project-item <?= $fbHiddenClass ?>">
                             <div class="project-thumb" style="width: 50px;">
-                                <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:50%; box-shadow:none; overflow:hidden;">
+                                <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:10px; box-shadow:none; overflow:hidden;">
                                     <?php if (!empty($fb['company_logo'])): ?>
-                                        <img src="../../Assets/Images/Organization/<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" onerror="this.style.display='none'">
+                                        <!-- FIXED LOGO PATH -->
+                                        <img src="../../<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
                                     <?php else: ?>
-                                        <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; border-radius:50%;">
-                                            <?= strtoupper(mb_substr($fb['company'], 0, 1)) ?>
+                                        <!-- FIXED FALLBACK INITIALS -->
+                                        <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:18px; border-radius:10px;">
+                                            <?= htmlspecialchars($compInitials) ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>
