@@ -525,10 +525,10 @@ CREATE TABLE `organization` (
 --
 
 INSERT INTO `organization` (`Email`, `Name`, `orgtype`, `contactPersonName`, `contactNumber`, `website`, `location`, `about`, `linkedin`, `twitter`, `facebook`, `logo`) VALUES
-('2024is052@stu.ucsc.cmb.ac.lk', 'MYDB Club', 'Student Society', 'Haritha Induwara', '0779063904', 'https://mydb.org', 'Colombo, Sri Lanka', 'Student database exploration and open source software initiatives.', 'https://linkedin.com/company/mydb', '', '', 'mydb_logo.png'),
+('2024is052@stu.ucsc.cmb.ac.lk', 'MYDB Club', 'Student Society', 'Haritha Induwara', '0779063904', 'https://mydb.org', 'Colombo, Sri Lanka', 'Student database exploration and open source software initiatives.', 'https://linkedin.com/company/mydb', '', '', NULL),
 ('foss@sliit.lk', 'SLIIT FOSS Community', 'Open Source Community', 'Tharindu Gamage', '0761122334', 'https://foss.sliit.lk', 'New Kandy Road, Malabe', 'Promoting free and open-source software culture among university undergraduates.', 'https://linkedin.com/company/sliit-foss', 'https://twitter.com/sliitfoss', 'https://facebook.com/sliitfoss', NULL),
-('ieee@ucsc.cmb.ac.lk', 'IEEE Student Branch UCSC', 'Academic Society', 'Kasun Rathnayake', '0715551234', 'https://ieee.ucsc.cmb.ac.lk', 'UCSC, Reid Avenue, Colombo 07', 'Empowering students to innovate and excel in technology and engineering disciplines.', 'https://linkedin.com/company/ieee-ucsc', 'https://twitter.com/ieee_ucsc', 'https://facebook.com/ieeeucsc', 'ieee_logo.png'),
-('rotaract@ucsc.cmb.ac.lk', 'Rotaract Club of UCSC', 'Community Service', 'Sachini Wickramasinghe', '0784449876', 'https://rotaractucsc.org', 'Colombo 07, Sri Lanka', 'Youth leadership and social community empowerment initiatives across Sri Lanka.', 'https://linkedin.com/company/rotaract-ucsc', '', 'https://facebook.com/rotaractucsc', 'rotaract_logo.png');
+('ieee@ucsc.cmb.ac.lk', 'IEEE Student Branch UCSC', 'Academic Society', 'Kasun Rathnayake', '0715551234', 'https://ieee.ucsc.cmb.ac.lk', 'UCSC, Reid Avenue, Colombo 07', 'Empowering students to innovate and excel in technology and engineering disciplines.', 'https://linkedin.com/company/ieee-ucsc', 'https://twitter.com/ieee_ucsc', 'https://facebook.com/ieeeucsc', NULL),
+('rotaract@ucsc.cmb.ac.lk', 'Rotaract Club of UCSC', 'Community Service', 'Sachini Wickramasinghe', '0784449876', 'https://rotaractucsc.org', 'Colombo 07, Sri Lanka', 'Youth leadership and social community empowerment initiatives across Sri Lanka.', 'https://linkedin.com/company/rotaract-ucsc', '', 'https://facebook.com/rotaractucsc', NULL);
 
 -- --------------------------------------------------------
 

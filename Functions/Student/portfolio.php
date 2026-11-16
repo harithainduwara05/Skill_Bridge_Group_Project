@@ -113,26 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'save_project') {
             $data = $_POST;
-            
-            // STRICT DATE VALIDATION
-            $status = trim((string) ($data['project_status'] ?? 'Currently Working'));
-            $start = trim((string) ($data['start_date'] ?? ''));
-            $end = trim((string) ($data['end_date'] ?? ''));
-            
-            if ($status === 'Currently Working') {
-                if ($start === '') {
-                    throw new InvalidArgumentException('Start date is required when currently working on a project.');
-                }
-                $data['end_date'] = ''; // Ensure end date is empty for active projects
-            } elseif ($status === 'Completed') {
-                if ($start === '' || $end === '') {
-                    throw new InvalidArgumentException('Both start and end dates are required for completed projects.');
-                }
-                if ($end < $start) {
-                    throw new InvalidArgumentException('The end date cannot be earlier than the start date.');
-                }
-            }
-
             $data['project_image'] = portfolioUpload('project_image', 'project');
             $newUpload = $data['project_image'];
             $data['technologies'] = array_filter(array_map('trim', explode(',', (string) ($_POST['technologies'] ?? ''))));
@@ -601,7 +581,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
 <!-- Project Modal -->
 <div class="modal" id="projectModal" role="dialog" aria-modal="true" aria-labelledby="projectModalTitle">
-    <form class="modal-box" method="post" enctype="multipart/form-data">
+    <form class="modal-box" method="post" id="projectForm" enctype="multipart/form-data">
         <input type="hidden" name="csrf" value="<?= portfolioEsc($csrf) ?>">
         <input type="hidden" name="action" value="save_project">
         <input type="hidden" name="id" value="">
@@ -610,8 +590,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <button type="button" class="close" onclick="portfolioClose('projectModal')" aria-label="Close">×</button>
         </div>
         <div class="modal-content">
-            <label>Project Name<span style="color:red; font-weight:bold;">*</span>
-                <input name="title" type="text" maxlength="150" required></label>
+            <label>Project Name<input name="title" type="text" maxlength="150" required></label>
             <label>Description<textarea name="description" maxlength="10000"></textarea></label>
             <label>Skills Used (comma-separated)<input name="technologies" type="text" placeholder="PHP, React, MySQL"></label>
             <label>Project URL<input name="repository_url" type="url" placeholder="https://github.com/..."></label>
@@ -622,14 +601,14 @@ include __DIR__ . '/../../Includes/dash_header.php';
                     <option value="Currently Working" selected>Currently Working</option>
                 </select>
             </label>
-            <label>Start Date<span style="color:red; font-weight:bold;">*</span>
+            <label>Start Date <span style="color:red; font-weight:bold;">*</span>
                 <input name="start_date" id="projectStartDate" type="date" required>
             </label>
-            <label id="projectEndDateLabel" style="display:none;">End Date<span style="color:red; font-weight:bold;">*</span>
+            <label id="projectEndDateLabel" style="display:none;">End Date <span style="color:red; font-weight:bold;">*</span>
                 <input name="end_date" id="projectEndDate" type="date">
             </label>
         </div>
-        <div class="modal-footer"><button type="submit" class="save-btn">Save Project</button></div>
+        <div class="modal-footer"><button type="submit" class="save-btn" id="saveProjectBtn">Save Project</button></div>
     </form>
 </div>
 
@@ -644,16 +623,14 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <button type="button" class="close" onclick="portfolioClose('certificateModal')" aria-label="Close">×</button>
         </div>
         <div class="modal-content">
-            <label>Certificate Name<span style="color:red; font-weight:bold;">*</span>
-            <input name="certificate_name" maxlength="150" required></label>
-            <label>Issuing Organization<span style="color:red; font-weight:bold;">*</span>
-                <input name="issuer" maxlength="150" required>
-            </label>
+            <label>Certificate Name<input name="certificate_name" maxlength="150" required></label>
+            <label>Issuing Organization<input name="issuer" maxlength="150" required></label>
             <label>Issue Date<input name="issue_date" type="date"></label>
             <label>Expiration Date<input name="expiration_date" type="date"></label>
             <label>Skills Used (comma-separated)
                 <input name="skills" maxlength="1500" placeholder="Python, TensorFlow, Machine Learning">
             </label>
+            <p class="portfolio-field-hint">List the skills demonstrated by this certificate.</p>
             <label>Credential ID<input name="credential_id" maxlength="150"></label>
             <label>Credential URL<input name="credential_url" type="url"></label>
             <label>Certificate File (PDF or image)<input name="certificate_file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"></label>
@@ -706,6 +683,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
 
 <script>
 // --- Dynamic Date Rules for Projects ---
+const pForm = document.getElementById('projectForm');
 const pStatus = document.getElementById('projectStatusSelect');
 const pStart = document.getElementById('projectStartDate');
 const pEnd = document.getElementById('projectEndDate');
@@ -731,8 +709,23 @@ if (pStart) {
     pStart.addEventListener('change', function() {
         if (this.value) {
             pEnd.min = this.value; // Prevent picking an end date earlier than the start date
+            if (pEnd.value && pEnd.value < this.value) {
+                pEnd.value = ''; // Reset invalid end date automatically
+            }
         } else {
             pEnd.min = '';
+        }
+    });
+}
+
+if (pForm) {
+    pForm.addEventListener('submit', function(e) {
+        if (pStatus.value === 'Completed' && pStart.value && pEnd.value) {
+            if (pEnd.value < pStart.value) {
+                e.preventDefault();
+                alert("The End Date cannot be earlier than the Start Date.");
+                pEnd.focus();
+            }
         }
     });
 }
@@ -1002,6 +995,7 @@ function portfolioViewFeedback(fb) {
     info.className = 'portfolio-detail-info';
     info.style.marginBottom = '20px';
     
+    // Add Logo to Modal Info if exists
     if (fb.company_logo) {
         const logoImg = document.createElement('img');
         logoImg.src = '../../' + fb.company_logo;

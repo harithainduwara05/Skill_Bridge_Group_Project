@@ -30,19 +30,26 @@ while ($row = $res->fetch_assoc()) {
 }
 $q->close();
 
-// Fetch portfolios
+// Fetch portfolios (with deduplication by portfolio_project_id or title)
 $portfolios = [];
+$seenPortfolioIds = [];
 $q = $conn->prepare("SELECT * FROM student_portfolio_projects WHERE student_email=? ORDER BY start_date DESC");
 $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $portfolios[] = $row;
+    $pid = $row['portfolio_project_id'] ?? null;
+    $pkey = $pid ? 'id_' . $pid : 'title_' . strtolower(trim($row['title'] ?? ''));
+    if (!isset($seenPortfolioIds[$pkey])) {
+        $seenPortfolioIds[$pkey] = true;
+        $portfolios[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Internal Projects (Completed)
+// Fetch Internal Projects (Completed, with deduplication)
 $internal_projects = [];
+$seenInternalIds = [];
 $q = $conn->prepare("
     SELECT sp.student_project_id, p.title, p.description, org.Name AS company, sp.role, p.icon, sp.progress, p.status,
            (SELECT GROUP_CONCAT(ps.skill_name ORDER BY ps.skill_name SEPARATOR ', ') FROM project_skills ps WHERE ps.project_id = p.id) AS tech_stack
@@ -56,23 +63,35 @@ $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $internal_projects[] = $row;
+    $spId = $row['student_project_id'] ?? null;
+    $skey = $spId ? 'id_' . $spId : 'title_' . strtolower(trim($row['title'] ?? ''));
+    if (!isset($seenInternalIds[$skey])) {
+        $seenInternalIds[$skey] = true;
+        $internal_projects[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Certificates
+// Fetch Certificates (with deduplication)
 $certificates = [];
+$seenCertIds = [];
 $q = $conn->prepare("SELECT * FROM certificates WHERE Email=? ORDER BY issue_date DESC");
 $q->bind_param("s", $email);
 $q->execute();
 $res = $q->get_result();
 while ($row = $res->fetch_assoc()) {
-    $certificates[] = $row;
+    $cid = $row['certificate_id'] ?? null;
+    $ckey = $cid ? 'id_' . $cid : 'name_' . strtolower(trim($row['certificate_name'] ?? ''));
+    if (!isset($seenCertIds[$ckey])) {
+        $seenCertIds[$ckey] = true;
+        $certificates[] = $row;
+    }
 }
 $q->close();
 
-// Fetch Feedback & Recommendations from project_feedback schema
+// Fetch Feedback & Recommendations from project_feedback schema (with deduplication by feedback id)
 $feedbacks = [];
+$seenFbIds = [];
 $avg_rating = 0.0;
 $total_rating = 0.0;
 
@@ -96,8 +115,13 @@ try {
         $q->execute();
         $res = $q->get_result();
         while ($row = $res->fetch_assoc()) {
-            $feedbacks[] = $row;
-            $total_rating += (float)$row['rating'];
+            $fbid = $row['id'] ?? null;
+            $fbkey = $fbid ? 'id_' . $fbid : 'text_' . md5($row['feedback_text'] ?? '');
+            if (!isset($seenFbIds[$fbkey])) {
+                $seenFbIds[$fbkey] = true;
+                $feedbacks[] = $row;
+                $total_rating += (float)$row['rating'];
+            }
         }
         $q->close();
     }
@@ -177,7 +201,7 @@ if ($rawPhoto !== '') {
                     <?= htmlspecialchars($student['University'] ?? 'University not specified') ?>
                 </p>
 
-                <!-- Prominent Rating Badge (e.g., 4.9 out of 5) for Organizations / Outsiders -->
+                <!-- Prominent Rating Badge -->
                 <div class="public-rating-banner">
                     <span class="rating-stars">
                         <?php 
@@ -489,7 +513,8 @@ if ($rawPhoto !== '') {
                             <div class="project-thumb" style="width: 50px;">
                                 <div class="linkedin-project-image-placeholder cert-placeholder" style="background:transparent; border:none; width:50px; height:50px; border-radius:50%; box-shadow:none; overflow:hidden;">
                                     <?php if (!empty($fb['company_logo'])): ?>
-                                        <img src="../../Assets/Images/Organization/<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" onerror="this.style.display='none'">
+                                        <!-- FIXED LOGO PATH -->
+                                        <img src="../../<?= htmlspecialchars($fb['company_logo']) ?>" alt="Logo" onerror="this.style.display='none'">
                                     <?php else: ?>
                                         <div style="width:100%; height:100%; background:#0f766e; color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:20px; border-radius:50%;">
                                             <?= strtoupper(mb_substr($fb['company'], 0, 1)) ?>
