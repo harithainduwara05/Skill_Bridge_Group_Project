@@ -35,10 +35,10 @@ jobs:
           extensions: mysqli, pdo_mysql, mbstring, json, openssl
           coverage: none
 
-      # Step 3: Import exact skillbridge_db .sql dump into native MySQL container
+      # Step 3: Import exact skillbridge_db.sql dump into native MySQL container
       - name: Import Database SQL Dump
         run: |
-          mysql -h 127.0.0.1 -u root -P 3306 skillbridge_db < "skillbridge_db .sql"
+          mysql -h 127.0.0.1 -u root -P 3306 skillbridge_db < ./skillbridge_db.sql
 
       # Step 4: Run Pure PHP Automated Test Suite (All 4 Actors)
       - name: Run Automated Tests
