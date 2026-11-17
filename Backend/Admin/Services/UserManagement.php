@@ -33,53 +33,83 @@ class UserManagement extends AdminDB
 
     public function getAllUsersDetailed($role = '', $status = '', $search = '')
     {
-        $sql = "
-        SELECT 
-            u.Email AS email,
-            LOWER(u.role) AS role,
-            u.status AS status,
-            u.created_at AS created_at,
-            COALESCE(s.Name, c.contactPersonName, o.contactPersonName, a.Name, 'User') AS user_name,
-            COALESCE(s.University, c.Name, o.Name, 'System') AS organization_name,
-            s.profile_image AS profile_image,
-            c.contactNumber AS contact_number,
-            c.website AS website,
-            s.degree AS degree,
-            s.year AS academic_year
-        FROM user u
-        LEFT JOIN student s ON u.Email = s.Email
-        LEFT JOIN company c ON u.Email = c.Email
-        LEFT JOIN organization o ON u.Email = o.Email
-        LEFT JOIN admin a ON u.Email = a.Email
-        WHERE 1=1
-        ";
-        
+        $cleanRole = strtolower(trim($role));
+        $queries = [];
         $params = [];
         $types = "";
-        
-        if (!empty($role) && $role !== 'all') {
-            $sql .= " AND LOWER(u.role) = ?";
-            $params[] = strtolower($role);
-            $types .= "s";
+
+        // Student subquery
+        if (empty($cleanRole) || $cleanRole === 'all' || $cleanRole === 'student') {
+            $queries[] = "
+                SELECT 
+                    u.Email AS email, 'student' AS role, u.status AS status, u.created_at AS created_at,
+                    s.Name AS user_name, s.University AS organization_name, s.profile_image AS profile_image,
+                    '' AS contact_number, s.website AS website, '' AS location, s.degree AS degree, s.year AS academic_year, s.bio AS about
+                FROM user u
+                INNER JOIN student s ON u.Email = s.Email
+            ";
         }
-        
+
+        // Company subquery
+        if (empty($cleanRole) || $cleanRole === 'all' || $cleanRole === 'company') {
+            $queries[] = "
+                SELECT 
+                    u.Email AS email, 'company' AS role, u.status AS status, u.created_at AS created_at,
+                    c.contactPersonName AS user_name, c.Name AS organization_name, c.profile_img AS profile_image,
+                    c.contactNumber AS contact_number, c.website AS website, c.location AS location, '' AS degree, '' AS academic_year, '' AS about
+                FROM user u
+                INNER JOIN company c ON u.Email = c.Email
+            ";
+        }
+
+        // Organization subquery
+        if (empty($cleanRole) || $cleanRole === 'all' || $cleanRole === 'organization') {
+            $queries[] = "
+                SELECT 
+                    u.Email AS email, 'organization' AS role, u.status AS status, u.created_at AS created_at,
+                    o.contactPersonName AS user_name, o.Name AS organization_name, o.logo AS profile_image,
+                    o.contactNumber AS contact_number, o.website AS website, o.location AS location, '' AS degree, '' AS academic_year, o.about AS about
+                FROM user u
+                INNER JOIN organization o ON u.Email = o.Email
+            ";
+        }
+
+        // Admin subquery
+        if (empty($cleanRole) || $cleanRole === 'all' || $cleanRole === 'admin') {
+            $queries[] = "
+                SELECT 
+                    u.Email AS email, 'admin' AS role, u.status AS status, u.created_at AS created_at,
+                    a.Name AS user_name, 'System' AS organization_name, a.profile_image AS profile_image,
+                    a.contactNumber AS contact_number, '' AS website, '' AS location, '' AS degree, '' AS academic_year, '' AS about
+                FROM user u
+                INNER JOIN admin a ON u.Email = a.Email
+            ";
+        }
+
+        if (empty($queries)) {
+            return [];
+        }
+
+        $unionSql = implode(" UNION ALL ", $queries);
+        $sql = "SELECT * FROM ($unionSql) AS all_users WHERE 1=1";
+
         if (!empty($status) && $status !== 'all') {
-            $sql .= " AND u.status = ?";
+            $sql .= " AND status = ?";
             $params[] = $status;
             $types .= "s";
         }
-        
+
         if (!empty($search)) {
             $searchTerm = '%' . $search . '%';
-            $sql .= " AND (u.Email LIKE ? OR s.Name LIKE ? OR c.contactPersonName LIKE ? OR o.contactPersonName LIKE ? OR a.Name LIKE ? OR s.University LIKE ? OR c.Name LIKE ? OR o.Name LIKE ?)";
-            for ($i = 0; $i < 8; $i++) {
-                $params[] = $searchTerm;
-                $types .= "s";
-            }
+            $sql .= " AND (email LIKE ? OR user_name LIKE ? OR organization_name LIKE ?)";
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $params[] = $searchTerm;
+            $types .= "sss";
         }
-        
-        $sql .= " ORDER BY u.created_at DESC";
-        
+
+        $sql .= " ORDER BY created_at DESC";
+
         if (!empty($types)) {
             return $this->runQuery($sql, $types, ...$params)->fetch_all(MYSQLI_ASSOC);
         } else {
@@ -89,31 +119,72 @@ class UserManagement extends AdminDB
 
     public function getUserByEmail($email)
     {
-        $sql = "
-        SELECT 
-            u.Email AS email,
-            LOWER(u.role) AS role,
-            u.status AS status,
-            u.created_at AS created_at,
-            COALESCE(s.Name, c.contactPersonName, o.contactPersonName, a.Name, 'User') AS user_name,
-            COALESCE(s.University, c.Name, o.Name, 'System') AS organization_name,
-            s.profile_image AS profile_image,
-            c.contactNumber AS contact_number,
-            c.website AS website,
-            c.location AS location,
-            s.degree AS degree,
-            s.year AS academic_year,
-            o.about AS about
-        FROM user u
-        LEFT JOIN student s ON u.Email = s.Email
-        LEFT JOIN company c ON u.Email = c.Email
-        LEFT JOIN organization o ON u.Email = o.Email
-        LEFT JOIN admin a ON u.Email = a.Email
-        WHERE u.Email = ?
-        LIMIT 1
-        ";
-        $res = $this->runQuery($sql, "s", $email);
-        return $res ? $res->fetch_assoc() : null;
+        $userRes = $this->runQuery("SELECT Email, role, status, created_at FROM user WHERE Email = ? LIMIT 1", "s", $email);
+        if (!$userRes || $userRes->num_rows === 0) {
+            return null;
+        }
+
+        $u = $userRes->fetch_assoc();
+        $role = strtolower(trim($u['role']));
+
+        $data = [
+            'email' => $u['Email'],
+            'role' => $role,
+            'status' => $u['status'],
+            'created_at' => $u['created_at'],
+            'user_name' => 'User',
+            'organization_name' => 'System',
+            'profile_image' => null,
+            'contact_number' => '',
+            'website' => '',
+            'location' => '',
+            'degree' => '',
+            'academic_year' => '',
+            'about' => ''
+        ];
+
+        if ($role === 'student') {
+            $r = $this->runQuery("SELECT s.* FROM student s INNER JOIN user u ON s.Email = u.Email WHERE s.Email = ? LIMIT 1", "s", $email);
+            if ($r && $row = $r->fetch_assoc()) {
+                $data['user_name'] = $row['Name'] ?? 'Student';
+                $data['organization_name'] = $row['University'] ?? '';
+                $data['profile_image'] = $row['profile_image'];
+                $data['degree'] = $row['degree'] ?? '';
+                $data['academic_year'] = $row['year'] ?? '';
+                $data['website'] = $row['website'] ?? '';
+                $data['about'] = $row['bio'] ?? '';
+            }
+        } elseif ($role === 'company') {
+            $r = $this->runQuery("SELECT c.* FROM company c INNER JOIN user u ON c.Email = u.Email WHERE c.Email = ? LIMIT 1", "s", $email);
+            if ($r && $row = $r->fetch_assoc()) {
+                $data['user_name'] = $row['contactPersonName'] ?? '';
+                $data['organization_name'] = $row['Name'] ?? '';
+                $data['profile_image'] = $row['profile_img'];
+                $data['contact_number'] = $row['contactNumber'] ?? '';
+                $data['website'] = $row['website'] ?? '';
+                $data['location'] = $row['location'] ?? '';
+            }
+        } elseif ($role === 'organization') {
+            $r = $this->runQuery("SELECT o.* FROM organization o INNER JOIN user u ON o.Email = u.Email WHERE o.Email = ? LIMIT 1", "s", $email);
+            if ($r && $row = $r->fetch_assoc()) {
+                $data['user_name'] = $row['contactPersonName'] ?? '';
+                $data['organization_name'] = $row['Name'] ?? '';
+                $data['profile_image'] = $row['logo'];
+                $data['contact_number'] = $row['contactNumber'] ?? '';
+                $data['website'] = $row['website'] ?? '';
+                $data['location'] = $row['location'] ?? '';
+                $data['about'] = $row['about'] ?? '';
+            }
+        } elseif ($role === 'admin') {
+            $r = $this->runQuery("SELECT a.* FROM admin a INNER JOIN user u ON a.Email = u.Email WHERE a.Email = ? LIMIT 1", "s", $email);
+            if ($r && $row = $r->fetch_assoc()) {
+                $data['user_name'] = $row['Name'] ?? 'Admin';
+                $data['profile_image'] = $row['profile_image'];
+                $data['contact_number'] = $row['contactNumber'] ?? '';
+            }
+        }
+
+        return $data;
     }
 
     public function addUser($email, $password, $role, $name, $status = 'Active', $orgOrUni = '', $contactNumber = '', $degree = '', $year = '')
@@ -135,7 +206,12 @@ class UserManagement extends AdminDB
                 $uni = !empty($orgOrUni) ? $orgOrUni : 'University';
                 $deg = !empty($degree) ? $degree : 'General';
                 $yr = !empty($year) ? $year : date('Y');
-                $this->runAction("INSERT INTO student (Email, University, year, degree, Name, profile_completion) VALUES (?, ?, ?, ?, ?, 0)", "sssss", $email, $uni, $yr, $deg, $name);
+                $domain = ltrim(substr(strrchr($email, "@"), 1), '@');
+                $this->runAction(
+                    "INSERT INTO student (Email, domain, University, year, degree, Name, profile_completion) VALUES (?, ?, ?, ?, ?, ?, 0)",
+                    "ssssss",
+                    $email, $domain, $uni, $yr, $deg, $name
+                );
                 break;
                 
             case 'company':
@@ -186,7 +262,8 @@ class UserManagement extends AdminDB
                 if ($chk && $chk->num_rows > 0) {
                     $this->runAction("UPDATE student SET Name = ?, University = ? WHERE Email = ?", "sss", $name, $uni, $email);
                 } else {
-                    $this->runAction("INSERT INTO student (Email, University, year, degree, Name, profile_completion) VALUES (?, ?, ?, ?, ?, 0)", "sssss", $email, $uni, date('Y'), 'General', $name);
+                    $domain = ltrim(substr(strrchr($email, "@"), 1), '@');
+                    $this->runAction("INSERT INTO student (Email, domain, University, year, degree, Name, profile_completion) VALUES (?, ?, ?, ?, ?, ?, 0)", "ssssss", $email, $domain, $uni, date('Y'), 'General', $name);
                 }
                 break;
                 
@@ -253,3 +330,4 @@ class UserManagement extends AdminDB
         ];
     }
 }
+?>

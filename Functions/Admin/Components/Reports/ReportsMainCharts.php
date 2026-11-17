@@ -98,53 +98,41 @@
                     <!-- Background base ring -->
                     <circle cx="100" cy="100" r="70" fill="none" stroke="#f8fafc" stroke-width="26" />
                     
-                    <!-- Dynamic SVG Donut Segments (circumference = 440) -->
-                    <!-- UCSC: 36% (158.4) -->
-                    <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" stroke="#2563eb" stroke-width="24" stroke-dasharray="158.4 440" stroke-dashoffset="0" />
-                    <!-- Moratuwa: 28% (123.2) -->
-                    <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" stroke="#f59e0b" stroke-width="24" stroke-dasharray="123.2 440" stroke-dashoffset="-158.4" />
-                    <!-- Kelaniya: 18% (79.2) -->
-                    <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" stroke="#8b5cf6" stroke-width="24" stroke-dasharray="79.2 440" stroke-dashoffset="-281.6" />
-                    <!-- SLIIT: 12% (52.8) -->
-                    <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" stroke="#ef4444" stroke-width="24" stroke-dasharray="52.8 440" stroke-dashoffset="-360.8" />
-                    <!-- Others: 6% (26.4) -->
-                    <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" stroke="#94a3b8" stroke-width="24" stroke-dasharray="26.4 440" stroke-dashoffset="-413.6" />
+                    <!-- Dynamic SVG Donut Segments from Real Database -->
+                    <?php if (!empty($donutDistribution['segments'])): ?>
+                        <?php foreach ($donutDistribution['segments'] as $seg): ?>
+                            <?php if ($seg['dash'] > 0): ?>
+                            <circle class="ra-donut-seg" cx="100" cy="100" r="70" fill="none" 
+                                    stroke="<?= $seg['color'] ?>" stroke-width="24" 
+                                    stroke-dasharray="<?= $seg['dash'] ?> 440" 
+                                    stroke-dashoffset="<?= $seg['offset'] ?>" />
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </svg>
 
                 <!-- Donut Center Label -->
                 <div class="ra-donut-center-info">
-                    <strong id="raDonutTotalCandidates">3,850</strong>
+                    <strong id="raDonutTotalCandidates"><?= number_format($donutDistribution['total_students'] ?? 0) ?></strong>
                     <span>Active Students</span>
                 </div>
             </div>
 
             <!-- Donut Legend Breakdown -->
             <div class="ra-donut-legend-list">
-                <div class="ra-donut-legend-item">
-                    <span class="ra-donut-dot" style="background: #2563eb;"></span>
-                    <span class="ra-donut-uni-name">UCSC (Colombo)</span>
-                    <strong class="ra-donut-val">36% <small style="color:#64748b; font-weight:normal;">(1,386)</small></strong>
-                </div>
-                <div class="ra-donut-legend-item">
-                    <span class="ra-donut-dot" style="background: #f59e0b;"></span>
-                    <span class="ra-donut-uni-name">UoM (Moratuwa IT)</span>
-                    <strong class="ra-donut-val">28% <small style="color:#64748b; font-weight:normal;">(1,078)</small></strong>
-                </div>
-                <div class="ra-donut-legend-item">
-                    <span class="ra-donut-dot" style="background: #8b5cf6;"></span>
-                    <span class="ra-donut-uni-name">Univ of Kelaniya</span>
-                    <strong class="ra-donut-val">18% <small style="color:#64748b; font-weight:normal;">(693)</small></strong>
-                </div>
-                <div class="ra-donut-legend-item">
-                    <span class="ra-donut-dot" style="background: #ef4444;"></span>
-                    <span class="ra-donut-uni-name">SLIIT (Computing & Eng)</span>
-                    <strong class="ra-donut-val">12% <small style="color:#64748b; font-weight:normal;">(462)</small></strong>
-                </div>
-                <div class="ra-donut-legend-item">
-                    <span class="ra-donut-dot" style="background: #94a3b8;"></span>
-                    <span class="ra-donut-uni-name">Other Partners</span>
-                    <strong class="ra-donut-val">6% <small style="color:#64748b; font-weight:normal;">(231)</small></strong>
-                </div>
+                <?php if (!empty($donutDistribution['segments'])): ?>
+                    <?php foreach ($donutDistribution['segments'] as $seg): ?>
+                    <div class="ra-donut-legend-item">
+                        <span class="ra-donut-dot" style="background: <?= $seg['color'] ?>;"></span>
+                        <span class="ra-donut-uni-name"><?= htmlspecialchars($seg['name']) ?></span>
+                        <strong class="ra-donut-val"><?= $seg['pct'] ?>% <small style="color:#64748b; font-weight:normal;">(<?= number_format($seg['count']) ?>)</small></strong>
+                    </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="ra-donut-legend-item">
+                        <span class="ra-donut-uni-name" style="color: #64748b;">No partner institutions data</span>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>

@@ -1,18 +1,13 @@
 <?php
 $currentPage = basename($_SERVER['PHP_SELF']);
+require_once __DIR__.'/../Backend/Admin/loader.php';
+require_once __DIR__ . '/../Config/db.php';
 
-if (!isset($conn)) {
-    @include_once __DIR__ . '/../Config/db.php';
-}
+$objectForComplain = new ComplaintManagement($conn);
+$activeComplaintsCount =$objectForComplain->getActiveComplainCount();
 
-$activeComplaintsCount = 0;
-if (isset($conn) && $conn instanceof mysqli) {
-    // Total complaints excluding RESOLVED and DISMISSED
-    $cntRes = $conn->query("SELECT COUNT(*) AS active_count FROM complain WHERE status NOT IN ('RESOLVED', 'DISMISSED')");
-    if ($cntRes && $cntRow = $cntRes->fetch_assoc()) {
-        $activeComplaintsCount = intval($cntRow['active_count'] ?? 0);
-    }
-}
+$objectForProject = new AdminDB($conn);
+$activeProjectCount=(int)$objectForProject->getCountWhere('Project','status','reviewing');
 ?>
 
 <!DOCTYPE html>
@@ -71,6 +66,9 @@ if (isset($conn) && $conn instanceof mysqli) {
                     <span class="material-symbols-outlined">folder_open</span>
                 </span>
                 <span class="nav-text">Projects</span>
+                <?php if ($activeProjectCount > 0): ?>
+                    <span class="badge" id="sidebarProjectBadge"><?= $activeProjectCount ?></span>
+                <?php endif; ?>
             </a>
 
             <a href="Internship_Management.php"

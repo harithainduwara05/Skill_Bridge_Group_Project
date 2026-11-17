@@ -2,7 +2,7 @@
 <div class="cm-table-responsive">
     <table class="data-table cm-table">
         <?php 
-            $TableColumns = ["Complaint ID", "Submitted By", "Category", "Description", "Priority", "Status", "Actions"];
+            $TableColumns = ["Complaint ID", "Submitted By", "Category", "Priority", "Status", "Actions"];
             include dirname(__DIR__) . "/Common/TableHeder.php";
         ?>
         <tbody id="cmTableBody">
@@ -92,13 +92,6 @@
                         <span class="cm-category-cell"><?= $categoryDisplay ?></span>
                     </td>
 
-                    <!-- Description -->
-                    <td>
-                        <div class="cm-desc-cell" title="<?= $descExcerpt ?>">
-                            <?= $descExcerpt ?>
-                        </div>
-                    </td>
-
                     <!-- Priority -->
                     <td>
                         <span class="cm-priority-pill priority-<?= $priorityLower ?>">
@@ -126,7 +119,7 @@
                 <?php endforeach; ?>
             <?php else: ?>
                 <tr id="cmEmptyStateRow">
-                    <td colspan="7" style="text-align: center; padding: 48px 20px; color: #64748b;">
+                    <td colspan="6" style="text-align: center; padding: 48px 20px; color: #64748b;">
                         <span class="material-symbols-outlined" style="font-size: 40px; color: #94a3b8; display: block; margin-bottom: 8px;">report_off</span>
                         <strong style="font-size: 15px; color: #1e293b; display: block; margin-bottom: 4px;">No complaints recorded</strong>
                         <span style="font-size: 13px;">All platform systems and student activities are running smoothly without open grievances.</span>

@@ -57,3 +57,14 @@
 .rl-cancel:hover { background: #e2e8f0; }
 .rl-confirm { background: #dc2626; color: #fff; }
 .rl-confirm:hover { background: #b91c1c; }
+
+/* ---- Required fields + validation messages ---- */
+.req { color: #dc2626; font-weight: 700; margin-left: 2px; }
+.form-hint { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+.field-error { font-size: 12px; color: #dc2626; margin-top: 6px; }
+.field-error:empty { display: none; }
+.form-group:has(.field-error:not(:empty)) .form-input,
+.form-group:has(.field-error:not(:empty)) .form-textarea {
+    border-color: #f87171;
+    background: #fff;
+}

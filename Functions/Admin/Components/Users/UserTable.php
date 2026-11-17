@@ -21,7 +21,11 @@
                     $joinedDate = !empty($u['created_at']) ? date('M d, Y', strtotime($u['created_at'])) : 'N/A';
                     $isSelf = ($currentAdminEmail !== '' && strtolower($u['email']) === $currentAdminEmail);
                 ?>
-                <tr class="<?= $isSelf ? 'user-self-row' : '' ?>">
+                <tr class="user-row <?= $isSelf ? 'user-self-row' : '' ?>"
+                    data-id="<?= htmlspecialchars($u['email']) ?>"
+                    data-role="<?= htmlspecialchars($userRole) ?>"
+                    data-status="<?= htmlspecialchars($statusClass) ?>"
+                    data-search="<?= htmlspecialchars(strtolower($u['user_name'] . ' ' . $u['email'] . ' ' . ($u['organization_name'] ?? '')), ENT_QUOTES) ?>">
                     <td>
                         <div class="user-cell-meta">
                             <div class="user-avatar-circle <?= $userRole ?>">

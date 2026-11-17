@@ -104,7 +104,7 @@ const AdminCore = {
                     if (el) closeElements.push(el);
                 });
             }
-            modal.querySelectorAll('[data-dismiss="modal"], [data-close], .btn-close, .modal-close').forEach(b => {
+            modal.querySelectorAll('[data-dismiss="modal"], [data-cm-dismiss="modal"], [data-close], .btn-close, .modal-close, .cm-modal-close, .pm-modal-close').forEach(b => {
                 closeElements.push(b);
             });
 
@@ -262,3 +262,16 @@ window.AdminCore = AdminCore;
 window.showToast = AdminCore.toast;
 window.cmShowToast = AdminCore.toast;
 window.escapeHtml = AdminCore.escapeHtml;
+
+// Global close handler for Flash Toast components
+window.closeToast = function() {
+    var toast = document.getElementById('flashToast') || document.querySelector('.flash-toast');
+    if (toast) {
+        toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+        setTimeout(function() {
+            if (toast && toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }
+};

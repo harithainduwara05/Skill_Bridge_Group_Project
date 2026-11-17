@@ -8,7 +8,9 @@ require_role('organization');
 // Backend (PHP + SQL) of this page
 require_once __DIR__ . "/../../Backend/Organization/feedback.php";
 
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/feedback.css">';
+// ?v=<file time> makes the browser load the NEW css every time the file changes
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/feedback.css?v='
+           . filemtime(__DIR__ . '/../../Assets/CSS/Organization/feedback.css') . '">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 ?>
@@ -85,6 +87,14 @@ include "../../Includes/dash_header.php";
             </div>
             <button type="button" class="fb-clear" id="fbClear" hidden>Clear</button>
         </div>
+
+        <?php if (!$reviews): ?>
+            <div class="fb-empty">
+                <span class="material-symbols-outlined">rate_review</span>
+                <div>You have not given any feedback yet.</div>
+                <small>Feedback can be given to a team once it is Completed (you accepted its final report on the Teams page).</small>
+            </div>
+        <?php endif; ?>
 
         <!-- Review cards -->
         <div class="fb-list">
@@ -188,7 +198,6 @@ include "../../Includes/dash_header.php";
     <div class="fb-overlay" id="fbModal">
         <form class="fb-modal" method="post" action="feedback.php" id="fbForm" novalidate>
             <input type="hidden" name="action" value="submit_feedback" id="fbAction">
-            <input type="hidden" name="feedback_id" id="fbFeedbackId">
             <input type="hidden" name="rating" id="fbRatingVal">
 
             <div class="fb-m-head">
@@ -201,21 +210,25 @@ include "../../Includes/dash_header.php";
             </div>
 
             <div class="fb-m-body">
-                <?php if (empty($fbProjects)): ?>
-                    <div class="fb-note">
-                        <span class="material-symbols-outlined">info</span>
-                        None of your projects have students working on them yet. Feedback can be given once a team is assigned.
-                    </div>
-                <?php else: ?>
+                <!-- shown only for NEW feedback when no project can get feedback -->
+                <div class="fb-note" id="fbNoProjects" hidden>
+                    <span class="material-symbols-outlined">info</span>
+                    <span>No team can get new feedback right now. Feedback can be given once to each team that is
+                    <b>Completed</b> (you accepted its final report on the Teams page) and does not have feedback yet.</span>
+                </div>
+
+                <!-- the form fields (hidden only when no project can get feedback) -->
+                <div id="fbFields">
 
                 <!-- 1. Project -->
                 <div class="fb-step"><span>1</span> Project &amp; Team</div>
                 <div class="fb-field">
-                    <label class="fb-f-label" for="fbProject">Project *</label>
-                    <select id="fbProject" name="project_id" class="fb-input">
-                        <option value="">Select a project</option>
+                    <label class="fb-f-label" for="fbProject">Project &amp; Team *</label>
+                    <!-- feedback is given to a team (value = team id) -->
+                    <select id="fbProject" name="team_id" class="fb-input">
+                        <option value="">Select a project team</option>
                         <?php foreach ($fbProjects as $fp): ?>
-                            <option value="<?= $fp['id'] ?>"><?= htmlspecialchars($fp['title']) ?></option>
+                            <option value="<?= $fp['id'] ?>"><?= htmlspecialchars($fp['title'] . ' — ' . $fp['team']) ?></option>
                         <?php endforeach; ?>
                     </select>
                     <div class="fb-err" data-err="project"></div>
@@ -259,7 +272,7 @@ include "../../Includes/dash_header.php";
                 <div class="fb-field">
                     <label class="fb-f-label">Suggested Improvements</label>
                     <div class="fb-chip-box" id="fbChipBox">
-                        <input type="text" id="fbChipInput" placeholder="Type a skill to improve and press Enter">
+                        <input type="text" id="fbChipInput" maxlength="40" placeholder="Type a skill to improve and press Enter">
                     </div>
                     <input type="hidden" name="improvements" id="fbImprovements">
                     <div class="fb-quick">
@@ -271,14 +284,16 @@ include "../../Includes/dash_header.php";
                 </div>
 
 
-                <?php endif; ?>
+                    <div class="fb-final-note">
+                        <span class="material-symbols-outlined">lock</span>
+                        <span>Please check your feedback before submitting. <b>Feedback is final</b> and can’t be changed after it is submitted.</span>
+                    </div>
+                </div>
             </div>
 
             <div class="fb-m-foot">
                 <button type="button" class="fb-btn outline" data-fb-close>Cancel</button>
-                <?php if (!empty($fbProjects)): ?>
-                <button type="submit" class="fb-btn solid"><span class="material-symbols-outlined" id="fbSubmitIcon">send</span><span id="fbSubmitText">Submit Feedback</span></button>
-                <?php endif; ?>
+                <button type="submit" class="fb-btn solid" id="fbSubmitBtn"><span class="material-symbols-outlined" id="fbSubmitIcon">send</span><span id="fbSubmitText">Submit Feedback</span></button>
             </div>
         </form>
     </div>
@@ -295,408 +310,19 @@ include "../../Includes/dash_header.php";
 </main>
 
 <script>
-// popup covers the whole screen (moved out of <main>)
-document.body.appendChild(document.getElementById('fbModal'));
-
-/* ================= FILTERS: search, rating, sort ================= */
-(function () {
-    const list   = document.querySelector('.fb-list');
-    const cards  = Array.from(list.querySelectorAll('.fb-card'));
-    const search = document.getElementById('fbSearch');
-    const rating = document.getElementById('fbRating');
-    const sort   = document.getElementById('fbSort');
-    const clear  = document.getElementById('fbClear');
-
-    const PAGE = 3;                 // cards shown per "Load More"
-    let limit = PAGE;
-    const moreBtn = document.getElementById('fbLoadMore');
-
-    function apply(keepLimit) {
-        if (keepLimit !== true) limit = PAGE;          // filters changed -> start from the first page
-        const q = search.value.trim().toLowerCase();
-        const n = (c, k) => Number(c.dataset[k]) || 0;
-        const sorted = cards.slice().sort((a, b) => {
-            if (sort.value === 'oldest') return n(a, 'created') - n(b, 'created');
-            if (sort.value === 'high')   return n(b, 'rating') - n(a, 'rating') || n(b, 'created') - n(a, 'created');
-            if (sort.value === 'low')    return n(a, 'rating') - n(b, 'rating') || n(b, 'created') - n(a, 'created');
-            return n(b, 'created') - n(a, 'created');
-        });
-        sorted.forEach(c => list.appendChild(c));
-
-        const matching = sorted.filter(c => (rating.value === 'all' || c.dataset.rating === rating.value)
-                                         && (q === '' || c.dataset.search.includes(q)));
-        cards.forEach(c => { c.hidden = true; });
-        matching.slice(0, limit).forEach(c => { c.hidden = false; });
-
-        const shown = Math.min(limit, matching.length);
-        document.getElementById('fbShown').textContent = shown;
-        document.getElementById('fbTotal').textContent = matching.length;
-        moreBtn.hidden = shown >= matching.length;
-        document.getElementById('fbEmpty').hidden = matching.length !== 0;
-        clear.hidden = q === '' && rating.value === 'all' && sort.value === 'latest';
-    }
-    search.addEventListener('input', () => apply());
-    rating.addEventListener('change', () => apply());
-    sort.addEventListener('change', () => apply());
-    moreBtn.addEventListener('click', () => {
-        const firstNew = limit;
-        limit += PAGE;
-        apply(true);
-        // scroll gently to the first newly loaded card
-        const visible = Array.from(list.querySelectorAll('.fb-card:not([hidden])'));
-        if (visible[firstNew]) visible[firstNew].scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    clear.addEventListener('click', () => { search.value = ''; rating.value = 'all'; sort.value = 'latest'; apply(); });
-    apply();
-})();
-
-/* ================= SUBMIT NEW FEEDBACK ================= */
-(function () {
-    const PROJECTS = <?= json_encode($fbProjects, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-    const LABELS = { 1: 'Needs Work', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Exceptional' };
-    const STATUS = { reviewing: 'Reviewing', inprogress: 'Active', completed: 'Completed', hold: 'Hold' };
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
-
-    const modal = document.getElementById('fbModal');
-    const form  = document.getElementById('fbForm');
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-    const err = (k, m) => { const e = form.querySelector('[data-err="' + k + '"]'); if (e) e.textContent = m || ''; };
-
-    function open() { modal.classList.add('open'); }
-    function close() { modal.classList.remove('open'); }
-    document.getElementById('fbOpenForm').addEventListener('click', () => window.fbOpenForm ? window.fbOpenForm(null) : open());
-
-    // opened from a notification: feedback.php?give=1 -> open the form straight away
-    if (new URLSearchParams(location.search).has('give')) {
-        history.replaceState(null, '', location.pathname);
-        setTimeout(() => document.getElementById('fbOpenForm').click(), 0);
-    }
-    modal.querySelectorAll('[data-fb-close]').forEach(b => b.addEventListener('click', close));
-    modal.addEventListener('click', e => { if (e.target === modal) close(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
-
-    const projectEl = document.getElementById('fbProject');
-    document.body.appendChild(document.getElementById('fbViewModal'));
-    if (!projectEl) return;          // no projects -> only the info note is shown
-
-    // project -> team + students
-    projectEl.addEventListener('change', () => {
-        const p = PROJECTS.find(x => x.id === Number(projectEl.value));
-        const box = document.getElementById('fbTeamBox');
-        err('project', ''); projectEl.classList.remove('invalid');
-        if (!p) { box.hidden = true; return; }
-        box.innerHTML = `
-            <div class="fb-team-top"><span class="material-symbols-outlined">groups</span>${esc(p.team)}
-                <span class="fb-st">${esc(STATUS[p.status] || p.status)}</span></div>
-            <div class="fb-people">${p.students.map(st =>
-                `<span class="fb-person"><i style="background:${colorFor(st.name)}">${esc(initials(st.name))}</i>${esc(st.name)}${st.role ? ' · ' + esc(st.role) : ''}</span>`).join('')}</div>`;
-        box.hidden = false;
-    });
-
-    // overall stars
-    const starBtns = Array.from(document.querySelectorAll('#fbStarPick button'));
-    const ratingVal = document.getElementById('fbRatingVal');
-    const starText = document.getElementById('fbStarText');
-    function paint(v) { starBtns.forEach(b => b.classList.toggle('on', Number(b.dataset.v) <= v)); }
-    starBtns.forEach(b => {
-        b.addEventListener('mouseenter', () => paint(Number(b.dataset.v)));
-        b.addEventListener('click', () => {
-            ratingVal.value = b.dataset.v;
-            starText.textContent = b.dataset.v + '/5 · ' + LABELS[b.dataset.v];
-            starText.classList.add('set');
-            err('rating', '');
-        });
-    });
-    document.getElementById('fbStarPick').addEventListener('mouseleave', () => paint(Number(ratingVal.value) || 0));
-
-    // competency sliders
-    form.querySelectorAll('[data-range]').forEach(r => r.addEventListener('input', () => {
-        form.querySelector('[data-out="' + r.dataset.range + '"]').textContent = Number(r.value).toFixed(1);
-    }));
-
-    // summary counter
-    const summary = document.getElementById('fbSummary');
-    summary.addEventListener('input', () => {
-        document.getElementById('fbCount').textContent = summary.value.length;
-        if (summary.value.trim().length >= 20) { err('summary', ''); summary.classList.remove('invalid'); }
-    });
-
-    // improvements chips
-    let chips = [];
-    const chipBox = document.getElementById('fbChipBox');
-    const chipIn  = document.getElementById('fbChipInput');
-    function renderChips() {
-        chipBox.querySelectorAll('.fb-chip').forEach(c => c.remove());
-        chips.forEach((c, i) => {
-            const el = document.createElement('span');
-            el.className = 'fb-chip';
-            el.innerHTML = esc(c) + ' <button type="button" aria-label="Remove">&times;</button>';
-            el.querySelector('button').addEventListener('click', ev => { ev.stopPropagation(); chips.splice(i, 1); renderChips(); });
-            chipBox.insertBefore(el, chipIn);
-        });
-        document.getElementById('fbImprovements').value = chips.join(', ');
-    }
-    function addChip(v) {
-        (v || '').split(',').map(x => x.trim()).filter(Boolean).forEach(x => {
-            if (chips.length < 8 && !chips.some(c => c.toLowerCase() === x.toLowerCase())) chips.push(x);
-        });
-        chipIn.value = '';
-        renderChips();
-    }
-    chipIn.addEventListener('keydown', e => {
-        if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addChip(chipIn.value); }
-        else if (e.key === 'Backspace' && !chipIn.value && chips.length) { chips.pop(); renderChips(); }
-    });
-    chipIn.addEventListener('blur', () => addChip(chipIn.value));
-    chipBox.addEventListener('click', () => chipIn.focus());
-    document.querySelectorAll('[data-quick]').forEach(b => b.addEventListener('click', () => addChip(b.dataset.quick)));
-
-    // validation
-    form.addEventListener('submit', e => {
-        addChip(chipIn.value);
-        let ok = true;
-        if (!projectEl.value) { err('project', 'Please select a project.'); projectEl.classList.add('invalid'); ok = false; }
-        if (!ratingVal.value) { err('rating', 'Please give an overall rating.'); ok = false; }
-        if (summary.value.trim().length < 20) { err('summary', 'Please write at least 20 characters.'); summary.classList.add('invalid'); ok = false; }
-        if (!ok) {
-            e.preventDefault();
-            const first = form.querySelector('.fb-err:not(:empty)');
-            if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
-        }
-        // editing a demo review (not in the database) -> save in this browser
-        if (editingDemo) {
-            e.preventDefault();
-            const val = n => Number(form.querySelector('[data-range="' + n + '"]').value);
-            window.fbSaveDemo(editingDemo, {
-                rating: Number(ratingVal.value),
-                skills: { 'Technical Skills': val('technical'), 'Communication': val('communication'),
-                          'Teamwork': val('teamwork'), 'Problem-solving': val('problem_solving') },
-                summary: summary.value.trim(),
-                improvements: chips.slice(),
-                shared: true,
-                updated: new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-            });
-            close();
-        }
-    });
-
-    // ---------- open the form: new (r = null) or edit (r = review) ----------
-    let editingDemo = null;
-    const tempOptClass = 'fb-temp-opt';
-    window.fbOpenForm = function (r) {
-        form.reset();
-        form.querySelectorAll('.fb-err').forEach(x => x.textContent = '');
-        form.querySelectorAll('.invalid').forEach(x => x.classList.remove('invalid'));
-        projectEl.querySelectorAll('.' + tempOptClass).forEach(o => o.remove());
-        projectEl.disabled = false;
-        projectEl.classList.remove('fb-select-locked');
-        document.getElementById('fbTeamBox').hidden = true;
-        editingDemo = null;
-
-        const edit = !!r;
-        document.getElementById('fbAction').value = edit ? 'update_feedback' : 'submit_feedback';
-        document.getElementById('fbFeedbackId').value = edit && r.id ? r.id : '';
-        document.getElementById('fbFormTitle').textContent = edit ? 'Edit Feedback' : 'Submit New Feedback';
-        document.getElementById('fbFormSub').textContent = edit ? 'Update the ratings and comments for this team.' : 'Rate the team’s work and help them improve.';
-        document.getElementById('fbSubmitText').textContent = edit ? 'Save Changes' : 'Submit Feedback';
-        document.getElementById('fbSubmitIcon').textContent = edit ? 'check' : 'send';
-
-        // ratings
-        ratingVal.value = edit ? r.rating : '';
-        paint(edit ? r.rating : 0);
-        starText.textContent = edit ? r.rating + '/5 · ' + LABELS[r.rating] : 'Click to rate';
-        starText.classList.toggle('set', edit);
-        const map = { technical: 'Technical Skills', communication: 'Communication', teamwork: 'Teamwork', problem_solving: 'Problem-solving' };
-        Object.keys(map).forEach(k => {
-            const v = edit ? Number(r.skills[map[k]] || 3) : 3;
-            form.querySelector('[data-range="' + k + '"]').value = v;
-            form.querySelector('[data-out="' + k + '"]').textContent = v.toFixed(1);
-        });
-
-        summary.value = edit ? r.summary : '';
-        document.getElementById('fbCount').textContent = summary.value.length;
-        chips = edit ? r.improvements.slice() : [];
-        renderChips();
-
-        if (edit) {
-            // the project of a feedback can't be changed
-            let opt = Array.from(projectEl.options).find(o => r.project_id && Number(o.value) === r.project_id);
-            if (!opt) {
-                opt = new Option(r.title, r.project_id || 'demo', true, true);
-                opt.className = tempOptClass;
-                projectEl.add(opt);
-            }
-            projectEl.value = opt.value;
-            projectEl.disabled = true;
-            projectEl.classList.add('fb-select-locked');
-            const box = document.getElementById('fbTeamBox');
-            box.innerHTML = `
-                <div class="fb-team-top"><span class="material-symbols-outlined">groups</span>${esc(r.team)}</div>
-                <div class="fb-people">${(r.members || []).map(st =>
-                    `<span class="fb-person"><i style="background:${colorFor(st.name)}">${esc(initials(st.name))}</i>${esc(st.name)}${st.role ? ' · ' + esc(st.role) : ''}</span>`).join('')}</div>`;
-            box.hidden = false;
-            if (!r.id) editingDemo = r.key;
-        }
-        open();
-    };
-})();
-
-/* ================= VIEW FULL DETAILS ================= */
-(function () {
-    const REVIEWS = <?= json_encode(array_values(array_map(fn($r) => [
+    // Values from PHP (database) used by Assets/JS/Organization/feedback.js
+    const ORG_DATA = {
+        PROJECTS: <?= json_encode($fbProjects, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
+        REVIEWS: <?= json_encode(array_values(array_map(fn($r) => [
                         'key' => $r['key'], 'id' => $r['id'] ?? null, 'project_id' => $r['project_id'] ?? null,
                         'title' => $r['title'], 'team' => $r['team'], 'category' => $r['category'] ?? '',
                         'date' => date('M d, Y', $r['created']), 'rating' => (int)$r['rating'], 'skills' => $r['skills'],
-                        'summary' => $r['summary'], 'improvements' => $r['improvements'], 'shared' => !empty($r['shared']),
-                        'updated' => $r['updated'] ?? '', 'members' => $r['members'] ?? [],
-                    ], $reviews)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;
-    const LABELS = { 1: 'Needs Work', 2: 'Fair', 3: 'Good', 4: 'Very Good', 5: 'Exceptional' };
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
-    const OV_KEY = 'sb_demo_feedback_overrides';
-
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-    const loadOv = () => { try { return JSON.parse(localStorage.getItem(OV_KEY)) || {}; } catch (e) { return {}; } };
-    const stars = (v, size) => { let h = ''; for (let i = 1; i <= 5; i++) {
-        const icon = v >= i ? 'star' : (v >= i - 0.5 ? 'star_half' : 'star');
-        h += `<span class="material-symbols-outlined fb-star ${v >= i - 0.5 ? 'on' : ''}" style="font-size:${size}px;">${icon}</span>`; } return h; };
-
-    const effective = i => Object.assign({}, REVIEWS[i], REVIEWS[i].id ? {} : (loadOv()[REVIEWS[i].key] || {}));
-
-    // update a card on the page after a demo edit
-    function updateCard(i) {
-        const r = effective(i);
-        const card = document.querySelector('.fb-card[data-fb-index="' + i + '"]');
-        if (!card) return;
-        card.dataset.rating = r.rating;
-        card.querySelector('.fb-rating .stars').innerHTML = stars(r.rating, 20);
-        card.querySelector('.fb-rating-label').textContent = LABELS[r.rating];
-        const rows = card.querySelectorAll('.fb-comp-row');
-        Object.values(r.skills).forEach((v, k) => {
-            if (!rows[k]) return;
-            rows[k].querySelector('strong').textContent = Number(v).toFixed(1);
-            rows[k].querySelector('.fb-track span').style.width = Math.round(v / 5 * 100) + '%';
-        });
-        card.querySelector('.fb-summary').textContent = r.summary;
-        card.querySelector('.fb-chips').innerHTML = r.improvements.map(x => `<span class="fb-chip">${esc(x)}</span>`).join('');
-    }
-    REVIEWS.forEach((r, i) => { if (!r.id && loadOv()[r.key]) updateCard(i); });
-
-    window.fbSaveDemo = function (key, data) {
-        const all = loadOv(); all[key] = data;
-        try { localStorage.setItem(OV_KEY, JSON.stringify(all)); } catch (e) {}
-        const i = REVIEWS.findIndex(r => r.key === key);
-        updateCard(i);
-        const t = document.createElement('div');
-        t.className = 'flash-toast flash-success';
-        t.innerHTML = '<div class="flash-icon-wrap"><span class="material-symbols-outlined">check_circle</span></div><div class="flash-content"><div class="flash-title" style="font-weight:700;font-size:14px;">Feedback updated</div></div>';
-        document.body.appendChild(t);
-        setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+                        'summary' => $r['summary'], 'improvements' => $r['improvements'],
+                        'members' => $r['members'] ?? [],
+                    ], $reviews)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
     };
-
-    // ---------- details popup ----------
-    const modal = document.getElementById('fbViewModal');
-    let current = -1;
-
-    function openView(i) {
-        current = i;
-        const r = effective(i);
-        const entries = Object.entries(r.skills);
-        const avg = entries.reduce((a, [, v]) => a + Number(v), 0) / entries.length;
-        const best = entries.reduce((a, b) => (Number(b[1]) > Number(a[1]) ? b : a));
-        const low  = entries.reduce((a, b) => (Number(b[1]) < Number(a[1]) ? b : a));
-
-        document.getElementById('fvTitle').textContent = r.title;
-        document.getElementById('fvMeta').innerHTML =
-            `<span><span class="material-symbols-outlined">groups</span>${esc(r.team)}</span>` +
-            (r.category ? `<span><span class="material-symbols-outlined">category</span>${esc(r.category)}</span>` : '') +
-            `<span><span class="material-symbols-outlined">calendar_today</span>${esc(r.date)}</span>`;
-        document.getElementById('fvScore').innerHTML = r.rating + '<small>/5</small>';
-        document.getElementById('fvStars').innerHTML = stars(r.rating, 16);
-        document.getElementById('fvLabel').textContent = LABELS[r.rating];
-
-        document.getElementById('fvBody').innerHTML = `
-            <div class="fv-stats">
-                <div class="fv-stat"><div class="fv-stat-icon" style="background:#dbeafe;color:#1d4ed8;"><span class="material-symbols-outlined">analytics</span></div>
-                    <div><div class="fv-stat-label">Competency Average</div><div class="fv-stat-value">${avg.toFixed(1)} / 5</div></div></div>
-                <div class="fv-stat"><div class="fv-stat-icon" style="background:#dcfce7;color:#15803d;"><span class="material-symbols-outlined">trending_up</span></div>
-                    <div><div class="fv-stat-label">Strongest Area</div><div class="fv-stat-value">${esc(best[0])}</div></div></div>
-                <div class="fv-stat"><div class="fv-stat-icon" style="background:#ffedd5;color:#c2410c;"><span class="material-symbols-outlined">construction</span></div>
-                    <div><div class="fv-stat-label">Needs Work</div><div class="fv-stat-value">${esc(low[0])}</div></div></div>
-            </div>
-
-            <div class="fv-card">
-                <h4><span class="material-symbols-outlined">bar_chart</span> Competency Breakdown</h4>
-                ${entries.map(([name, v]) => `
-                    <div class="fv-comp"><span>${esc(name)}</span>
-                        <div class="fb-track"><span class="${name === best[0] ? 'best' : (name === low[0] && low[1] < best[1] ? 'low' : '')}" style="width:${Math.round(v / 5 * 100)}%"></span></div>
-                        <strong>${Number(v).toFixed(1)}</strong></div>`).join('')}
-            </div>
-
-            <div class="fv-card">
-                <h4><span class="material-symbols-outlined">notes</span> Performance Summary</h4>
-                <p>${esc(r.summary)}</p>
-            </div>
-
-            <div class="fv-card">
-                <h4><span class="material-symbols-outlined">lightbulb</span> Suggested Improvements</h4>
-                ${r.improvements.length ? `<div class="fb-chips">${r.improvements.map(x => `<span class="fb-chip">${esc(x)}</span>`).join('')}</div>`
-                                        : '<div class="fv-empty">No improvements suggested.</div>'}
-            </div>
-
-            <div class="fv-two">
-                <div class="fv-card">
-                    <h4><span class="material-symbols-outlined">group</span> Team Members</h4>
-                    ${r.members.length ? r.members.map(m => `
-                        <div class="fv-member"><i style="background:${colorFor(m.name)}">${esc(initials(m.name))}</i>
-                            <div><div class="fv-member-name">${esc(m.name)}</div><div class="fv-member-role">${esc(m.role || 'Team member')}</div></div></div>`).join('')
-                        : '<div class="fv-empty">No member details.</div>'}
-                </div>
-                <div class="fv-card">
-                    <h4><span class="material-symbols-outlined">info</span> Feedback Info</h4>
-                    <div class="fv-info-row"><span>Submitted on</span><strong>${esc(r.date)}</strong></div>
-                    <div class="fv-info-row"><span>Shared with students</span><strong style="color:${r.shared ? '#15803d' : '#6b7280'}">${r.shared ? 'Yes' : 'No'}</strong></div>
-                    <div class="fv-info-row"><span>Team size</span><strong>${r.members.length} member${r.members.length === 1 ? '' : 's'}</strong></div>
-                </div>
-            </div>
-        `;
-        document.getElementById('fvBody').scrollTop = 0;
-        modal.classList.add('open');
-    }
-
-    function closeView() { modal.classList.remove('open'); }
-    modal.querySelectorAll('[data-fv-close]').forEach(b => b.addEventListener('click', closeView));
-    modal.addEventListener('click', e => { if (e.target === modal) closeView(); });
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeView(); });
-    document.getElementById('fvPrint').addEventListener('click', () => window.print());
-
-
-    document.querySelectorAll('[data-fb-view]').forEach(b => b.addEventListener('click', () => openView(Number(b.dataset.fbView))));
-})();
-
-/* hide the success / error message */
-(function () {
-    const t = document.getElementById('fbFlash');
-    if (!t) return;
-    setTimeout(() => {
-        t.style.transition = 'opacity .4s ease'; t.style.opacity = '0';
-        setTimeout(() => t.remove(), 400);
-        history.replaceState(null, '', location.pathname);
-    }, 3500);
-})();
 </script>
+<script src="../../Assets/JS/Organization/feedback.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/Organization/feedback.js') ?>"></script>
 
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Privacy Policy</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Terms of Service</a>
-    </div>
-</footer>
 
 <?php include "../../Includes/dash_footer.php"; ?>

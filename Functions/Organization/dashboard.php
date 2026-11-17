@@ -8,7 +8,9 @@ require_role('organization');
 // Backend (PHP + SQL) of this page
 require_once __DIR__ . "/../../Backend/Organization/dashboard.php";
 
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/dashboard.css">';
+// ?v=<file time> makes the browser load the NEW css every time the file changes (no old cached colours)
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/dashboard.css?v='
+           . filemtime(__DIR__ . '/../../Assets/CSS/Organization/dashboard.css') . '">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 
@@ -76,6 +78,49 @@ include "../../Includes/dash_header.php";
             </div>
         </div>
 
+    </div>
+
+    <!-- ===================== PENDING PROJECTS (Reviewing + Hold) ===================== -->
+    <div class="org-main-row">
+        <div class="card pending-card">
+            <div class="card-header">
+                <h3>Pending Projects</h3>
+                <div class="pending-counts">
+                    <span class="pending-chip review"><?= $pendingReviewing ?> waiting for approval</span>
+                    <span class="pending-chip hold"><?= $pendingHold ?> on hold</span>
+                    <a href="manage_projects.php?status=pending" class="btn-link">View All<?= $pendingTotal > 4 ? ' (' . $pendingTotal . ')' : '' ?></a>
+                </div>
+            </div>
+            <div class="card-body">
+                <?php if (empty($pendingProjects)): ?>
+                    <p class="pending-empty">
+                        <span class="material-symbols-outlined">task_alt</span>
+                        No pending projects. All your projects are approved.
+                    </p>
+                <?php else: ?>
+                    <div class="pending-list">
+                        <?php foreach ($pendingProjects as $pp): ?>
+                        <a class="pending-item <?= $pp['tone'] ?>" href="<?= htmlspecialchars($pp['link']) ?>" title="<?= htmlspecialchars($pp['note']) ?>">
+                            <span class="pending-icon material-symbols-outlined">
+                                <?= $pp['tone'] === 'review' ? 'hourglass_top' : ($pp['tone'] === 'replied' ? 'forward_to_inbox' : 'pause_circle') ?>
+                            </span>
+                            <span class="pending-text">
+                                <span class="pending-title"><?= htmlspecialchars($pp['title']) ?></span>
+                                <span class="pending-note"><?= htmlspecialchars($pp['note']) ?></span>
+                            </span>
+                            <span class="badge-status <?= htmlspecialchars($pp['status']) ?>"><?= htmlspecialchars(statusLabel($pp['status'])) ?></span>
+                            <span class="pending-wait"><?= htmlspecialchars($pp['waiting']) ?></span>
+                            <?php if ($pp['tone'] === 'action'): ?>
+                                <span class="pending-btn">Respond</span>
+                            <?php else: ?>
+                                <span class="pending-go">View <span class="material-symbols-outlined">chevron_right</span></span>
+                            <?php endif; ?>
+                        </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
     <!-- ===================== PROJECT POSTS + TEAM PROGRESS (TWO SEPARATE CARDS) ===================== -->
@@ -168,13 +213,5 @@ include "../../Includes/dash_header.php";
 
 </main>
 
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Privacy Policy</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Terms of Service</a>
-    </div>
-</footer>
 
 <?php include "../../Includes/dash_footer.php"; ?>

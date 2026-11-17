@@ -8,9 +8,7 @@
 $user = current_user();
 $organization_email = $user['email'];
 
-require_once __DIR__ . "/team_schema.php";
 require_once __DIR__ . "/report_data.php";
-tmEnsureSchema($conn);
 
 $params = rpParams($_GET);
 $report = rpBuild(rpDataset($conn, $organization_email), $params);

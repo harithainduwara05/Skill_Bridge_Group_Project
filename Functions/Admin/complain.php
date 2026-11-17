@@ -1,5 +1,3 @@
-<!--Initialize Admin Environment: Auth Guard, 
-Backend Controller & Sidebar-->
 <?php
 $backendPage = "complain.php";
 require_once __DIR__ . "/Components/Common/AdminInit.php";

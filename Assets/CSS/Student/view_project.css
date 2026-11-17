@@ -353,35 +353,17 @@
 }
 
 
-.organization-logo{
-    width:72px;
-    height:72px;
-    background:white;
-    border-radius:12px;
-    overflow:hidden;
-    display:flex;
-    align-items:center;
-    justify-content:center;
+.organization-logo {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
 }
-
-
-.organization-logo{
-
-    width:72px;
-    height:72px;
-
-    background:#ffffff;
-
-    border-radius:12px;
-
-    display:flex;
-    align-items:center;
-    justify-content:center;
-
-    flex-shrink:0;
-
-}
-
 
 .organization-logo span{
 
@@ -467,100 +449,6 @@
 
 }
 
-/* ================================
-   TOAST MESSAGE
-================================ */
-
-.toast-message{
-
-    position:fixed;
-
-    top:30px;
-
-    right:30px;
-
-    background:#ffffff;
-
-    color:#15803d;
-
-    border-left:5px solid #16a34a;
-
-    padding:16px 22px;
-
-    border-radius:14px;
-
-    display:flex;
-
-    align-items:center;
-
-    gap:12px;
-
-    font-size:16px;
-
-    font-weight:600;
-
-    box-shadow:0 10px 30px rgba(0,0,0,0.15);
-
-    z-index:9999;
-
-    transform:translateX(50px);
-
-    opacity:0;
-
-    pointer-events:none;
-
-    transition:.4s ease;
-
-}
-
-
-.toast-message i{
-
-    font-size:22px;
-
-    color:#16a34a;
-
-}
-.toast-message.show{
-
-    opacity:1;
-
-    transform:translateX(0);
-
-    animation:slideIn .3s ease;
-
-}
-
-
-@keyframes slideIn{
-
-    from{
-
-        opacity:0;
-
-        transform:translateX(50px);
-
-    }
-
-    to{
-
-        opacity:1;
-
-        transform:translateX(0);
-
-    }
-
-}
-
-
-.toast-message.hide{
-
-    opacity:0;
-
-    transform:translateX(50px);
-
-}
-
 /* RESPONSIVE */
 
 @media(max-width:1000px){
@@ -598,4 +486,125 @@
         grid-template-columns:1fr;
     }
 
+}
+/* Scoped project-details layout (avoids .project-info in projects.css) */
+.view-project-page {
+    width: 100%;
+    min-width: 0;
+}
+.view-project-page .project-header-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 210px;
+    align-items: start;
+    gap: 28px;
+    padding: 30px;
+}
+.view-project-page .project-detail-info {
+    display: block;
+    min-width: 0;
+    margin: 0;
+}
+.view-project-page .project-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 18px;
+}
+.view-project-page .project-tags span {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+.view-project-page .project-detail-info h1 {
+    max-width: none;
+    margin: 0 0 16px;
+    font-size: clamp(24px, 2.4vw, 34px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+.view-project-page .project-detail-info > p {
+    max-width: 780px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.75;
+    overflow-wrap: anywhere;
+}
+.view-project-page .project-buttons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-width: 0;
+    gap: 12px;
+}
+.view-project-page .project-buttons form,
+.view-project-page .project-buttons .proposal-btn,
+.view-project-page .project-buttons .save-btn {
+    width: 100%;
+    min-width: 0;
+}
+.view-project-page .project-stat-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+.view-project-page .project-stat {
+    width: 100%;
+    min-width: 0;
+}
+/* Compact toast: applies to every Student Projects page. */
+.project-toast {
+    position: fixed;
+    inset: 84px 22px auto auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: max-content;
+    min-width: 0;
+    max-width: min(360px, calc(100vw - 32px));
+    padding: 12px 14px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.45;
+    z-index: 10020;
+}
+.project-toast span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.project-toast button {
+    flex-shrink: 0;
+    padding: 2px 4px;
+}
+@media (max-width: 1000px) {
+    .view-project-page .project-header-card {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .view-project-page .project-buttons {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .view-project-page .project-buttons form,
+    .view-project-page .project-buttons .proposal-btn,
+    .view-project-page .project-buttons .save-btn {
+        width: auto;
+        flex: 1 1 180px;
+    }
+}
+@media (max-width: 700px) {
+    .view-project-page {
+        padding: 16px;
+    }
+    .view-project-page .project-header-card {
+        padding: 20px;
+    }
+    .view-project-page .project-stat-wrapper {
+        grid-template-columns: 1fr;
+    }
+    .project-toast {
+        right: 12px;
+        max-width: calc(100vw - 24px);
+    }
 }

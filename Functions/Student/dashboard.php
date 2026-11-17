@@ -1,0 +1,330 @@
+<?php
+    error_reporting(E_ALL);
+    ini_set('display_errors',1);
+
+    include "../../Config/db.php";
+    include "../../Session/Session.php";
+
+    require_once __DIR__ . "/../../Backend/Student/StudentBackend.php";
+    require_once __DIR__ . "/profile_completion.php";
+    require_once __DIR__ . "/check_student_access.php";
+    require_login();
+
+    $user = current_user();
+    if(!$user){
+        die("Session expired");
+    }
+
+    $email = $user['Email'] ?? $user['email'] ?? null;
+    if(!validateStudentYear($email)){
+        die("<h2 style='color:red;text-align:center;margin-top:100px;'> Access Denied</h2>
+        <p style='text-align:center;'>Invalid student batch. Only Year 1 - Year 4 students can access SkillBridge.</p>");
+    }
+
+    $studentManager = new StudentManager();
+
+    // Student details
+    $student = $studentManager->getStudent($email);
+    if(!$student){
+        die("Student profile not found");
+    }
+
+    // Dashboard counts
+    $student['skills'] = $studentManager->getSkillCount($email);
+    $student['certificates'] = $studentManager->getCertificateCount($email);
+    $student['projects'] = $studentManager->getProjectCount($email);
+    $student['applications'] = $studentManager->getApplicationCount($email);
+    $student['active_teams'] = $studentManager->getActiveTeamCount($email);
+
+    // Skills
+    $skills = array_slice($studentManager->getSkills($email),0,6);
+
+    // Projects
+    $projects = $studentManager->getProjects($email);
+
+    // Internships
+    if(canApplyInternship($email)){
+        $internships = $studentManager->getRecommendedInternships();
+    }
+    else{
+        $internships=[];
+    }
+
+    // Notifications
+    $notifications = $studentManager->getNotifications($email);
+    $completion = calculateProfileCompletion($student,$student['skills'],$student['certificates'],$student['projects']);
+
+    $pageTitle = "Student Dashboard | SkillBridge";
+    $extra_css = '
+    <link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">';
+
+    include "../../Includes/student_sidebar.php";
+    include "../../Includes/dash_header.php";
+?>
+
+<div class = "container">
+    <!-- HEADER -->
+    <div class="header">
+        <div>
+            <h1> Welcome back, <?php echo htmlspecialchars($student['Name']); ?> </h1>
+            <p>Continue building your skills and career journey.</p>
+        </div>
+        <a href="projects.php" class="post-btn">Browse Projects</a>
+    </div>
+
+    <!-- PROFILE + STATS -->
+    <div class="top-section">
+        <div class="profile-card">
+            <?php
+            if (!array_key_exists('profile_image', $student) && isset($conn)) {
+                $photoQuery = $conn->prepare("SELECT profile_image FROM student WHERE Email = ? LIMIT 1");
+                if ($photoQuery) {
+                    $photoQuery->bind_param('s', $email);
+                    $photoQuery->execute();
+                    $photoRow = $photoQuery->get_result()->fetch_assoc();
+                    $student['profile_image'] = $photoRow['profile_image'] ?? null;
+                    $photoQuery->close();
+                }
+            }
+
+            $student_img_src = null;
+            $profile_image = trim((string)($student['profile_image'] ?? ''));
+            $profile_image = basename(str_replace('\\', '/', $profile_image));
+            if ($profile_image !== '' && $profile_image !== '.' && $profile_image !== '..') {
+                $profile_dir_file = __DIR__ . '/../../Assets/Images/Student/Profile/' . $profile_image;
+                $legacy_dir_file  = __DIR__ . '/../../Assets/Images/Student/' . $profile_image;
+                if (is_file($profile_dir_file)) {
+                    $student_img_src = '../../Assets/Images/Student/Profile/' . rawurlencode($profile_image) . '?v=' . filemtime($profile_dir_file);
+                } elseif (is_file($legacy_dir_file)) {
+                    $student_img_src = '../../Assets/Images/Student/' . rawurlencode($profile_image) . '?v=' . filemtime($legacy_dir_file);
+                }
+            }
+            $student_name = trim((string)($student['Name'] ?? ''));
+            $student_initial = $student_name !== '' ? strtoupper(mb_substr($student_name, 0, 1)) : 'S';
+            ?>
+            <div class="dashboard-avatar">
+                <?php if(!empty($student_img_src)): ?>
+                    <img src="<?php echo htmlspecialchars($student_img_src, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($student['Name'], ENT_QUOTES, 'UTF-8'); ?>" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                    <div class="default-avatar-placeholder" style="display:none;"><span><?php echo htmlspecialchars($student_initial); ?></span></div>
+                <?php else: ?>
+                    <div class="default-avatar-placeholder"><span><?php echo htmlspecialchars($student_initial); ?></span></div>
+                <?php endif; ?>
+            </div>
+            <div>
+                <h2><?php echo htmlspecialchars($student['Name']); ?></h2>
+                <p>
+                    <?php echo htmlspecialchars($student['degree']); ?> • Year <?php echo htmlspecialchars($student['year']); ?>
+                    <br>
+                    <?php echo htmlspecialchars($student['University']); ?>
+                </p>
+                <div class="profile-completion">
+                    <div class="completion-header">
+                        <span>Profile Completion</span>
+                        <strong><?php echo $completion; ?>%</strong>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width:<?php echo $completion; ?>%;"></div>
+                    </div>
+                </div>
+                <div class="profile-buttons">
+                    <a href="settings.php" class="btn">Complete Profile</a>
+                    <a href="./cv_builder.php" class="outline">View Public CV</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- STATISTICS -->
+        <div class="stats">
+            <div class="card">
+                <h1>
+                    <span class="ico"><img src="../../Assets/Images/Icons/skills.png"></span>
+                    <?php echo $student['skills']; ?>
+                </h1>
+                <p>Skills Added</p>
+            </div>
+            <div class="card">
+                <h1>
+                    <span class="ico"><img src="../../Assets/Images/Icons/certificates.png"></span>
+                    <?php echo $student['certificates']; ?>
+                </h1>
+                <p>Certificates</p>
+            </div>
+            <div class="card">
+                <h1>
+                    <span class="ico"><img src="../../Assets/Images/Icons/projects.svg"></span>
+                    <?php echo $student['projects']; ?>
+                </h1>
+                <p>Projects Done</p>
+            </div>
+            <div class="card">
+                <h1>
+                    <span class="ico"><i class="fa fa-users" aria-hidden="true"></i></span>
+                    <?php echo $student['active_teams']; ?>
+                </h1>
+                <p>Active Teams</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MIDDLE -->
+    <div class="middle">
+        <!-- SKILLS -->
+        <div class="box">
+            <div class="skill-header">
+                <h2>Skill Development</h2>
+                <a href="skills.php" class="manage-skills">Manage Skills →</a>
+            </div>
+            <div class="skills">
+                <?php foreach($skills as $skill){ ?>
+                <div class="skill-card">
+                    <h5><?php echo htmlspecialchars($skill['skill_name']); ?></h5>
+                    <p><?php echo htmlspecialchars($skill['level']); ?></p>
+                    <div class="progress">
+                        <div style="width:
+                            <?php
+                                if($skill['level']=="Expert") {echo "95";}
+                                elseif($skill['level']=="Advanced") {echo "85";}
+                                elseif($skill['level']=="Intermediate") {echo "70";}
+                                else {echo "50";}
+                            ?>%">
+                        </div>
+                    </div>
+                </div>
+                <?php } ?>
+            </div>  
+        </div>  
+
+        <!-- UPDATES -->
+        <div class="box updates-box">
+            <div class="updates-header">
+                <h2> Updates </h2>
+                <a href="notifications.php" class="view-all-btn">View All →</a>
+            </div>
+
+            <?php foreach($notifications as $notification){ ?>
+                <div class="update-item">
+                <?php
+                    $type = strtolower(trim($notification['type'] ?? ''));
+                    $title = strtolower($notification['title'] ?? '');
+
+                    if($type == "application" || str_contains($title,"application")){
+                        $iconClass = "blue";
+                        $icon = "application.png";
+                    } elseif($type == "project" || str_contains($title,"project")){
+                        $iconClass = "green";
+                        $icon = "projects.svg";
+                    } elseif($type == "skill" || str_contains($title,"skill")){
+                        $iconClass = "orange";
+                        $icon = "skills.png";
+                    } else {
+                        $iconClass = "orange";
+                        $icon = "notification.png";
+                    }
+                ?>
+                <div class="update-icon <?php echo $iconClass; ?>">
+                    <img src="../../Assets/Images/Icons/<?php echo $icon; ?>">
+                </div>
+                <div class="update-content">
+                    <h3><?php echo htmlspecialchars($notification['title']); ?></h3>
+                    <p><?php echo htmlspecialchars($notification['message']); ?></p>
+                    <span>
+                        <?php
+                            if(!empty($notification['created_at'])){
+                                $date = new DateTime($notification['created_at']);
+                                echo $date->format("d M Y");
+                            }
+                        ?>
+                    </span>
+                </div>
+            </div>
+        <?php } ?>
+        </div> 
+    </div>
+
+    <!-- Bottom Section -->
+    <div class="bottom-section">
+        <!-- Recent Projects -->
+        <div class="projects-box">
+            <div class="project-header">
+                <h2>Recent Projects</h2>
+                <a href="teams.php" class="view-all-btn">See All Projects</a>
+            </div>
+            <?php foreach($projects as $project){ ?>
+            <?php
+                $progressVal = (int)($project['progress'] ?? 0);
+                $statusVal = trim((string)($project['status'] ?? ''));
+                if ($progressVal === 100) {
+                    $statusVal = 'Completed';
+                }
+                
+                $teamId = (int)($project['team_id'] ?? 0);
+                $projectId = (int)($project['id'] ?? 0);
+                
+                if ($teamId > 0) {
+                    $viewLink = "view_team.php?id={$teamId}";
+                } else {
+                    $viewLink = "view_project.php?id={$projectId}";
+                }
+            ?>
+            <div class="project-item">
+                <!-- COLUMN 1 : PROJECT LOGO -->
+                <div class="project-logo">
+                    <?php
+                        $words = explode(" ", $project['title']);
+                        echo strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[1] ?? "", 0, 1));
+                    ?>
+                </div>
+
+                <!-- COLUMN 2 : PROJECT DETAILS -->
+                <div class="project-details">
+                    <h4><?php echo htmlspecialchars($project['title'] ?? ''); ?></h4>
+                    <p>Organization: <?php echo htmlspecialchars($project['organization'] ?? $project['company'] ?? 'N/A'); ?></p>
+                    <p>Role: <?php echo htmlspecialchars($project['team'] ?? $project['role'] ?? 'N/A');?></p>
+                </div>
+
+                <!-- COLUMN 3 : PROGRESS -->
+                <div class="progress-column">
+                    <span>Progress</span>
+                    <strong><?php echo $progressVal; ?>%</strong>
+                </div>
+
+                <!-- COLUMN 4 : STATUS -->
+                <div class="status-column">
+                    <span>Status</span>
+                    <div class="status <?php echo strtolower(str_replace(' ', '-', $statusVal)); ?>">
+                        <?php echo htmlspecialchars($statusVal); ?>
+                    </div>
+                </div>
+
+                <!-- COLUMN 5 : ACTION -->
+                <div class="action-column">
+                    <a href="<?= htmlspecialchars($viewLink) ?>" class="view-icon" title="View Project">
+                        <i class="fa-solid fa-eye"></i>
+                    </a>
+                </div>
+            </div>
+        <?php } ?>
+        </div>
+
+        <!-- Recommended Internships -->
+        <?php if(canApplyInternship($email)){ ?>
+        <div class="recommended-box">
+            <h2>Recommended For You</h2>
+            <?php foreach($internships as $internship){ ?>
+            <div class="intern-card">
+                <div class="intern-title">
+                    <h3><?php echo htmlspecialchars($internship['title']); ?></h3>
+                    <span>Closes in 2d</span>
+                </div>
+                <p><?php echo htmlspecialchars($internship['company']); ?></p>
+                <p><?php echo htmlspecialchars($internship['tech_tags']); ?></p>
+                <a href="view_internship.php?id=<?= (int)$internship['id'] ?>" class="apply-btn">View Details</a>
+            </div>
+            <?php } ?>
+        </div>
+        <?php } ?>
+    </div>
+</div>
+
+<?php include "../../Includes/dash_footer.php"; ?>

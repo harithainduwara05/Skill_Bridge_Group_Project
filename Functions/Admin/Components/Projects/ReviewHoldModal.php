@@ -44,16 +44,16 @@
                 </div>
 
                 <!-- Card 2: Team's Submitted Reason / Explanation -->
-                <div class="pm-review-card-team">
+                <div class="pm-review-card-team" id="pmReviewTeamCard">
                     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-                        <span style="font-size: 13px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
+                        <span id="pmReviewTeamTitleSpan" style="font-size: 13px; font-weight: 700; color: #166534; display: flex; align-items: center; gap: 6px;">
                             <span class="material-symbols-outlined" style="font-size: 18px;">forum</span>
-                            Team's Submitted Justification / Explanation
+                            Organization Submitted Justification / Explanation
                         </span>
                         <span id="pmReviewTeamStatusBadge" style="font-size: 11.5px; font-weight: 600; color: #15803d; background: #dcfce7; padding: 2px 8px; border-radius: 6px;">Response Submitted</span>
                     </div>
                     <p id="pmReviewTeamResponse" style="font-size: 13px; color: #14532d; margin: 0; line-height: 1.5;">
-                        We have uploaded the revised software architecture diagram (v2.1) and clarified student roles in accordance with platform guidelines. Please review the updated milestones.
+                        <!-- Populated dynamically by project_management.js -->
                     </p>
                 </div>
 
@@ -61,7 +61,7 @@
 
             <!-- Decision Options Guidance -->
             <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; font-size: 12px; color: #64748b; line-height: 1.45;">
-                <strong style="color: #334155;">Final Decision:</strong> Choose <strong>Reactivate Project</strong> to restore it to Active if the justification is valid. Choose <strong>Permanently Reject</strong> to proceed to state the final rejection reason.
+                <strong style="color: #334155;">Final Decision:</strong> Choose <strong>Accept & Publish</strong> to restore this project to Published status and reopen for students if the organization's justification is valid. Choose <strong>Permanently Reject</strong> to proceed to state the final rejection reason.
             </div>
         </div>
 
@@ -74,10 +74,10 @@
                     <span class="material-symbols-outlined" style="font-size: 18px;">block</span>
                     <span>Permanently Reject</span>
                 </button>
-                <!-- Reactivate to Active Button -->
+                <!-- Accept & Reactivate to Active Button -->
                 <button type="button" class="pm-btn-reactivate" onclick="confirmReactivateFromReview()" style="height: 40px; padding: 0 18px;">
                     <span class="material-symbols-outlined" style="font-size: 18px;">check_circle</span>
-                    <span>Reactivate Project</span>
+                    <span>Accept & Reactivate</span>
                 </button>
             </div>
         </div>

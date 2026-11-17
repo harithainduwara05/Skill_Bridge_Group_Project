@@ -386,6 +386,7 @@
 .user-page-btn,
 .univ-page-btn {
     min-width: 32px;
+    width: auto !important;
     height: 32px;
     padding: 0 8px;
     border-radius: 8px;
@@ -400,6 +401,18 @@
     cursor: pointer;
     text-decoration: none;
     transition: all 0.15s ease;
+    white-space: nowrap;
+    box-sizing: border-box;
+}
+
+.page-btn.page-prev,
+.page-btn.page-next,
+.page-prev,
+.page-next {
+    width: auto !important;
+    min-width: auto;
+    padding: 0 12px !important;
+    white-space: nowrap;
 }
 
 .page-btn:hover:not(:disabled):not(.disabled):not(.active),

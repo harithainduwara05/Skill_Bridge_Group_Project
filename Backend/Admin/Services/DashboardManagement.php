@@ -10,12 +10,12 @@ class DashboardManagement extends AdminDB
 {
     public function getOngoingProjectCount()
     {
-        return $this->runCount("SELECT COUNT(*) FROM projects WHERE STR_TO_DATE(deadline, '%b %d, %Y') >= CURRENT_DATE()");
+        return $this->runCount("SELECT COUNT(*) FROM projects WHERE deadline >= CURRENT_DATE()");
     }
 
     public function getAvailableInternshipCount()
     {
-        return $this->runCount("SELECT COUNT(*) FROM internships WHERE STR_TO_DATE(deadline, '%b %d, %Y') >= CURRENT_DATE()");
+        return $this->runCount("SELECT COUNT(*) FROM internships WHERE deadline_date >= CURRENT_DATE()");
     }
 
     public function getActiveProjectCount()
@@ -23,3 +23,4 @@ class DashboardManagement extends AdminDB
         return $this->runCount("SELECT COUNT(*) FROM student_projects WHERE status = 'Active'");
     }
 }
+?>

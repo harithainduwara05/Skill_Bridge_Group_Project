@@ -8,7 +8,7 @@ require_role('organization');
 // Backend (PHP + SQL) of this page
 require_once __DIR__ . "/../../Backend/Organization/profile.php";
 
-$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/profile.css">';
+$extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Organization/profile.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Organization/profile.css') . '">';
 include "../../Includes/org_sidebar.php";
 include "../../Includes/dash_header.php";
 
@@ -30,7 +30,8 @@ include "../../Includes/dash_header.php";
     </div>
     <?php endif; ?>
 
-    <form method="POST" action="" enctype="multipart/form-data" id="profileForm">
+    <!-- novalidate: checked by the script at the bottom (messages under the fields) and again on the server -->
+    <form method="POST" action="" enctype="multipart/form-data" id="profileForm" novalidate>
 
     <!-- ===================== STAT CARDS ===================== -->
     <div class="stats-grid">
@@ -98,13 +99,15 @@ include "../../Includes/dash_header.php";
                         <img src="<?= !empty($org['logo']) ? '../../' . htmlspecialchars($org['logo']) : '../../Assets/Images/logo.png' ?>" alt="" id="logoPreview" class="<?= empty($org['logo']) ? 'is-default' : '' ?>" onerror="this.onerror=null;this.classList.add('is-default');this.src='../../Assets/Images/logo.png';">
                     </div>
                     <label for="logoInput" class="upload-link" style="cursor:pointer;">Upload New Logo</label>
-                    <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').submit();">
+                    <input type="file" name="logo" id="logoInput" accept="image/png, image/jpeg, image/gif, image/webp" style="display:none;" onchange="document.getElementById('profileForm').requestSubmit();">
                     <?php if (!empty($org['logo'])): ?>
                         <input type="hidden" name="remove_logo" id="removeLogo" value="0">
                         <button type="button" class="upload-link" style="background:none;border:none;padding:0;cursor:pointer;color:#dc2626;font-family:inherit;display:inline-flex;align-items:center;gap:4px;"
                                 onclick="openRemoveLogoModal()"><span class="material-symbols-outlined" style="font-size:18px;">delete</span>Remove Logo</button>
                     <?php endif; ?>
                     <span class="badge-status verified">Verified</span>
+                    <div class="form-hint">JPG, PNG, GIF or WEBP, up to 2MB.</div>
+                    <div class="field-error" data-for="logo"></div>
                 </div>
             </div>
 
@@ -113,20 +116,24 @@ include "../../Includes/dash_header.php";
                     <h3>Social Links</h3>
                 </div>
                 <div class="card-body">
+                    <div class="form-hint" style="margin:0 0 12px;">Optional. Paste the full link to your page.</div>
 
                     <div class="form-group">
                         <label class="form-label">LinkedIn</label>
-                        <input type="text" name="linkedin" class="form-input" value="<?= htmlspecialchars($org['linkedin'] ?? '') ?>">
+                        <input type="text" name="linkedin" class="form-input" maxlength="200" placeholder="https://linkedin.com/company/your-org" value="<?= htmlspecialchars($org['linkedin'] ?? '') ?>">
+                        <div class="field-error" data-for="linkedin"><?= htmlspecialchars($errors['linkedin'] ?? '') ?></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Twitter</label>
-                        <input type="text" name="twitter" class="form-input" value="<?= htmlspecialchars($org['twitter'] ?? '') ?>">
+                        <input type="text" name="twitter" class="form-input" maxlength="200" placeholder="https://x.com/your-org" value="<?= htmlspecialchars($org['twitter'] ?? '') ?>">
+                        <div class="field-error" data-for="twitter"><?= htmlspecialchars($errors['twitter'] ?? '') ?></div>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label">Facebook</label>
-                        <input type="text" name="facebook" class="form-input" value="<?= htmlspecialchars($org['facebook'] ?? '') ?>">
+                        <input type="text" name="facebook" class="form-input" maxlength="200" placeholder="https://facebook.com/your-org" value="<?= htmlspecialchars($org['facebook'] ?? '') ?>">
+                        <div class="field-error" data-for="facebook"><?= htmlspecialchars($errors['facebook'] ?? '') ?></div>
                     </div>
 
                 </div>
@@ -139,15 +146,18 @@ include "../../Includes/dash_header.php";
                 <h3>Organization Details</h3>
             </div>
             <div class="card-body">
+                <div class="form-hint" style="margin:0 0 12px;">Fields marked <span class="req">*</span> are required.</div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">Organization Name</label>
-                        <input type="text" name="org_name" class="form-input" value="<?= htmlspecialchars($org['Name'] ?? '') ?>">
+                        <label class="form-label">Organization Name <span class="req">*</span></label>
+                        <input type="text" name="org_name" class="form-input" maxlength="100" value="<?= htmlspecialchars($org['Name'] ?? '') ?>">
+                        <div class="field-error" data-for="org_name"><?= htmlspecialchars($errors['org_name'] ?? '') ?></div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Industry</label>
-                        <input type="text" name="industry" class="form-input" value="<?= htmlspecialchars($org['orgtype'] ?? '') ?>">
+                        <label class="form-label">Industry <span class="req">*</span></label>
+                        <input type="text" name="industry" class="form-input" maxlength="100" placeholder="e.g. Software, Student Society" value="<?= htmlspecialchars($org['orgtype'] ?? '') ?>">
+                        <div class="field-error" data-for="industry"><?= htmlspecialchars($errors['industry'] ?? '') ?></div>
                     </div>
                 </div>
 
@@ -155,26 +165,32 @@ include "../../Includes/dash_header.php";
                     <div class="form-group">
                         <label class="form-label">Official Email</label>
                         <input type="email" class="form-input" value="<?= htmlspecialchars($org['Email'] ?? '') ?>" readonly>
+                        <div class="form-hint">Your login email. It can't be changed here.</div>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Contact Number</label>
-                        <input type="text" name="contact_number" class="form-input" value="<?= htmlspecialchars($org['contactNumber'] ?? '') ?>">
+                        <label class="form-label">Contact Number <span class="req">*</span></label>
+                        <input type="tel" name="contact_number" class="form-input" maxlength="17" placeholder="e.g. 0771234567" value="<?= htmlspecialchars($org['contactNumber'] ?? '') ?>">
+                        <div class="field-error" data-for="contact_number"><?= htmlspecialchars($errors['contact_number'] ?? '') ?></div>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Website URL</label>
-                    <input type="text" name="website" class="form-input" value="<?= htmlspecialchars($org['website'] ?? '') ?>">
+                    <label class="form-label">Website URL <span class="req">*</span></label>
+                    <input type="text" name="website" class="form-input" maxlength="200" placeholder="e.g. https://example.com" value="<?= htmlspecialchars($org['website'] ?? '') ?>">
+                    <div class="field-error" data-for="website"><?= htmlspecialchars($errors['website'] ?? '') ?></div>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Address</label>
-                    <input type="text" name="address" class="form-input" value="<?= htmlspecialchars($org['location'] ?? '') ?>">
+                    <label class="form-label">Address <span class="req">*</span></label>
+                    <input type="text" name="address" class="form-input" maxlength="100" value="<?= htmlspecialchars($org['location'] ?? '') ?>">
+                    <div class="field-error" data-for="address"><?= htmlspecialchars($errors['address'] ?? '') ?></div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">About Organization</label>
-                    <textarea name="about" class="form-textarea"><?= htmlspecialchars($org['about'] ?? '') ?></textarea>
+                    <textarea name="about" class="form-textarea" maxlength="1000"><?= htmlspecialchars($org['about'] ?? '') ?></textarea>
+                    <div class="form-hint">Optional, up to 1000 characters.</div>
+                    <div class="field-error" data-for="about"><?= htmlspecialchars($errors['about'] ?? '') ?></div>
                 </div>
 
                 <div style="text-align:right; margin-top:10px;">
@@ -207,49 +223,9 @@ include "../../Includes/dash_header.php";
     </div>
 </div>
 
-<script>
-    function openRemoveLogoModal() {
-        document.getElementById('removeLogoModal').classList.add('show');
-        document.getElementById('rlCancel').focus();
-    }
-    function closeRemoveLogoModal() {
-        document.getElementById('removeLogoModal').classList.remove('show');
-    }
-    function confirmRemoveLogo() {
-        document.getElementById('rlConfirm').disabled = true;   // avoid double submit
-        document.getElementById('removeLogo').value = '1';
-        document.getElementById('profileForm').submit();
-    }
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeRemoveLogoModal();
-    });
-</script>
 <?php endif; ?>
 
-<script>
-    // Auto-hide the flash toast message after a few seconds
-    document.addEventListener('DOMContentLoaded', function () {
-        const toast = document.querySelector('.flash-toast');
-        if (toast) {
-            setTimeout(function () {
-                toast.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(20px)';
-                setTimeout(function () {
-                    toast.remove();
-                }, 400);
-            }, 3000); // visible for 3 seconds
-        }
-    });
-</script>
+<script src="../../Assets/JS/Organization/profile.js?v=<?= filemtime(__DIR__ . '/../../Assets/JS/Organization/profile.js') ?>"></script>
 
-<footer class="footer">
-    <div>&copy; 2026 SkillBridge. All rights reserved.</div>
-    <div class="footer-links">
-        <a href="/Skill_Bridge_Group_Project/help_center.php">Help Center</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Privacy Policy</a>
-        <a href="/Skill_Bridge_Group_Project/help_center.php#knowledgeBaseSection">Terms of Service</a>
-    </div>
-</footer>
 
 <?php include "../../Includes/dash_footer.php"; ?>

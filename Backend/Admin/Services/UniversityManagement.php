@@ -16,13 +16,20 @@ class UniversityManagement extends AdminDB
 
     public function getPopularUni()
     {
-        $sql = "SELECT ue.University AS 'UNIVERSITY NAME', COUNT(DISTINCT s.Email) AS 'STUDENTS',
-                COUNT(DISTINCT sp.project_id) AS 'ACTIVE PROJECTS', ue.Status AS 'status'
-                FROM student s
-                JOIN universityemails ue ON SUBSTRING_INDEX(s.Email, '@', -1) = ue.emailEx
-                LEFT JOIN student_projects sp ON s.Email = sp.Email AND sp.status = 'Active'
-                GROUP BY ue.University
-                ORDER BY `ACTIVE PROJECTS` DESC";
+        $sql = "
+            SELECT 
+                ue.University AS 'UNIVERSITY NAME', 
+                COUNT(DISTINCT s.Email) AS 'STUDENTS',
+                (SELECT COUNT(DISTINCT sp.project_id) 
+                 FROM student_projects sp 
+                 INNER JOIN student st ON sp.Email = st.Email 
+                 WHERE (st.domain = ue.emailEx OR st.University = ue.University) AND sp.status = 'Active') AS 'ACTIVE PROJECTS', 
+                ue.Status AS 'status'
+            FROM universityemails ue
+            INNER JOIN student s ON (s.domain = ue.emailEx OR s.University = ue.University)
+            GROUP BY ue.University, ue.Status, ue.emailEx
+            ORDER BY `ACTIVE PROJECTS` DESC
+        ";
         return $this->runQuery($sql)->fetch_all(MYSQLI_ASSOC);
     }
 
@@ -69,17 +76,35 @@ class UniversityManagement extends AdminDB
 
     public function addUniversity($university, $faculty, $domain, $status, $location)
     {
-        return $this->runAction("INSERT INTO universityemails (University, faculty, emailEx, Status, Location) VALUES (?, ?, ?, ?, ?)", "sssss", $university, $faculty, $domain, $status, $location);
+        $ok = $this->runAction("INSERT INTO universityemails (University, faculty, emailEx, Status, Location) VALUES (?, ?, ?, ?, ?)", "sssss", $university, $faculty, $domain, $status, $location);
+        
+        // Keep 3NF university_faculties companion table synchronized
+        @$this->runAction(
+            "INSERT INTO university_faculties (domain, University, faculty, Location, Status) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE University=VALUES(University), faculty=VALUES(faculty), Location=VALUES(Location), Status=VALUES(Status)",
+            "sssss",
+            $domain, $university, $faculty, $location, $status
+        );
+        return $ok;
     }
 
     public function updateUniversity($university, $faculty, $domain, $status, $location, $origDomain)
     {
-        return $this->runAction("UPDATE universityemails SET University=?, faculty=?, emailEx=?, Status=?, Location=? WHERE emailEx=?", "ssssss", $university, $faculty, $domain, $status, $location, $origDomain);
+        $ok = $this->runAction("UPDATE universityemails SET University=?, faculty=?, emailEx=?, Status=?, Location=? WHERE emailEx=?", "ssssss", $university, $faculty, $domain, $status, $location, $origDomain);
+
+        // Keep 3NF university_faculties companion table synchronized
+        @$this->runAction(
+            "UPDATE university_faculties SET University=?, faculty=?, domain=?, Status=?, Location=? WHERE domain=?",
+            "ssssss",
+            $university, $faculty, $domain, $status, $location, $origDomain
+        );
+        return $ok;
     }
 
     public function deleteUniversity($domain)
     {
-        return $this->runAction("DELETE FROM universityemails WHERE emailEx = ?", "s", $domain);
+        $ok = $this->runAction("DELETE FROM universityemails WHERE emailEx = ?", "s", $domain);
+        @$this->runAction("DELETE FROM university_faculties WHERE domain = ?", "s", $domain);
+        return $ok;
     }
 
     public function getUniversityFacultiesList()
@@ -99,3 +124,4 @@ class UniversityManagement extends AdminDB
         return null;
     }
 }
+?>

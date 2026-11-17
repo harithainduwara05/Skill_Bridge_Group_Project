@@ -24,7 +24,9 @@
                         default => 'inactive'
                     };
                     ?>
-                    <tr>
+                    <tr class="univ-row"
+                        data-status="<?= htmlspecialchars($badgeCls) ?>"
+                        data-search="<?= htmlspecialchars(strtolower($row['University'] . ' ' . ($row['faculty'] ?? '') . ' ' . $row['emailEx'] . ' ' . ($row['Location'] ?? '')), ENT_QUOTES) ?>">
                         <td>
                             <div class="university-logo mit" style="background:#1e293b;">
                                 <?= htmlspecialchars($initials) ?></div>

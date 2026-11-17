@@ -27,7 +27,9 @@ include "../../Includes/dash_header.php";
             "btnId"       => "btnAddUser",
             "btnIcon"     => "person_add",
             "btnClass"    => "btn-add-user",
-            "headerClass" => "user-page-header"
+            "headerClass" => "user-page-header",
+            "extraActions" => '<button type="button" class="btn-bulk-user" id="btnBulkUpload"><span class="material-symbols-outlined" style="font-size:18px;">upload_file</span>Bulk Import Students</button>'
+      
         ];
         include __DIR__ . "/Components/Common/PageHeader.php";
     ?>
@@ -67,6 +69,10 @@ include "../../Includes/dash_header.php";
             <!-- Reusable Pagination Component -->
             <?php 
                 $entityLabel = 'users';
+                $paginationInfoId = 'userPaginationInfo';
+                $paginationControlsId = 'userPaginationControls';
+                $alwaysShow = true;
+                $perPage = 5;
                 include __DIR__ . "/Components/Common/Pagination.php";
             ?>
             <!-- EndHere -->
