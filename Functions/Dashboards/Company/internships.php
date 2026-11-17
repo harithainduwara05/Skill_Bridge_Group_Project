@@ -7,6 +7,8 @@ include "../../../Config/db.php";
 include "../../../Session/Session.php";
 
 require_once "../../../Backend/CompanyBackend.php";
+require_once "../../../Backend/SkillCatalog.php";
+require_once "../../../Backend/LocationCatalog.php";
 
 
 
@@ -100,6 +102,177 @@ function normaliseInternshipDeadline($value)
     return $timestamp === false ? '' : date('M j, Y', $timestamp);
 }
 
+function validateTechTags($raw)
+{
+    $skills = [];
+    $canonicalSkills = [];
+    $seen = [];
+
+    foreach (explode(',', (string) $raw) as $skill) {
+        $skill = trim(preg_replace('/ +/', ' ', $skill));
+        if ($skill === '') continue;
+        $skills[] = $skill;
+    }
+
+    if (count($skills) === 0) {
+        return ['', 'Please enter at least one skill, e.g. PHP, MySQL, JavaScript.'];
+    }
+    if (count($skills) > 15) {
+        return ['', 'Please list no more than 15 skills.'];
+    }
+
+    foreach ($skills as $skill) {
+        if (preg_match('/\p{L}/u', $skill) !== 1) {
+            return ['', '"' . $skill . '" is not a valid skill. Skills must contain letters, not only numbers or symbols.'];
+        }
+        $key = skillKey($skill);
+        $catalog = skillCatalogMap();
+        if (!isset($catalog[$key])) {
+            $hint = skillSuggestion($skill);
+            $message = '"' . $skill . '" is not a recognised skill or technology.';
+            $message .= $hint !== ''
+                ? ' Did you mean "' . $hint . '"?'
+                : ' Please enter a real skill such as PHP, MySQL or Communication.';
+            return ['', $message];
+        }
+        $canonical = $catalog[$key];
+        $canonicalKey = skillKey($canonical);
+        if (isset($seen[$canonicalKey])) {
+            return ['', 'Skill "' . $canonical . '" is listed more than once.'];
+        }
+        $seen[$canonicalKey] = true;
+        $canonicalSkills[] = $canonical;
+    }
+
+    return [implode(', ', $canonicalSkills), ''];
+}
+
+function internshipIndustryOptions()
+{
+    return ['Information Technology', 'Software Development', 'Data Science & AI', 'Cyber Security',
+        'Business & Management', 'Finance & Accounting', 'Marketing', 'Engineering', 'Design / UI-UX',
+        'Human Resources', 'Other'];
+}
+
+function internshipTypeOptions()
+{
+    return ['Full-time', 'Part-time', 'Contract', 'Project-based', 'Flexible Hours'];
+}
+
+/**
+ * Returns [valueToSave, errorMessage]. $type is the dropdown value, $other the free text used when $type === 'Other'.
+ */
+function resolveInternshipType($type, $other)
+{
+    $type = trim((string) $type);
+    $other = trim(preg_replace('/\s+/u', ' ', (string) $other));
+
+    if ($type === '') return ['', ''];
+    foreach (internshipTypeOptions() as $option) {
+        if (strcasecmp($option, $type) === 0) return [$option, ''];
+    }
+    if ($type !== 'Other') return ['', 'Please select a valid internship type.'];
+
+    if ($other === '') return ['', 'Please describe the internship type for the "Other" option, e.g. Seasonal.'];
+    if (mb_strlen($other) < 2 || mb_strlen($other) > 50) return ['', 'The internship type must be between 2 and 50 characters.'];
+    if (preg_match('/^[\p{L}][\p{L}\s\/.\'\-]*$/u', $other) !== 1) {
+        return ['', 'The internship type may only contain letters, spaces, hyphens and slashes.'];
+    }
+    return [$other, ''];
+}
+
+/**
+ * Server-side validation for the create / update internship forms.
+ * $existing is the stored internship when editing (unchanged legacy dates are not re-checked).
+ * Returns [errorMessage, locationToSave, internshipTypeToSave]. errorMessage is '' when everything is valid.
+ */
+function validateInternshipDetails(array $d, $existing = null)
+{
+    $today = strtotime('today');
+    $fail = function ($message) { return [$message, '', '']; };
+
+    $title = (string) ($d['title'] ?? '');
+    if ($title === '') return $fail('Please enter the internship title.');
+    if (mb_strlen($title) < 3 || mb_strlen($title) > 255) return $fail('The internship title must be between 3 and 255 characters.');
+    if (preg_match('/\p{L}/u', $title) !== 1) return $fail('The internship title must contain letters.');
+
+    if (!in_array((string) ($d['industry'] ?? ''), internshipIndustryOptions(), true)) {
+        return $fail('Please select a valid industry category.');
+    }
+
+    $description = (string) ($d['description'] ?? '');
+    if (!empty($d['require_description']) && $description === '') {
+        return $fail('Please enter the internship description.');
+    }
+    if ($description !== '' && mb_strlen($description) < 20) {
+        return $fail('The description is too short. Please write at least 20 characters.');
+    }
+    if (mb_strlen($description) > 5000) return $fail('The description is too long (maximum 5000 characters).');
+
+    if (!in_array((string) ($d['academic_year'] ?? ''), ['3rd Year', '4th Year'], true)) {
+        return $fail('Please select the preferred academic year: 3rd Year or 4th Year (only 3rd and 4th year students can apply).');
+    }
+    if (!in_array((string) ($d['experience_level'] ?? ''), ['', 'Beginner', 'Intermediate', 'Advanced'], true)) {
+        return $fail('Please select a valid experience level.');
+    }
+
+    $vacancies = (int) ($d['vacancies'] ?? 0);
+    if ($vacancies < 1 || $vacancies > 999) return $fail('Number of vacancies must be between 1 and 999.');
+
+    $duration = (string) ($d['duration'] ?? '');
+    if ($duration === '') return $fail('Please enter the internship duration, e.g. 6 Months.');
+    if (preg_match('/\d/', $duration) !== 1 || preg_match('/(day|week|month|year)/i', $duration) !== 1) {
+        return $fail('Duration must include a number and a unit, e.g. 6 Months or 12 Weeks.');
+    }
+
+    list($internshipType, $typeError) = resolveInternshipType($d['internship_type'] ?? '', $d['internship_type_other'] ?? '');
+    if ($typeError !== '') return $fail($typeError);
+    if (!in_array((string) ($d['work_mode'] ?? ''), ['', 'On-site', 'Remote', 'Hybrid'], true)) {
+        return $fail('Please select a valid work mode.');
+    }
+
+    list($location, $locationError) = resolveInternshipLocation(
+        $d['work_mode'] ?? '', $d['location'] ?? '', $d['location_other'] ?? ''
+    );
+    if ($locationError !== '') return $fail($locationError);
+
+    // Dates
+    $deadlineInput = (string) ($d['deadline_input'] ?? '');
+    $deadlineTs = $deadlineInput === '' ? false : strtotime($deadlineInput);
+    if ($deadlineTs === false) return $fail('Please select a valid application deadline.');
+    $deadlineUnchanged = $existing && normaliseInternshipDeadline($deadlineInput) === normaliseInternshipDeadline($existing['deadline'] ?? '');
+    if (!$deadlineUnchanged && $deadlineTs < $today) {
+        return $fail('The application deadline cannot be in the past.');
+    }
+
+    $startDate = (string) ($d['start_date'] ?? '');
+    if ($startDate !== '') {
+        $startObj = DateTime::createFromFormat('Y-m-d', $startDate);
+        if (!$startObj || $startObj->format('Y-m-d') !== $startDate) {
+            return $fail('Please select a valid start date.');
+        }
+        $startUnchanged = $existing && $startDate === (string) ($existing['start_date'] ?? '');
+        if (!($startUnchanged && $deadlineUnchanged) && $startObj->getTimestamp() < $deadlineTs) {
+            return $fail('The start date must be on or after the application deadline.');
+        }
+    }
+
+    // Allowance
+    $paidStatus = (string) ($d['paid_status'] ?? '');
+    if (!in_array($paidStatus, ['Paid', 'Unpaid'], true)) return $fail('Please select Paid or Unpaid.');
+    $stipend = (float) ($d['stipend'] ?? 0);
+    if ($paidStatus === 'Paid' && $stipend <= 0) {
+        return $fail('Please enter the monthly allowance for a paid internship.');
+    }
+    if ($stipend < 0 || $stipend > 10000000) return $fail('Please enter a valid monthly allowance.');
+
+    if (mb_strlen((string) ($d['responsibilities'] ?? '')) > 5000 || mb_strlen((string) ($d['benefits'] ?? '')) > 5000) {
+        return $fail('Responsibilities and benefits must each be under 5000 characters.');
+    }
+
+    return ['', $location, $internshipType];
+}
+
 
 /* =========================
    CREATE INTERNSHIP
@@ -117,6 +290,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_internship']))
     $internshipType = trim($_POST['internship_type'] ?? '');
     $workMode = trim($_POST['work_mode'] ?? '');
     $location = trim($_POST['location'] ?? '');
+    $locationOther = trim($_POST['location_other'] ?? '');
     $startDate = trim($_POST['start_date'] ?? '');
     $deadlineInput = trim($_POST['deadline'] ?? '');
     $deadline = normaliseInternshipDeadline($deadlineInput);
@@ -125,7 +299,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_internship']))
     $responsibilities = trim($_POST['responsibilities'] ?? '');
     $benefits = trim($_POST['benefits'] ?? '');
 
-    $coverImage = uploadInternshipFile($_FILES['cover_image'] ?? null, 'image');
+    // Validate the text fields first so nothing is uploaded for an invalid form.
+    list($createError, $location, $internshipType) = validateInternshipDetails([
+        'title' => $title, 'industry' => $industry, 'description' => $description,
+        'academic_year' => $academicYear, 'experience_level' => $experienceLevel,
+        'vacancies' => $vacancies, 'duration' => $duration, 'internship_type' => $internshipType,
+        'internship_type_other' => trim($_POST['internship_type_other'] ?? ''),
+        'work_mode' => $workMode, 'location' => $location, 'location_other' => $locationOther,
+        'start_date' => $startDate, 'deadline_input' => $deadlineInput, 'paid_status' => $paidStatus,
+        'stipend' => $stipend, 'responsibilities' => $responsibilities, 'benefits' => $benefits,
+        'require_description' => true,
+    ]);
+
+    $coverImage = $createError === '' ? uploadInternshipFile($_FILES['cover_image'] ?? null, 'image') : '';
     if ($coverImage === false) {
         $createError = 'Invalid cover image. Upload JPG, JPEG, PNG or WEBP under 10MB.';
     }
@@ -138,11 +324,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_internship']))
         }
     }
 
-    if ($createError === '' && (
-        $title === '' || $industry === '' || $description === '' || $techTags === '' ||
-        $duration === '' || $deadline === '' || $vacancies < 1
-    )) {
-        $createError = 'Please complete all required fields.';
+    if ($createError === '') {
+        list($techTags, $techTagsError) = validateTechTags($techTags);
+        if ($techTagsError !== '') $createError = $techTagsError;
     }
 
     if ($createError === '') {
@@ -187,6 +371,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
         $internshipType = trim($_POST['internship_type'] ?? '');
         $workMode = trim($_POST['work_mode'] ?? '');
         $location = trim($_POST['location'] ?? '');
+        $locationOther = trim($_POST['location_other'] ?? '');
         $startDate = trim($_POST['start_date'] ?? '');
         $deadlineInput = trim($_POST['deadline'] ?? '');
         $deadline = normaliseInternshipDeadline($deadlineInput);
@@ -195,8 +380,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
         $responsibilities = trim($_POST['responsibilities'] ?? '');
         $benefits = trim($_POST['benefits'] ?? '');
 
+        // Validate the text fields first so nothing is uploaded for an invalid form.
+        list($updateError, $resolvedLocation, $resolvedType) = validateInternshipDetails([
+            'title' => $title, 'industry' => $industry, 'description' => $description,
+            'academic_year' => $academicYear, 'experience_level' => $experienceLevel,
+            'vacancies' => $vacancies, 'duration' => $duration, 'internship_type' => $internshipType,
+            'internship_type_other' => trim($_POST['internship_type_other'] ?? ''),
+            'work_mode' => $workMode, 'location' => $location, 'location_other' => $locationOther,
+            'start_date' => $startDate, 'deadline_input' => $deadlineInput, 'paid_status' => $paidStatus,
+            'stipend' => $stipend, 'responsibilities' => $responsibilities, 'benefits' => $benefits,
+            'require_description' => false,
+        ], $internshipToUpdate);
+        if ($updateError === '') {
+            $location = $resolvedLocation;
+            $internshipType = $resolvedType;
+        }
+
         $coverImage = $internshipToUpdate['cover_image'] ?? '';
-        $newCover = uploadInternshipFile($_FILES['cover_image'] ?? null, 'image');
+        $newCover = $updateError === '' ? uploadInternshipFile($_FILES['cover_image'] ?? null, 'image') : '';
         if ($newCover === false) {
             $updateError = 'Invalid cover image. Upload JPG, JPEG, PNG or WEBP under 10MB.';
         } elseif ($newCover !== '') {
@@ -231,10 +432,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_internship']))
             'benefits' => $benefits
         ];
 
-        if ($updateError === '' && (
-            $title === '' || $industry === '' || $duration === '' || $deadline === ''
-        )) {
-            $updateError = 'Please complete all required fields.';
+        if ($updateError === '' && $techTags !== '') {
+            $submittedTechTags = $techTags;
+            list($techTags, $techTagsError) = validateTechTags($techTags);
+            $updateFormData['tech_tags'] = $techTagsError === '' ? $techTags : $submittedTechTags;
+            if ($techTagsError !== '') $updateError = $techTagsError;
         }
 
         if ($updateError === '') {
@@ -1938,12 +2140,12 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
                         <div class="form-group full">
                             <label for="tech_tags">Required Skills / Technologies *</label>
                             <input id="tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($_POST['tech_tags'] ?? '') ?>" placeholder="e.g. PHP, MySQL, JavaScript" required>
-                            <small>Separate skills using commas.</small>
+                            <small>Separate skills using commas. Use real skills, e.g. PHP, MySQL, JavaScript.</small>
                         </div>
                         <div class="form-group">
                             <label for="academic_year">Preferred Academic Year</label>
-                            <select id="academic_year" name="academic_year">
-                                <option value="">Any Year</option><option>3rd Year</option><option>4th Year</option>
+                            <select id="academic_year" name="academic_year" required>
+                                <option value="">Select Year</option><option <?= ($_POST['academic_year'] ?? '') === '3rd Year' ? 'selected' : '' ?>>3rd Year</option><option <?= ($_POST['academic_year'] ?? '') === '4th Year' ? 'selected' : '' ?>>4th Year</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -1968,15 +2170,36 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="internship_type">Internship Type</label>
-                            <select id="internship_type" name="internship_type"><option value="">Select Type</option><option>Full-time</option><option>Part-time</option></select>
+                            <select id="internship_type" name="internship_type" data-type-select>
+                                <option value="">Select Type</option>
+                                <?php foreach (internshipTypeOptions() as $typeOption): ?>
+                                    <option value="<?= htmlspecialchars($typeOption) ?>" <?= ($_POST['internship_type'] ?? '') === $typeOption ? 'selected' : '' ?>><?= htmlspecialchars($typeOption) ?></option>
+                                <?php endforeach; ?>
+                                <option value="Other" <?= ($_POST['internship_type'] ?? '') === 'Other' ? 'selected' : '' ?>>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" data-type-other-group hidden>
+                            <label for="internship_type_other">Specify Type *</label>
+                            <input id="internship_type_other" type="text" name="internship_type_other" maxlength="50" value="<?= htmlspecialchars($_POST['internship_type_other'] ?? '') ?>" placeholder="e.g. Seasonal" data-type-other>
                         </div>
                         <div class="form-group">
                             <label for="work_mode">Work Mode</label>
                             <select id="work_mode" name="work_mode"><option value="">Select Work Mode</option><option>On-site</option><option>Remote</option><option>Hybrid</option></select>
                         </div>
-                        <div class="form-group full">
-                            <label for="location">Location</label>
-                            <input id="location" type="text" name="location" maxlength="255" value="<?= htmlspecialchars($_POST['location'] ?? '') ?>" placeholder="e.g. Colombo, Sri Lanka">
+                        <div class="form-group" data-location-group>
+                            <label for="location">Work Location <span data-location-required hidden>*</span></label>
+                            <select id="location" name="location" data-location-select>
+                                <option value="">Select District</option>
+                                <?php foreach (sriLankaDistricts() as $district): ?>
+                                    <option value="<?= htmlspecialchars($district) ?>" <?= ($_POST['location'] ?? '') === $district ? 'selected' : '' ?>><?= htmlspecialchars($district) ?></option>
+                                <?php endforeach; ?>
+                                <option value="Other" <?= ($_POST['location'] ?? '') === 'Other' ? 'selected' : '' ?>>Other / outside Sri Lanka</option>
+                            </select>
+                            <small data-location-hint>Where the intern will work. Not required for Remote internships.</small>
+                        </div>
+                        <div class="form-group" data-location-other-group hidden>
+                            <label for="location_other">City, Country *</label>
+                            <input id="location_other" type="text" name="location_other" maxlength="100" value="<?= htmlspecialchars($_POST['location_other'] ?? '') ?>" placeholder="e.g. Singapore, Singapore" data-location-other>
                         </div>
                         <div class="form-group">
                             <label for="start_date">Start Date</label>
@@ -2067,16 +2290,18 @@ $pageError = ($_GET['notice'] ?? '') === 'status_rejected'
 
                 <div class="internship-form-section"><h3>Requirements</h3><div class="form-grid">
                     <div class="form-group full"><label for="edit_tech_tags">Required Skills / Technologies</label><input id="edit_tech_tags" type="text" name="tech_tags" maxlength="255" value="<?= htmlspecialchars($updateFormData['tech_tags'] ?? '') ?>"></div>
-                    <div class="form-group"><label for="edit_academic_year">Preferred Academic Year</label><select id="edit_academic_year" name="academic_year"><option value="">Any Year</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option></select></div>
+                    <div class="form-group"><label for="edit_academic_year">Preferred Academic Year</label><select id="edit_academic_year" name="academic_year" required><option value="">Select Year</option><option>3rd Year</option><option>4th Year</option></select></div>
                     <div class="form-group"><label for="edit_experience_level">Experience Level</label><select id="edit_experience_level" name="experience_level"><option value="">Select Level</option><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></div>
                     <div class="form-group"><label for="edit_vacancies">Number of Vacancies</label><input id="edit_vacancies" type="number" name="vacancies" min="1" max="999" value="<?= htmlspecialchars($updateFormData['vacancies'] ?? '1') ?>"></div>
                     <div class="form-group"><label for="edit_duration">Duration *</label><input id="edit_duration" type="text" name="duration" maxlength="50" value="<?= htmlspecialchars($updateFormData['duration'] ?? '') ?>" required></div>
                 </div></div>
 
                 <div class="internship-form-section"><h3>Work Details</h3><div class="form-grid">
-                    <div class="form-group"><label for="edit_internship_type">Internship Type</label><select id="edit_internship_type" name="internship_type"><option value="">Select Type</option><option>Full-time</option><option>Part-time</option></select></div>
+                    <div class="form-group"><label for="edit_internship_type">Internship Type</label><select id="edit_internship_type" name="internship_type" data-type-select><option value="">Select Type</option><?php foreach (internshipTypeOptions() as $typeOption): ?><option value="<?= htmlspecialchars($typeOption) ?>"><?= htmlspecialchars($typeOption) ?></option><?php endforeach; ?><option value="Other">Other</option></select></div>
+                    <div class="form-group" data-type-other-group hidden><label for="edit_internship_type_other">Specify Type *</label><input id="edit_internship_type_other" type="text" name="internship_type_other" maxlength="50" placeholder="e.g. Seasonal" data-type-other></div>
                     <div class="form-group"><label for="edit_work_mode">Work Mode</label><select id="edit_work_mode" name="work_mode"><option value="">Select Work Mode</option><option>On-site</option><option>Remote</option><option>Hybrid</option></select></div>
-                    <div class="form-group full"><label for="edit_location">Location</label><input id="edit_location" type="text" name="location" maxlength="255" value="<?= htmlspecialchars($updateFormData['location'] ?? '') ?>"></div>
+                    <div class="form-group" data-location-group><label for="edit_location">Work Location <span data-location-required hidden>*</span></label><select id="edit_location" name="location" data-location-select><option value="">Select District</option><?php foreach (sriLankaDistricts() as $district): ?><option value="<?= htmlspecialchars($district) ?>"><?= htmlspecialchars($district) ?></option><?php endforeach; ?><option value="Other">Other / outside Sri Lanka</option></select><small data-location-hint>Where the intern will work. Not required for Remote internships.</small></div>
+                    <div class="form-group" data-location-other-group hidden><label for="edit_location_other">City, Country *</label><input id="edit_location_other" type="text" name="location_other" maxlength="100" placeholder="e.g. Singapore, Singapore" data-location-other></div>
                     <div class="form-group"><label for="edit_start_date">Start Date</label><input id="edit_start_date" type="date" name="start_date" value="<?= htmlspecialchars($updateFormData['start_date'] ?? '') ?>"></div>
                     <div class="form-group"><label for="edit_deadline">Application Deadline *</label><input id="edit_deadline" type="date" name="deadline" value="<?= htmlspecialchars($updateFormData['deadline'] ?? '') ?>" required></div>
                 </div></div>
@@ -2447,6 +2672,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 
+<script>window.SKILL_CATALOG = <?= json_encode(skillCatalogMap(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script src="../../../Assets/JS/Company/internships.js?v=<?= filemtime(__DIR__ . '/../../../Assets/JS/Company/internships.js') ?>"></script>
 
 

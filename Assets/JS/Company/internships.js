@@ -637,7 +637,6 @@
                     "duration",
                     "internship_type",
                     "work_mode",
-                    "location",
                     "start_date",
                     "deadline",
                     "paid_status",
@@ -652,6 +651,33 @@
                         name,
                         internship[name]
                     );
+                });
+
+                const locationSelect = form.elements.location;
+                const locationOther = form.elements.location_other;
+                if (locationOther) locationOther.value = "";
+                if (locationSelect) {
+                    const savedLocation = String(internship.location || "").trim();
+                    const isDistrict = Array.from(locationSelect.options).some(function (option) {
+                        return option.value === savedLocation;
+                    });
+                    if (savedLocation === "Remote" || savedLocation === "") {
+                        locationSelect.value = "";
+                    } else if (isDistrict) {
+                        locationSelect.value = savedLocation;
+                    } else {
+                        locationSelect.value = "Other";
+                        if (locationOther) locationOther.value = savedLocation;
+                    }
+                    locationSelect.dataset.originalValue = locationSelect.value;
+                }
+                if (locationOther) {
+                    locationOther.dataset.originalValue = locationOther.value;
+                }
+                ["deadline", "start_date"].forEach(function (name) {
+                    if (form.elements[name]) {
+                        form.elements[name].dataset.originalValue = form.elements[name].value;
+                    }
                 });
 
                 const statusInput = form.elements.status;
@@ -681,6 +707,7 @@
             );
 
             syncEditStipend();
+            document.dispatchEvent(new Event("internship:edit-filled"));
 
             if (form.elements.title) {
                 form.elements.title.focus();
@@ -783,6 +810,236 @@
         );
     } else {
         initializeEditInternshipModal();
+    }
+})();
+
+(function () {
+    const districts = [
+        "Ampara", "Anuradhapura", "Badulla", "Batticaloa", "Colombo",
+        "Galle", "Gampaha", "Hambantota", "Jaffna", "Kalutara", "Kandy",
+        "Kegalle", "Kilinochchi", "Kurunegala", "Mannar", "Matale", "Matara",
+        "Monaragala", "Mullaitivu", "Nuwara Eliya", "Polonnaruwa", "Puttalam",
+        "Ratnapura", "Trincomalee", "Vavuniya"
+    ];
+    const industries = [
+        "Information Technology", "Software Development", "Data Science & AI",
+        "Cyber Security", "Business & Management", "Finance & Accounting",
+        "Marketing", "Engineering", "Design / UI-UX", "Human Resources", "Other"
+    ];
+    const today = function () {
+        const now = new Date();
+        return [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+    };
+    const length = value => Array.from(value).length;
+
+    function validDate(value) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+        const date = new Date(value + "T00:00:00");
+        if (Number.isNaN(date.getTime())) return false;
+        const normalized = [date.getFullYear(), String(date.getMonth() + 1).padStart(2, "0"), String(date.getDate()).padStart(2, "0")].join("-");
+        return normalized === value;
+    }
+
+    function syncLocation(form) {
+        const mode = form.elements.work_mode;
+        const location = form.elements.location;
+        const other = form.elements.location_other;
+        const otherGroup = document.getElementById(form.id === "editInternshipForm" ? "editLocationOtherGroup" : "locationOtherGroup");
+        if (!mode || !location || !other) return;
+
+        const remote = mode.value === "Remote";
+        const locationRequired = mode.value === "On-site" || mode.value === "Hybrid";
+        location.disabled = remote;
+        location.required = locationRequired;
+        if (remote) {
+            location.value = "";
+            other.value = "";
+        }
+        const isOther = location.value === "Other" && !remote;
+        other.disabled = !isOther;
+        other.required = isOther;
+        if (otherGroup) {
+            otherGroup.hidden = !isOther;
+            otherGroup.style.display = isOther ? "" : "none";
+        }
+        if (remote) {
+            location.setCustomValidity("");
+            other.setCustomValidity("");
+        }
+    }
+
+    function validateForm(form) {
+        const edit = form.id === "editInternshipForm";
+        const field = name => form.elements[name];
+        const value = name => field(name) ? String(field(name).value).trim() : "";
+        const setError = (name, message) => {
+            if (field(name)) field(name).setCustomValidity(message);
+        };
+        const title = value("title");
+        const industry = value("industry");
+        const description = value("description");
+        const academicYear = value("academic_year");
+        const experience = value("experience_level");
+        const vacancies = value("vacancies");
+        const duration = value("duration");
+        const internshipType = value("internship_type");
+        const internshipTypeOther = value("internship_type_other");
+        const workMode = value("work_mode");
+        const deadline = value("deadline");
+        const startDate = value("start_date");
+        const paidStatus = value("paid_status");
+        const stipend = value("stipend");
+        const responsibilities = value("responsibilities");
+        const benefits = value("benefits");
+        const deadlineField = field("deadline");
+        const startDateField = field("start_date");
+        const originalDeadline = deadlineField ? (deadlineField.dataset.originalValue || form.dataset.originalDeadline || "") : "";
+        const originalStartDate = startDateField ? (startDateField.dataset.originalValue || form.dataset.originalStartDate || "") : "";
+        const deadlineUnchanged = edit && deadline !== "" && deadline === originalDeadline;
+        const startUnchanged = edit && startDate !== "" && startDate === originalStartDate;
+
+        setError("title", length(title) < 3 || length(title) > 255 || !/\p{L}/u.test(title)
+            ? "Title must be 3-255 characters and include at least one letter." : "");
+        setError("industry", industries.includes(industry) ? "" : "Please select a valid industry category.");
+        setError("description", ((!edit && description === "") || (description !== "" && length(description) < 20))
+            ? "Description must be at least 20 characters."
+            : (length(description) > 5000 ? "Description must not exceed 5,000 characters." : ""));
+        setError("academic_year", ["", "3rd Year", "4th Year"].includes(academicYear)
+            ? "" : "Please select a valid academic year.");
+        setError("experience_level", ["", "Beginner", "Intermediate", "Advanced"].includes(experience)
+            ? "" : "Please select a valid experience level.");
+        setError("vacancies", /^\d+$/.test(vacancies) && Number(vacancies) >= 1 && Number(vacancies) <= 999
+            ? "" : "Vacancies must be a whole number from 1 to 999.");
+        setError("duration", /^\d+\s*(day|days|week|weeks|month|months|year|years)$/i.test(duration)
+            ? "" : "Duration must include a number and a unit (day, week, month, or year).");
+        const typeOptions = ["Full-time", "Part-time", "Contract", "Project-based", "Flexible Hours"];
+        const typeOtherValid = /^[\p{L}][\p{L} /-]{0,48}[\p{L}]$|^[\p{L}]{2,50}$/u.test(internshipTypeOther) && length(internshipTypeOther) >= 2 && length(internshipTypeOther) <= 50;
+        setError("internship_type", typeOptions.includes(internshipType) || internshipType === "Other"
+            ? "" : "Please select a valid internship type.");
+        const typeOther = field("internship_type_other");
+        const typeOtherGroup = document.getElementById(edit ? "editInternshipTypeOtherGroup" : "internshipTypeOtherGroup");
+        if (typeOther) {
+            typeOther.required = internshipType === "Other";
+            typeOther.disabled = internshipType !== "Other";
+            if (typeOtherGroup) typeOtherGroup.hidden = internshipType !== "Other";
+            setError("internship_type_other", internshipType === "Other" && !typeOtherValid
+                ? "Other internship type must be 2-50 characters using letters, spaces, hyphens, or slashes." : "");
+        }
+        setError("work_mode", ["", "On-site", "Remote", "Hybrid"].includes(workMode)
+            ? "" : "Please select a valid work mode.");
+
+        const todayValue = today();
+        if (deadlineField) {
+            deadlineField.min = edit && deadlineUnchanged && deadline < todayValue ? deadline : todayValue;
+        }
+        if (startDateField) {
+            startDateField.min = edit && deadlineUnchanged && startUnchanged ? startDate : deadline;
+        }
+        setError("deadline", !validDate(deadline)
+            ? "Please select a valid application deadline."
+            : (!deadlineUnchanged && deadline < todayValue ? "Application deadline cannot be in the past." : ""));
+        setError("start_date", startDate !== "" && !validDate(startDate)
+            ? "Please enter a valid start date."
+            : (startDate !== "" && !(deadlineUnchanged && startUnchanged) && startDate < deadline
+                ? "Start date must be on or after the application deadline." : ""));
+
+        setError("paid_status", ["Paid", "Unpaid"].includes(paidStatus) ? "" : "Please select Paid or Unpaid.");
+        const stipendNumber = Number(stipend);
+        setError("stipend", stipend !== "" && (!Number.isFinite(stipendNumber) || stipendNumber < 0)
+            ? "Stipend must be a valid amount of LKR 0-10,000,000."
+            : (stipend !== "" && stipendNumber > 10000000
+                ? "Stipend must not exceed LKR 10,000,000."
+                : (paidStatus === "Paid" && (!stipend || !Number.isFinite(stipendNumber) || stipendNumber <= 0)
+                    ? "Enter a stipend greater than 0 for a paid internship." : "")));
+        setError("responsibilities", length(responsibilities) > 5000 ? "Responsibilities must not exceed 5,000 characters." : "");
+        setError("benefits", length(benefits) > 5000 ? "Benefits must not exceed 5,000 characters." : "");
+
+        const location = field("location");
+        const other = field("location_other");
+        if (location && other) {
+            const selection = location.value;
+            const otherValue = other.value.trim();
+            let locationMessage = "";
+            let otherMessage = "";
+            if (workMode !== "Remote") {
+                if ((workMode === "On-site" || workMode === "Hybrid") && selection === "") {
+                    locationMessage = "Please select a work location.";
+                } else if (selection !== "" && selection !== "Other" && !districts.includes(selection)) {
+                    locationMessage = "Please select a valid work location.";
+                } else if (selection === "Other" && (length(otherValue) < 2 || length(otherValue) > 100 || !/\p{L}/u.test(otherValue) || !/^[\p{L} ,]+$/u.test(otherValue))) {
+                    otherMessage = "Enter a city and country using 2-100 letters, spaces, and commas only.";
+                }
+            }
+            setError("location", locationMessage);
+            setError("location_other", otherMessage);
+        }
+
+        return form.checkValidity();
+    }
+
+    function initialize() {
+        ["internshipForm", "editInternshipForm"].forEach(function (id) {
+            const form = document.getElementById(id);
+            if (!form) return;
+            const edit = id === "editInternshipForm";
+            const mode = form.elements.work_mode;
+            const location = form.elements.location;
+            const paidStatus = form.elements.paid_status;
+            const stipend = form.elements.stipend;
+            const deadline = form.elements.deadline;
+            const startDate = form.elements.start_date;
+
+            if (edit) {
+                if (deadline && !deadline.dataset.originalValue) deadline.dataset.originalValue = form.dataset.originalDeadline || deadline.value;
+                if (startDate && !startDate.dataset.originalValue) startDate.dataset.originalValue = form.dataset.originalStartDate || startDate.value;
+            } else if (deadline) {
+                deadline.min = today();
+            }
+
+            const update = function () {
+                syncLocation(form);
+                if (paidStatus && stipend) {
+                    const isPaid = paidStatus.value === "Paid";
+                    stipend.disabled = !isPaid;
+                    stipend.required = isPaid;
+                    if (!isPaid) stipend.value = "";
+                }
+                validateForm(form);
+            };
+
+            form.addEventListener("input", update);
+            form.addEventListener("change", update);
+            form.addEventListener("submit", function (event) {
+                update();
+                if (!validateForm(form)) {
+                    event.preventDefault();
+                    const invalid = form.querySelector(":invalid");
+                    if (invalid) invalid.reportValidity();
+                }
+            }, true);
+            if (mode) mode.addEventListener("change", update);
+            if (location) location.addEventListener("change", update);
+            if (paidStatus) paidStatus.addEventListener("change", update);
+            if (deadline) deadline.addEventListener("change", update);
+            if (startDate) startDate.addEventListener("change", update);
+            update();
+        });
+
+        document.addEventListener("internship:edit-filled", function () {
+            const form = document.getElementById("editInternshipForm");
+            if (!form) return;
+            syncLocation(form);
+            ["deadline", "start_date"].forEach(function (name) {
+                if (form.elements[name]) form.elements[name].dataset.originalValue = form.elements[name].value;
+            });
+            validateForm(form);
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initialize, { once: true });
+    } else {
+        initialize();
     }
 })();
 
@@ -998,7 +1255,7 @@
             if (locationEl) locationEl.textContent = data.location || "Not specified";
             if (vacanciesEl) vacanciesEl.textContent = data.vacancies ? (data.vacancies + " opening" + (data.vacancies > 1 ? "s" : "")) : "Not specified";
             if (expEl) expEl.textContent = data.experience_level || "Not specified";
-            if (yearEl) yearEl.textContent = data.academic_year || "Any Year";
+            if (yearEl) yearEl.textContent = data.academic_year || "3rd & 4th Year (both)";
             if (startDateEl) startDateEl.textContent = data.start_date || "Not specified";
             if (deadlineEl) deadlineEl.textContent = data.deadline || "Not specified";
             if (paidStatusEl) paidStatusEl.textContent = data.paid_status || "Unpaid";
@@ -1114,3 +1371,109 @@
     }
 })();
 
+(function () {
+    const catalog = window.SKILL_CATALOG || null;
+
+    function skillKey(value) {
+        return String(value).trim().toLowerCase().replace(/[\s.\-_]+/g, "");
+    }
+
+    function editDistance(left, right) {
+        const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+        for (let i = 1; i <= left.length; i++) {
+            let diagonal = previous[0];
+            previous[0] = i;
+            for (let j = 1; j <= right.length; j++) {
+                const above = previous[j];
+                previous[j] = Math.min(
+                    previous[j] + 1,
+                    previous[j - 1] + 1,
+                    diagonal + (left[i - 1] === right[j - 1] ? 0 : 1)
+                );
+                diagonal = above;
+            }
+        }
+        return previous[right.length];
+    }
+
+    function suggest(skill) {
+        if (!catalog) return "";
+        const key = skillKey(skill);
+        if (!key) return "";
+        let best = "";
+        let bestDistance = Infinity;
+        Object.entries(catalog).forEach(([catalogKey, canonical]) => {
+            const distance = editDistance(key, catalogKey);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                best = canonical;
+            }
+        });
+        return bestDistance <= Math.max(1, Math.floor(key.length / 3)) ? best : "";
+    }
+
+    function validateSkills(value, required) {
+        const skills = [];
+        for (const rawSkill of value.split(",")) {
+            const skill = rawSkill.trim().replace(/ +/g, " ");
+            if (!skill) continue;
+            skills.push(skill);
+        }
+        if (skills.length === 0) {
+            return required ? "Please enter at least one skill, e.g. PHP, MySQL, JavaScript." : "";
+        }
+        if (skills.length > 15) return "Please list no more than 15 skills.";
+
+        const canonicalSkills = [];
+        const seen = new Set();
+        for (const skill of skills) {
+            if (!/\p{L}/u.test(skill)) {
+                return `"${skill}" is not a valid skill. Skills must contain letters, not only numbers or symbols.`;
+            }
+            const key = skillKey(skill);
+            if (catalog && !Object.prototype.hasOwnProperty.call(catalog, key)) {
+                const hint = suggest(skill);
+                return `"${skill}" is not a recognised skill or technology.${hint ? ` Did you mean "${hint}"?` : " Please enter a real skill such as PHP, MySQL or Communication."}`;
+            }
+            const canonical = catalog ? catalog[key] : skill;
+            const canonicalKey = skillKey(canonical);
+            if (seen.has(canonicalKey)) return `Skill "${canonical}" is listed more than once.`;
+            seen.add(canonicalKey);
+            canonicalSkills.push(canonical);
+        }
+        return "";
+    }
+
+    function bindTechTagsValidation() {
+        ["tech_tags", "edit_tech_tags"].forEach(id => {
+            const input = document.getElementById(id);
+            if (!input || input.dataset.techTagsValidationBound === "true") return;
+            input.dataset.techTagsValidationBound = "true";
+            const form = input.form;
+            const required = id === "tech_tags";
+            const validate = () => {
+                const message = validateSkills(input.value, required);
+                input.setCustomValidity(message);
+                return message === "";
+            };
+
+            input.addEventListener("input", validate);
+            input.addEventListener("blur", function () {
+                if (!validate() && input.value.trim() !== "") input.reportValidity();
+            });
+            if (form) {
+                form.addEventListener("submit", function (event) {
+                    if (!validate()) {
+                        event.preventDefault();
+                        input.reportValidity();
+                    }
+                }, true);
+            }
+        });
+    }
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindTechTagsValidation, { once: true });
+    }
+    bindTechTagsValidation();
+})();
