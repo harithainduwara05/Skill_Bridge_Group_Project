@@ -1,50 +1,84 @@
 document.addEventListener("DOMContentLoaded", function () {
     const statusFilter = document.getElementById("statusFilter");
     const universityFilter = document.getElementById("universityFilter");
+    const internshipFilter = document.getElementById("internshipFilter");
+    const searchInput = document.getElementById("applicationSearch");
+    const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+    const noMatchRow = document.getElementById("noMatchRow");
     const rows = Array.from(document.querySelectorAll("#applicationsTable tbody .application-row"));
     const visibleCount = document.getElementById("visibleApplicationCount");
 
     function filterApplications() {
         const status = statusFilter ? statusFilter.value : "all";
         const university = universityFilter ? universityFilter.value : "all";
+        const internship = internshipFilter ? internshipFilter.value : "all";
+        const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
         let shown = 0;
 
         rows.forEach(function (row) {
-            const statusMatch = status === "all" || row.dataset.status === status;
-            const universityMatch = university === "all" || row.dataset.university === university;
-            const visible = statusMatch && universityMatch;
+            const visible =
+                (status === "all" || row.dataset.status === status) &&
+                (university === "all" || (row.dataset.university || "").replace(/\s+/g, " ").trim().toLocaleLowerCase() === university.replace(/\s+/g, " ").trim().toLocaleLowerCase()) &&
+                (internship === "all" || row.dataset.internship === internship) &&
+                (query === "" || (row.dataset.search || "").indexOf(query) !== -1);
             row.hidden = !visible;
             if (visible) shown++;
         });
 
         if (visibleCount) visibleCount.textContent = String(shown);
+        if (noMatchRow) noMatchRow.hidden = !(rows.length > 0 && shown === 0);
     }
 
-    if (statusFilter) statusFilter.addEventListener("change", filterApplications);
-    if (universityFilter) universityFilter.addEventListener("change", filterApplications);
+    [statusFilter, universityFilter, internshipFilter].forEach(function (el) {
+        if (el) el.addEventListener("change", filterApplications);
+    });
+    if (searchInput) searchInput.addEventListener("input", filterApplications);
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener("click", function () {
+            if (statusFilter) statusFilter.value = "all";
+            if (universityFilter) universityFilter.value = "all";
+            if (internshipFilter) internshipFilter.value = "all";
+            if (searchInput) searchInput.value = "";
+            filterApplications();
+        });
+    }
 
     const exportButton = document.getElementById("exportCsvBtn");
     if (exportButton) {
         exportButton.addEventListener("click", function () {
-            const lines = [["Student", "University", "Skills", "Applied Date", "Status"]];
+            const lines = [["Student", "Email", "Internship", "University", "Skills", "Applied Date", "Status", "Interview", "Disqualification Reason"]];
             rows.forEach(function (row) {
                 if (row.hidden) return;
                 const cells = row.querySelectorAll("td");
+                const interview = row.dataset.status === "Accepted" && row.dataset.interviewDate
+                    ? [row.dataset.interviewDate, row.dataset.interviewTime].filter(Boolean).join(" ")
+                    : "";
                 lines.push([
                     cells[0].querySelector("strong")?.textContent.trim() || "",
+                    cells[0].querySelector("span")?.textContent.trim() || "",
+                    row.dataset.internship || "",
                     cells[1].textContent.trim(),
                     cells[2].textContent.trim().replace(/\s+/g, " "),
                     cells[3].textContent.trim(),
-                    cells[4].textContent.trim()
+                    row.dataset.status || "",
+                    interview,
+                    row.dataset.status === "Disqualified" ? (row.dataset.disqualificationReason || "") : ""
                 ]);
             });
 
+            if (lines.length === 1) {
+                alert("There are no applications to export.");
+                return;
+            }
+
             const csv = lines.map(function (line) {
                 return line.map(function (value) {
-                    return '"' + String(value).replace(/"/g, '""') + '"';
+                    let text = String(value);
+                    if (/^[=+\-@\t\r]/.test(text)) text = "'" + text; // stop spreadsheet formula injection
+                    return '"' + text.replace(/"/g, '""') + '"';
                 }).join(",");
             }).join("\r\n");
-            const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+            const url = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
             const link = document.createElement("a");
             link.href = url;
             link.download = "skillbridge-applications.csv";
@@ -71,6 +105,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const radioDisqualified = document.getElementById("radioDecisionDisqualified");
     const cardOptAccepted = document.getElementById("cardOptAccepted");
     const cardOptDisqualified = document.getElementById("cardOptDisqualified");
+    const radioApplied = document.getElementById("radioDecisionApplied");
+    const cardOptApplied = document.getElementById("cardOptApplied");
 
     const acceptSection = document.getElementById("acceptInterviewSection");
     const disqualifySection = document.getElementById("disqualifySection");
@@ -85,30 +121,83 @@ document.addEventListener("DOMContentLoaded", function () {
     const inputDisqualifyNotes = document.getElementById("modalDisqualificationNotes");
 
     function setDecisionMode(mode) {
-        if (mode === "Accepted") {
-            radioAccepted.checked = true;
-            if (cardOptAccepted) cardOptAccepted.classList.add("active");
-            if (cardOptDisqualified) cardOptDisqualified.classList.remove("active");
+        const accepted = mode === "Accepted";
+        const disqualified = mode === "Disqualified";
+        const applied = mode === "Applied";
 
-            if (acceptSection) acceptSection.hidden = false;
-            if (disqualifySection) disqualifySection.hidden = true;
+        if (radioAccepted) radioAccepted.checked = accepted;
+        if (radioDisqualified) radioDisqualified.checked = disqualified;
+        if (radioApplied) radioApplied.checked = applied;
+        if (cardOptAccepted) cardOptAccepted.classList.toggle("active", accepted);
+        if (cardOptDisqualified) cardOptDisqualified.classList.toggle("active", disqualified);
+        if (cardOptApplied) cardOptApplied.classList.toggle("active", applied);
 
-            if (inputDate) inputDate.required = true;
-            if (selectTime) selectTime.required = true;
-            if (selectReason) selectReason.required = false;
-        } else {
-            radioDisqualified.checked = true;
-            if (cardOptAccepted) cardOptAccepted.classList.remove("active");
-            if (cardOptDisqualified) cardOptDisqualified.classList.add("active");
+        if (acceptSection) acceptSection.hidden = !accepted;
+        if (disqualifySection) disqualifySection.hidden = !disqualified;
 
-            if (acceptSection) acceptSection.hidden = true;
-            if (disqualifySection) disqualifySection.hidden = false;
-
-            if (inputDate) inputDate.required = false;
-            if (selectTime) selectTime.required = false;
-            if (selectReason) selectReason.required = true;
-        }
+        if (inputDate) inputDate.required = accepted;
+        if (selectTime) selectTime.required = accepted;
+        if (inputLink) inputLink.required = accepted;
+        if (selectReason) selectReason.required = disqualified;
+        validateInterviewLink();
+        validateInterviewDate();
+        validateNoteLengths();
+        validateReasonNotes();
     }
+
+    // Same rules as the server (applications.php validateApplicationDecision)
+    function validateInterviewLink() {
+        if (!inputLink || !selectType) return;
+        let message = "";
+        const value = inputLink.value.trim();
+        const video = selectType.value.indexOf("Video") === 0;
+        if (radioAccepted && radioAccepted.checked) {
+            if (value.length < 3) {
+                message = "Please enter a meeting link or location of at least 3 characters.";
+            } else if (value.length > 255) {
+                message = "The meeting link / location is too long (maximum 255 characters).";
+            } else if (video && !/^(https?:\/\/)?[A-Za-z0-9][A-Za-z0-9.\-]*\.[A-Za-z]{2,}(\/\S*)?$/.test(value)) {
+                message = "Please enter a valid meeting link, e.g. https://meet.google.com/abc-defg-hij.";
+            } else if (!video && (value.length < 3 || !/\p{L}/u.test(value))) {
+                message = "Please enter the interview location, e.g. Room 302, Head Office.";
+            }
+        }
+        inputLink.setCustomValidity(message);
+    }
+
+    function validateInterviewDate() {
+        if (!inputDate) return;
+        const now = new Date();
+        const today = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, "0"), String(now.getDate()).padStart(2, "0")].join("-");
+        const latest = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        const max = [latest.getFullYear(), String(latest.getMonth() + 1).padStart(2, "0"), String(latest.getDate()).padStart(2, "0")].join("-");
+        inputDate.min = today;
+        inputDate.max = max;
+        inputDate.setCustomValidity(inputDate.value && (inputDate.value < today || inputDate.value > max)
+            ? (inputDate.value < today ? "The interview date cannot be in the past." : "The interview date must be within the next year.") : "");
+    }
+
+    function validateNoteLengths() {
+        if (inputNotes) inputNotes.setCustomValidity(inputNotes.value.length > 1000 ? "Interview notes must be under 1000 characters." : "");
+        if (inputDisqualifyNotes) inputDisqualifyNotes.setCustomValidity(inputDisqualifyNotes.value.length > 500 ? "Additional feedback must be under 500 characters." : "");
+    }
+
+    function validateReasonNotes() {
+        if (!selectReason || !inputDisqualifyNotes) return;
+        const needsNote = radioDisqualified && radioDisqualified.checked && selectReason.value === "Other";
+        inputDisqualifyNotes.setCustomValidity(
+            needsNote && inputDisqualifyNotes.value.trim().length < 5
+                ? 'Please add a short explanation when the reason is "Other".' : ""
+        );
+    }
+
+    if (inputLink) inputLink.addEventListener("input", validateInterviewLink);
+    if (inputDate) inputDate.addEventListener("change", validateInterviewDate);
+    if (inputNotes) inputNotes.addEventListener("input", validateNoteLengths);
+    if (inputDisqualifyNotes) inputDisqualifyNotes.addEventListener("input", validateNoteLengths);
+    if (selectType) selectType.addEventListener("change", validateInterviewLink);
+    if (selectReason) selectReason.addEventListener("change", validateReasonNotes);
+    if (inputDisqualifyNotes) inputDisqualifyNotes.addEventListener("input", validateReasonNotes);
 
     if (radioAccepted) {
         radioAccepted.addEventListener("change", function () {
@@ -118,6 +207,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (radioDisqualified) {
         radioDisqualified.addEventListener("change", function () {
             if (this.checked) setDecisionMode("Disqualified");
+        });
+    }
+    if (radioApplied) {
+        radioApplied.addEventListener("change", function () {
+            if (this.checked) setDecisionMode("Applied");
         });
     }
 
@@ -153,26 +247,34 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Default to tomorrow
                 const tomorrow = new Date();
                 tomorrow.setDate(tomorrow.getDate() + 1);
-                inputDate.value = tomorrow.toISOString().split("T")[0];
+                inputDate.value = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, "0"), String(tomorrow.getDate()).padStart(2, "0")].join("-");
             }
         }
-        if (selectTime) selectTime.value = interviewTime || "10:00 AM - 10:45 AM";
-        if (selectType) selectType.value = interviewType || "Video Interview (Google Meet / Zoom)";
+        if (selectTime) selectTime.value = Array.from(selectTime.options).some(function (o) { return o.value === interviewTime; }) ? interviewTime : "";
+        if (selectType) {
+            selectType.value = Array.from(selectType.options).some(function (o) { return o.value === interviewType; })
+                ? interviewType : "Video Interview (Google Meet / Zoom)";
+        }
         if (inputLink) inputLink.value = interviewLink;
         if (inputNotes) inputNotes.value = interviewNotes;
 
         // Pre-fill disqualify values
+        let matchedOption = "";
         if (selectReason) {
-            // Check if disqReason matches one of the options
-            let matchedOption = "";
+            // The saved text is "Reason - extra notes"
             Array.from(selectReason.options).forEach(opt => {
                 if (opt.value && disqReason.startsWith(opt.value)) matchedOption = opt.value;
             });
             selectReason.value = matchedOption || (disqReason ? "Other" : "");
         }
         if (inputDisqualifyNotes) {
-            inputDisqualifyNotes.value = disqReason;
+            inputDisqualifyNotes.value = matchedOption
+                ? disqReason.slice(matchedOption.length).replace(/^\s*-\s*/, "")
+                : disqReason;
         }
+
+        // "Undo decision" only makes sense once a decision exists
+        if (cardOptApplied) cardOptApplied.hidden = currentStatus === "Applied";
 
         // Determine which mode to show
         if (mode === "accept") {
@@ -203,6 +305,13 @@ document.addEventListener("DOMContentLoaded", function () {
             openDecisionModal(this);
         });
     });
+
+    if (decisionForm) {
+        decisionForm.addEventListener("submit", function () {
+            const saveBtn = document.getElementById("saveDecisionModalBtn");
+            if (saveBtn) saveBtn.disabled = true;
+        });
+    }
 
     if (closeBtn) closeBtn.addEventListener("click", closeDecisionModal);
     if (cancelBtn) cancelBtn.addEventListener("click", closeDecisionModal);

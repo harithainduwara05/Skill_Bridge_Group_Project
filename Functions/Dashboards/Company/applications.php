@@ -13,9 +13,66 @@ if (!$company) {
 }
 $companyName = $company['Name'];
 
+$interviewTimeSlots = [
+    '09:00 AM - 09:45 AM', '10:00 AM - 10:45 AM', '11:00 AM - 11:45 AM', '01:30 PM - 02:15 PM',
+    '02:30 PM - 03:15 PM', '03:30 PM - 04:15 PM', '04:30 PM - 05:15 PM',
+];
+$interviewTypes = ['Video Interview (Google Meet / Zoom)', 'In-Person Interview'];
+$disqualifyReasons = [
+    'Technical skills insufficient', 'Qualifications / GPA mismatch', 'Schedule / Availability mismatch',
+    'Position already filled', 'Interview performance', 'Other',
+];
+
+if (empty($_SESSION['applications_csrf'])) {
+    $_SESSION['applications_csrf'] = bin2hex(random_bytes(16));
+}
+$csrfToken = $_SESSION['applications_csrf'];
+
+/** Returns an error message, or '' when the decision details are valid. */
+function validateApplicationDecision($decision, array $details, array $slots, array $types, array $reasons)
+{
+    if ($decision === 'Accepted') {
+        $date = $details['interview_date'];
+        $dateObj = $date === '' ? false : DateTime::createFromFormat('Y-m-d', $date);
+        if (!$dateObj || $dateObj->format('Y-m-d') !== $date) {
+            return 'Please choose a valid interview date.';
+        }
+        if ($date < date('Y-m-d')) return 'The interview date cannot be in the past.';
+        if ($date > date('Y-m-d', strtotime('+1 year'))) return 'The interview date must be within the next year.';
+        if (!in_array($details['interview_time'], $slots, true)) return 'Please choose a valid interview time slot.';
+        if (!in_array($details['interview_type'], $types, true)) return 'Please choose a valid interview format.';
+
+        $link = $details['interview_link'];
+        if ($link === '') return 'Please enter the meeting link or the interview location.';
+        if (mb_strlen($link) < 3) return 'Please enter a meeting link or location of at least 3 characters.';
+        if (mb_strlen($link) > 255) return 'The meeting link / location is too long (maximum 255 characters).';
+        if ($details['interview_type'] === $types[0]) {
+            if (preg_match('/^(https?:\/\/)?[A-Za-z0-9][A-Za-z0-9.\-]*\.[A-Za-z]{2,}(\/\S*)?$/', $link) !== 1) {
+                return 'Please enter a valid meeting link, e.g. https://meet.google.com/abc-defg-hij.';
+            }
+        } elseif (mb_strlen($link) < 3 || preg_match('/\p{L}/u', $link) !== 1) {
+            return 'Please enter the interview location, e.g. Room 302, Head Office.';
+        }
+        if (mb_strlen($details['interview_notes']) > 1000) return 'Interview notes must be under 1000 characters.';
+        return '';
+    }
+
+    if ($decision === 'Disqualified') {
+        if (!in_array($details['disqualification_reason'], $reasons, true)) return 'Please select a reason for disqualification.';
+        $notes = $details['disqualification_notes'];
+        if ($details['disqualification_reason'] === 'Other' && mb_strlen($notes) < 5) {
+            return 'Please add a short explanation when the reason is "Other".';
+        }
+        if (mb_strlen($notes) > 500) return 'Additional feedback must be under 500 characters.';
+        return '';
+    }
+
+    return 'Please choose a decision.';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['application_decision'])) {
     $applicationId = (int) ($_POST['application_id'] ?? 0);
-    $decision = trim($_POST['application_decision'] ?? '');
+    $decision = ucfirst(strtolower(trim($_POST['application_decision'] ?? '')));
     $details = [
         'interview_date' => trim($_POST['interview_date'] ?? ''),
         'interview_time' => trim($_POST['interview_time'] ?? ''),
@@ -26,24 +83,69 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['application_decision'
         'disqualification_notes' => trim($_POST['disqualification_notes'] ?? ''),
     ];
 
-    $updated = $applicationId > 0
-        && $companyManager->updateCompanyApplicationDecision($applicationId, $companyName, $decision, $details);
-    $notice = $updated
-        ? (strtolower($decision) === 'accepted' ? 'accepted' : 'disqualified')
-        : 'decision_failed';
-    header('Location: applications.php?notice=' . $notice);
+    $flashType = 'error';
+    $flashMessage = '';
+    if (!hash_equals($csrfToken, (string) ($_POST['csrf_token'] ?? ''))) {
+        $flashMessage = 'Your session expired. Please try again.';
+    } elseif ($applicationId < 1) {
+        $flashMessage = 'Application not found.';
+    } elseif ($decision === 'Applied') {
+        if ($companyManager->resetCompanyApplication($applicationId, $companyName)) {
+            $flashType = 'success';
+            $flashMessage = 'Decision undone. The application is back to Applied and any interview was removed.';
+        } else {
+            $flashMessage = 'Unable to undo this decision. Please refresh and try again.';
+        }
+    } else {
+        $flashMessage = validateApplicationDecision($decision, $details, $interviewTimeSlots, $interviewTypes, $disqualifyReasons);
+        if ($flashMessage === '') {
+            if ($companyManager->updateCompanyApplicationDecision($applicationId, $companyName, $decision, $details)) {
+                $flashType = 'success';
+                $flashMessage = $decision === 'Accepted'
+                    ? 'Application accepted and interview scheduled successfully.'
+                    : 'Application status updated to Disqualified.';
+            } else {
+                $flashMessage = 'Unable to update this application. Please refresh and try again.';
+            }
+        }
+    }
+
+    $_SESSION['applications_flash'] = ['type' => $flashType, 'message' => $flashMessage];
+    header('Location: applications.php');
     exit;
 }
 
 $applications = [];
-$sql = "SELECT ia.application_id, ia.Email AS email, ia.status, ia.applied_date,
-               ia.interview_date, ia.interview_time, ia.interview_type, ia.interview_link, ia.interview_notes, ia.disqualification_reason,
-               s.Name AS student_name, s.University, i.title AS internship_title
-        FROM internship_applications ia
-        INNER JOIN internships i ON i.id = ia.internship_id
-        INNER JOIN student s ON s.Email = ia.Email
-        WHERE TRIM(i.company) = TRIM(?)
-        ORDER BY ia.applied_date DESC, ia.application_id DESC";
+
+$companyTableCheck = $conn->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'internships' AND COLUMN_NAME = 'company_email' LIMIT 1");
+$hasNormalizedCompanySchema = $companyTableCheck && $companyTableCheck->num_rows > 0;
+
+if ($hasNormalizedCompanySchema) {
+    $sql = "SELECT ia.application_id, ia.Email AS email, ia.status, ia.applied_date,
+                   ii.interview_date,
+                   ii.interview_time,
+                   ii.interview_type,
+                   ii.interview_link,
+                   ii.interview_notes,
+                   ia.disqualification_reason,
+                   s.Name AS student_name, s.University, i.title AS internship_title
+            FROM internship_applications ia
+            INNER JOIN internships i ON i.id = ia.internship_id
+            LEFT JOIN company c ON c.Email = i.company_email
+            LEFT JOIN internship_interviews ii ON ii.application_id = ia.application_id
+            INNER JOIN student s ON s.Email = ia.Email
+            WHERE TRIM(COALESCE(c.Name, '')) = TRIM(?)
+            ORDER BY ia.applied_date DESC, ia.application_id DESC";
+} else {
+    $sql = "SELECT ia.application_id, ia.Email AS email, ia.status, ia.applied_date,
+                   ia.interview_date, ia.interview_time, ia.interview_type, ia.interview_link, ia.interview_notes, ia.disqualification_reason,
+                   s.Name AS student_name, s.University, i.title AS internship_title
+            FROM internship_applications ia
+            INNER JOIN internships i ON i.id = ia.internship_id
+            INNER JOIN student s ON s.Email = ia.Email
+            WHERE TRIM(i.company) = TRIM(?)
+            ORDER BY ia.applied_date DESC, ia.application_id DESC";
+}
 $stmt = $conn->prepare($sql);
 if ($stmt) {
     $stmt->bind_param('s', $companyName);
@@ -71,22 +173,38 @@ foreach ($applications as &$application) {
 }
 unset($application);
 
-$universities = [];
-$universityResult = $conn->query("SELECT DISTINCT TRIM(University) AS University FROM universityemails WHERE Status = 'Active' AND TRIM(COALESCE(University, '')) <> '' ORDER BY University ASC");
+$universityMap = [];
+$universityResult = $conn->query("SELECT University FROM universityemails WHERE TRIM(COALESCE(University, '')) <> ''");
 if ($universityResult) {
     while ($universityRow = $universityResult->fetch_assoc()) {
-        $universities[] = $universityRow['University'];
+        $value = preg_replace('/\s+/u', ' ', trim((string) $universityRow['University']));
+        if ($value !== '') $universityMap[mb_strtolower($value, 'UTF-8')] = $value;
+    }
+}
+foreach ($applications as $application) {
+    $value = preg_replace('/\s+/u', ' ', trim((string) ($application['University'] ?? '')));
+    if ($value !== '') $universityMap[mb_strtolower($value, 'UTF-8')] = $value;
+}
+$universities = array_values($universityMap);
+natcasesort($universities);
+$universities = array_values($universities);
+
+$successMessage = '';
+$errorMessage = '';
+if (!empty($_SESSION['applications_flash'])) {
+    $flash = $_SESSION['applications_flash'];
+    unset($_SESSION['applications_flash']);
+    if (($flash['type'] ?? '') === 'success') {
+        $successMessage = (string) ($flash['message'] ?? '');
+    } else {
+        $errorMessage = (string) ($flash['message'] ?? '');
     }
 }
 
-$noticeMessages = [
-    'accepted' => 'Application accepted and interview scheduled successfully.',
-    'disqualified' => 'Application status updated to Disqualified.',
-];
-$successMessage = $noticeMessages[$_GET['notice'] ?? ''] ?? '';
-$errorMessage = ($_GET['notice'] ?? '') === 'decision_failed'
-    ? 'Unable to update this application. Please refresh and try again.'
-    : '';
+$internshipTitles = array_values(array_unique(array_filter(array_map(function ($row) {
+    return trim($row['internship_title'] ?? '');
+}, $applications))));
+sort($internshipTitles);
 $page_title = 'Applications';
 $extra_css = '<link rel="stylesheet" href="../../../Assets/CSS/Company/applications.css?v=' . filemtime(__DIR__ . '/../../../Assets/CSS/Company/applications.css') . '">';
 
@@ -137,6 +255,19 @@ include '../../../Includes/dash_header.php';
 
     <section class="applications-filter-card">
         <div class="filter-group">
+            <label for="applicationSearch">Search</label>
+            <input type="search" id="applicationSearch" placeholder="Student name, email or skill" autocomplete="off">
+        </div>
+        <div class="filter-group">
+            <label for="internshipFilter">Internship</label>
+            <select id="internshipFilter">
+                <option value="all">All Internships</option>
+                <?php foreach ($internshipTitles as $internshipOption): ?>
+                    <option value="<?= htmlspecialchars($internshipOption, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars($internshipOption) ?></option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+        <div class="filter-group">
             <label for="statusFilter">Application Status</label>
             <select id="statusFilter">
                 <option value="all">All Statuses</option>
@@ -154,6 +285,10 @@ include '../../../Includes/dash_header.php';
                 <?php endforeach; ?>
             </select>
         </div>
+        <div class="filter-group">
+            <label>&nbsp;</label>
+            <button type="button" class="export-btn" id="clearFiltersBtn">Clear filters</button>
+        </div>
     </section>
 
     <section class="applications-table-card">
@@ -166,6 +301,7 @@ include '../../../Includes/dash_header.php';
                     <?php if (!$applications): ?>
                         <tr><td colspan="6" class="applications-empty">No applications found.</td></tr>
                     <?php endif; ?>
+                    <tr id="noMatchRow" hidden><td colspan="6" class="applications-empty">No applications match your filters.</td></tr>
                     <?php foreach ($applications as $application): ?>
                         <?php
                             $name = trim($application['student_name'] ?? 'Student');
@@ -188,7 +324,8 @@ include '../../../Includes/dash_header.php';
                             data-candidate="<?= htmlspecialchars($name, ENT_QUOTES, 'UTF-8') ?>"
                             data-internship="<?= htmlspecialchars($internshipTitle, ENT_QUOTES, 'UTF-8') ?>"
                             data-status="<?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8') ?>"
-                            data-university="<?= htmlspecialchars($application['University'] ?? '', ENT_QUOTES, 'UTF-8') ?>"
+                            data-search="<?= htmlspecialchars(strtolower($name . ' ' . ($application['email'] ?? '') . ' ' . ($application['skills'] ?? '')), ENT_QUOTES, 'UTF-8') ?>"
+                            data-university="<?= htmlspecialchars(preg_replace('/\s+/u', ' ', trim((string) ($application['University'] ?? ''))), ENT_QUOTES, 'UTF-8') ?>"
                             data-interview-date="<?= htmlspecialchars($interviewDate, ENT_QUOTES, 'UTF-8') ?>"
                             data-interview-time="<?= htmlspecialchars($interviewTime, ENT_QUOTES, 'UTF-8') ?>"
                             data-interview-type="<?= htmlspecialchars($interviewType, ENT_QUOTES, 'UTF-8') ?>"
@@ -254,6 +391,7 @@ include '../../../Includes/dash_header.php';
 
             <form method="POST" id="decisionModalForm">
                 <input type="hidden" name="application_id" id="modalApplicationId" value="0">
+                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($csrfToken) ?>">
 
                 <div class="modal-body-content">
                     <!-- STATUS TOGGLE CARDS -->
@@ -283,6 +421,18 @@ include '../../../Includes/dash_header.php';
                                 </div>
                             </div>
                         </label>
+                        <label class="status-toggle-card" id="cardOptApplied" hidden>
+                            <input type="radio" name="application_decision" value="Applied" id="radioDecisionApplied" required>
+                            <div class="card-inner">
+                                <div class="card-icon-box">
+                                    <span class="material-symbols-outlined">undo</span>
+                                </div>
+                                <div class="card-texts">
+                                    <strong>Undo decision</strong>
+                                    <span>Back to Applied, interview removed</span>
+                                </div>
+                            </div>
+                        </label>
                     </div>
 
                     <!-- ACCEPT: INTERVIEW DETAILS -->
@@ -302,13 +452,9 @@ include '../../../Includes/dash_header.php';
                                 <label for="modalInterviewTime">Time Slot <span class="req">*</span></label>
                                 <select id="modalInterviewTime" name="interview_time">
                                     <option value="">Select Time Slot</option>
-                                    <option value="09:00 AM - 09:45 AM">09:00 AM - 09:45 AM</option>
-                                    <option value="10:00 AM - 10:45 AM">10:00 AM - 10:45 AM</option>
-                                    <option value="11:00 AM - 11:45 AM">11:00 AM - 11:45 AM</option>
-                                    <option value="01:30 PM - 02:15 PM">01:30 PM - 02:15 PM</option>
-                                    <option value="02:30 PM - 03:15 PM">02:30 PM - 03:15 PM</option>
-                                    <option value="03:30 PM - 04:15 PM">03:30 PM - 04:15 PM</option>
-                                    <option value="04:30 PM - 05:15 PM">04:30 PM - 05:15 PM</option>
+                                    <?php foreach ($interviewTimeSlots as $slot): ?>
+                                        <option value="<?= htmlspecialchars($slot) ?>"><?= htmlspecialchars($slot) ?></option>
+                                    <?php endforeach; ?>
                                 </select>
                             </div>
                         </div>
@@ -345,12 +491,9 @@ include '../../../Includes/dash_header.php';
                             <label for="modalDisqualificationReason">Primary Reason <span class="req">*</span></label>
                             <select id="modalDisqualificationReason" name="disqualification_reason">
                                 <option value="">Select a reason</option>
-                                <option value="Technical skills insufficient">Technical skills insufficient</option>
-                                <option value="Qualifications / GPA mismatch">Qualifications / GPA mismatch</option>
-                                <option value="Schedule / Availability mismatch">Schedule / Availability mismatch</option>
-                                <option value="Position already filled">Position already filled</option>
-                                <option value="Interview performance">Interview performance</option>
-                                <option value="Other">Other</option>
+                                <?php foreach ($disqualifyReasons as $reasonOption): ?>
+                                    <option value="<?= htmlspecialchars($reasonOption) ?>"><?= htmlspecialchars($reasonOption) ?></option>
+                                <?php endforeach; ?>
                             </select>
                         </div>
 
@@ -376,4 +519,3 @@ include '../../../Includes/dash_header.php';
 </main>
 <script src="../../../Assets/JS/Company/applications.js"></script>
 <?php include '../../../Includes/dash_footer.php'; ?>
-
