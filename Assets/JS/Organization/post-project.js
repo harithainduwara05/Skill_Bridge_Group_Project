@@ -1,13 +1,11 @@
 document.addEventListener('DOMContentLoaded', function () {
-
     /* ---------- Keyword / skill chips ---------- */
     const chipBox = document.getElementById('chipBox');
     const chipInput = document.getElementById('chipInput');
     const keywordsHidden = document.getElementById('keywordsHidden');
     // start with the skills already in the hidden field (kept after a validation error)
     let keywords = keywordsHidden && keywordsHidden.value
-        ? keywordsHidden.value.split(',').map(s => s.trim()).filter(Boolean)
-        : [];
+        ? keywordsHidden.value.split(',').map(s => s.trim()).filter(Boolean) : [];
 
     function renderChips() {
         chipBox.querySelectorAll('.chip').forEach(el => el.remove());

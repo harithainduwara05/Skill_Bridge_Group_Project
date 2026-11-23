@@ -102,9 +102,6 @@
     letter-spacing: 0.4px;
     text-transform: uppercase;
 }
-
-.category-tag.devops { background: #dbeafe; color: #1d4ed8; }
-.category-tag.aiml { background: #dcfce7; color: #15803d; }
 .category-tag.frontend { background: #ede9fe; color: #7c3aed; }
 .category-tag.backend { background: #1f2937; color: #f3f4f6; }
 .category-tag.security { background: #fee2e2; color: #dc2626; }
@@ -285,7 +282,6 @@
     }
 }
 
-
 /* ============================================
    Moved from the <style> block in manage_projects.php
    ============================================ */
@@ -422,12 +418,6 @@
 }
 .delete-rule-box .material-symbols-outlined { font-size: 18px; color: #3b82f6; }
 
-/* ---- Disabled edit / delete buttons (On Hold, Rejected) ---- */
-.action-btn.is-disabled,
-.action-btn.is-disabled:hover {
-    color: #d1d5db !important; background: none !important; cursor: not-allowed; opacity: .7;
-}
-
 /* ---- On Hold action icon (only shown on On Hold projects) ---- */
 .action-btn.hold-btn { color: #d97706; position: relative; }
 .action-btn.hold-btn:hover { background: #fef3c7; color: #b45309; }
@@ -473,7 +463,6 @@
 .hm-reason-date { font-size: 12px; color: #b45309; margin-top: 1px; }
 .hm-reason-text { margin: 0; font-size: 14px; line-height: 1.65; color: #451a03; white-space: pre-wrap; }
 
-
 .hm-hint { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 12.5px; color: #6b7280; flex-wrap: wrap; }
 .hm-hint .material-symbols-outlined { font-size: 16px; color: #3b82f6; }
 .hm-next { margin: 16px 0 0; }
@@ -501,16 +490,6 @@
 
 .hm-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
 .hm-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 14px; }
-
-.hm-status-options { display: flex; flex-direction: column; gap: 8px; }
-.hm-status-option {
-    display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #e5e7eb;
-    border-radius: 12px; cursor: pointer; transition: border-color .15s ease, background .15s ease;
-}
-.hm-status-option:hover { border-color: #bfdbfe; }
-.hm-status-option:has(input:checked) { border-color: #1e3a5f; background: #f8fafc; }
-.hm-status-option input { accent-color: #1e3a5f; margin: 0; }
-.hm-status-desc { font-size: 13px; color: #4b5563; }
 
 .hm-notify-note {
     display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px;
