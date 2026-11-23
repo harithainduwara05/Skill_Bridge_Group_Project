@@ -223,7 +223,7 @@ include "../../Includes/dash_header.php";
                 <!-- 1. Project -->
                 <div class="fb-step"><span>1</span> Project &amp; Team</div>
                 <div class="fb-field">
-                    <label class="fb-f-label" for="fbProject">Project &amp; Team *</label>
+                    <label class="fb-f-label" for="fbProject">Project &amp; Team <span class="req">*</span></label>
                     <!-- feedback is given to a team (value = team id) -->
                     <select id="fbProject" name="team_id" class="fb-input">
                         <option value="">Select a project team</option>
@@ -238,7 +238,7 @@ include "../../Includes/dash_header.php";
                 <!-- 2. Ratings -->
                 <div class="fb-step"><span>2</span> Ratings</div>
                 <div class="fb-field">
-                    <label class="fb-f-label">Overall Rating *</label>
+                    <label class="fb-f-label">Overall Rating <span class="req">*</span></label>
                     <div class="fb-overall">
                         <div class="fb-star-pick" id="fbStarPick">
                             <?php for ($i = 1; $i <= 5; $i++): ?>
@@ -250,7 +250,7 @@ include "../../Includes/dash_header.php";
                     <div class="fb-err" data-err="rating"></div>
                 </div>
 
-                <div class="fb-f-label" style="margin-top:4px;">Competency Breakdown *</div>
+                <div class="fb-f-label" style="margin-top:4px;">Competency Breakdown <span class="req">*</span></div>
                 <div class="fb-comp-grid">
                     <?php foreach (['technical' => 'Technical Skills', 'communication' => 'Communication', 'teamwork' => 'Teamwork', 'problem_solving' => 'Problem-solving'] as $k => $label): ?>
                         <div class="fb-slider">
@@ -263,7 +263,7 @@ include "../../Includes/dash_header.php";
                 <!-- 3. Written feedback -->
                 <div class="fb-step"><span>3</span> Written Feedback</div>
                 <div class="fb-field">
-                    <label class="fb-f-label" for="fbSummary">Performance Summary *</label>
+                    <label class="fb-f-label" for="fbSummary">Performance Summary <span class="req">*</span></label>
                     <textarea id="fbSummary" name="summary" class="fb-input" rows="4" maxlength="1500"
                               placeholder="What did the team do well? How was the quality of their work and their communication?"></textarea>
                     <div class="fb-counter"><span class="fb-err" data-err="summary"></span><span><span id="fbCount">0</span>/1500</span></div>

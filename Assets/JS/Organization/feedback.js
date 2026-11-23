@@ -308,7 +308,6 @@ document.body.appendChild(document.getElementById('fbModal'));
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) closeView(); });
     document.getElementById('fvPrint').addEventListener('click', () => window.print());
 
-
     document.querySelectorAll('[data-fb-view]').forEach(b => b.addEventListener('click', () => openView(Number(b.dataset.fbView))));
 })();
 

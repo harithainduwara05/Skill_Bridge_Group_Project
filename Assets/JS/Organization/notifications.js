@@ -28,9 +28,22 @@
         const fd = new FormData();
         fd.append('action', action);
         if (id) fd.append('id', id);
-        return fetch('notifications.php', { method: 'POST', body: fd })
-            .then(r => r.json())
+        // keepalive: the change is still saved when a card's link opens another page
+        return fetch('notifications.php', { method: 'POST', body: fd, keepalive: true }).then(r => r.json())
+            .then(res => { if (res && typeof res.unread === 'number') setSidebarBadge(res.unread); return res; })
             .catch(() => ({ success: false }));
+    }
+
+    // red number next to "Notifications" in the sidebar (Includes/org_sidebar.php) -> same as the database
+    function setSidebarBadge(count) {
+        const badge = document.getElementById('orgNotifBadge');
+        if (!badge) return;
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.setAttribute('aria-label', count + ' unread notifications');
+        } else {
+            badge.remove();
+        }
     }
 
     function cardHtml(n) {
@@ -54,16 +67,14 @@
     }
 
     const EMPTY = {
-        all: 'No notifications. You’re all clear.',
-        unread: 'You’re all caught up. No unread notifications.',
+        all: 'No notifications. You’re all clear.', unread: 'You’re all caught up. No unread notifications.',
         archived: 'No archived notifications.'
     };
 
     function render() {
         const inbox = notifications.filter(n => !n.archived);
         const items = tab === 'archived' ? notifications.filter(n => n.archived)
-                    : tab === 'unread'   ? inbox.filter(n => !n.read)
-                    : inbox;
+                    : tab === 'unread'   ? inbox.filter(n => !n.read) : inbox;
 
         markAll.disabled  = !inbox.some(n => !n.read);
         clearAll.disabled = inbox.length === 0;
