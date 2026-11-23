@@ -13,13 +13,21 @@ $applicationId = (int) ($_GET['application_id'] ?? 0);
 $candidate = null;
 
 if ($company && $applicationId > 0) {
-    $applicationStmt = $conn->prepare("SELECT s.Email, s.Name, s.University, s.degree, s.year, s.bio, s.profile_image, s.github, s.linkedin, s.website,
-                                               ia.status AS application_status, ia.applied_date, i.title AS internship_title
-                                        FROM internship_applications ia
-                                        INNER JOIN internships i ON i.id = ia.internship_id
-                                        INNER JOIN student s ON s.Email = ia.Email
-                                        WHERE ia.application_id = ? AND TRIM(i.company) = TRIM(?)
-                                        LIMIT 1");
+    $companyColumnCheck = $conn->query("SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'internships' AND COLUMN_NAME = 'company_email' LIMIT 1");
+    $hasNormalizedCompanySchema = $companyColumnCheck && $companyColumnCheck->num_rows > 0;
+    $applicationSql = "SELECT s.Email, s.Name, s.University, s.degree, s.year, s.bio, s.profile_image, s.github, s.linkedin, s.website,
+                              ia.status AS application_status, ia.applied_date, i.title AS internship_title
+                       FROM internship_applications ia
+                       INNER JOIN internships i ON i.id = ia.internship_id
+                       INNER JOIN student s ON s.Email = ia.Email";
+    if ($hasNormalizedCompanySchema) {
+        $applicationSql .= " LEFT JOIN company c ON c.Email = i.company_email
+                             WHERE ia.application_id = ? AND TRIM(COALESCE(c.Name, '')) = TRIM(?)";
+    } else {
+        $applicationSql .= " WHERE ia.application_id = ? AND TRIM(i.company) = TRIM(?)";
+    }
+    $applicationSql .= " LIMIT 1";
+    $applicationStmt = $conn->prepare($applicationSql);
     $applicationStmt->bind_param('is', $applicationId, $company['Name']);
     $applicationStmt->execute();
     $candidate = $applicationStmt->get_result()->fetch_assoc();
