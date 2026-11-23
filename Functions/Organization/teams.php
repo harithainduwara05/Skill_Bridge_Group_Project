@@ -202,6 +202,9 @@ include "../../Includes/dash_header.php";
             </div>
         </div>
 
+        <!-- every task is Done: add more tasks, or say the work is finished and ask for the final report -->
+        <div class="tw-report-bar" id="twReportBar" hidden></div>
+
         <div class="tw-layout" id="twLayout">
             <!-- Kanban -->
             <div class="tw-board-wrap" id="twBoardWrap">
@@ -266,23 +269,16 @@ include "../../Includes/dash_header.php";
             </div>
             <div class="tm-modal-body">
                 <div class="tm-field">
-                    <label class="tm-f-label" for="twTTitle">Task Title *</label>
+                    <label class="tm-f-label" for="twTTitle">Task Title <span class="req">*</span></label>
                     <input type="text" id="twTTitle" class="tm-input" maxlength="120" placeholder="e.g. Design the login screen">
                     <div class="tm-err" id="twTErr"></div>
                 </div>
-                <!-- teams saved in the database: a short description (team_tasks.description) -->
-                <div class="tm-field" id="twTDescWrap" hidden>
+                <!-- a short description (team_tasks.description) -->
+                <div class="tm-field">
                     <label class="tm-f-label" for="twTDesc">Description</label>
                     <textarea id="twTDesc" class="tm-input" maxlength="500" rows="3" placeholder="What needs to be done? (optional)"></textarea>
                 </div>
                 <div class="tm-grid-2">
-                    <div class="tm-field" id="twTTagWrap">
-                        <label class="tm-f-label" for="twTTag">Type</label>
-                        <select id="twTTag" class="tm-input">
-                            <option>Development</option><option>Design</option><option>Research</option>
-                            <option>Testing</option><option>Documentation</option>
-                        </select>
-                    </div>
                     <div class="tm-field">
                         <label class="tm-f-label" for="twTWho">Assign To</label>
                         <select id="twTWho" class="tm-input"></select>
@@ -294,7 +290,7 @@ include "../../Includes/dash_header.php";
                     </div>
                 </div>
                 <!-- files for the student (saved in team_files with this task's id) -->
-                <div class="tm-field" id="twTFileWrap" hidden>
+                <div class="tm-field">
                     <label class="tm-f-label" for="twTFile">Attachments <span class="tm-opt">(optional)</span></label>
                     <input type="file" id="twTFile" class="tm-input tw-t-file" multiple
                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp,.zip,.fig,.mp4">
@@ -367,9 +363,16 @@ include "../../Includes/dash_header.php";
                 <button type="button" class="tm-x" data-close-back aria-label="Close"><span class="material-symbols-outlined">close</span></button>
             </div>
             <div class="tm-modal-body">
-                <label class="tm-f-label" for="twBackNote">What should the student change? *</label>
+                <label class="tm-f-label" for="twBackNote">What should the student change? <span class="req">*</span></label>
                 <textarea id="twBackNote" class="tm-input" rows="3" maxlength="300" placeholder="e.g. Please add the error message for a wrong password."></textarea>
                 <div class="tm-hint">The task goes back to In Progress. The student gets a notification and the note is posted in the team chat.</div>
+                <!-- optional file for the student, e.g. an example or a corrected document (saved with this task) -->
+                <div id="twBackFileWrap" hidden>
+                    <label class="tm-f-label" for="twBackFile" style="margin-top:12px;">Attach a file <span class="tm-opt">(optional)</span></label>
+                    <input type="file" id="twBackFile" class="tm-input tw-t-file" multiple
+                           accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg,.gif,.webp,.zip,.fig,.mp4">
+                    <div class="tm-hint">An example or a file with your corrections. Up to 10MB each. The student sees it when they open the task.</div>
+                </div>
                 <div class="tm-err" id="twBackErr"></div>
             </div>
             <div class="tm-modal-foot">
@@ -412,12 +415,12 @@ include "../../Includes/dash_header.php";
             </div>
             <div class="tm-modal-body">
                 <div class="tm-field">
-                    <label class="tm-f-label" for="teName">Team Name *</label>
+                    <label class="tm-f-label" for="teName">Team Name <span class="req">*</span></label>
                     <input type="text" id="teName" name="team_name" class="tm-input" maxlength="100">
                     <div class="tm-err" id="teErrName"></div>
                 </div>
                 <div class="tm-field">
-                    <label class="tm-f-label" for="teDeadline">Team Deadline *</label>
+                    <label class="tm-f-label" for="teDeadline">Team Deadline <span class="req">*</span></label>
                     <input type="date" id="teDeadline" name="deadline" class="tm-input">
                     <input type="hidden" name="extend_project" value="0">
                     <div class="tm-warn" data-extend-note hidden></div>
@@ -518,12 +521,12 @@ include "../../Includes/dash_header.php";
                 <div class="tm-step"><span>1</span>Team &amp; Project</div>
                 <div class="tm-grid-2">
                     <div class="tm-field">
-                        <label class="tm-f-label" for="tmName">Team Name *</label>
+                        <label class="tm-f-label" for="tmName">Team Name <span class="req">*</span></label>
                         <input type="text" id="tmName" name="team_name" class="tm-input" maxlength="100" placeholder="e.g. Code Crafters" autocomplete="off">
                         <div class="tm-err" data-err="name"></div>
                     </div>
                     <div class="tm-field">
-                        <label class="tm-f-label" for="tmProject">Project *</label>
+                        <label class="tm-f-label" for="tmProject">Project <span class="req">*</span></label>
                         <select id="tmProject" name="project_id" class="tm-input">
                             <option value="">Select a project</option>
                             <?php foreach ($tmProjects as $pr): ?>
@@ -538,7 +541,7 @@ include "../../Includes/dash_header.php";
                 <div class="tm-step"><span>2</span>Members &amp; Roles</div>
                 <div class="tm-field">
                     <div class="tm-f-label-row">
-                        <label class="tm-f-label">Accepted Students *</label>
+                        <label class="tm-f-label">Accepted Students <span class="req">*</span></label>
                         <span class="tm-picked" id="tmPicked"></span>
                     </div>
                     <div class="tm-members" id="tmMembers">
@@ -549,7 +552,7 @@ include "../../Includes/dash_header.php";
                 </div>
 
                 <div class="tm-field">
-                    <label class="tm-f-label" for="tmLeader">Team Leader *</label>
+                    <label class="tm-f-label" for="tmLeader">Team Leader <span class="req">*</span></label>
                     <select id="tmLeader" name="leader" class="tm-input" disabled>
                         <option value="">Choose members first</option>
                     </select>
@@ -559,7 +562,7 @@ include "../../Includes/dash_header.php";
                 <div class="tm-step"><span>3</span>Deadline</div>
 
                 <div class="tm-field">
-                    <label class="tm-f-label" for="tmDeadline">Team Deadline *</label>
+                    <label class="tm-f-label" for="tmDeadline">Team Deadline <span class="req">*</span></label>
                     <input type="date" id="tmDeadline" name="deadline" class="tm-input" min="<?= date('Y-m-d') ?>">
                     <!-- 1 = the organization agreed to make the project longer (date after the day the project ends) -->
                     <input type="hidden" name="extend_project" value="0">
@@ -641,24 +644,16 @@ include "../../Includes/dash_header.php";
         WORKSPACE_TEAMS: <?= json_encode(array_values(array_map(fn($t) => [
                     // id is set only for teams saved in the database -> their tasks + chat are saved on the server
                     'id' => $t['id'] ?? null, 'deadline_raw' => $t['deadline_raw'] ?? '', 'tasks' => $t['tasks'] ?? [],
-                    'name' => $t['name'], 'project' => $t['project'], 'phase' => $t['phase'],
+                    'name' => $t['name'], 'project' => $t['project'], 'phase' => $t['phase'], 'state' => $t['state'],
                     'members' => array_map(fn($m) => ['name' => $m['name'], 'role' => $m['role'], 'leader' => !empty($m['leader']),
                                                        'email' => strtolower($m['email'] ?? '')],
                                            $t['details']['members'] ?? []),
                   ], $teams)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
-        ORG_NAME: <?= json_encode($user['username'] ?? 'Organization', JSON_UNESCAPED_UNICODE | JSON_HEX_TAG) ?>,
         MENU_TEAMS: <?= json_encode(array_values(array_map(fn($t) => [
-                    'id' => $t['id'] ?? null, 'project_id' => $t['project_id'] ?? null,
-                    'name' => $t['name'], 'project' => $t['project'], 'state' => $t['state'],
-                    'leader' => $t['leader'], 'leader_email' => $t['leader_email'] ?? null,
-                    'member_emails' => $t['member_emails'] ?? [],
-                    'deadline_raw' => $t['deadline_raw'] ?? '', 'deadline' => $t['deadline'],
-                    'skills' => $t['skills'], 'project_deadline_raw' => $t['project_deadline_raw'] ?? '',
+                    'id' => $t['id'] ?? null, 'name' => $t['name'], 'project' => $t['project'],
+                    'deadline_raw' => $t['deadline_raw'] ?? '', 'project_deadline_raw' => $t['project_deadline_raw'] ?? '',
                     'project_start_raw' => $t['project_start_raw'] ?? '', 'project_weeks' => (int)($t['project_weeks'] ?? 0),
-                    'members' => array_map(fn($m) => ['name' => $m['name'], 'email' => strtolower($m['email'] ?? ''), 'role' => $m['role'], 'leader' => !empty($m['leader'])],
-                                           $t['details']['members'] ?? []),
                   ], $teams)), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,
-        PROJECT_MAX: <?= json_encode(array_column(array_map(fn($p) => ['id' => (int)$p['id'], 'm' => (int)$p['members']], $tmProjects), 'm', 'id')) ?>,
         REVIEW_TEAMS: <?= json_encode(array_values(array_map(fn($t) => [
                     'id' => $t['id'] ?? null, 'name' => $t['name'], 'project' => $t['project'],
                     'percent' => (int)$t['percent'], 'time' => $t['time'], 'deadline' => $t['deadline'],

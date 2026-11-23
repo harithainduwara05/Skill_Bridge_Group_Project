@@ -354,7 +354,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && in_array($_POST['action'] ?? '', ['
 
                 tmNotify($conn, $memberEmails, 'Final Report Sent Back',
                          'The organization sent back the final report of ' . $own['name'] . ' for changes: ' . $note);
-                twAddMessage($conn, $teamId, $organization_email, 'We sent back the final report for changes: ' . $note . ' Please fix it and send it again.');
+                twAddMessage($conn, $teamId, $organization_email, 'We sent back the final report. What to change: ' . $note);
                 $done = 'report_changes';
             }
 
@@ -570,7 +570,10 @@ foreach (tmFetch($conn,
     if (!$teamTasks) {
         $taskPhase = 'Phase 1: Planning';                                    // no tasks yet
     } elseif ($doneCount === count($teamTasks)) {
-        $taskPhase = 'All tasks done – waiting for the final report';
+        // all tasks are Done: the organization decides if the work is finished (it may give more tasks)
+        $taskPhase = twReportRequested($conn, (int)$row['id'])
+            ? 'Final report requested – waiting for the team'
+            : 'All tasks done – add more tasks or request the final report';
     } elseif ($workingCount > 0 || $reviewCount > 0 || $doneCount > 0) {
         // the students started -> In Progress; tasks sent for review are shown too,
         // so the organization knows there is work to check before it is counted as Done
@@ -610,9 +613,6 @@ foreach (tmFetch($conn,
         'actions' => ($report && $report['status'] === 'submitted' && $state !== 'completed')
                      ? ['Review Report', 'Task', 'Chat'] : ($tmStateActions[$state] ?? $tmStateActions['ontrack']),
         'id' => (int)$row['id'],
-        'project_id' => (int)$row['project_id'],
-        'leader_email' => strtolower($row['leader_email']),
-        'member_emails' => array_map(fn($m) => strtolower($m['Email']), $memberRows),
         'deadline_raw' => !empty($row['deadline']) ? date('Y-m-d', strtotime($row['deadline'])) : '',
         'tasks' => $teamTasks,
         // the team deadline can be moved up to the day the project ends

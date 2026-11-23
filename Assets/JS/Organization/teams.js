@@ -8,6 +8,12 @@
    (inside <main> they were limited to the content area). */
 document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(o));
 
+/* Small helpers used by every part of this page */
+const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
+const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };   // safe text for HTML
+const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
+const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
+
 /* =================================================================
    FILTER (status, project, search) – works on the cards in the page
 ================================================================= */
@@ -91,7 +97,6 @@ document.querySelectorAll('.tm-overlay').forEach(o => document.body.appendChild(
     apply();
 })();
 
-
 /* =================================================================
    TEAM DEADLINE AFTER THE DAY THE PROJECT ENDS (Create Team / Edit Team / Extend Deadline)
    The day the project ends = Application Deadline + duration weeks. A later team deadline is
@@ -149,17 +154,11 @@ window.TMExtend = (function () {
     return { info, note, confirm, latest, nice };
 })();
 
-
 /* =================================================================
    SHARED FORM PARTS (used by Create Team and Edit Team)
    - member list with a Role box for every ticked student
 ================================================================= */
 window.TMForm = (function () {
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-
     /* people: [{ value, name, sub, skills[], badge, badgeClass, locked }]
        chosen: { value: role }  -> ticked students and their roles          */
     function renderMembers(box, people, chosen) {
@@ -210,8 +209,7 @@ window.TMForm = (function () {
         if (pickedEl) pickedEl.textContent = picked.length + ' / ' + max + ' selected';
 
         const keep = leaderEl.value;
-        leaderEl.innerHTML = picked.length
-            ? '<option value="">Select the leader</option>' + picked.map(r => {
+        leaderEl.innerHTML = picked.length ? '<option value="">Select the leader</option>' + picked.map(r => {
                 const cb = r.querySelector('input[type="checkbox"]');
                 return `<option value="${esc(cb.value)}">${esc(cb.dataset.name)}</option>`; }).join('')
             : '<option value="">Choose members first</option>';
@@ -228,7 +226,6 @@ window.TMForm = (function () {
 
     return { esc, initials, colorFor, renderMembers, syncMembers, markLeader };
 })();
-
 
 /* =================================================================
    CREATE NEW TEAM
@@ -394,26 +391,20 @@ window.TMForm = (function () {
     });
 })();
 
-
 /* =================================================================
    TEAM DETAILS (View / View Final Report)
 ================================================================= */
 (function () {
     const TEAMS  = ORG_DATA.DETAIL_TEAMS;
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
 
     const modal = document.getElementById('tmViewModal');
     const body  = document.getElementById('tvBody');
 
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
     const pct = v => Math.max(0, Math.min(100, Number(v) || 0));
 
     // Final report card: the file + summary from the team leader, and Accept / Send back for changes
     const REPORT_STATE = {
-        submitted:         ['Waiting for your review', 'wait'],
-        accepted:          ['Accepted', 'ok'],
+        submitted:         ['Waiting for your review', 'wait'], accepted:          ['Accepted', 'ok'],
         changes_requested: ['Sent back for changes', 'changes']
     };
     function reportCard(t, d) {
@@ -443,7 +434,7 @@ window.TMForm = (function () {
                 <button type="button" class="tm-btn solid" id="tvRepAccept"><span class="material-symbols-outlined">check_circle</span>Accept Report</button>
             </div>
             <div class="tv-rep-form" id="tvRepForm" hidden>
-                <label class="tm-f-label" for="tvRepNote">What should the team change? *</label>
+                <label class="tm-f-label" for="tvRepNote">What should the team change? <span class="req">*</span></label>
                 <textarea id="tvRepNote" maxlength="500" placeholder="e.g. Please add the test results and screenshots of the final system."></textarea>
                 <div class="tm-err" id="tvRepErr"></div>
                 <div class="tv-rep-actions">
@@ -498,7 +489,7 @@ window.TMForm = (function () {
     }
 
     function open(i) {
-        const t = window.tmEffective ? window.tmEffective(i, TEAMS[i]) : TEAMS[i];
+        const t = TEAMS[i];
         if (!t) return;
         const d = t.details || { members: [], activity: [] };
         const members = d.members || [];
@@ -509,8 +500,7 @@ window.TMForm = (function () {
         st.textContent = t.status;
         document.getElementById('tvProject').innerHTML = 'Project: <strong>' + esc(t.project) + '</strong>';
 
-        const info = [
-            ['Organization', d.company], ['Category', d.category], ['Duration', d.duration],
+        const info = [['Organization', d.company], ['Category', d.category], ['Duration', d.duration],
             ['Team created', d.created], ['Team deadline', d.team_deadline], ['Project ends', d.project_deadline]
         ].filter(r => r[1]).map(r => `<div class="tv-info"><span>${esc(r[0])}</span><strong>${esc(r[1])}</strong></div>`).join('');
 
@@ -534,8 +524,7 @@ window.TMForm = (function () {
                     <div class="tv-bar ${pct(m.progress) === 100 ? 'completed' : ''}"><span style="width:${pct(m.progress)}%"></span></div>
                     <strong>${pct(m.progress)}%</strong>
                 </div>
-            </div>`).join('')
-            : '<div class="tv-empty">No member details available.</div>';
+            </div>`).join('') : '<div class="tv-empty">No member details available.</div>';
 
         const acts = (d.activity || []).length ? `<ul class="tv-act">${d.activity.map(a => `
                 <li><span class="tv-act-dot"></span><div><div class="tv-act-text">${esc(a.text)}</div><div class="tv-act-when">${esc(a.when)}</div></div></li>`).join('')}</ul>`
@@ -596,79 +585,20 @@ window.TMForm = (function () {
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) close(); });
 })();
 
-
 /* =================================================================
    TEAM WORKSPACE – Kanban board + team chat (same page, with Back)
    Teams saved in the database: tasks + chat are saved on the server
    (Backend/TeamWorkspace.php) and are shared with the students of the team.
-   Demo teams: tasks and messages are saved in this browser (localStorage).
 ================================================================= */
 (function () {
     const TEAMS = ORG_DATA.WORKSPACE_TEAMS;
-    const ORG_NAME = ORG_DATA.ORG_NAME;
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
     const COLS = [
         { key: 'todo',     label: 'To Do',       dot: '#6b7280' },
         { key: 'progress', label: 'In Progress', dot: '#ea580c' },
         { key: 'review',   label: 'Review',      dot: '#2563eb' },
-        { key: 'done',     label: 'Done',        dot: '#16a34a' }
-    ];
+        { key: 'done',     label: 'Done',        dot: '#16a34a' }];
 
-    // ---------- demo seed data ----------
-    const SEED_TASKS = {
-        'Nexus Systems': [
-            ['Collect 12 months of supplier data', 'Research', 'done', 'Chamod Fernando', '2026-09-10', 100, 4],
-            ['Demand forecast model v2', 'Development', 'progress', 'Nimal Silva', '2026-10-05', 60, 6],
-            ['Supplier dashboard prototype', 'Design', 'review', 'Amaya Dissanayake', '2026-10-02', 100, 3],
-            ['REST API for stock levels', 'Development', 'progress', 'Ravindu Pathirana', '2026-10-08', 45, 2],
-            ['Write test cases for forecasting', 'Testing', 'todo', 'Ishara Gunawardena', '2026-10-12', 0, 0],
-            ['Sprint 2 demo slides', 'Documentation', 'todo', 'Sanduni Perera', '2026-10-15', 0, 1]
-        ],
-        'Vortex Group': [
-            ['Credential smart contract', 'Development', 'progress', 'Kasun Madushanka', '2026-09-22', 55, 5],
-            ['Threat model & security review', 'Research', 'review', 'Malith Senanayake', '2026-09-25', 100, 2],
-            ['Issuer portal UI', 'Design', 'todo', 'Tharushi Wijeratne', '2026-10-06', 0, 0],
-            ['Verification API', 'Development', 'todo', 'Dulaj Bandara', '2026-10-10', 0, 1]
-        ],
-        'Quantum Analytics': [
-            ['Sensor data pipeline', 'Development', 'done', 'Dilini Herath', '2026-08-15', 100, 3],
-            ['Failure prediction model', 'Development', 'done', 'Ishan Rathnayake', '2026-08-30', 100, 5],
-            ['Maintenance dashboard', 'Design', 'done', 'Nethmi Samarasinghe', '2026-09-10', 100, 2],
-            ['Final report', 'Documentation', 'done', 'Yasith Abeysekara', '2026-09-18', 100, 4]
-        ],
-        'Alpha Ops': [
-            ['Terraform modules for VPC', 'Development', 'done', 'Kavinda Jayasuriya', '2026-08-25', 100, 2],
-            ['CI/CD with GitHub Actions', 'Development', 'done', 'Malsha Karunaratne', '2026-09-15', 100, 3],
-            ['Blue-green deployment on K8s', 'Development', 'progress', 'Sahan Liyanage', '2026-10-10', 70, 4],
-            ['Grafana alerts & dashboards', 'Testing', 'review', 'Tharindu Wickramaratne', '2026-10-12', 100, 1],
-            ['Runbook for the ops team', 'Documentation', 'todo', 'Kavinda Jayasuriya', '2026-10-25', 0, 0]
-        ]
-    };
-    const SEED_CHAT = {
-        'Nexus Systems': [
-            ['Sanduni Perera', 'Morning everyone! Sprint 2 review is on Friday. Please move finished cards to Review.', '09:05'],
-            ['Nimal Silva', 'Forecast model v2 is training now, accuracy is already better than v1 👌', '09:20'],
-            ['Amaya Dissanayake', 'Dashboard prototype is ready. Link is on the Review card.', '10:02']
-        ],
-        'Vortex Group': [
-            ['Malith Senanayake', 'We are behind on Phase 1. Let’s finish the contract tests first.', '08:40'],
-            ['Kasun Madushanka', 'Working on it, 2 tests still failing. Should be done by tonight.', '09:15']
-        ],
-        'Quantum Analytics': [
-            ['Erandi Weerasinghe', 'Final report submitted. Thank you all for the great work! 🎉', '16:30']
-        ],
-        'Alpha Ops': [
-            ['Kavinda Jayasuriya', 'Cluster is now in production. Please keep an eye on the alerts.', '11:10'],
-            ['Tharindu Wickramaratne', 'Grafana alerts are set up, moved the card to Review.', '11:45']
-        ]
-    };
-
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
     const av = n => `<span class="tm-av" title="${esc(n)}" style="background:${colorFor(n)};">${esc(initials(n))}</span>`;
-    const load = (k, fallback) => { try { const v = JSON.parse(localStorage.getItem(k)); return v || fallback; } catch (e) { return fallback; } };
-    const save = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
     const list  = document.getElementById('tmListView');
     const page  = document.getElementById('tmWorkspace');
@@ -701,8 +631,7 @@ window.TMForm = (function () {
 
     let team = null, teamIndex = -1, tasks = [], messages = [], listScroll = 0;
 
-    // ---------- database teams: talk to the server ----------
-    const isDbTeam = () => teamIndex >= 0 && TEAMS[teamIndex].id != null;
+    // ---------- talk to the server ----------
     const taskCache = {};        // team id -> latest tasks from the server (used by Delay Review)
     let lastMsgId = 0;           // newest chat message we already have
     let pollTimer = null;
@@ -712,14 +641,13 @@ window.TMForm = (function () {
         const fd = new FormData();
         fd.append('ws_action', action);
         Object.keys(data || {}).forEach(k => fd.append(k, data[k]));
-        return fetch('teams.php', { method: 'POST', body: fd })
-            .then(r => r.json())
+        return fetch('teams.php', { method: 'POST', body: fd }).then(r => r.json())
             .catch(() => ({ ok: false, message: 'Could not reach the server. Check your connection.' }));
     }
 
     // server task -> the shape the board uses
-    const fromServer = t => ({ id: String(t.id), title: t.title, tag: '', description: t.description || '', col: t.col,
-                               who: t.who || '', assignee: t.assignee || '', due: t.due || '', progress: t.progress, comments: 0,
+    const fromServer = t => ({ id: String(t.id), title: t.title, description: t.description || '', col: t.col,
+                               who: t.who || '', assignee: t.assignee || '', due: t.due || '', progress: t.progress,
                                files: Number(t.files) || 0 });
     let taskFilesOn = false;     // team_files.task_id is in the database -> files can be attached to a task
 
@@ -751,11 +679,14 @@ window.TMForm = (function () {
 
     // get new messages + the current tasks (also moves made by the students)
     function refreshFromServer() {
-        if (!isDbTeam() || page.hidden) return Promise.resolve();
+        if (teamIndex < 0 || page.hidden) return Promise.resolve();
         const id = TEAMS[teamIndex].id;
         return api('load', { team_id: id, after_id: lastMsgId }).then(res => {
-            if (!res.ok || !isDbTeam() || TEAMS[teamIndex].id !== id) return;
+            if (!res.ok || TEAMS[teamIndex].id !== id) return;
             taskFilesOn = !!res.task_files;
+            reportLoaded = true;
+            reportRequested = !!res.report_requested;
+            reportStatus = res.report ? res.report.status : '';
             if (res.messages.length) { addServerMessages(res.messages); renderChat(); }
             // shared files (team_files) – also the ones the students uploaded
             if (JSON.stringify(res.files) !== JSON.stringify(files)) { files = res.files; renderFiles(); }
@@ -763,6 +694,7 @@ window.TMForm = (function () {
             setServerTasks(res.tasks);
             // don't redraw while a task menu is open or a card is being dragged
             if (JSON.stringify(tasks) !== before && !board.querySelector('.tw-menu, .dragging')) renderBoard();
+            else renderReportBar();
         });
     }
 
@@ -776,71 +708,39 @@ window.TMForm = (function () {
         const el = document.getElementById('twChatErr');
         el.textContent = text || '';
     }
-    const taskKey = () => 'sb_team_tasks_' + team.name;
-    const chatKey = () => 'sb_team_chat_' + team.name;
-    const fileKey = () => 'sb_team_files_' + team.name;
     let files = [];
-    const fileUrls = {};   // files uploaded in this visit can be opened (id -> object URL)
 
-    function seedTasks() {
-        return (SEED_TASKS[team.name] || []).map((r, i) => ({
-            id: 'd' + i, title: r[0], tag: r[1], col: r[2], who: r[3], due: r[4], progress: r[5], comments: r[6]
-        }));
-    }
     // helpers used by the Delay Review popup
-    window.tmTasksFor = function (i) {
-        if (TEAMS[i].id != null) return (taskCache[TEAMS[i].id] || TEAMS[i].tasks || []).map(fromServer);   // database team
-        const name = TEAMS[i].name;
-        return load('sb_team_tasks_' + name, null) || (SEED_TASKS[name] || []).map((r, k) => ({
-            id: 'd' + k, title: r[0], tag: r[1], col: r[2], who: r[3], due: r[4], progress: r[5], comments: r[6] }));
-    };
-    window.tmPostToChat = function (i, text) {
-        const name = TEAMS[i].name;
-        const list = load('sb_team_chat_' + name, null) ||
-            [{ sys: true, text: 'Today' }].concat((SEED_CHAT[name] || []).map(r => ({ who: r[0], text: r[1], time: r[2] })));
-        const now = new Date();
-        list.push({ me: true, who: ORG_NAME, text: text,
-                    time: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
-        save('sb_team_chat_' + name, list);
-    };
+    window.tmTasksFor = i => (taskCache[TEAMS[i].id] || TEAMS[i].tasks || []).map(fromServer);
+    // "Send Reminder" -> a message in the team chat (saved on the server, the students see it)
+    window.tmPostToChat = (i, text) => api('send_message', { team_id: TEAMS[i].id, message: text });
     window.tmOpenWorkspace = (i, focus) => openWorkspace(i, focus);
-
-    function seedChat() {
-        const base = [{ sys: true, text: 'Today' }];
-        return base.concat((SEED_CHAT[team.name] || []).map(r => ({ who: r[0], text: r[1], time: r[2] })));
-    }
 
     // ---------------- open / close ----------------
     function openWorkspace(i, focus, push) {
         team = TEAMS[i]; teamIndex = i;
-        if (team && window.tmEffective) team = Object.assign(window.tmEffective(i, team), { name: TEAMS[i].name, displayName: window.tmEffective(i, team).name });
         if (!team) return;
 
         stopPolling();
         showChatError('');
-        const dbTeam = isDbTeam();
+        reportLoaded = false; reportRequested = false; reportStatus = '';   // filled by the first "load"
         document.getElementById('twUploadErr').textContent = '';
-        if (dbTeam) {
-            setServerTasks(TEAMS[i].tasks || []);     // tasks that came with the page, refreshed below
-            messages = []; lastMsgId = 0; lastDate = '';
-        } else {
-            tasks    = load(taskKey(), null) || seedTasks();
-            messages = load(chatKey(), null) || seedChat();
-        }
+        setServerTasks(TEAMS[i].tasks || []);     // tasks that came with the page, refreshed below
+        messages = []; lastMsgId = 0; lastDate = '';
 
-        document.getElementById('twCrumb').textContent = team.displayName || team.name;
+        document.getElementById('twCrumb').textContent = team.name;
         document.getElementById('twPhase').textContent = team.phase || 'Active Sprint';
         document.getElementById('twProject').textContent = team.project;
-        document.getElementById('twTeamName').textContent = (team.displayName || team.name) + ' · ' + team.members.length + ' members';
+        document.getElementById('twTeamName').textContent = team.name + ' · ' + team.members.length + ' members';
         document.getElementById('twAvatars').innerHTML = team.members.slice(0, 5).map(m => av(m.name)).join('');
 
         memberFilter.innerHTML = '<option value="all">All members</option>' +
             team.members.map(m => `<option value="${esc(m.name)}">${esc(m.name)}</option>`).join('');
-        // database team: the task is given by email (saved on the server); demo team: by name
+        // the task is given to a member by email (saved on the server)
         document.getElementById('twTWho').innerHTML = '<option value="">Unassigned</option>' +
-            team.members.map(m => `<option value="${esc(dbTeam ? m.email : m.name)}">${esc(m.name)}</option>`).join('');
+            team.members.map(m => `<option value="${esc(m.email)}">${esc(m.name)}</option>`).join('');
 
-        files = dbTeam ? [] : (load(fileKey(), null) || seedFiles());
+        files = [];
         renderBoard();
         renderChat();
         renderFiles();
@@ -855,11 +755,10 @@ window.TMForm = (function () {
         setMode(focus === 'chat' ? 'chat' : 'tasks');
         if (focus === 'chat' && window.innerWidth <= 1150) chat.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-        if (dbTeam) {                       // load the chat + latest tasks, then keep them up to date
-            msgs.innerHTML = '<div class="tw-sys">Loading messages…</div>';
-            refreshFromServer().then(() => { if (!messages.length) renderChat(); });
-            startPolling();
-        }
+        // load the chat + latest tasks, then keep them up to date
+        msgs.innerHTML = '<div class="tw-sys">Loading messages…</div>';
+        refreshFromServer().then(() => { if (!messages.length) renderChat(); });
+        startPolling();
     }
 
     function closeWorkspace() {
@@ -909,7 +808,55 @@ window.TMForm = (function () {
         return 'Due in ' + days + 'd';
     }
 
+    // ---------- Final report request bar (shown when every task is Done) ----------
+    // The organization may give tasks in parts, so "all Done" does not mean the work is finished.
+    // It adds more tasks, or presses "Request Final Report" -> the team leader can send the report.
+    let reportLoaded = false;      // the first "load" of this team came back
+    let reportRequested = false;   // the organization asked for the final report (after the newest task)
+    let reportStatus = '';         // '' (no report) | 'submitted' | 'accepted' | 'changes_requested'
+    const reportBar = document.getElementById('twReportBar');
+
+    function renderReportBar() {
+        const allDone = tasks.length > 0 && tasks.every(t => t.col === 'done');
+        const show = reportLoaded && allDone && TEAMS[teamIndex].state !== 'completed'
+                     && reportStatus !== 'submitted' && reportStatus !== 'accepted';
+        reportBar.hidden = !show;
+        if (!show) { reportBar.innerHTML = ''; return; }
+        const leader = esc((team.members.find(m => m.leader) || {}).name || 'the team leader');
+        if (reportRequested || reportStatus === 'changes_requested') {
+            reportBar.className = 'tw-report-bar sent';
+            reportBar.innerHTML = `
+                <span class="material-symbols-outlined">schedule_send</span>
+                <div><b>${reportStatus === 'changes_requested' ? 'Final report sent back for changes' : 'Final report requested'}</b>
+                <p>Waiting for ${leader} to send the final report. Adding a new task cancels the request.</p></div>`;
+        } else {
+            reportBar.className = 'tw-report-bar';
+            reportBar.innerHTML = `
+                <span class="material-symbols-outlined">task_alt</span>
+                <div><b>All tasks are done</b>
+                <p>Is the work finished? Ask the team for the final report, or add more tasks if there is more to do.</p></div>
+                <button type="button" class="tm-btn solid" data-request-report>
+                    <span class="material-symbols-outlined">description</span>Request Final Report</button>
+                <div class="tm-err" id="twReportErr"></div>`;
+        }
+    }
+
+    reportBar.addEventListener('click', e => {
+        const btn = e.target.closest('[data-request-report]');
+        if (!btn) return;
+        btn.disabled = true;
+        api('request_report', { team_id: TEAMS[teamIndex].id }).then(res => {
+            if (!res.ok) { btn.disabled = false; document.getElementById('twReportErr').textContent = res.message; return; }
+            reportRequested = true;
+            boardChanged = true;            // the team card label changes too
+            renderReportBar();
+            refreshFromServer();            // show the message in the team chat
+            if (window.tmToast) window.tmToast('Final report requested. The team leader got a notification.');
+        });
+    });
+
     function renderBoard() {
+        renderReportBar();
         const who = memberFilter.value;
         board.innerHTML = COLS.map(c => {
             const items = tasks.filter(t => t.col === c.key && (who === 'all' || t.who === who));
@@ -922,17 +869,15 @@ window.TMForm = (function () {
                 ${items.length ? items.map(t => `
                     <div class="tw-card ${t.col}" draggable="${canDrag(t)}" data-id="${esc(t.id)}">
                         <button type="button" class="tw-kebab" data-menu="${esc(t.id)}" aria-label="Task options">⋯</button>
-                        ${t.tag ? `<span class="tw-tag ${esc(t.tag)}">${esc(t.tag)}</span>` : ''}
                         <div class="tw-card-title">${esc(t.title)}</div>
                         ${t.description ? `<div class="tw-card-desc">${esc(t.description)}</div>` : ''}
                         ${t.col === 'progress' ? `<div class="tw-card-bar"><span style="width:${Number(t.progress) || 0}%"></span></div>` : ''}
                         <div class="tw-card-foot">
                             <span class="left">${t.due ? '<span class="material-symbols-outlined">event</span>' + dueLabel(t) : ''}
-                                ${t.comments ? ' &nbsp;<span class="material-symbols-outlined">chat_bubble</span>' + Number(t.comments) : ''}
                                 ${t.files ? `<span class="tw-card-clip" title="${t.files} attachment${t.files === 1 ? '' : 's'}"><span class="material-symbols-outlined">attach_file</span>${t.files}</span>` : ''}</span>
                             ${t.who ? av(t.who) : ''}
                         </div>
-                        ${t.col === 'review' && isDbTeam() ? `<div class="tw-card-actions">
+                        ${t.col === 'review' ? `<div class="tw-card-actions">
                             <button type="button" class="tw-open-review" data-open-task="${esc(t.id)}"><span class="material-symbols-outlined">rate_review</span>Open &amp; Review</button>
                         </div>` : ''}
                     </div>`).join('') : '<div class="tw-col-empty">No tasks</div>'}
@@ -950,8 +895,8 @@ window.TMForm = (function () {
     // What the organization can do (the same rules as TW_MOVES in Backend/TeamWorkspace.php).
     // The students move their own tasks: Start (To Do -> In Progress) and Send for Review.
     const ORG_MOVES = { review: ['done', 'progress'], done: ['progress'] };
-    const canMove = (t, col) => !isDbTeam() || (ORG_MOVES[t.col] || []).includes(col);
-    const canDrag = t => !isDbTeam() || !!ORG_MOVES[t.col];
+    const canMove = (t, col) => (ORG_MOVES[t.col] || []).includes(col);
+    const canDrag = t => !!ORG_MOVES[t.col];
     function whyNot(t, col) {
         if (col === 'done') return 'A task can be marked Done after the student sends it for Review.';
         return 'Students move their own tasks (Start / Send for Review). You can approve or send back tasks in Review.';
@@ -962,20 +907,16 @@ window.TMForm = (function () {
         if (!t || t.col === col) return;
         if (!canMove(t, col)) { if (window.tmToast) window.tmToast(whyNot(t, col)); return; }
         // Review -> In Progress needs a note for the student first
-        if (isDbTeam() && t.col === 'review' && col === 'progress' && note === undefined) { openBack(t); return; }
+        if (t.col === 'review' && col === 'progress' && note === undefined) { openBack(t); return; }
         t.col = col;
         if (col === 'done' || col === 'review') t.progress = 100;
         if (col === 'progress' && !t.progress) t.progress = 10;
         if (col === 'todo') t.progress = 0;
         renderBoard();                                   // show it straight away
-        if (isDbTeam()) {
-            api('move_task', { task_id: id, col: col, note: note || '' }).then(res => {
-                if (res.ok) setServerTasks(res.tasks); else showChatError(res.message);
-                renderBoard();
-            });
-        } else {
-            save(taskKey(), tasks);
-        }
+        api('move_task', { task_id: id, col: col, note: note || '' }).then(res => {
+            if (res.ok) setServerTasks(res.tasks); else showChatError(res.message);
+            renderBoard();
+        });
     }
 
     memberFilter.addEventListener('change', renderBoard);
@@ -1008,7 +949,7 @@ window.TMForm = (function () {
 
     function openTaskDetail(id) {
         const t = tasks.find(x => String(x.id) === String(id));
-        if (!t || !isDbTeam()) return;
+        if (!t) return;
         detailId = t.id;
         document.getElementById('twDetailTitle').textContent = t.title;
         document.getElementById('twDetailSub').textContent = COL_LABEL[t.col] + (t.who ? ' · ' + t.who : ' · Not given to anyone yet');
@@ -1043,7 +984,7 @@ window.TMForm = (function () {
                             <span class="tw-d-file-name">${esc(f.name)}<em>${f.org ? 'From you' : 'From ' + esc(f.who)}</em></span>
                             <small>${esc(f.when)}</small></a>`).join('')
                         : '<div class="tw-d-empty">No files attached to this task yet.</div>'}
-                    ${TEAMS[teamIndex].state !== 'completed' ? `<label class="tw-d-attach">
+                    ${TEAMS[teamIndex].state !== 'completed' && (tk.col === 'todo' || tk.col === 'progress') ? `<label class="tw-d-attach">
                             <input type="file" multiple data-d-attach hidden>
                             <span class="material-symbols-outlined">attach_file</span>Attach a file
                         </label><div class="tm-err" id="twDetailFileErr"></div>` : ''}
@@ -1087,7 +1028,7 @@ window.TMForm = (function () {
         const open = e.target.closest('[data-open-task]');
         const card = e.target.closest('.tw-card');
         if (open) { e.stopPropagation(); openTaskDetail(open.dataset.openTask); }
-        else if (card && isDbTeam()) openTaskDetail(card.dataset.id);
+        else if (card) openTaskDetail(card.dataset.id);
     });
 
     // Send back popup: a short note for the student (also posted in the team chat)
@@ -1099,6 +1040,8 @@ window.TMForm = (function () {
         document.getElementById('twBackTitle').textContent = 'Task: ' + t.title;
         document.getElementById('twBackNote').value = '';
         document.getElementById('twBackErr').textContent = '';
+        document.getElementById('twBackFile').value = '';
+        document.getElementById('twBackFileWrap').hidden = !taskFilesOn;   // needs the team_files.task_id column
         backModal.classList.add('open');
         setTimeout(() => document.getElementById('twBackNote').focus(), 50);
     }
@@ -1107,10 +1050,34 @@ window.TMForm = (function () {
     backForm.addEventListener('submit', e => {
         e.preventDefault();
         const note = document.getElementById('twBackNote').value.trim();
-        if (note.length < 5) { document.getElementById('twBackErr').textContent = 'Please tell the student what to change (at least 5 characters).'; return; }
-        backModal.classList.remove('open');
-        if (backTask) moveTask(backTask.id, 'progress', note);
+        const errEl = document.getElementById('twBackErr');
+        if (note.length < 5) { errEl.textContent = 'Please tell the student what to change (at least 5 characters).'; return; }
+        if (!backTask) return;
+        const picked = taskFilesOn ? Array.from(document.getElementById('twBackFile').files) : [];
+        const big = picked.find(f => f.size > 10 * 1024 * 1024);
+        if (big) { errEl.textContent = `"${big.name}" is larger than 10MB.`; return; }
+
+        const sendBack = () => { backModal.classList.remove('open'); moveTask(backTask.id, 'progress', note); };
+        if (!picked.length) { sendBack(); return; }
+
+        // upload the file(s) to this task first; send the task back only when they are saved
+        const btn = backForm.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        errEl.textContent = 'Uploading…';
+        uploadToTask(backTask.id, picked).then(errors => {
+            btn.disabled = false;
+            if (errors.length) { errEl.textContent = errors.join(' '); return; }
+            errEl.textContent = '';
+            sendBack();
+        });
     });
+
+    // why a started task has no "Delete task"
+    const DELETE_NOTE = {
+        progress: 'A student is working on this task, so it can’t be deleted. If it is not needed, ask them in the chat to move it back to To Do.',
+        review:   'This task is waiting for your review. Approve it or send it back.',
+        done:     'Approved work can’t be deleted.'
+    };
 
     // ⋯ menu (move / delete) – also works on phones
     board.addEventListener('click', e => {
@@ -1123,13 +1090,16 @@ window.TMForm = (function () {
         const menu = document.createElement('div');
         menu.className = 'tw-menu';
         const MOVE_LABEL = { done: ['check', 'Approve (Done)'], progress: [t.col === 'done' ? 'replay' : 'undo', t.col === 'done' ? 'Reopen task' : 'Send back'] };
-        const moves = isDbTeam() ? (ORG_MOVES[t.col] || []) : COLS.filter(c => c.key !== t.col).map(c => c.key);
+        const moves = ORG_MOVES[t.col] || [];
         menu.innerHTML = moves.map(k => {
-                const lb = isDbTeam() ? MOVE_LABEL[k] : ['arrow_forward', 'Move to ' + COLS.find(c => c.key === k).label];
+                const lb = MOVE_LABEL[k];
                 return `<button type="button" data-move="${k}"><span class="material-symbols-outlined">${lb[0]}</span>${lb[1]}</button>`;
             }).join('') +
             (moves.length ? '' : '<div class="tw-menu-note">The student moves this task.</div>') +
-            '<hr><button type="button" class="danger" data-del><span class="material-symbols-outlined">delete</span>Delete task</button>';
+            // only a task nobody started (To Do) can be deleted, so no student work is lost (the server checks it too)
+            (t.col === 'todo'
+                ? '<hr><button type="button" class="danger" data-del><span class="material-symbols-outlined">delete</span>Delete task</button>'
+                : '<hr><div class="tw-menu-note">' + (DELETE_NOTE[t.col] || '') + '</div>');
         menu.addEventListener('click', ev => {
             ev.stopPropagation();
             const mv = ev.target.closest('[data-move]');
@@ -1142,14 +1112,10 @@ window.TMForm = (function () {
                     del.lastChild.textContent = 'Click again to delete';
                     return;
                 }
-                if (isDbTeam()) {
-                    api('delete_task', { task_id: id }).then(res => {
-                        if (res.ok) setServerTasks(res.tasks); else showChatError(res.message);
-                        renderBoard();
-                    });
-                } else {
-                    tasks = tasks.filter(x => x.id !== id); save(taskKey(), tasks);
-                }
+                api('delete_task', { task_id: id }).then(res => {
+                    if (res.ok) setServerTasks(res.tasks); else showChatError(res.message);
+                    renderBoard();
+                });
                 menu.remove();
                 renderBoard();
             }
@@ -1162,11 +1128,12 @@ window.TMForm = (function () {
     const taskModal = document.getElementById('twTaskModal');
     const taskForm  = document.getElementById('twTaskForm');
     document.getElementById('twNewTask').addEventListener('click', () => {
+        // the final report is waiting for review -> send it back first (the server checks this too)
+        if (reportStatus === 'submitted') {
+            if (window.tmToast) window.tmToast('The final report is waiting for your review. Send it back first if the team needs to do more work.');
+            return;
+        }
         taskForm.reset(); document.getElementById('twTErr').textContent = ''; document.getElementById('twTDueErr').textContent = '';
-        // database teams have a Description (team_tasks.description); demo teams have a Type
-        document.getElementById('twTDescWrap').hidden = !isDbTeam();
-        document.getElementById('twTTagWrap').hidden = isDbTeam();
-        document.getElementById('twTFileWrap').hidden = !isDbTeam();   // always shown (uploads work once team_files.task_id exists)
         document.getElementById('twTFileErr').textContent = '';
         taskModal.classList.add('open');
         setTimeout(() => document.getElementById('twTTitle').focus(), 50);
@@ -1189,54 +1156,34 @@ window.TMForm = (function () {
         if (due && due < today) { document.getElementById('twTDueErr').textContent = 'The due date can’t be in the past.'; ok = false; }
         else if (due && teamDl && due > teamDl) { document.getElementById('twTDueErr').textContent = 'The due date can’t be after the team deadline.'; ok = false; }
         if (!ok) return;
-        const col = 'todo';                     // a new task always starts in To Do
 
-        if (isDbTeam()) {                       // save on the server (the student gets a notification)
-            const submitBtn = taskForm.querySelector('[type="submit"]');
-            submitBtn.disabled = true;
-            api('add_task', {
-                team_id: TEAMS[teamIndex].id, title: title, description: document.getElementById('twTDesc').value.trim(),
-                assignee: document.getElementById('twTWho').value, due: due
-            }).then(res => {
-                if (!res.ok) { submitBtn.disabled = false; document.getElementById('twTErr').textContent = res.message; return; }
-                setServerTasks(res.tasks);
-                renderBoard();
-                // then the attachments, one by one, with the new task's id
-                const picked = document.getElementById('twTFile').files;
-                if (!picked.length || !res.task_id) { submitBtn.disabled = false; taskModal.classList.remove('open'); return; }
-                document.getElementById('twTFileErr').textContent = 'Uploading the attachments…';
-                uploadToTask(res.task_id, picked).then(errors => {
-                    submitBtn.disabled = false;
-                    if (errors.length) {   // the task is saved; say which files did not go
-                        document.getElementById('twTFileErr').textContent = 'The task was added, but: ' + errors.join(' ');
-                        return;
-                    }
-                    taskModal.classList.remove('open');
-                });
+        // save on the server (a new task always starts in To Do; the student gets a notification)
+        const submitBtn = taskForm.querySelector('[type="submit"]');
+        submitBtn.disabled = true;
+        api('add_task', {
+            team_id: TEAMS[teamIndex].id, title: title, description: document.getElementById('twTDesc').value.trim(),
+            assignee: document.getElementById('twTWho').value, due: due
+        }).then(res => {
+            if (!res.ok) { submitBtn.disabled = false; document.getElementById('twTErr').textContent = res.message; return; }
+            reportRequested = false;            // a new task cancels the final report request (same rule as the server)
+            setServerTasks(res.tasks);
+            renderBoard();
+            // then the attachments, one by one, with the new task's id
+            const picked = document.getElementById('twTFile').files;
+            if (!picked.length || !res.task_id) { submitBtn.disabled = false; taskModal.classList.remove('open'); return; }
+            document.getElementById('twTFileErr').textContent = 'Uploading the attachments…';
+            uploadToTask(res.task_id, picked).then(errors => {
+                submitBtn.disabled = false;
+                if (errors.length) {   // the task is saved; say which files did not go
+                    document.getElementById('twTFileErr').textContent = 'The task was added, but: ' + errors.join(' ');
+                    return;
+                }
+                taskModal.classList.remove('open');
             });
-            return;
-        }
-
-        tasks.push({
-            id: 'n' + Date.now(), title: title, tag: document.getElementById('twTTag').value, col: col,
-            who: document.getElementById('twTWho').value, due: document.getElementById('twTDue').value,
-            progress: col === 'done' || col === 'review' ? 100 : (col === 'progress' ? 10 : 0), comments: 0
         });
-        save(taskKey(), tasks);
-        renderBoard();
-        taskModal.classList.remove('open');
     });
 
     // ---------------- Shared Assets ----------------
-    const SEED_FILES = {
-        'Nexus Systems':     [['Supplier_Data_Analysis.pdf', 2.4, 'Chamod Fernando', '2 days ago'], ['Dashboard_Prototype.fig', 8.1, 'Amaya Dissanayake', 'Yesterday'], ['Forecast_Model_v2.zip', 6.7, 'Nimal Silva', '2h ago']],
-        'Vortex Group':      [['Threat_Model.pdf', 1.2, 'Malith Senanayake', '3 days ago'], ['Contract_Architecture.png', 0.9, 'Kasun Madushanka', '5 days ago']],
-        'Quantum Analytics': [['Final_Report.pdf', 4.2, 'Yasith Abeysekara', 'Sep 18'], ['Demo_Video.mp4', 18.5, 'Nethmi Samarasinghe', 'Sep 16']],
-        'Alpha Ops':         [['Infrastructure_Diagram.png', 1.6, 'Kavinda Jayasuriya', 'Yesterday'], ['Ops_Runbook_Draft.docx', 0.4, 'Malsha Karunaratne', '4h ago']]
-    };
-    function seedFiles() {
-        return (SEED_FILES[team.name] || []).map((f, i) => ({ id: 's' + i, name: f[0], size: f[1] * 1024 * 1024, by: f[2], when: f[3] }));
-    }
     function fileType(name) {
         const ext = (name.split('.').pop() || '').toLowerCase();
         if (ext === 'pdf') return ['pdf', 'picture_as_pdf'];
@@ -1253,9 +1200,6 @@ window.TMForm = (function () {
         document.getElementById('twFilesCount').textContent = files.length + ' file' + (files.length === 1 ? '' : 's');
         box.innerHTML = files.length ? files.map(f => {
             const [cls, icon] = fileType(f.name);
-            // database team: the file is on the server (f.path); demo team: only files added in this visit
-            const canOpen = isDbTeam() ? !!f.path : !!fileUrls[f.id];
-            const canDelete = isDbTeam() ? !!f.can_delete : true;
             return `
             <div class="tw-file">
                 <div class="tw-file-icon ${cls}"><span class="material-symbols-outlined">${icon}</span></div>
@@ -1264,9 +1208,9 @@ window.TMForm = (function () {
                     <div class="tw-file-meta">${sizeText(f.size)} · ${esc(f.by)} · ${esc(f.when)}</div>
                     ${f.task ? `<div class="tw-file-task"><span class="material-symbols-outlined">attach_file</span>Task: ${esc(f.task)}</div>` : ''}
                 </div>
-                <button type="button" class="tw-file-btn" data-open-file="${esc(f.id)}" ${canOpen ? '' : 'disabled'}
-                        title="${canOpen ? 'Open / download' : 'Demo file'}"><span class="material-symbols-outlined">download</span></button>
-                ${canDelete ? `<button type="button" class="tw-file-btn danger" data-del-file="${esc(f.id)}" title="Remove"><span class="material-symbols-outlined">delete</span></button>` : ''}
+                <button type="button" class="tw-file-btn" data-open-file="${esc(f.id)}" ${f.path ? '' : 'disabled'}
+                        title="Open / download"><span class="material-symbols-outlined">download</span></button>
+                ${f.can_delete ? `<button type="button" class="tw-file-btn danger" data-del-file="${esc(f.id)}" title="Remove"><span class="material-symbols-outlined">delete</span></button>` : ''}
             </div>`;
         }).join('') : '<div class="tw-files-empty">No files shared yet.</div>';
     }
@@ -1283,8 +1227,7 @@ window.TMForm = (function () {
                 fd.append('team_id', TEAMS[teamIndex].id);
                 fd.append('task_id', taskId);
                 fd.append('files[]', file);
-                return fetch('teams.php', { method: 'POST', body: fd })
-                    .then(r => r.json())
+                return fetch('teams.php', { method: 'POST', body: fd }).then(r => r.json())
                     .catch(() => ({ ok: false, message: `"${file.name}" could not be uploaded.` }))
                     .then(res => {
                         if (!res.ok) { errors.push(res.message); return; }
@@ -1300,50 +1243,36 @@ window.TMForm = (function () {
     function addFiles(list) {
         const errEl = document.getElementById('twUploadErr');
         const errors = [];
-
-        if (isDbTeam()) {                       // upload to the server (team_files), the whole team can see them
-            const toSend = [];
-            Array.from(list).forEach(file => {
-                if (file.size > 10 * 1024 * 1024) errors.push(`"${file.name}" is larger than 10MB.`);
-                else toSend.push(file);
-            });
-            errEl.textContent = errors.join(' ');
-            if (!toSend.length) return;
-            errEl.textContent = (errors.join(' ') + ' Uploading…').trim();
-
-            // one file per request, so many files together never go over the server's upload limit
-            const teamId = TEAMS[teamIndex].id;
-            let chain = Promise.resolve();
-            toSend.forEach(file => {
-                chain = chain.then(() => {
-                    const fd = new FormData();
-                    fd.append('ws_action', 'upload_file');
-                    fd.append('team_id', teamId);
-                    fd.append('files[]', file);
-                    return fetch('teams.php', { method: 'POST', body: fd })
-                        .then(r => r.json())
-                        .catch(() => ({ ok: false, message: `"${file.name}" could not be uploaded.` }))
-                        .then(res => {
-                            if (!res.ok) { errors.push(res.message); return; }
-                            errors.push(...(res.errors || []));
-                            files = res.files;
-                            renderFiles();
-                        });
-                });
-            });
-            chain.then(() => { errEl.textContent = errors.join(' '); });
-            return;
-        }
-
+        // upload to the server (team_files), the whole team can see them
+        const toSend = [];
         Array.from(list).forEach(file => {
-            if (file.size > 10 * 1024 * 1024) { errors.push(`"${file.name}" is larger than 10MB.`); return; }
-            const id = 'u' + Date.now() + Math.random().toString(36).slice(2, 6);
-            fileUrls[id] = URL.createObjectURL(file);
-            files.unshift({ id: id, name: file.name, size: file.size, by: 'You', when: 'Just now' });
+            if (file.size > 10 * 1024 * 1024) errors.push(`"${file.name}" is larger than 10MB.`);
+            else toSend.push(file);
         });
         errEl.textContent = errors.join(' ');
-        save(fileKey(), files);
-        renderFiles();
+        if (!toSend.length) return;
+        errEl.textContent = (errors.join(' ') + ' Uploading…').trim();
+
+        // one file per request, so many files together never go over the server's upload limit
+        const teamId = TEAMS[teamIndex].id;
+        let chain = Promise.resolve();
+        toSend.forEach(file => {
+            chain = chain.then(() => {
+                const fd = new FormData();
+                fd.append('ws_action', 'upload_file');
+                fd.append('team_id', teamId);
+                fd.append('files[]', file);
+                return fetch('teams.php', { method: 'POST', body: fd }).then(r => r.json())
+                    .catch(() => ({ ok: false, message: `"${file.name}" could not be uploaded.` }))
+                    .then(res => {
+                        if (!res.ok) { errors.push(res.message); return; }
+                        errors.push(...(res.errors || []));
+                        files = res.files;
+                        renderFiles();
+                    });
+            });
+        });
+        chain.then(() => { errEl.textContent = errors.join(' '); });
     }
 
     const drop = document.getElementById('twDrop');
@@ -1357,8 +1286,7 @@ window.TMForm = (function () {
         const o = e.target.closest('[data-open-file]');
         if (o) {
             const f = files.find(x => String(x.id) === o.dataset.openFile);
-            if (isDbTeam() && f && f.path) window.open('../../' + f.path, '_blank');
-            else if (fileUrls[o.dataset.openFile]) window.open(fileUrls[o.dataset.openFile], '_blank');
+            if (f && f.path) window.open('../../' + f.path, '_blank');
         }
         const d = e.target.closest('[data-del-file]');
         if (!d) return;
@@ -1379,19 +1307,11 @@ window.TMForm = (function () {
     fileDelModal.addEventListener('click', e => { if (e.target === fileDelModal) closeFileDel(); });
     document.getElementById('twFileDelOk').addEventListener('click', function () {
         if (!delFileId) return;
-        const id = delFileId;
-        if (isDbTeam()) {
-            this.disabled = true;
-            api('delete_file', { file_id: id }).then(res => {
-                if (res.ok) { files = res.files; renderFiles(); closeFileDel(); if (window.tmToast) window.tmToast('File removed'); }
-                else { document.getElementById('twFileDelErr').textContent = res.message; this.disabled = false; }
-            });
-        } else {
-            files = files.filter(f => String(f.id) !== String(id));
-            save(fileKey(), files);
-            renderFiles();
-            closeFileDel();
-        }
+        this.disabled = true;
+        api('delete_file', { file_id: delFileId }).then(res => {
+            if (res.ok) { files = res.files; renderFiles(); closeFileDel(); if (window.tmToast) window.tmToast('File removed'); }
+            else { document.getElementById('twFileDelErr').textContent = res.message; this.disabled = false; }
+        });
     });
 
     // ---------------- Chat ----------------
@@ -1421,24 +1341,15 @@ window.TMForm = (function () {
         if (!text) return;
         if (text.length > 500) { showChatError('A message can have up to 500 characters.'); return; }
 
-        if (isDbTeam()) {                       // save on the server, then show it (with any new replies)
-            const sendBtn = e.target.querySelector('button');
-            sendBtn.disabled = true;
-            api('send_message', { team_id: TEAMS[teamIndex].id, message: text }).then(res => {
-                sendBtn.disabled = false;
-                if (!res.ok) { showChatError(res.message); return; }
-                input.value = '';
-                refreshFromServer();
-            });
-            return;
-        }
-
-        const now = new Date();
-        messages.push({ me: true, who: ORG_NAME, text: text,
-                        time: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') });
-        save(chatKey(), messages);
-        input.value = '';
-        renderChat();
+        // save on the server, then show it (with any new replies)
+        const sendBtn = e.target.querySelector('button');
+        sendBtn.disabled = true;
+        api('send_message', { team_id: TEAMS[teamIndex].id, message: text }).then(res => {
+            sendBtn.disabled = false;
+            if (!res.ok) { showChatError(res.message); return; }
+            input.value = '';
+            refreshFromServer();
+        });
     });
 
     // (runs last, after everything above is ready)
@@ -1450,144 +1361,13 @@ window.TMForm = (function () {
     }
 })();
 
-
 /* =================================================================
-   ⋮ MENU – Edit Team, Change Status
-   Database teams are saved on the server.
-   Demo teams (not in the database) are changed in this browser only.
+   ⋮ MENU – Edit Team (saved on the server)
 ================================================================= */
 (function () {
     const TEAMS = ORG_DATA.MENU_TEAMS;
-    const CANDIDATES = ORG_DATA.CANDIDATES;
-    const PROJECT_MAX = ORG_DATA.PROJECT_MAX;
 
-    const STATUS = { ontrack: ['On Track', '#16a34a'], behind: ['Behind Schedule', '#dc2626'], completed: ['Completed', '#6b7280'] };
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
-    const OV_KEY = 'sb_demo_team_overrides';
-
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
-    const loadOv = () => { try { return JSON.parse(localStorage.getItem(OV_KEY)) || {}; } catch (e) { return {}; } };
-    const saveOv = o => { try { localStorage.setItem(OV_KEY, JSON.stringify(o)); } catch (e) {} };
-    const isDb = t => t.id !== null && t.id !== undefined;
-    const fmtShort = ymd => ymd ? new Date(ymd + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) : '';
-
-    // The popups for "View" / Kanban read the edited demo name + status from here too
-    window.tmEffective = function (i, t) {
-        const o = loadOv()[TEAMS[i] && TEAMS[i].name] || {};
-        return Object.assign({}, t, o.name ? { name: o.name } : {},
-            o.state ? { state: o.state, status: STATUS[o.state][0] } : {});
-    };
-
-    // ---------- buttons at the bottom of a card (depend on the status) ----------
-    //   On Track -> View, Task, Chat | Behind Schedule -> View, Review, Chat | Completed -> View Final Report
-    const ACTIONS = {
-        ontrack:   ['View', 'Task', 'Chat'],
-        behind:    ['View', 'Review', 'Chat'],
-        completed: ['Final Report']
-    };
-    const ACTION_ICON = { 'View': 'visibility', 'Task': 'task_alt', 'Chat': 'chat_bubble', 'Review': 'rate_review', 'Final Report': 'description' };
-
-    function renderActions(card, i, state) {
-        const box = card.querySelector('.tm-actions');
-        if (!box) return;
-        const list = ACTIONS[state] || ACTIONS.ontrack;
-        box.classList.toggle('single', list.length === 1);
-        box.innerHTML = list.map((a, k) => {
-            const cls  = a === 'Final Report' ? 'report' : (k === 0 ? 'solid' : '');
-            const data = (a === 'View' || a === 'Final Report' || a === 'Review Report') ? `data-view-team="${i}"`
-                       : (a === 'Task' || a === 'Chat') ? `data-work-team="${i}" data-work-focus="${a === 'Chat' ? 'chat' : 'tasks'}"`
-                       : `data-review-team="${i}"`;
-            return `<button type="button" class="tm-btn ${cls}" ${data}>` +
-                   `<span class="material-symbols-outlined">${ACTION_ICON[a]}</span>${a === 'Final Report' ? 'View Final Report' : a}</button>`;
-        }).join('');
-    }
-
-    // ---------- update a card on the page ----------
-    function applyToCard(i) {
-        const t = TEAMS[i];
-        const o = loadOv()[t.name];
-        const card = document.querySelector('.tm-card[data-team-index="' + i + '"]');
-        if (!o || !card) return;
-
-
-        if (o.name) card.querySelector('.tm-name').textContent = o.name;
-
-        if (o.state) {
-            const pill = card.querySelector('.tm-pill:not(.new)');
-            pill.className = 'tm-pill ' + o.state;
-            pill.textContent = STATUS[o.state][0];
-            card.dataset.state = o.state;
-            card.classList.toggle('completed', o.state === 'completed');
-            const box = card.querySelector('.tm-progress');
-            box.classList.remove('behind', 'completed');
-            if (o.state !== 'ontrack') box.classList.add(o.state);
-            renderActions(card, i, o.state);
-        }
-
-        if (o.members) {
-            const all = t.members.filter(m => o.members.includes(m.name));
-            const leader = all.find(m => m.name === o.leader) || all[0];
-            if (leader) {
-                card.querySelector('.tm-leader-name').textContent = leader.name;
-                card.querySelector('.tm-leader-role').textContent = (o.roles && o.roles[leader.name]) || leader.role;
-                const la = card.querySelector('.tm-leader .tm-av');
-                la.textContent = initials(leader.name);
-                la.style.background = colorFor(leader.name);
-            }
-            const others = all.filter(m => m !== leader);
-            card.querySelector('.tm-stack').innerHTML =
-                others.slice(0, 3).map(m => `<div class="tm-av" title="${esc(m.name)}" style="background:${colorFor(m.name)};">${esc(initials(m.name))}</div>`).join('') +
-                (others.length > 3 ? `<div class="tm-av more">+${others.length - 3}</div>` : '');
-        }
-
-        if (o.skills) {
-            let box = card.querySelector('.tm-skills');
-            if (!box && o.skills.length) {
-                box = document.createElement('div');
-                box.className = 'tm-skills';
-                box.innerHTML = '<div class="tm-label">Skills Covered</div><div class="tm-chips"></div>';
-                card.querySelector('.tm-progress').before(box);
-            }
-            if (box) {
-                box.hidden = !o.skills.length;
-                box.querySelector('.tm-chips').innerHTML = o.skills.map(sk => `<span class="tm-chip">${esc(sk)}</span>`).join('');
-            }
-        }
-
-        if (o.deadline) {
-            const left = card.querySelector('.tm-meta .left');
-            if (left) left.innerHTML = '<span class="material-symbols-outlined">calendar_today</span>Deadline: ' + esc(fmtShort(o.deadline));
-            card.dataset.deadline = Math.floor(new Date(o.deadline + 'T00:00:00').getTime() / 1000);
-            // "X days left" / "X days delayed" next to the deadline
-            const right = card.querySelector('.tm-meta .right');
-            if (right) {
-                const days = Math.round((new Date(o.deadline + 'T00:00:00') - new Date(new Date().toDateString())) / 86400000);
-                const tone = days < 0 ? 'late' : (days <= 14 ? 'warn' : 'ok');
-                right.className = 'right ' + tone;
-                right.innerHTML = '<span class="material-symbols-outlined">' + (days < 0 ? 'warning' : 'schedule') + '</span>' +
-                    (days < 0 ? Math.abs(days) + ' days delayed' : days + ' day' + (days === 1 ? '' : 's') + ' left');
-            }
-        }
-
-        card.dataset.search = [card.querySelector('.tm-name').textContent, t.project,
-            card.querySelector('.tm-leader-name').textContent,
-            ...Array.from(card.querySelectorAll('.tm-stack .tm-av[title]')).map(a => a.title)].join(' ').toLowerCase();
-        document.dispatchEvent(new Event('tm-refilter'));
-    }
-    TEAMS.forEach((t, i) => { if (!isDb(t)) applyToCard(i); });
-
-    window.tmDemoSave = (i, patch, msg) => demoSave(i, patch, msg);
     window.tmToast = msg => toast(msg);
-
-    function demoSave(i, patch, msg) {
-        const all = loadOv();
-        all[TEAMS[i].name] = Object.assign(all[TEAMS[i].name] || {}, patch);
-        saveOv(all);
-        applyToCard(i);
-        toast(msg);
-    }
 
     function toast(msg) {
         const el = document.createElement('div');
@@ -1658,15 +1438,14 @@ window.TMForm = (function () {
     function openEdit(i) {
         editing = i;
         const t = TEAMS[i];
-        const o = isDb(t) ? {} : (loadOv()[t.name] || {});
-        document.getElementById('teId').value = isDb(t) ? t.id : '';
+        document.getElementById('teId').value = t.id;
         document.getElementById('teProject').textContent = 'Project: ' + t.project;
-        document.getElementById('teName').value = o.name || t.name;
+        document.getElementById('teName').value = t.name;
         ['teErrName', 'teErrDeadline'].forEach(id => teErr(id, ''));
         editForm.querySelectorAll('.invalid').forEach(el => el.classList.remove('invalid'));
 
-        editOldDeadline = isDb(t) ? (t.deadline_raw || '') : '';
-        teDeadline.value = isDb(t) ? editOldDeadline : (o.deadline || '');
+        editOldDeadline = t.deadline_raw || '';
+        teDeadline.value = editOldDeadline;
 
         // deadline: from today (the current deadline can always be kept); a date after the day
         // the project ends is possible too -> the project is then made longer (up to MAX_WEEKS)
@@ -1693,24 +1472,15 @@ window.TMForm = (function () {
         else {
             const x = teInfo();
             if (x && x.tooLate) { teErr('teErrDeadline', 'A project can run up to ' + ORG_DATA.MAX_WEEKS + ' weeks, so the latest team deadline is ' + x.max + '.'); ok = false; }
-            else if (ok && x && teExtend.value !== '1' && isDb(TEAMS[editing])) {
+            else if (ok && x && teExtend.value !== '1') {
                 e.preventDefault();
                 window.TMExtend.confirm(x, () => { teExtend.value = '1'; editForm.submit(); });
                 return;
             }
         }
-        if (!ok) { e.preventDefault(); return; }
-
-        if (!isDb(TEAMS[editing])) {          // demo team -> save in the browser
-            e.preventDefault();
-            demoSave(editing, { name: name, deadline: dl || undefined }, 'Team updated');
-            editModal.classList.remove('open');
-        }
-        // database team -> normal form submit to teams.php
+        if (!ok) e.preventDefault();   // otherwise: normal form submit to teams.php
     });
-
 })();
-
 
 /* =================================================================
    DELAY REVIEW – "Review" button on Behind Schedule teams
@@ -1718,13 +1488,9 @@ window.TMForm = (function () {
 ================================================================= */
 (function () {
     const TEAMS = ORG_DATA.REVIEW_TEAMS;
-    const COLORS = ['#1e3a5f', '#0f766e', '#7c3aed', '#b45309', '#be185d', '#2563eb', '#475569'];
 
     const modal = document.getElementById('tmReviewModal');
     const body  = document.getElementById('trBody');
-    const esc = t => { const d = document.createElement('div'); d.textContent = t == null ? '' : String(t); return d.innerHTML; };
-    const initials = n => String(n || '').trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0).toUpperCase()).join('');
-    const colorFor = n => { let h = 0; for (const c of String(n)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return COLORS[h % COLORS.length]; };
     const av = n => `<span class="tm-av" style="background:${colorFor(n)};">${esc(initials(n))}</span>`;
     const today = new Date(new Date().toDateString());
     const toDate = str => { const d = new Date(str); return isNaN(d) ? null : new Date(d.toDateString()); };
@@ -1734,8 +1500,7 @@ window.TMForm = (function () {
 
     function open(i) {
         current = i;
-        const base = TEAMS[i];
-        const t = window.tmEffective ? Object.assign({}, base, window.tmEffective(i, base)) : base;
+        const t = TEAMS[i];
 
         document.getElementById('trName').textContent = t.name;
         document.getElementById('trProject').innerHTML = 'Project: <strong>' + esc(t.project) + '</strong>';
@@ -1769,8 +1534,7 @@ window.TMForm = (function () {
                 <span class="tr-flag ${isLate ? 'late' : 'risk'}">${isLate ? x.days + 'd overdue' : (x.days === 0 ? 'Due today' : 'Due in ' + x.days + 'd')}</span>
             </div>`;
 
-        const reminder =
-            `Hi team, our progress is ${actual}% but we should be around ${expected}% by now.` +
+        const reminder = `Hi team, our progress is ${actual}% but we should be around ${expected}% by now.` +
             (late.length ? `\n\nPlease finish these overdue tasks first:\n` + late.map(x => `• ${x.title} (${x.who || 'unassigned'})`).join('\n') : '') +
             `\n\nIf anything is blocking you, reply here so we can help.`;
 
@@ -1836,7 +1600,7 @@ window.TMForm = (function () {
                 </div>
 
                 <div class="tr-pane" data-pane="remind">
-                    <textarea id="trReminder" maxlength="1000">${esc(reminder)}</textarea>
+                    <textarea id="trReminder" maxlength="500">${esc(reminder)}</textarea>
                     <div class="tr-pane-foot">
                         <span class="tr-note">The message is posted in the team chat.</span>
                         <button type="button" class="tm-btn solid" id="trSendReminder"><span class="material-symbols-outlined">send</span>Send to Team</button>
@@ -1846,7 +1610,7 @@ window.TMForm = (function () {
                 <div class="tr-pane" data-pane="extend" hidden>
                     <div class="tm-grid-2">
                         <div class="tm-field">
-                            <label class="tm-f-label" for="trNewDate">New Deadline *</label>
+                            <label class="tm-f-label" for="trNewDate">New Deadline <span class="req">*</span></label>
                             <input type="date" id="trNewDate" class="tm-input" min="${ymd(minDate)}" max="${latestDl}" value="${ymd(suggest)}">
                             <div class="tm-warn" id="trExtendNote" hidden></div>
                         </div>
@@ -1855,7 +1619,7 @@ window.TMForm = (function () {
                             <input type="text" class="tm-input" value="${esc(t.team_deadline || t.deadline || 'Not set')}" disabled>
                         </div>
                     </div>
-                    <label class="tm-f-label" for="trReason">Reason *</label>
+                    <label class="tm-f-label" for="trReason">Reason <span class="req">*</span></label>
                     <textarea id="trReason" maxlength="300" placeholder="e.g. The smart contract audit took longer than planned."></textarea>
                     <div class="tm-err" id="trErr"></div>
                     <div class="tr-pane-foot">
@@ -1876,9 +1640,11 @@ window.TMForm = (function () {
         document.getElementById('trSendReminder').addEventListener('click', () => {
             const text = document.getElementById('trReminder').value.trim();
             if (!text) return;
-            if (window.tmPostToChat) window.tmPostToChat(i, text);
-            if (window.tmToast) window.tmToast('Reminder sent to the team chat');
-            close();
+            window.tmPostToChat(i, text).then(res => {
+                if (!res.ok) { window.tmToast(res.message); return; }
+                window.tmToast('Reminder sent to the team chat');
+                close();
+            });
         });
 
         // extend deadline (a date after the day the project ends makes the project longer)
@@ -1897,24 +1663,17 @@ window.TMForm = (function () {
             if (x && x.tooLate) { err.textContent = 'A project can run up to ' + ORG_DATA.MAX_WEEKS + ' weeks, so the latest deadline is ' + x.max + '.'; return; }
             if (reason.length < 5) { err.textContent = 'Please write a short reason (at least 5 characters).'; return; }
 
-            if (base.id !== null && base.id !== undefined) {       // database team -> save on the server
-                const f = document.getElementById('trExtendForm');
-                const send = longer => {
-                    f.elements.namedItem('team_id').value = base.id;
-                    f.elements.namedItem('deadline').value = date;
-                    f.elements.namedItem('reason').value = reason;
-                    f.elements.namedItem('extend_project').value = longer ? '1' : '0';
-                    f.submit();
-                };
-                if (x) window.TMExtend.confirm(x, () => send(true));   // ask first: make the project longer?
-                else send(false);
-                return;
-            }
-            // demo team -> save in the browser + tell the team in chat
-            const nice = new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
-            if (window.tmPostToChat) window.tmPostToChat(i, `The team deadline has been extended to ${nice}. Reason: ${reason}`);
-            if (window.tmDemoSave) window.tmDemoSave(i, { deadline: date, state: 'ontrack' }, 'Deadline extended to ' + nice);
-            close();
+            // save on the server (normal form submit to teams.php)
+            const f = document.getElementById('trExtendForm');
+            const send = longer => {
+                f.elements.namedItem('team_id').value = t.id;
+                f.elements.namedItem('deadline').value = date;
+                f.elements.namedItem('reason').value = reason;
+                f.elements.namedItem('extend_project').value = longer ? '1' : '0';
+                f.submit();
+            };
+            if (x) window.TMExtend.confirm(x, () => send(true));   // ask first: make the project longer?
+            else send(false);
         });
 
         body.scrollTop = 0;
@@ -1935,7 +1694,6 @@ window.TMForm = (function () {
         if (window.tmOpenWorkspace) window.tmOpenWorkspace(current, 'tasks');
     });
 })();
-
 
 /* =================================================================
    OPENED FROM A NOTIFICATION
@@ -1965,7 +1723,6 @@ window.TMForm = (function () {
     const btn = (open === 'review' && card.querySelector('[data-review-team]')) || card.querySelector('[data-view-team]');
     if (btn) btn.click();
 })();
-
 
 /* hide the success / error message after a few seconds */
 (function () {
