@@ -101,20 +101,6 @@ function orgSaveProjectSkills(mysqli $conn, int $projectId, array $skills): void
     }
 }
 
-/** Run a SELECT and return all rows (empty array if it fails, so the page still loads) */
-function orgFetch(mysqli $conn, string $sql, string $types = '', array $params = []): array
-{
-    try {
-        $st = $conn->prepare($sql);
-        if ($types !== '') $st->bind_param($types, ...$params);
-        $st->execute();
-        $res = $st->get_result();
-        return $res ? $res->fetch_all(MYSQLI_ASSOC) : [];
-    } catch (Throwable $e) {
-        return [];
-    }
-}
-
 /**
  * Save the correct status of every team of this organization (org_teams.status).
  * The rule is in Backend/TeamWorkspace.php (TW_STATUS_SQL): Completed when the final report is accepted,

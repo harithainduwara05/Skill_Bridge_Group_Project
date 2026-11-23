@@ -33,11 +33,13 @@
 |                         Review -> Done ("Approve")             Review -> In Progress ("Send back" + note)
 |                         Done -> In Progress ("Reopen")
 |                   only the organization can mark a task Done, so the progress shows approved work only
-|     delete_task   task_id
+|     delete_task   task_id  (only the organization)
 |     upload_file   team_id, files[]  (multipart form, max 10MB each)
 |     delete_file   file_id
+|     request_report team_id  -> the organization says the work is finished (every task must be Done)
+|                   the leader and members get a notification; a task added later cancels the request
 |     submit_report team_id, summary, report (one file: pdf / doc / docx / zip, max 10MB)
-|                   only the team leader, only when every task is Done
+|                   only the team leader, only when every task is Done and the organization asked for it
 |
 | Who can use a team:
 |   - the organization that owns the team's project (projects.organization_email)
@@ -62,6 +64,30 @@ const TW_STATUS = ['todo' => 'Todo', 'progress' => 'In Progress', 'review' => 'R
 
 // Task history lives in the team chat: every step is a message that starts with this tag
 function twTaskTag(int $taskId): string { return '[Task #' . $taskId . '] '; }
+
+/*
+| Final report request: the organization decides when the work is finished (it can give tasks in parts).
+| "Request Final Report" saves a team chat message that starts with this tag (sent by the organization).
+| The request counts only if it is newer than the newest task, so a task added later cancels it.
+| The leader can send the first final report only after this request.
+*/
+const TW_REPORT_TAG = '[Final Report] ';
+
+function twReportRequested(mysqli $conn, int $teamId): bool
+{
+    $q = $conn->prepare("SELECT 1
+                         FROM team_messages m
+                         JOIN org_teams t ON t.id = m.team_id
+                         JOIN projects p  ON p.id = t.project_id
+                         WHERE m.team_id = ?
+                           AND LOWER(m.sender_email) = LOWER(p.organization_email)
+                           AND m.message LIKE '[Final Report] %'
+                           AND m.sent_at > COALESCE((SELECT MAX(k.created_at) FROM team_tasks k WHERE k.team_id = ?), '1970-01-01')
+                         LIMIT 1");
+    $q->bind_param("ii", $teamId, $teamId);
+    $q->execute();
+    return (bool)$q->get_result()->fetch_row();
+}
 
 /*
 | Task attachments: team_files.task_id (NULL = a general Shared Assets file, a number = a file of that task).
@@ -266,6 +292,8 @@ function twMessages(mysqli $conn, int $teamId, int $afterId, string $myEmail): a
         if (preg_match('/^\[Task #(\d+)\] (.*)$/s', $text, $mm)) {
             $taskId = (int)$mm[1];
             $text = 'Task "' . ($titles[$taskId] ?? 'deleted task') . '" – ' . $mm[2];
+        } elseif (strpos($text, TW_REPORT_TAG) === 0) {
+            $text = substr($text, strlen(TW_REPORT_TAG));   // the final report request is shown as a normal message
         }
         $out[] = [
             'id' => (int)$m['message_id'], 'who' => $m['sender_name'], 'role' => $m['role'] ?? '',
@@ -429,7 +457,7 @@ function twHandleRequest(mysqli $conn, ?array $user): void
         $canDeleteAll = $role === 'organization' || $isLeader;   // can remove any task / file of the team
 
         // a Completed team (final report accepted) is finished: the board and the report can't change any more
-        if ($team['status'] === 'completed' && in_array($action, ['add_task', 'move_task', 'delete_task', 'submit_report'], true)) {
+        if ($team['status'] === 'completed' && in_array($action, ['add_task', 'move_task', 'delete_task', 'submit_report', 'request_report'], true)) {
             twJson(['ok' => false, 'message' => 'This team is completed, so its work can no longer be changed.']);
         }
 
@@ -449,7 +477,8 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                         'report'    => twReport($conn, $teamId),
                         'status'    => $status,
                         'is_leader' => $isLeader,
-                        'task_files' => twHasTaskFiles($conn)]);
+                        'task_files' => twHasTaskFiles($conn),
+                        'report_requested' => twReportRequested($conn, $teamId)]);
 
             case 'send_message':
                 $text = trim($_POST['message'] ?? '');
@@ -464,6 +493,15 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 $col      = 'todo';                       // a new task always starts in To Do
                 $assignee = strtolower(trim($_POST['assignee'] ?? ''));
                 $due      = trim($_POST['due'] ?? '');
+
+                // the final report is waiting for the organization's review -> no new work until it is sent back
+                $report = twReport($conn, $teamId);
+                if ($report && $report['status'] === 'submitted') {
+                    twJson(['ok' => false, 'message' => $role === 'organization'
+                        ? 'The final report is waiting for your review. Send it back first if the team needs to do more work.'
+                        : 'The final report is waiting for the organization’s review, so new tasks can’t be added now.']);
+                }
+                $wasRequested = twReportRequested($conn, $teamId);   // a new task cancels the final report request
 
                 if (mb_strlen($title) < 3 || mb_strlen($title) > 120)  twJson(['ok' => false, 'message' => 'The task title must be 3 to 120 characters.']);
                 if (mb_strlen($desc) > 500)                            twJson(['ok' => false, 'message' => 'The description can have up to 500 characters.']);
@@ -496,6 +534,20 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                     $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'team', 'Unread')");
                     $n->bind_param("sss", $assignee, $nTitle, $nMsg);
                     $n->execute();
+                }
+                // the final report was asked for, but there is more work now -> tell the team the request is cancelled
+                if ($wasRequested) {
+                    twAddMessage($conn, $teamId, $email, 'A new task "' . $title . '" was added, so the final report request is cancelled. '
+                                                       . 'Please finish the new task first.');
+                    $leader = strtolower($team['leader_email']);
+                    if ($leader !== $email) {
+                        $nTitle = 'Final Report Request Cancelled';
+                        $nMsg   = 'A new task "' . $title . '" was added to the team ' . $team['name']
+                                . '. Please finish it first. The organization will ask for the final report again.';
+                        $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'team', 'Unread')");
+                        $n->bind_param("sss", $leader, $nTitle, $nMsg);
+                        $n->execute();
+                    }
                 }
                 twRefreshStatus($conn, $teamId);
                 twJson(['ok' => true, 'tasks' => twTasks($conn, $teamId), 'task_id' => $newTaskId]);
@@ -581,11 +633,27 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 twJson(['ok' => true] + twTaskDetail($conn, $teamId, (int)$taskRow['task_id']));
 
             case 'delete_task':
-                // only the organization or the team leader
-                if (!$canDeleteAll) {
-                    twJson(['ok' => false, 'message' => 'Only the organization or the team leader can delete a task.']);
+                // only the organization: it gives the work and approves it, and a deleted task changes the progress.
+                // A student who thinks a task is not needed asks the organization in the team chat.
+                if ($role !== 'organization') {
+                    twJson(['ok' => false, 'message' => 'Only the organization can delete a task. Ask them in the team chat if this task is not needed.']);
+                }
+                // only a task nobody started (To Do): In Progress / Review / Done hold a student's work.
+                // A started task that is not needed: the student moves it back to To Do first (they agree), then it can be deleted.
+                if ($taskRow['status'] !== TW_STATUS['todo']) {
+                    twJson(['ok' => false, 'message' => 'Only tasks in To Do can be deleted. A student already started this task.']);
                 }
                 $id = (int)$taskRow['task_id'];
+                // tell the team (the chat) and the student who had the task
+                twAddMessage($conn, $teamId, $email, 'Removed the task "' . $taskRow['title'] . '".');
+                $assignee = strtolower((string)($taskRow['assigned_to'] ?? ''));
+                if ($assignee !== '') {
+                    $nTitle = 'Task Removed';
+                    $nMsg   = 'The organization removed the task "' . $taskRow['title'] . '" from the team ' . $team['name'] . '.';
+                    $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'team', 'Unread')");
+                    $n->bind_param("sss", $assignee, $nTitle, $nMsg);
+                    $n->execute();
+                }
                 // the task's files stay in Shared Assets (also done by the foreign key, ON DELETE SET NULL)
                 if (twHasTaskFiles($conn)) {
                     $q = $conn->prepare("UPDATE team_files SET task_id = NULL WHERE task_id = ?");
@@ -668,8 +736,41 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 if ($full && $base && strpos($full, $base) === 0 && is_file($full)) @unlink($full);
                 twJson(['ok' => true, 'files' => twFiles($conn, $teamId, $email, $canDeleteAll)]);
 
+            case 'request_report':
+                // the organization says the work is finished -> the team leader can send the final report
+                if ($role !== 'organization') twJson(['ok' => false, 'message' => 'Only the organization can ask for the final report.']);
+
+                $old = twReport($conn, $teamId);
+                if ($old && in_array($old['status'], ['submitted', 'accepted'], true)) twJson(['ok' => false, 'message' => 'The team already sent the final report.']);
+
+                $tasks = twTasks($conn, $teamId);
+                $done  = count(array_filter($tasks, fn($t) => $t['col'] === 'done'));
+                if (!$tasks || $done < count($tasks)) {
+                    twJson(['ok' => false, 'message' => 'Approve every task (Done) before asking for the final report (' . $done . ' of ' . count($tasks) . ' done).']);
+                }
+                if (twReportRequested($conn, $teamId)) twJson(['ok' => true, 'report_requested' => true]);   // asked already
+
+                $leaderName = $team['leader_email'];
+                foreach ($members as $m) { if ($m['leader']) $leaderName = $m['name']; }
+                twAddMessage($conn, $teamId, $email, TW_REPORT_TAG . 'All the work is done. ' . $leaderName . ', please submit the final report.');
+
+                $n = $conn->prepare("INSERT INTO notifications (Email, title, message, type, status) VALUES (?, ?, ?, 'team', 'Unread')");
+                foreach ($members as $m) {
+                    if ($m['leader']) {
+                        $nTitle = 'Submit the Final Report';
+                        $nMsg   = 'All tasks of the team "' . $team['name'] . '" are done. Please submit the final report from the team workspace.';
+                    } else {
+                        $nTitle = 'Final Report Requested';
+                        $nMsg   = 'All tasks of the team "' . $team['name'] . '" are done. ' . $leaderName . ' (team leader) will submit the final report.';
+                    }
+                    $n->bind_param("sss", $m['email'], $nTitle, $nMsg);
+                    $n->execute();
+                }
+                twJson(['ok' => true, 'report_requested' => true]);
+
             case 'submit_report':
                 // the team leader sends the final report when every task on the board is Done
+                // and the organization asked for it (or sent an earlier report back for changes)
                 if ($role !== 'student' || !$isLeader) twJson(['ok' => false, 'message' => 'Only the team leader can send the final report.']);
 
                 $old = twReport($conn, $teamId);
@@ -679,6 +780,9 @@ function twHandleRequest(mysqli $conn, ?array $user): void
                 $done  = count(array_filter($tasks, fn($t) => $t['col'] === 'done'));
                 if (!$tasks || $done < count($tasks)) {
                     twJson(['ok' => false, 'message' => 'Move every task to Done before sending the final report (' . $done . ' of ' . count($tasks) . ' done).']);
+                }
+                if (!$old && !twReportRequested($conn, $teamId)) {
+                    twJson(['ok' => false, 'message' => 'The organization has not asked for the final report yet. It may still give more tasks.']);
                 }
 
                 $summary = trim($_POST['summary'] ?? '');

@@ -595,69 +595,6 @@ include "../../Includes/dash_header.php";
 
 
 <!-- =============================================================
-     CONFIRMATION MODAL
-============================================================== -->
-
-<div
-    class="pr-modal-overlay"
-    id="confirmModal"
->
-
-    <div class="pr-modal">
-
-        <div class="pr-modal-body">
-
-            <div class="pr-confirm-content">
-
-                <div class="pr-confirm-icon">
-
-                    <span
-                        class="material-symbols-outlined"
-                        id="confirmIcon"
-                    >
-                        help
-                    </span>
-
-                </div>
-
-                <h3 id="confirmTitle">
-                    Confirm Action
-                </h3>
-
-                <p id="confirmMessage">
-                    Are you sure you want to continue?
-                </p>
-
-                <div class="pr-confirm-actions">
-
-                    <button
-                        type="button"
-                        class="pr-btn pr-cancel-btn"
-                        data-close-modal="confirmModal"
-                    >
-                        Cancel
-                    </button>
-
-                    <button
-                        type="button"
-                        class="pr-btn pr-confirm-btn"
-                        id="confirmActionButton"
-                    >
-                        Confirm
-                    </button>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- =============================================================
      ACCEPT MODAL (message is sent to the student)
 ============================================================== -->
 
@@ -678,7 +615,7 @@ include "../../Includes/dash_header.php";
         </div>
 
         <div class="rj-body">
-            <label class="rj-label" for="acMessage">Message to the student *</label>
+            <label class="rj-label" for="acMessage">Message to the student <span class="req">*</span></label>
 
             <div class="rj-quick">
                 <button type="button" class="rj-chip ac-chip">Great proposal! Welcome to the project. We will add you to a team soon.</button>
@@ -733,7 +670,7 @@ include "../../Includes/dash_header.php";
         </div>
 
         <div class="rj-body">
-            <label class="rj-label" for="rjReason">Reason for rejecting *</label>
+            <label class="rj-label" for="rjReason">Reason for rejecting <span class="req">*</span></label>
 
             <div class="rj-quick">
                 <button type="button" class="rj-chip">Your skills don’t match the project requirements.</button>

@@ -27,17 +27,10 @@ function openProjectView(id) {
     // key facts (empty ones are skipped)
     const info = document.getElementById('pvInfo');
     info.innerHTML = '';
-    [
-        ['Posted', d.posted],
-        ['Deadline', d.deadline],
-        ['Applicants', d.applicants],
+    [['Posted', d.posted], ['Deadline', d.deadline], ['Applicants', d.applicants],
         ['Assigned Team', d.assigned > 0 ? ('Assigned (' + d.assigned + '/' + d.required + ')') : 'Not Assigned'],
-        ['Visibility', d.visibility],
-        ['Duration', d.duration],
-        ['Students Required', d.members],
-        ['Preferred Year', d.year],
-        ['Difficulty', d.difficulty]
-    ].forEach(function (row) {
+        ['Visibility', d.visibility], ['Duration', d.duration], ['Students Required', d.members],
+        ['Preferred Year', d.year], ['Difficulty', d.difficulty]].forEach(function (row) {
         if (row[1] === '' || row[1] === null || row[1] === undefined) return;
         const box = pvEl('div');
         box.appendChild(pvEl('div', 'pv-info-label', row[0]));
@@ -89,8 +82,7 @@ let pendingDeleteId = null;
 function openDeleteModal(id, title, blockReason) {
     // Not allowed -> show the warning instead of the delete confirmation
     if (blockReason) {
-        showBlocked(
-            'You can’t delete this project', title, blockReason,
+        showBlocked('You can’t delete this project', title, blockReason,
             'Only <b>Rejected</b> projects, or <b>Reviewing</b> projects with <b>0 applicants</b>, can be deleted.'
         );
         return;
@@ -131,18 +123,14 @@ function showBlocked(heading, title, reason, ruleHtml, holdId) {
 
 function openEditBlocked(title, status, holdId) {
     if (status === 'hold') {
-        showBlocked(
-            'You can’t edit this project', title,
+        showBlocked('You can’t edit this project', title,
             'This project is On Hold by the Admin, so it can’t be edited from here.',
             'Use the <b>hold icon</b> in the Actions column to see the Admin’s reason, fix the project and send it back.',
-            holdId
-        );
+            holdId);
     } else {
-        showBlocked(
-            'You can’t edit this project', title,
+        showBlocked('You can’t edit this project', title,
             'This project was Rejected by the Admin, so it can’t be edited.',
-            'Rejected projects can’t be changed. You can delete it and post a new project instead.'
-        );
+            'Rejected projects can’t be changed. You can delete it and post a new project instead.');
     }
 }
 

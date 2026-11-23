@@ -8,7 +8,6 @@
 | Error messages are written into the <div class="field-error" data-for="..."> under each field.
 */
 document.addEventListener('DOMContentLoaded', function () {
-
     const form = document.getElementById('postProjectForm') || document.getElementById('editProjectForm');
     if (!form) return;
 
@@ -171,11 +170,8 @@ document.addEventListener('DOMContentLoaded', function () {
             'It will be in the category list from now on.</p>' +
             '<input type="text" class="form-input" id="addCatName" maxlength="40" placeholder="e.g. Game Development" autocomplete="off">' +
             '<div class="add-cat-row"><small class="add-cat-err" id="addCatErr"></small><small class="add-cat-count" id="addCatCount">0 / 40</small></div>' +
-            '<div class="add-cat-actions">' +
-                '<button type="button" class="add-cat-cancel">Cancel</button>' +
-                '<button type="button" class="add-cat-save">Add Category</button>' +
-            '</div>' +
-        '</div>';
+            '<div class="add-cat-actions">' + '<button type="button" class="add-cat-cancel">Cancel</button>' +
+                '<button type="button" class="add-cat-save">Add Category</button>' + '</div>' + '</div>';
     document.body.appendChild(modal);
 
     const input = modal.querySelector('#addCatName');
@@ -219,9 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const fd = new FormData();
         fd.append('action', 'add_category');
         fd.append('name', name);
-        fetch(location.href, { method: 'POST', body: fd })
-            .then(r => r.json())
-            .then(function (res) {
+        fetch(location.href, { method: 'POST', body: fd }).then(r => r.json()).then(function (res) {
                 save.disabled = false;
                 if (!res.ok) { err.textContent = res.message; input.classList.add('invalid'); return; }
                 const opt = addOption(res.name);
@@ -231,8 +225,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     ? '"' + res.name + '" is already in the list, so it is selected.'
                     : '"' + res.name + '" was added and selected.';
                 close();
-            })
-            .catch(function () {
+            }).catch(function () {
                 save.disabled = false;
                 err.textContent = 'Something went wrong. Please try again.';
             });

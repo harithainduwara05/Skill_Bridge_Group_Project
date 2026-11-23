@@ -175,7 +175,6 @@ include "../../Includes/dash_header.php";
                 <?php foreach ($report['filters'] as $k => $v): ?>
                     <span class="rp-chip"><b><?= $h($k) ?>:</b> <?= $h($v) ?></span>
                 <?php endforeach; ?>
-                <?php if ($report['has_sample']): ?><span class="rp-chip sample">Includes sample data</span><?php endif; ?>
             </div>
 
             <div class="rp-body">
@@ -253,7 +252,7 @@ include "../../Includes/dash_header.php";
         RP: <?= json_encode([
     'type' => $type, 'title' => $report['type_label'] . ' Report', 'org' => $orgName,
     'period' => $report['period_text'], 'generated' => date('M d, Y h:i A'),
-    'filters' => $report['filters'], 'sample' => $report['has_sample'],
+    'filters' => $report['filters'],
     'cards' => $report['cards'], 'charts' => $report['charts'],
     'file' => 'skillbridge_' . $type . '_report_' . date('Y-m-d') . '.pdf',
 ], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) ?>,

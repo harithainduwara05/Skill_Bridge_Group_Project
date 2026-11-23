@@ -16,7 +16,6 @@ const projectDetails = ORG_DATA.projectDetails;
 
 const studentProfiles = ORG_DATA.studentProfiles;
 
-
 /* ================================================================
    DOM ELEMENTS
 ================================================================ */
@@ -37,176 +36,78 @@ const emptyResults = document.getElementById('emptyResults');
 
 const proposalTotal = document.getElementById('proposalTotal');
 
-
 let newestFirst = true;
 
-let pendingAction = null;
-
-
-/* ================================================================
-   LOCAL STORAGE
-================================================================ */
-
-const STORAGE_KEY = 'skillbridge_organization_proposal_statuses';
-
-// Clear the statuses the old demo version saved in this browser
-try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
-
-
-function loadSavedStatuses()
-{
-    try {
-
-        const saved = localStorage.getItem(STORAGE_KEY);
-
-        if (!saved) {
-            return {};
-        }
-
-        return JSON.parse(saved);
-
-    } catch (error) {
-
-        return {};
-
-    }
-}
-
-
-function saveStatuses(statuses)
-{
-    localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify(statuses)
-    );
-}
-
-
-function getCurrentStatus(id)
-{
+function getCurrentStatus(id) {
     // The status comes from the database (project_proposals.status).
     // (Statuses saved in the browser by the old demo version are ignored.)
-    const proposal = proposalData.find(
-        p => Number(p.id) === Number(id)
-    );
+    const proposal = proposalData.find(p => Number(p.id) === Number(id));
 
     return proposal ? proposal.status : 'pending';
 }
-
 
 /* ================================================================
    APPLY SAVED STATUS
 ================================================================ */
 
-function applySavedStatuses()
-{
+function applySavedStatuses() {
     const cards = document.querySelectorAll('.pr-card');
 
     cards.forEach(card => {
-
         const id = card.dataset.id;
 
         const status = getCurrentStatus(id);
 
-        updateCardStatus(
-            card,
-            status,
-            false
-        );
-
+        updateCardStatus(card, status, false);
     });
-
 }
-
 
 /* ================================================================
    UPDATE CARD STATUS
 ================================================================ */
 
-function updateCardStatus(
-    card,
-    newStatus,
+function updateCardStatus(card, newStatus,
     notify = true   // renamed: "showToast" here hid the showToast() function and crashed
-)
-{
-
+) {
     card.dataset.status = newStatus;
-
 
     /* Status badge */
 
-    const badge = card.querySelector(
-        '[data-status-badge]'
-    );
+    const badge = card.querySelector('[data-status-badge]');
 
     if (badge) {
+        badge.className = 'pr-badge ' + newStatus;
 
-        badge.className =
-            'pr-badge ' + newStatus;
-
-        badge.textContent =
-            statusLabels[newStatus];
+        badge.textContent = statusLabels[newStatus];
 
         // Only "Accepted" / "Rejected" are ever shown as a badge on the
         // card — "Pending" stays hidden (it's just the default state).
-        badge.style.display =
-            newStatus === 'pending' ? 'none' : '';
-
+        badge.style.display = newStatus === 'pending' ? 'none' : '';
     }
-
 
     /* Buttons */
 
-    const acceptBtn =
-        card.querySelector('.accept-btn');
+    const acceptBtn = card.querySelector('.accept-btn');
 
-    const rejectBtn =
-        card.querySelector('.reject-btn');
-
+    const rejectBtn = card.querySelector('.reject-btn');
 
     if (acceptBtn) {
-
-        acceptBtn.disabled =
-            newStatus === 'accepted' ||
-            newStatus === 'rejected';
-
+        acceptBtn.disabled = newStatus === 'accepted' || newStatus === 'rejected';
     }
 
-
     if (rejectBtn) {
-
-        rejectBtn.disabled =
-            newStatus === 'accepted' ||
-            newStatus === 'rejected';
-
+        rejectBtn.disabled = newStatus === 'accepted' || newStatus === 'rejected';
     }
 
     /* Hide the Accept / Reject buttons once a decision is made */
 
-    const actions =
-        card.querySelector('.pr-actions');
+    const actions = card.querySelector('.pr-actions');
 
     if (actions) {
-
-        actions.hidden =
-            newStatus === 'accepted' ||
-            newStatus === 'rejected';
-
+        actions.hidden = newStatus === 'accepted' || newStatus === 'rejected';
     }
 
-
-    /* Save */
-
-    const statuses = loadSavedStatuses();
-
-    statuses[card.dataset.id] =
-        newStatus;
-
-    saveStatuses(statuses);
-
-
     if (notify) {
-
         if (newStatus === 'accepted') {
             showToast('The proposal was accepted successfully.', 'Proposal accepted');
         }
@@ -214,12 +115,10 @@ function updateCardStatus(
         if (newStatus === 'rejected') {
             showToast('The proposal was rejected successfully.', 'Proposal rejected');
         }
-
     }
 
     applyFilters(true);   // keep the cards already loaded with "Load More"
 }
-
 
 /* ================================================================
    FILTER PROPOSALS
@@ -230,98 +129,54 @@ let shownLimit = PAGE_SIZE;
 const loadMoreBox = document.getElementById('prMore');
 const loadMoreBtn = document.getElementById('prLoadMore');
 
-function applyFilters(keepLimit)
-{
+function applyFilters(keepLimit) {
     // a filter / search / sort change starts again from the first 5
     if (keepLimit !== true) shownLimit = PAGE_SIZE;
 
-    const search =
-        searchInput.value
-            .trim()
-            .toLowerCase();
+    const search = searchInput.value.trim().toLowerCase();
 
-    const selectedStatus =
-        statusFilter.value;
+    const selectedStatus = statusFilter.value;
 
-    const selectedTime =
-        timeFilter.value;
+    const selectedTime = timeFilter.value;
 
-
-    const cards =
-        Array.from(
-            document.querySelectorAll('.pr-card')
-        );
-
+    const cards = Array.from(document.querySelectorAll('.pr-card'));
 
     let visibleCount = 0;
 
-
     cards.forEach(card => {
+        const name = card.dataset.name || '';
 
-        const name =
-            card.dataset.name || '';
+        const school = card.dataset.school || '';
 
-        const school =
-            card.dataset.school || '';
+        const project = card.dataset.project || '';
 
-        const project =
-            card.dataset.project || '';
+        const status = card.dataset.status || '';
 
-        const status =
-            card.dataset.status || '';
+        const daysAgo = parseInt(card.dataset.days, 10) || 0;
 
-        const daysAgo =
-            parseInt(card.dataset.days, 10) || 0;
+        const skills = card.dataset.skills || '';
 
-        const skills =
-            card.dataset.skills || '';
+        const searchMatch = !search || name.includes(search) || school.includes(search) ||
+            project.toLowerCase().includes(search) || skills.includes(search);
 
+        const statusMatch = selectedStatus === 'all' || status === selectedStatus;
 
-        const searchMatch =
-            !search ||
-            name.includes(search) ||
-            school.includes(search) ||
-            project.toLowerCase().includes(search) ||
-            skills.includes(search);
+        const timeMatch = selectedTime === 'all' || (selectedTime === 'daily' && daysAgo <= 0) ||
+            (selectedTime === 'weekly' && daysAgo <= 7) || (selectedTime === 'monthly' && daysAgo <= 30);
 
-
-        const statusMatch =
-            selectedStatus === 'all' ||
-            status === selectedStatus;
-
-        const timeMatch =
-            selectedTime === 'all' ||
-            (selectedTime === 'daily' && daysAgo <= 0) ||
-            (selectedTime === 'weekly' && daysAgo <= 7) ||
-            (selectedTime === 'monthly' && daysAgo <= 30);
-
-
-        const shouldShow =
-            searchMatch &&
-            statusMatch &&
-            timeMatch;
-
+        const shouldShow = searchMatch && statusMatch && timeMatch;
 
         if (shouldShow) {
-
             visibleCount++;
 
             // matching, but only the first "shownLimit" are shown
             card.classList.toggle('hidden', visibleCount > shownLimit);
-
         } else {
-
             card.classList.add('hidden');
-
         }
-
     });
 
-
-    emptyResults.classList.toggle(
-        'show',
-        visibleCount === 0
-    );
+    emptyResults.classList.toggle('show', visibleCount === 0);
 
     // "Load More" + "Showing x of y"
     if (loadMoreBox) {
@@ -331,7 +186,6 @@ function applyFilters(keepLimit)
         loadMoreBox.hidden = visibleCount === 0;
         loadMoreBtn.hidden = shown >= visibleCount;
     }
-
 }
 
 if (loadMoreBtn) {
@@ -345,130 +199,79 @@ if (loadMoreBtn) {
     });
 }
 
-
 /* ================================================================
    SORT
 ================================================================ */
 
-function sortCards()
-{
-
-    const cards =
-        Array.from(
-            document.querySelectorAll('.pr-card')
-        );
-
+function sortCards() {
+    const cards = Array.from(document.querySelectorAll('.pr-card'));
 
     cards.sort((a, b) => {
+        const aDays = Number(a.dataset.days);
 
-        const aDays =
-            Number(a.dataset.days);
-
-        const bDays =
-            Number(b.dataset.days);
-
+        const bDays = Number(b.dataset.days);
 
         if (newestFirst) {
-
             return aDays - bDays;
-
         } else {
-
             return bDays - aDays;
-
         }
-
     });
-
 
     cards.forEach(card => {
-
         proposalList.appendChild(card);
-
     });
 
-
-    sortText.textContent =
-        newestFirst
-            ? 'Sort by Newest'
-            : 'Sort by Oldest';
-
+    sortText.textContent = newestFirst ? 'Sort by Newest' : 'Sort by Oldest';
 
     applyFilters();
-
 }
-
 
 /* ================================================================
    OPEN MODAL
 ================================================================ */
 
-function openModal(id)
-{
-
-    const modal =
-        document.getElementById(id);
+function openModal(id) {
+    const modal = document.getElementById(id);
 
     if (modal) {
-
         modal.classList.add('show');
 
-        document.body.style.overflow =
-            'hidden';
-
+        document.body.style.overflow = 'hidden';
     }
-
 }
-
 
 /* ================================================================
    CLOSE MODAL
 ================================================================ */
 
-function closeModal(id)
-{
-
-    const modal =
-        document.getElementById(id);
+function closeModal(id) {
+    const modal = document.getElementById(id);
 
     if (modal) {
-
         modal.classList.remove('show');
 
-        document.body.style.overflow =
-            '';
-
+        document.body.style.overflow = '';
     }
-
 }
-
 
 /* ================================================================
    CLOSE ALL MODALS
 ================================================================ */
 
-function closeAllModals()
-{
-
-    document
-        .querySelectorAll('.pr-modal-overlay')
-        .forEach(modal => {
-
+function closeAllModals() {
+    document.querySelectorAll('.pr-modal-overlay').forEach(modal => {
             modal.classList.remove('show');
-
         });
 
     document.body.style.overflow = '';
-
 }
-
 
 /* ================================================================
    FULL PROPOSAL
 ================================================================ */
 
-function showFullProposal(id)
-{
+function showFullProposal(id) {
     const proposal = proposalData.find(p => Number(p.id) === Number(id));
     if (!proposal) {
         return;
@@ -479,12 +282,9 @@ function showFullProposal(id)
     const sp      = studentProfiles[proposal.email] || {};
     const project = projectDetails[proposal.project] || null;
 
-    const avatar = sp.image
-        ? `<img src="${e(sp.image)}" alt="">`
-        : e(getInitials(proposal.name));
+    const avatar = sp.image ? `<img src="${e(sp.image)}" alt="">` : e(getInitials(proposal.name));
 
-    const skillsHtml = (proposal.skills || [])
-        .map(sk => `<span class="pf-chip">${e(sk)}</span>`).join('');
+    const skillsHtml = (proposal.skills || []).map(sk => `<span class="pf-chip">${e(sk)}</span>`).join('');
 
     const planHtml = (proposal.plan || []).map((step, i) => `
         <li>
@@ -495,13 +295,9 @@ function showFullProposal(id)
             </div>
         </li>`).join('');
 
-    const projectRows = project ? [
-        ['Organization', project.company],
-        ['Category', project.category],
-        ['Duration', project.duration],
-        ['Students needed', project.members],
-        ['Difficulty', project.difficulty],
-        ['Deadline', project.deadline]
+    const projectRows = project ? [['Organization', project.company], ['Category', project.category],
+        ['Duration', project.duration], ['Students needed', project.members],
+        ['Difficulty', project.difficulty], ['Deadline', project.deadline]
     ].filter(r => r[1] !== null && r[1] !== undefined && r[1] !== '')
      .map(r => `<div class="pf-row"><span>${e(r[0])}</span><strong>${e(String(r[1]))}</strong></div>`).join('')
     : '';
@@ -627,13 +423,11 @@ document.getElementById('proposalModalFoot').addEventListener('click', function 
     if (btn.dataset.pfAction === 'reject')  { openRejectModal(id); }
 });
 
-
 /* ================================================================
    PROFILE
 ================================================================ */
 
-function showProfile(id, pushHistory = true)
-{
+function showProfile(id, pushHistory = true) {
     const proposal = proposalData.find(p => Number(p.id) === Number(id));
     if (!proposal) {
         return;
@@ -670,8 +464,7 @@ function showProfile(id, pushHistory = true)
                 <div class="sp-review-meta"><strong>${e(rv.organization || 'Organization')}</strong> · ${e(rv.project)}${rv.role ? ' · ' + e(rv.role) : ''}</div>
                 <p class="sp-review-text">${e(rv.summary)}</p>
             </div>`).join('');
-    const ratingHtml = rt.count
-        ? `<div class="sp-rating-head">
+    const ratingHtml = rt.count ? `<div class="sp-rating-head">
                <div class="sp-rating-big">${Number(rt.avg).toFixed(1)}</div>
                <div>${stars(rt.avg)}<div class="sp-rating-sub">From ${rt.count} organization feedback${rt.count === 1 ? '' : 's'}</div></div>
            </div>
@@ -680,9 +473,7 @@ function showProfile(id, pushHistory = true)
         : '<p class="sp-empty">No ratings yet. This student has not received feedback from an organization.</p>';
 
     // ---------- header ----------
-    const avatar = sp.image
-        ? `<img src="${e(sp.image)}" alt="${e(sp.name)}">`
-        : e(getInitials(sp.name));
+    const avatar = sp.image ? `<img src="${e(sp.image)}" alt="${e(sp.name)}">` : e(getInitials(sp.name));
 
     const yearText = sp.year ? `Year ${e(sp.year)}` : '';
     const degreeLine = [e(sp.degree), yearText].filter(Boolean).join(' &bull; ');
@@ -700,8 +491,7 @@ function showProfile(id, pushHistory = true)
     ].join('');
 
     // ---------- skills ----------
-    const skillsHtml = sp.skills.length
-        ? sp.skills.map(sk => `
+    const skillsHtml = sp.skills.length ? sp.skills.map(sk => `
             <div class="sp-skill">
                 <div class="sp-skill-top">
                     <span class="sp-skill-name">${e(sk.skill_name)}</span>
@@ -709,12 +499,10 @@ function showProfile(id, pushHistory = true)
                 </div>
                 <div class="sp-bar"><span style="width:${Math.max(0, Math.min(100, Number(sk.percentage) || 0))}%"></span></div>
                 ${sk.category ? `<div class="sp-skill-cat">${e(sk.category)}</div>` : ''}
-            </div>`).join('')
-        : '<p class="sp-empty">No skills added yet.</p>';
+            </div>`).join('') : '<p class="sp-empty">No skills added yet.</p>';
 
     // ---------- portfolio ----------
-    const portfolioHtml = sp.portfolio.length
-        ? sp.portfolio.map(pf => `
+    const portfolioHtml = sp.portfolio.length ? sp.portfolio.map(pf => `
             <div class="sp-card">
                 ${pf.image ? `<img class="sp-card-img" src="${e(pf.image)}" alt="">` : '<div class="sp-card-icon"><span class="material-symbols-outlined">code_blocks</span></div>'}
                 <div class="sp-card-body">
@@ -724,12 +512,10 @@ function showProfile(id, pushHistory = true)
                     ${(pf.tech || []).length ? `<div class="pv-tech">${pf.tech.map(t => `<span>${e(t)}</span>`).join('')}</div>` : ''}
                     ${pf.link ? `<a class="sp-card-link" href="${e(pf.link)}" target="_blank" rel="noopener">${e(pf.link_label || 'View project')} <span class="material-symbols-outlined">open_in_new</span></a>` : ''}
                 </div>
-            </div>`).join('')
-        : '<p class="sp-empty">No portfolio projects yet.</p>';
+            </div>`).join('') : '<p class="sp-empty">No portfolio projects yet.</p>';
 
     // ---------- SkillBridge projects ----------
-    const projectsHtml = sp.projects.length
-        ? sp.projects.map(pr => {
+    const projectsHtml = sp.projects.length ? sp.projects.map(pr => {
             const pct = Math.max(0, Math.min(100, Number(pr.progress) || 0));
             const done = (pr.status || '').toLowerCase() === 'completed';
             return `
@@ -744,12 +530,10 @@ function showProfile(id, pushHistory = true)
                 <div class="sp-bar ${done ? 'done' : ''}"><span style="width:${pct}%"></span></div>
                 <div class="sp-proj-pct">${pct}% complete</div>
             </div>`;
-        }).join('')
-        : '<p class="sp-empty">No SkillBridge projects yet.</p>';
+        }).join('') : '<p class="sp-empty">No SkillBridge projects yet.</p>';
 
     // ---------- certificates ----------
-    const certsHtml = sp.certificates.length
-        ? sp.certificates.map(c => {
+    const certsHtml = sp.certificates.length ? sp.certificates.map(c => {
             const ok = (c.status || '').toLowerCase() === 'approved';
             return `
             <div class="sp-cert">
@@ -760,8 +544,7 @@ function showProfile(id, pushHistory = true)
                 </div>
                 <span class="sp-status ${ok ? 'done' : 'pending'}">${ok ? 'Approved' : e(c.status || 'Pending')}</span>
             </div>`;
-        }).join('')
-        : '<p class="sp-empty">No certificates yet.</p>';
+        }).join('') : '<p class="sp-empty">No certificates yet.</p>';
 
     document.getElementById('spBody').innerHTML = `
         <div class="sp-headcard">
@@ -826,13 +609,11 @@ function showProfile(id, pushHistory = true)
     openProfileView(proposal.id, pushHistory);
 }
 
-
 /* ---- Same-page profile view with Back (also works with the browser Back button) ---- */
 
 let listScrollY = 0;
 
-function openProfileView(id, pushHistory = true)
-{
+function openProfileView(id, pushHistory = true) {
     listScrollY = window.scrollY;
 
     document.getElementById('proposalListView').hidden = true;
@@ -844,8 +625,7 @@ function openProfileView(id, pushHistory = true)
     }
 }
 
-function closeProfileView()
-{
+function closeProfileView() {
     document.getElementById('studentProfileView').hidden = true;
     document.getElementById('proposalListView').hidden = false;
     window.scrollTo(0, listScrollY);
@@ -883,170 +663,6 @@ window.addEventListener('popstate', function (e) {
     }
 });
 
-
-/* ================================================================
-   CONFIRM ACTION
-================================================================ */
-
-function askConfirmation(
-    id,
-    action
-)
-{
-
-    const proposal =
-        proposalData.find(
-            p => Number(p.id) === Number(id)
-        );
-
-
-    if (!proposal) {
-        return;
-    }
-
-
-    pendingAction = {
-        id: Number(id),
-        action: action
-    };
-
-
-    const confirmIcon =
-        document.getElementById(
-            'confirmIcon'
-        );
-
-    const confirmTitle =
-        document.getElementById(
-            'confirmTitle'
-        );
-
-    const confirmMessage =
-        document.getElementById(
-            'confirmMessage'
-        );
-
-    const confirmButton =
-        document.getElementById(
-            'confirmActionButton'
-        );
-
-
-    if (action === 'accept') {
-
-        confirmIcon.textContent =
-            'check_circle';
-
-        confirmTitle.textContent =
-            'Accept Proposal';
-
-        confirmMessage.textContent =
-            `Are you sure you want to accept ${proposal.name}'s proposal?`;
-
-        confirmButton.textContent =
-            'Accept';
-
-        confirmButton.classList.remove(
-            'danger'
-        );
-
-    }
-
-
-    if (action === 'reject') {
-
-        confirmIcon.textContent =
-            'cancel';
-
-        confirmTitle.textContent =
-            'Reject Proposal';
-
-        confirmMessage.textContent =
-            `Are you sure you want to reject ${proposal.name}'s proposal?`;
-
-        confirmButton.textContent =
-            'Reject';
-
-        confirmButton.classList.add(
-            'danger'
-        );
-
-    }
-
-
-    openModal('confirmModal');
-
-}
-
-
-/* ================================================================
-   PERFORM ACTION
-================================================================ */
-
-function performAction()
-{
-
-    if (!pendingAction) {
-        return;
-    }
-
-
-    const id =
-        pendingAction.id;
-
-    const action =
-        pendingAction.action;
-
-
-    let newStatus;
-
-
-    if (action === 'accept') {
-        newStatus = 'accepted';
-    }
-
-    if (action === 'reject') {
-        newStatus = 'rejected';
-    }
-
-
-    const card =
-        document.querySelector(
-            `.pr-card[data-id="${id}"]`
-        );
-
-
-    // Close the confirmation straight away
-    pendingAction = null;
-
-    closeModal('confirmModal');
-
-
-    if (card && newStatus === 'accepted') {
-        saveAcceptOnServer(id, false).then(function (data) {
-            updateCardStatus(card, 'accepted', !data.message);
-            if (data.message) showToast(data.message, 'Proposal accepted');
-        }).catch(function (err) {
-            showToast(err.message || 'Please try again.', 'Could not accept the proposal', 'error');
-        });
-    } else if (card && newStatus) {
-
-        updateCardStatus(
-            card,
-            newStatus,
-            true
-        );
-
-    }
-
-
-    pendingAction = null;
-
-    closeModal('confirmModal');
-
-}
-
-
 /* ================================================================
    PORTFOLIO PREVIEW
    PDF   -> shown with the browser's own PDF viewer (iframe)
@@ -1070,9 +686,7 @@ document.addEventListener('click', function (e) {
             const fd = new FormData();
             fd.append('action', 'portfolio_file');
             fd.append('proposal_id', p.id);
-            fetch(window.location.href, { method: 'POST', body: fd })
-                .then(r => r.json())
-                .then(res => {
+            fetch(window.location.href, { method: 'POST', body: fd }).then(r => r.json()).then(res => {
                     if (!res.ok) throw new Error();
                     const bin   = atob(res.data);                       // base64 -> bytes
                     const bytes = new Uint8Array(bin.length);
@@ -1174,10 +788,8 @@ document.querySelectorAll('[data-close-modal="portfolioModal"]').forEach(functio
     });
 });
 
-
 /* Accept -> saved in the database so the student can be put in a team */
-async function saveAcceptOnServer(id, silent, message)
-{
+async function saveAcceptOnServer(id, silent, message) {
     const body = new FormData();
     body.append('action', 'accept_proposal');
     body.append('proposal_id', id);
@@ -1189,8 +801,6 @@ async function saveAcceptOnServer(id, silent, message)
     if (!data.ok) throw new Error(data.message || 'Something went wrong.');
     return data;
 }
-
-
 
 /* ================================================================
    TOAST
@@ -1205,8 +815,7 @@ let toastTimer;
 |   showToast('Nimal has been notified.', 'Proposal accepted')          -> green
 |   showToast('Please try again.', 'Could not accept', 'error')          -> red
 */
-function showToast(message, title, type)
-{
+function showToast(message, title, type) {
     type  = type === 'error' ? 'error' : 'success';
     title = title || (type === 'error' ? 'Something went wrong' : 'Done');
 
@@ -1216,14 +825,11 @@ function showToast(message, title, type)
 
     const toast = document.createElement('div');
     toast.className = 'flash-toast flash-' + type + ' pr-flash';
-    toast.innerHTML =
-        '<div class="flash-icon-wrap"><span class="material-symbols-outlined">' +
-            (type === 'success' ? 'check_circle' : 'error') +
-        '</span></div>' +
+    toast.innerHTML = '<div class="flash-icon-wrap"><span class="material-symbols-outlined">' +
+            (type === 'success' ? 'check_circle' : 'error') + '</span></div>' +
         '<div class="flash-content">' +
             '<div class="flash-title" style="font-weight:700; font-size:14px;"></div>' +
-            '<div class="flash-msg" style="font-size:13px; margin-top:2px;"></div>' +
-        '</div>';
+            '<div class="flash-msg" style="font-size:13px; margin-top:2px;"></div>' + '</div>';
     toast.querySelector('.flash-title').textContent = title;
     toast.querySelector('.flash-msg').textContent   = message || '';
     document.body.appendChild(toast);
@@ -1237,178 +843,92 @@ function showToast(message, title, type)
     }, 3500);
 }
 
-
 /* ================================================================
    INITIALS
 ================================================================ */
 
-function getInitials(name)
-{
-
-    return name
-        .trim()
-        .split(/\s+/)
-        .slice(0, 2)
-        .map(
-            part =>
-                part.charAt(0).toUpperCase()
-        )
-        .join('');
-
+function getInitials(name) {
+    return name.trim().split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('');
 }
-
 
 /* ================================================================
    HTML ESCAPE
 ================================================================ */
 
-function escapeHtml(value)
-{
-
-    return String(value)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-
+function escapeHtml(value) {
+    return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
-
 
 /* ================================================================
    SEARCH EVENT
 ================================================================ */
 
-searchInput.addEventListener(
-    'input',
-    applyFilters
-);
-
+searchInput.addEventListener('input', applyFilters);
 
 /* ================================================================
    STATUS FILTER EVENT
 ================================================================ */
 
-statusFilter.addEventListener(
-    'change',
-    applyFilters
-);
-
+statusFilter.addEventListener('change', applyFilters);
 
 /* ================================================================
    TIME FILTER EVENT
 ================================================================ */
 
-timeFilter.addEventListener(
-    'change',
-    applyFilters
-);
-
+timeFilter.addEventListener('change', applyFilters);
 
 /* ================================================================
    SORT EVENT
 ================================================================ */
 
-sortButton.addEventListener(
-    'click',
-    () => {
-
-        newestFirst =
-            !newestFirst;
+sortButton.addEventListener('click', () => {
+        newestFirst = !newestFirst;
 
         sortCards();
-
-    }
-);
-
+    });
 
 /* ================================================================
    BUTTON EVENTS
 ================================================================ */
 
-document.addEventListener(
-    'click',
-    function(event)
-    {
+document.addEventListener('click', function(event) {
+        const fullProposalButton = event.target.closest('.view-proposal-btn');
 
-        const fullProposalButton =
-            event.target.closest(
-                '.view-proposal-btn'
-            );
+        const profileButton = event.target.closest('.view-profile-btn');
 
+        const acceptButton = event.target.closest('.accept-btn');
 
-        const profileButton =
-            event.target.closest(
-                '.view-profile-btn'
-            );
-
-
-        const acceptButton =
-            event.target.closest(
-                '.accept-btn'
-            );
-
-
-        const rejectButton =
-            event.target.closest(
-                '.reject-btn'
-            );
-
+        const rejectButton = event.target.closest('.reject-btn');
 
         if (fullProposalButton) {
-
-            showFullProposal(
-                fullProposalButton.dataset.id
-            );
+            showFullProposal(fullProposalButton.dataset.id);
 
             return;
-
         }
-
 
         if (profileButton) {
-
-            showProfile(
-                profileButton.dataset.id
-            );
+            showProfile(profileButton.dataset.id);
 
             return;
-
         }
-
 
         if (acceptButton) {
-
             if (!acceptButton.disabled) {
-
-                openAcceptModal(
-                    acceptButton.dataset.id
-                );
-
+                openAcceptModal(acceptButton.dataset.id);
             }
 
             return;
-
         }
-
 
         if (rejectButton) {
-
             if (!rejectButton.disabled) {
-
-                openRejectModal(
-                    rejectButton.dataset.id
-                );
-
+                openRejectModal(rejectButton.dataset.id);
             }
 
             return;
-
         }
-
-    }
-);
-
+    });
 
 /* ================================================================
    ACCEPT WITH MESSAGE  (same as Reject: the student gets a notification)
@@ -1420,8 +940,7 @@ const acMessage = document.getElementById('acMessage');
 const acError   = document.getElementById('acError');
 const acSubmit  = document.getElementById('acSubmit');
 
-function openAcceptModal(id)
-{
+function openAcceptModal(id) {
     const proposal = proposalData.find(p => Number(p.id) === Number(id));
     if (!proposal) {
         return;
@@ -1492,7 +1011,6 @@ acSubmit.addEventListener('click', async function () {
 
         showToast(`${proposal ? proposal.name : 'The student'} has been notified.`, 'Proposal accepted');
         acceptingId = null;
-
     } catch (err) {
         acError.textContent = err.message || 'Could not accept the proposal. Please try again.';
     } finally {
@@ -1507,7 +1025,6 @@ document.getElementById('acceptModal').addEventListener('click', function (e) {
     }
 });
 
-
 /* ================================================================
    REJECT WITH REASON
 ================================================================ */
@@ -1518,8 +1035,7 @@ const rjReason = document.getElementById('rjReason');
 const rjError  = document.getElementById('rjError');
 const rjSubmit = document.getElementById('rjSubmit');
 
-function openRejectModal(id)
-{
+function openRejectModal(id) {
     const proposal = proposalData.find(p => Number(p.id) === Number(id));
     if (!proposal) {
         return;
@@ -1600,7 +1116,6 @@ rjSubmit.addEventListener('click', async function () {
 
         showToast(`${proposal ? proposal.name : 'The student'} has been notified with your reason.`, 'Proposal rejected');
         rejectingId = null;
-
     } catch (err) {
         rjError.textContent = err.message || 'Could not reject the proposal. Please try again.';
     } finally {
@@ -1615,92 +1130,41 @@ document.getElementById('rejectModal').addEventListener('click', function (e) {
     }
 });
 
-
-/* ================================================================
-   CONFIRM BUTTON
-================================================================ */
-
-document
-    .getElementById('confirmActionButton')
-    .addEventListener(
-        'click',
-        performAction
-    );
-
-
 /* ================================================================
    CLOSE MODAL BUTTONS
 ================================================================ */
 
-document.addEventListener(
-    'click',
-    function(event)
-    {
-
-        const closeButton =
-            event.target.closest(
-                '[data-close-modal]'
-            );
-
+document.addEventListener('click', function(event) {
+        const closeButton = event.target.closest('[data-close-modal]');
 
         if (!closeButton) {
             return;
         }
 
-
-        closeModal(
-            closeButton.dataset.closeModal
-        );
-
-    }
-);
-
+        closeModal(closeButton.dataset.closeModal);
+    });
 
 /* ================================================================
    CLOSE WHEN CLICKING OUTSIDE MODAL
 ================================================================ */
 
-document
-    .querySelectorAll('.pr-modal-overlay')
-    .forEach(overlay => {
-
-        overlay.addEventListener(
-            'click',
-            function(event)
-            {
-
+document.querySelectorAll('.pr-modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', function(event) {
                 if (event.target === overlay) {
-
-                    closeModal(
-                        overlay.id
-                    );
-
+                    closeModal(overlay.id);
                 }
-
-            }
-        );
-
+            });
     });
-
 
 /* ================================================================
    ESCAPE KEY
 ================================================================ */
 
-document.addEventListener(
-    'keydown',
-    function(event)
-    {
-
+document.addEventListener('keydown', function(event) {
         if (event.key === 'Escape') {
-
             closeAllModals();
-
         }
-
-    }
-);
-
+    });
 
 /* ================================================================
    INITIAL LOAD

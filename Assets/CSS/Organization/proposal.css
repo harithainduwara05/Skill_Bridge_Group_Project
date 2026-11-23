@@ -26,7 +26,6 @@
     color: #4b5563;
 }
 
-
 /* =========================================================
    FILTER BAR
 ========================================================= */
@@ -108,7 +107,6 @@
     font-size: 18px;
 }
 
-
 /* =========================================================
    PROPOSAL LIST
 ========================================================= */
@@ -177,36 +175,11 @@
     color: #0f3a66;
 }
 
-.pr-status-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 5px;
-    flex-shrink: 0;
-}
-
-.pr-verified {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: #dcfce7;
-    color: #166534;
-    font-size: 11px;
-    font-weight: 700;
-    padding: 3px 9px;
-    border-radius: 999px;
-}
-
-.pr-verified .material-symbols-outlined {
-    font-size: 14px;
-}
-
 .pr-school {
     font-size: 14px;
     color: #4b5563;
     margin-top: 2px;
 }
-
 
 /* =========================================================
    STATUS BADGES
@@ -234,7 +207,6 @@
     background: #fee2e2;
     color: #b91c1c;
 }
-
 
 /* =========================================================
    CARD BODY
@@ -318,7 +290,6 @@
     color: #4b5563;
     margin-top: 8px;
 }
-
 
 /* =========================================================
    FOOTER ACTIONS
@@ -414,7 +385,6 @@
     cursor: not-allowed;
 }
 
-
 /* =========================================================
    EMPTY RESULT
 ========================================================= */
@@ -448,7 +418,6 @@
     margin: 0;
     font-size: 14px;
 }
-
 
 /* =========================================================
    MODAL
@@ -526,66 +495,6 @@
     padding: 24px;
 }
 
-.pr-modal-profile {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 22px;
-}
-
-.pr-modal-avatar {
-    width: 54px;
-    height: 54px;
-    border-radius: 50%;
-    background: #e5edf5;
-    color: #1e3a5f;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-}
-
-.pr-modal-name {
-    font-size: 19px;
-    font-weight: 700;
-    color: #0f3a66;
-}
-
-.pr-modal-school {
-    font-size: 14px;
-    color: #6b7280;
-    margin-top: 3px;
-}
-
-.pr-modal-section {
-    margin-bottom: 20px;
-}
-
-.pr-modal-section:last-child {
-    margin-bottom: 0;
-}
-
-.pr-modal-section h4 {
-    margin: 0 0 8px;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: .05em;
-    color: #6b7280;
-}
-
-.pr-modal-section p {
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.65;
-    color: #374151;
-}
-
-.pr-modal-skills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
 .pr-modal-footer {
     display: flex;
     justify-content: flex-end;
@@ -593,7 +502,6 @@
     padding: 18px 24px;
     border-top: 1px solid #e5e7eb;
 }
-
 
 /* =========================================================
    CONFIRMATION MODAL
@@ -630,13 +538,6 @@
     color: #6b7280;
     line-height: 1.5;
     font-size: 14px;
-}
-
-.pr-confirm-actions {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 24px;
 }
 
 .pr-cancel-btn {
@@ -949,7 +850,6 @@
     .rj-foot .pr-btn { width: 100%; }
 }
 
-
 /* =========================================================
    TOAST
    The "Proposal accepted / rejected" message uses the shared
@@ -957,7 +857,6 @@
    Add Proposals-only changes here with the .pr-flash class, e.g.
    .flash-toast.pr-flash { top: 80px; }
 ========================================================= */
-
 
 /* =========================================================
    RESPONSIVE
@@ -1002,10 +901,6 @@
         flex-direction: column;
     }
 
-    .pr-confirm-actions {
-        flex-direction: column;
-    }
-
 }
 
 /* =========================================================
@@ -1013,10 +908,6 @@
 ========================================================= */
 .pr-portfolio-box { flex-direction: column; gap: 4px; width: 100%; padding: 10px; text-align: center;
                     font-family: inherit; box-sizing: border-box; text-decoration: none; }
-.pr-portfolio-box.pf-has-file { background: #f8fafc; color: #1e3a5f; border: 1px dashed #93c5fd; cursor: pointer;
-                                transition: background .15s ease, border-color .15s ease; }
-.pr-portfolio-box.pf-has-file:hover { background: #eff6ff; border-color: #3b82f6; }
-.pf-box-name { font-size: 12.5px; font-weight: 700; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pf-box-hint { font-size: 11.5px; color: #64748b; }
 
 .pv-modal { width: min(900px, 100%); display: flex; flex-direction: column; }
@@ -1031,21 +922,6 @@
 .pv-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; border-top: 1px solid #eef0f3; }
 .pv-download { background: #1e3a5f; color: #fff; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .pv-download:hover { background: #16304d; }
-
-/* Portfolio box: the student's latest profile project (when no file is attached) */
-.pr-portfolio-box.pf-project { display: block; height: auto; min-height: 130px; text-align: left; padding: 12px 14px;
-                               background: #ffffff; border: 1px solid #e2e8f0; color: #334155; }
-.pf-project-top { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-.pf-project-top .material-symbols-outlined { font-size: 18px !important; color: #1e3a5f; }
-.pf-project-label { font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #64748b; }
-.pf-project-title { font-size: 14px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-.pf-project-desc { font-size: 12.5px; line-height: 1.45; color: #475569; margin: 0 0 8px;
-                   display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.pf-project-links { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-.pf-project-links a, .pf-project-links button { display: inline-flex; align-items: center; gap: 3px; font-size: 12.5px;
-        font-weight: 600; color: #2563eb; text-decoration: none; background: none; border: 0; padding: 0; cursor: pointer; font-family: inherit; }
-.pf-project-links a:hover, .pf-project-links button:hover { text-decoration: underline; }
-.pf-project-links .material-symbols-outlined { font-size: 15px !important; }
 
 /* Portfolio Preview list: attached file + chosen profile projects (click -> preview) */
 .pf-list { display: flex; flex-direction: column; gap: 8px; }
@@ -1062,9 +938,6 @@
 .pf-item-text { min-width: 0; display: flex; flex-direction: column; }
 .pf-item-text strong { font-size: 13px; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pf-item-text small { font-size: 11.5px; color: #64748b; }
-.pf-more { align-self: flex-start; background: none; border: 0; padding: 0; color: #2563eb; font-size: 12.5px;
-           font-weight: 600; cursor: pointer; font-family: inherit; }
-.pf-more:hover { text-decoration: underline; }
 
 /* preview popup: project mode */
 .pv-body.pv-project-mode { height: auto; max-height: 65vh; overflow: auto; background: #fff; display: block; }
@@ -1121,3 +994,6 @@
 .pv-tech { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .pv-tech span { background: #eef2ff; color: #3730a3; font-size: 11.5px; font-weight: 600; padding: 3px 8px; border-radius: 999px; }
 .sp-card-img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex-shrink: 0; border: 1px solid #e5e7eb; }
+
+/* required field mark (*), red like Post Project / Profile */
+.req { color: #dc2626; font-weight: 700; margin-left: 2px; }

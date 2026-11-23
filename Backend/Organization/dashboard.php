@@ -74,7 +74,7 @@ function statusLabel($status) {
 }
 
 // ---- Pending Projects: not live yet, waiting for the Admin (Reviewing) or for us (Hold) ----
-// Hold first (we must act), then the ones waiting the longest. The hold reason and our reply
+// Newest first: a new post, or a project the Admin just put on Hold, comes to the top. The hold reason and our reply
 // come from the Admin's latest Hold in project_moderation_logs.
 $stmt = $conn->prepare("SELECT p.id, p.title, LOWER(p.status) AS status, p.posted_at,
                                 hl.reason AS hold_reason, hl.org_response, hl.created_at AS held_at
@@ -83,7 +83,7 @@ $stmt = $conn->prepare("SELECT p.id, p.title, LOWER(p.status) AS status, p.poste
                               (SELECT MAX(l.id) FROM project_moderation_logs l
                                 WHERE l.project_id = p.id AND l.action_type = 'Hold')
                          WHERE p.organization_email = ? AND LOWER(p.status) IN ('reviewing', 'hold')
-                         ORDER BY LOWER(p.status) = 'hold' DESC, p.posted_at ASC");
+                         ORDER BY COALESCE(CASE WHEN LOWER(p.status) = 'hold' THEN hl.created_at END, p.posted_at) DESC, p.id DESC");
 $stmt->bind_param("s", $organization_email);
 $stmt->execute();
 $pendingProjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
@@ -111,7 +111,7 @@ foreach ($pendingProjects as &$pp) {
     $pp['link'] = 'manage_projects.php?' . http_build_query(['status' => $pp['status'], 'search' => $pp['title']]);
 }
 unset($pp);
-// the dashboard shows the first 4 (Hold first); "View All" opens Manage Projects with Status: Pending
+// the dashboard shows the newest 4 (to keep it short); "View All" opens Manage Projects with Status: Pending
 $pendingTotal    = count($pendingProjects);
 $pendingProjects = array_slice($pendingProjects, 0, 4);
 

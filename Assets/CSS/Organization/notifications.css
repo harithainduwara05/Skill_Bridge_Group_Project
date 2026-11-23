@@ -57,11 +57,6 @@
 .nc-msg strong { color: #1e293b; }
 .nc-card.read .nc-title { color: #334155; }
 
-.nc-tags { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.nc-tag { font-size: 10px; font-weight: 800; letter-spacing: .3px; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
-    background: #eef2f7; color: #1e3a5f; }
-.nc-tag.hot { background: #fff1e6; color: #ea580c; }
-
 .nc-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
 .nc-btn { display: inline-flex; align-items: center; padding: 7px 14px; border-radius: 7px; font-size: 12.5px; font-weight: 600;
     text-decoration: none; border: 1px solid transparent; font-family: inherit; cursor: pointer; transition: background .15s ease; }
@@ -69,9 +64,6 @@
 .nc-btn.primary:hover { background: #14335c; }
 .nc-btn.outline { background: #fff; color: #1f2937; border-color: #d1d5db; font-weight: 400; }
 .nc-btn.outline:hover { background: #f8fafc; }
-.nc-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 700; color: #1e3a5f; text-decoration: none; }
-.nc-link:hover { text-decoration: underline; }
-.nc-link .material-symbols-outlined { font-size: 14px; }
 
 .nc-more { margin-top: 12px; border: 2px dashed #d5dde8; border-radius: 12px; padding: 18px 20px; text-align: center; }
 .nc-more button { background: none; border: none; font-size: 13.5px; font-weight: 700; color: #1e3a5f; cursor: pointer;

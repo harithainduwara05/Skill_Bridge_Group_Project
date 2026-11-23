@@ -5,14 +5,10 @@
 |--------------------------------------------------------------------------
 | 1. rpDataset()  collects everything this organization has:
 |      projects, teams, individual students, proposals, feedback
-|    (from the database + the same sample data the other pages show)
+|    (from the database)
 | 2. rpParams()   reads the options the organization picked (period, type, ...)
 | 3. rpBuild()    filters the rows and makes the stat cards, charts and table
 */
-
-// Sample data is shown together with the real database rows (same as the Teams /
-// Proposals / Feedback pages). Set to false when the real data is enough.
-const RP_INCLUDE_SAMPLE = false;
 
 const RP_TYPES = [
     'projects'   => ['label' => 'Projects',    'icon' => 'folder_open',  'hint' => 'Every project you posted'],
@@ -117,7 +113,6 @@ function rpDataset(mysqli $conn, string $org): array
             'needed' => (int)$p['members'], 'proposals' => count($apps),
             'accepted' => count(array_filter($apps, fn($a) => $a['status'] === 'accepted')),
             'teams' => (int)($teams[0]['c'] ?? 0), 'students' => (int)$p['students'], 'progress' => (int)round($p['progress']),
-            'sample' => false,
         ];
     }
 
@@ -148,7 +143,6 @@ function rpDataset(mysqli $conn, string $org): array
                 'role' => $m['role'] ?: 'Team Member', 'progress' => (int)$m['progress'], 'work' => $m['work'] ?: 'Not started',
                 'joined' => rpDate($t['created_at']),
                 'skills' => implode(', ', array_column(rpQuery($conn, "SELECT skill_name FROM skills WHERE Email = ? ORDER BY percentage DESC LIMIT 4", "s", [$m['Email']]), 'skill_name')),
-                'sample' => false,
             ];
         }
         $d['teams'][] = [
@@ -157,7 +151,6 @@ function rpDataset(mysqli $conn, string $org): array
             'progress' => $members ? (int)round($sum / count($members)) : 0,
             'created' => rpDate($t['created_at']), 'deadline' => rpDate($t['deadline']),
             'skills' => (string)$t['keywords'],   // a team's skills = its project's skills (project_skills)
-            'sample' => false,
         ];
     }
 
@@ -175,7 +168,6 @@ function rpDataset(mysqli $conn, string $org): array
             'role' => $m['role'] ?: 'Team Member', 'progress' => (int)$m['progress'], 'work' => $m['work'] ?: 'Not started',
             'joined' => rpDate($m['posted_at']),
             'skills' => implode(', ', array_column(rpQuery($conn, "SELECT skill_name FROM skills WHERE Email = ? ORDER BY percentage DESC LIMIT 4", "s", [$m['Email']]), 'skill_name')),
-            'sample' => false,
         ];
     }
 
@@ -191,7 +183,6 @@ function rpDataset(mysqli $conn, string $org): array
             'category' => $a['category'] ?: 'Uncategorized', 'status_key' => $a['status'] ?: 'pending',
             'submitted' => rpDate($a['applied_at']),
             'skills' => implode(', ', array_column(rpQuery($conn, "SELECT skill_name FROM skills WHERE Email = ? ORDER BY percentage DESC LIMIT 3", "s", [$a['Email']]), 'skill_name')),
-            'sample' => false,
         ];
     }
 
@@ -208,116 +199,10 @@ function rpDataset(mysqli $conn, string $org): array
             'project' => $f['title'], 'team' => $f['team_name'] ?: '-', 'category' => $f['category'] ?: 'Uncategorized',
             'rating' => (int)$f['rating'], 'technical' => (float)$f['technical'], 'communication' => (float)$f['communication'],
             'teamwork' => (float)$f['teamwork'], 'problem' => (float)$f['problem_solving'], 'date' => rpDate($f['created_at']),
-            'sample' => false,
         ];
     }
 
-    if (RP_INCLUDE_SAMPLE) rpAddSample($d);
     return $d;
-}
-
-// Same sample teams / students / proposals / feedback as the other Organization pages
-function rpAddSample(array &$d): void
-{
-    $ago = fn(int $days) => date('Y-m-d', strtotime("-$days days"));
-    $UOC = 'University of Colombo'; $UOM = 'University of Moratuwa'; $SLIIT = 'SLIIT'; $UOK = 'University of Kelaniya';
-
-    // team => [project, category, status, created, deadline, posted, needed, skills, members[name, role, email, uni, progress, work, skills]]
-    $teams = [
-        'Nexus Systems' => ['AI-Driven Supply Chain Optimizer', 'AI / Machine Learning', 'ontrack', '2026-08-04', '2026-10-24', '2026-07-10', 6,
-            'React.js, Python, TensorFlow, Figma', [
-            ['Sanduni Perera', 'Full Stack Lead', '2023cs041@stu.ucsc.cmb.ac.lk', $UOC, 78, 'In Progress', 'React.js, Node.js, MySQL'],
-            ['Ravindu Pathirana', 'Backend Developer', 'ravindu.p@uom.lk', $UOM, 74, 'In Progress', 'Python, FastAPI, PostgreSQL'],
-            ['Nimal Silva', 'ML Engineer', 'nimal.s@uom.lk', $UOM, 69, 'In Progress', 'TensorFlow, Pandas'],
-            ['Amaya Dissanayake', 'UI/UX Designer', 'it22104587@my.sliit.lk', $SLIIT, 90, 'In Progress', 'Figma, User Research'],
-            ['Chamod Fernando', 'Data Engineer', '2023is018@stu.ucsc.cmb.ac.lk', $UOC, 66, 'In Progress', 'SQL, Airflow, Python'],
-            ['Ishara Gunawardena', 'QA Engineer', 'ishara.g@kln.ac.lk', $UOK, 55, 'In Progress', 'Selenium, Jest'],
-        ]],
-        'Vortex Group' => ['Blockchain-Based Academic Credentials', 'Blockchain', 'behind', '2026-08-11', '2026-09-20', '2026-07-18', 4,
-            'Solidity, Node.js, Cryptography', [
-            ['Malith Senanayake', 'Security Architect', '2023cs077@stu.ucsc.cmb.ac.lk', $UOC, 52, 'In Progress', 'Cryptography, Solidity'],
-            ['Kasun Madushanka', 'Blockchain Developer', 'kasun.m@uom.lk', $UOM, 40, 'In Progress', 'Solidity, Hardhat'],
-            ['Tharushi Wijeratne', 'Frontend Developer', 'it22098311@my.sliit.lk', $SLIIT, 48, 'In Progress', 'React.js, Tailwind CSS'],
-            ['Dulaj Bandara', 'Backend Developer', 'dulaj.b@kln.ac.lk', $UOK, 38, 'In Progress', 'Node.js, MongoDB'],
-        ]],
-        'Quantum Analytics' => ['Predictive Maintenance for Smart Cities', 'Data Science', 'completed', '2026-07-20', '2026-09-18', '2026-07-05', 6,
-            'Python, Power BI, IoT', [
-            ['Erandi Weerasinghe', 'Data Analyst', '2023is052@stu.ucsc.cmb.ac.lk', $UOC, 100, 'Completed', 'Power BI, SQL, Python'],
-            ['Ishan Rathnayake', 'ML Engineer', 'ishan.r@uom.lk', $UOM, 100, 'Completed', 'XGBoost, Pandas'],
-            ['Dilini Herath', 'IoT Developer', 'it21876540@my.sliit.lk', $SLIIT, 100, 'Completed', 'Arduino, MQTT'],
-            ['Pasindu Kumara', 'Backend Developer', 'pasindu.k@kln.ac.lk', $UOK, 100, 'Completed', 'Java, Spring Boot'],
-            ['Nethmi Samarasinghe', 'Data Visualization', '2023cs090@stu.ucsc.cmb.ac.lk', $UOC, 100, 'Completed', 'D3.js, Chart.js'],
-            ['Yasith Abeysekara', 'Technical Writer', 'yasith.a@uom.lk', $UOM, 100, 'Completed', 'Documentation'],
-        ]],
-        'Alpha Ops' => ['Cloud Infrastructure Automation', 'Cloud & DevOps', 'ontrack', '2026-08-01', '2026-11-02', '2026-07-15', 4,
-            'AWS, Docker, Kubernetes', [
-            ['Kavinda Jayasuriya', 'DevOps Engineer', '2023cs012@stu.ucsc.cmb.ac.lk', $UOC, 88, 'In Progress', 'AWS, Terraform, Docker'],
-            ['Sahan Liyanage', 'Cloud Engineer', 'sahan.l@uom.lk', $UOM, 84, 'In Progress', 'Kubernetes, Helm'],
-            ['Malsha Karunaratne', 'Automation Developer', 'it22031477@my.sliit.lk', $SLIIT, 86, 'In Progress', 'Python, Ansible'],
-            ['Tharindu Wickramaratne', 'Monitoring & SRE', 'tharindu.w@kln.ac.lk', $UOK, 80, 'In Progress', 'Grafana, Prometheus'],
-        ]],
-    ];
-
-    foreach ($teams as $name => [$project, $cat, $status, $created, $deadline, $posted, $needed, $skills, $members]) {
-        $sum = 0;
-        foreach ($members as $k => [$sn, $role, $email, $uni, $prog, $work, $sk]) {
-            $sum += $prog;
-            $d['individual'][] = ['student' => $sn, 'email' => $email, 'university' => $uni, 'team' => $name, 'project' => $project,
-                'category' => $cat, 'role' => $role, 'progress' => $prog, 'work' => $work, 'joined' => $created, 'skills' => $sk, 'sample' => true];
-            // every member sent a proposal that was accepted before the team was made
-            $d['proposals'][] = ['student' => $sn, 'email' => $email, 'project' => $project, 'category' => $cat, 'status_key' => 'accepted',
-                'submitted' => date('Y-m-d', strtotime($created . ' -' . (3 + $k * 2) . ' days')), 'skills' => $sk, 'sample' => true];
-        }
-        $d['teams'][] = ['team' => $name, 'project' => $project, 'category' => $cat, 'status_key' => $status,
-            'leader' => $members[0][0], 'members' => count($members), 'progress' => (int)round($sum / count($members)),
-            'created' => $created, 'deadline' => $deadline, 'skills' => $skills, 'sample' => true];
-        $d['projects'][] = ['title' => $project, 'category' => $cat, 'status_key' => $status === 'completed' ? 'completed' : 'inprogress',
-            'posted' => $posted, 'deadline' => $deadline, 'needed' => $needed, 'proposals' => count($members) + 2, 'accepted' => count($members),
-            'teams' => 1, 'students' => count($members), 'progress' => (int)round($sum / count($members)), 'sample' => true];
-        // two proposals per project that were not accepted
-        foreach ([['Kaveen Silva', 'kaveen.s@uom.lk'], ['Hasini Perera', 'it22077120@my.sliit.lk']] as $j => [$sn, $em]) {
-            $d['proposals'][] = ['student' => $sn, 'email' => $em, 'project' => $project, 'category' => $cat, 'status_key' => 'rejected',
-                'submitted' => date('Y-m-d', strtotime($posted . ' +' . (4 + $j * 3) . ' days')), 'skills' => '', 'sample' => true];
-        }
-    }
-
-    // projects still waiting for a team + their proposals (same as the Proposals page)
-    $open = [
-        ['Campus Event Management System', 'Web Development', 'reviewing', 20, '2026-11-30', 3],
-        ['Smart Library Assistant', 'Web Development', 'reviewing', 16, '2026-12-10', 3],
-        ['Mobile Attendance Tracker', 'Mobile Development', 'reviewing', 18, '2026-11-20', 2],
-    ];
-    foreach ($open as [$title, $cat, $st, $postedAgo, $deadline, $needed]) {
-        $d['projects'][] = ['title' => $title, 'category' => $cat, 'status_key' => $st, 'posted' => $ago($postedAgo), 'deadline' => $deadline,
-            'needed' => $needed, 'proposals' => 1, 'accepted' => $title === 'Campus Event Management System' ? 1 : 0,
-            'teams' => 0, 'students' => 0, 'progress' => 0, 'sample' => true];
-    }
-    foreach ([
-        ['Nimasha Fernando', '2024is015@stu.ucsc.cmb.ac.lk', 'Cloud Migration UI/UX', 'UI/UX Design', 'pending', 3, 'React, Figma, Tailwind CSS'],
-        ['Sahan Wickramasinghe', '2024is032@stu.ucsc.cmb.ac.lk', 'AI Model Optimization', 'AI / Machine Learning', 'pending', 1, 'Python, TensorFlow'],
-        ['Dinithi Jayawardena', '2024is044@stu.ucsc.cmb.ac.lk', 'Campus Event Management System', 'Web Development', 'accepted', 6, 'Laravel, MySQL, Vue.js'],
-        ['Kavindu Perera', '2024is001@stu.ucsc.cmb.ac.lk', 'Smart Library Assistant', 'Web Development', 'pending', 9, 'Java, Spring Boot'],
-        ['Sachini Wijesinghe', '2024is091@stu.ucsc.cmb.ac.lk', 'Mobile Attendance Tracker', 'Mobile Development', 'rejected', 12, 'Flutter, Firebase'],
-    ] as [$sn, $em, $pr, $cat, $st, $days, $sk]) {
-        $d['proposals'][] = ['student' => $sn, 'email' => $em, 'project' => $pr, 'category' => $cat, 'status_key' => $st,
-            'submitted' => $ago($days), 'skills' => $sk, 'sample' => true];
-    }
-
-    // feedback (same as the Feedback page) + the finished Quantum Analytics team
-    foreach ([
-        ['Predictive Maintenance for Smart Cities', 'Quantum Analytics', 'Data Science', 5, 4.9, 4.6, 4.8, 4.7, 4],
-        ['Cloud Architecture Redesign', 'Skyline Team', 'Cloud & DevOps', 5, 5.0, 4.5, 4.8, 5.0, 5],
-        ['Secure API Gateway Implementation', 'Omega Devs', 'Cybersecurity', 4, 4.2, 4.0, 4.5, 4.0, 21],
-        ['Campus Event Management App', 'Pixel Pioneers', 'Mobile Development', 5, 4.8, 4.6, 5.0, 4.7, 28],
-        ['Sinhala Sentiment Analysis Model', 'Lanka NLP Crew', 'AI / Machine Learning', 4, 4.5, 3.8, 4.2, 4.4, 35],
-        ['Community Library Website', 'Code Crafters', 'Web Development', 3, 3.4, 3.0, 3.5, 3.2, 42],
-        ['Sales Forecast Dashboard', 'Data Dynamos', 'Data Science', 4, 4.3, 4.4, 4.0, 4.1, 56],
-        ['Tourism App UI Redesign', 'Design Pulse', 'UI/UX Design', 5, 4.6, 5.0, 4.8, 4.7, 70],
-        ['Network Intrusion Detection Lab', 'Cipher Squad', 'Cybersecurity', 4, 4.4, 3.9, 4.1, 4.5, 84],
-    ] as [$pr, $tm, $cat, $r, $t, $c, $w, $p, $days]) {
-        $d['feedback'][] = ['project' => $pr, 'team' => $tm, 'category' => $cat, 'rating' => $r, 'technical' => $t,
-            'communication' => $c, 'teamwork' => $w, 'problem' => $p, 'date' => $ago($days), 'sample' => true];
-    }
 }
 
 // ===================================================================
@@ -442,7 +327,6 @@ function rpBuild(array $data, array $p): array
         'rows' => $rows, 'total_rows' => count($rows),
         'columns' => array_intersect_key(RP_COLUMNS[$type], array_flip($p['cols'])),
         'options' => $opts,
-        'has_sample' => (bool)array_filter($rows, fn($r) => !empty($r['sample'])),
     ];
 
     $trendLabel = ['projects' => 'Projects posted', 'teams' => 'Teams created', 'individual' => 'Students joined',
