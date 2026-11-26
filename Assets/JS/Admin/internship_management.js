@@ -135,7 +135,7 @@ function initInternshipManagement() {
     // --------------------------------------------------------------------------
     function generateCompanyMessage(company, position, id, reason) {
         const reasonText = reason ? reason.trim() : '[Violation of SkillBridge terms or student complaint received]';
-        return `Dear ${company} Team,\n\nWe would like to notify you that your internship opportunity "${position}" (ID: ${id}) has been temporarily suspended by SkillBridge Administration.\n\nReason for Suspension:\n${reasonText}\n\nWhile suspended, this opportunity is deactivated and hidden from students.\n\nRegards,\nSkillBridge Compliance & Admin Team`;
+        return `Dear ${company} Team,\n\nWe would like to notify you that your internship opportunity "${position}" (ID: ${id}) has been temporarily suspended by SkillBridge Administration.\n\nReason for Suspension:\n${reasonText}\n\nYou have 7 days to resolve this issue and submit a valid reactivation request. If no valid correction is submitted within 7 days, this listing will be permanently rejected/terminated.\n\nRegards,\nSkillBridge Compliance & Admin Team`;
     }
 
     if (suspendReason) {
@@ -264,12 +264,18 @@ function initInternshipManagement() {
         const company       = row.getAttribute('data-company') || 'Company';
         const reason        = row.getAttribute('data-reason') || 'Violation of terms or policy complaint reported.';
         const companyAction = (row.getAttribute('data-company-action') || '').trim();
+        const suspendDays   = row.getAttribute('data-suspend-days') ?? '7';
 
         if (revTargetId)   revTargetId.value = internshipId;
         if (revId)         revId.textContent = internshipId;
         if (revPosition)   revPosition.textContent = position;
         if (revCompany)    revCompany.textContent = company;
         if (revReasonText) revReasonText.textContent = reason;
+
+        const revStatusBadge = document.getElementById('imRevStatusBadge');
+        if (revStatusBadge) {
+            revStatusBadge.innerHTML = `<span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended (${suspendDays}d left)`;
+        }
 
         if (companyAction) {
             if (revActionCard)   revActionCard.style.display = 'block';
@@ -363,8 +369,10 @@ function initInternshipManagement() {
         const moderationActionContainer  = document.getElementById('imModerationActionContainer');
         const terminateReason            = row.getAttribute('data-terminate-reason') || '';
 
+        const suspendDays              = row.getAttribute('data-suspend-days') ?? '7';
+
         if (status === 'suspended') {
-            if (statusBadgeContainer) statusBadgeContainer.innerHTML = `<span class="im-status-badge status-suspended"><span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended</span>`;
+            if (statusBadgeContainer) statusBadgeContainer.innerHTML = `<span class="im-status-badge status-suspended"><span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended (${suspendDays}d left)</span>`;
             if (suspendedBox) {
                 suspendedBox.style.display = 'flex';
                 if (suspendedReasonText) suspendedReasonText.textContent = reason || 'Violation of terms or policy complaints reported.';

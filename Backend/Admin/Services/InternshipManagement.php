@@ -32,7 +32,8 @@ class InternshipManagement extends AdminDB
                  INNER JOIN internship_tech_tags t ON tm.tag_id = t.tag_id 
                  WHERE tm.internship_id = i.id) AS tech_tags,
                 COALESCE((SELECT status FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1), 'Active') AS status,
-                (SELECT admin_reason FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS admin_reason
+                (SELECT admin_reason FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS admin_reason,
+                (SELECT created_at FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS suspended_at
             FROM internships i
             INNER JOIN company c ON i.company_email = c.Email
             INNER JOIN internship_industries ind ON i.industry_id = ind.industry_id
@@ -58,7 +59,8 @@ class InternshipManagement extends AdminDB
                  INNER JOIN internship_tech_tags t ON tm.tag_id = t.tag_id 
                  WHERE tm.internship_id = i.id) AS tech_tags,
                 COALESCE((SELECT status FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1), 'Active') AS status,
-                (SELECT admin_reason FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS admin_reason
+                (SELECT admin_reason FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS admin_reason,
+                (SELECT created_at FROM internship_moderation_logs WHERE internship_id = i.id ORDER BY id DESC LIMIT 1) AS suspended_at
             FROM internships i
             INNER JOIN company c ON i.company_email = c.Email
             INNER JOIN internship_industries ind ON i.industry_id = ind.industry_id
@@ -112,7 +114,7 @@ class InternshipManagement extends AdminDB
         } else {
             $ok = $this->runAction(
                 "INSERT INTO internship_moderation_logs (internship_id, admin_email, admin_reason, status) VALUES (?, ?, ?, ?)",
-                "iss",
+                "isss",
                 $cleanId, $adminEmail, $reason ?? 'Status updated by Administrator', $statusClean
             );
             if ($ok && !empty($compEmail) && strcasecmp($statusClean, 'Terminated') === 0) {

@@ -73,6 +73,12 @@
                             $companyAction = htmlspecialchars($item['reactivation_status'] ?? '');
                             $terminateReason = ($status === 'Terminated') ? $adminReason : '';
 
+                            $suspendDaysLeft = 7;
+                            if (!empty($item['suspended_at'])) {
+                                $diffDays = floor((time() - strtotime($item['suspended_at'])) / 86400);
+                                $suspendDaysLeft = max(0, 7 - (int)$diffDays);
+                            }
+
                             // Industry styling class
                             $indLower = strtolower($industry);
                             $indClass = '';
@@ -93,6 +99,7 @@
                             data-reason="<?= $adminReason ?>"
                             data-company-action="<?= $companyAction ?>"
                             data-terminate-reason="<?= $terminateReason ?>"
+                            data-suspend-days="<?= $suspendDaysLeft ?>"
                             data-deadline="<?= $deadlineFormatted ?>"
                             data-apps="<?= $appsCount ?>">
                             <td class="im-internship-id"><?= $formattedId ?></td>
@@ -108,8 +115,8 @@
                                         <span class="im-status-dot"></span> Active
                                     </span>
                                 <?php elseif ($status === 'Suspended'): ?>
-                                    <span class="im-status-badge status-suspended">
-                                        <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended
+                                    <span class="im-status-badge status-suspended" title="Suspended: <?= $suspendDaysLeft ?> days left in grace period">
+                                        <span class="material-symbols-outlined" style="font-size: 13px;">pause_circle</span> Suspended (<?= $suspendDaysLeft ?>d left)
                                     </span>
                                 <?php elseif ($status === 'Terminated'): ?>
                                     <span class="im-status-badge status-terminated">

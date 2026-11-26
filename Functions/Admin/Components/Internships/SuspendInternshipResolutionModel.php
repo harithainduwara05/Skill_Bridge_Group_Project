@@ -33,7 +33,7 @@
                     </div>
                     <div class="im-suspend-notice-alert">
                         <span class="material-symbols-outlined">info</span>
-                        <span>This listing will be hidden immediately from applicants. The reason and message below will be delivered as a formal notification to the company.</span>
+                        <span>This listing will be hidden immediately from applicants. The employer is granted a <strong>7-day grace period</strong> to fix the issue and submit a valid reactivation request; otherwise, it will be permanently terminated.</span>
                     </div>
                 </div>
 
