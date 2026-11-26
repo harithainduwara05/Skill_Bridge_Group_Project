@@ -6,10 +6,7 @@
         <div class="ra-chart-header">
             <div>
                 <h3>Hiring Velocity & Placement Trends</h3>
-                <p>Monthly application volume compared to confirmed industry placements.</p>
-            </div>
-            <div class="ra-chart-tools">
-                <span class="ra-badge-pill badge-live">Live Analytics</span>
+                <p>Monthly internship applications and confirmed placements.</p>
             </div>
         </div>
 

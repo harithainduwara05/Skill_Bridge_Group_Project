@@ -354,8 +354,36 @@ function initReportsAnalytics() {
 
                 // Trigger native backend CSV export stream
                 window.location.href = `reportandAnalysist.php?action=export_report&scope=${encodeURIComponent(scopeVal)}&timeframe=${encodeURIComponent(timeframeVal)}&format=${encodeURIComponent(selectedFormat)}`;
-            }, 600);
+            }, 400);
         });
+    }
+
+    // --------------------------------------------------------------------------
+    // University Benchmark Table Pagination (5 rows per page)
+    // --------------------------------------------------------------------------
+    const uniTableBody = document.getElementById('raUniTableBody');
+    const uniInfoEl = document.getElementById('raUniPaginationInfo');
+    const uniControlsEl = document.getElementById('raUniPaginationControls');
+    if (uniTableBody && typeof AdminCore !== 'undefined' && typeof AdminCore.paginate === 'function') {
+        const allUniRows = Array.from(uniTableBody.querySelectorAll('.ra-uni-row'));
+        if (allUniRows.length > 0) {
+            let uniPage = 1;
+            const renderUniPage = (targetPage) => {
+                uniPage = targetPage;
+                AdminCore.paginate({
+                    tableBody: uniTableBody,
+                    rows: allUniRows,
+                    pageSize: 3,
+                    currentPage: uniPage,
+                    infoEl: uniInfoEl,
+                    controlsEl: uniControlsEl,
+                    onPageChange: (nextPage) => renderUniPage(nextPage),
+                    emptyIcon: 'domain_disabled',
+                    emptyMessage: 'No partner universities currently registered in database.'
+                });
+            };
+            renderUniPage(1);
+        }
     }
 
     // --------------------------------------------------------------------------

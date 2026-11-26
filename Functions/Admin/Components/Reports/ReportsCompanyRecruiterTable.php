@@ -2,60 +2,54 @@
 <div class="ra-table-card" id="secTableCompanies">
     <div class="ra-table-header">
         <div>
-            <h3>Top Recruiting Industry Partners & Hiring Velocity</h3>
-            <p>Overview of corporate recruiters with highest intern engagement and positive mentorship ratings.</p>
+            <h3>Top Recruiting Companies</h3>
+            <p>Company internship listings, applications received, and placement outcomes.</p>
         </div>
-        <span class="ra-badge-pill">Enterprise Partners</span>
     </div>
 
     <div class="ra-table-responsive">
         <table class="ra-table">
             <thead>
                 <tr>
-                    <th>Company / Partner</th>
+                    <th>Company</th>
                     <th>Industry Sector</th>
                     <th>Active Vacancies</th>
-                    <th>Applications Received</th>
-                    <th>Offers Extended</th>
-                    <th>Placement Velocity</th>
-                    <th>Mentor Index</th>
+                    <th>Applications</th>
+                    <th>Hired</th>
+                    <th>Status</th>
+                    <th>Hire Rate</th>
                 </tr>
             </thead>
             <tbody>
             <?php if (!empty($companyBenchmarks)): ?>
                 <?php foreach ($companyBenchmarks as $idx => $comp): 
-                    $cName = htmlspecialchars($comp['Name'] ?? 'Corporate Partner');
-                    $cType = htmlspecialchars($comp['companytype'] ?? 'Enterprise Software');
-                    $cLoc  = htmlspecialchars($comp['location'] ?? 'Colombo, Sri Lanka');
+                    $cName = htmlspecialchars($comp['Name'] ?? 'Partner Company');
+                    $cType = htmlspecialchars($comp['companytype'] ?? 'Software');
+                    $cLoc  = htmlspecialchars($comp['location'] ?? 'Sri Lanka');
                     $vac   = (int)($comp['vacancies_count'] ?? 0);
                     $apps  = (int)($comp['applications_count'] ?? 0);
                     $hired = (int)($comp['hired_count'] ?? 0);
+                    $hireRate = ($apps > 0) ? round(($hired / $apps) * 100, 1) . '%' : '0%';
 
                     $cLower = strtolower($cName);
                     $compClass = 'comp-wso2';
                     $initials = 'CO';
-                    $mentorRating = '4.9';
 
                     if (strpos($cLower, 'wso2') !== false) {
                         $compClass = 'comp-wso2';
                         $initials = 'W2';
-                        $mentorRating = '4.9';
                     } elseif (strpos($cLower, 'ifs') !== false) {
                         $compClass = 'comp-ifs';
                         $initials = 'IFS';
-                        $mentorRating = '4.8';
                     } elseif (strpos($cLower, 'virtusa') !== false) {
                         $compClass = 'comp-virtusa';
                         $initials = 'VT';
-                        $mentorRating = '4.7';
                     } elseif (strpos($cLower, 'lseg') !== false) {
                         $compClass = 'comp-lseg';
                         $initials = 'LS';
-                        $mentorRating = '4.9';
                     } elseif (strpos($cLower, 'hr') !== false) {
                         $compClass = 'comp-ifs';
                         $initials = 'HR';
-                        $mentorRating = '4.8';
                     } else {
                         $compClass = 'comp-wso2';
                         $initials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $cName), 0, 2)) ?: 'CP';
@@ -77,7 +71,7 @@
                     <td><strong style="color: <?= ($hired > 0) ? '#16a34a' : '#64748b' ?>;"><?= number_format($hired) ?> Hired</strong></td>
                     <td>
                         <?php if ($hired > 0): ?>
-                            <span class="ra-pill ra-pill-green">High Velocity</span>
+                            <span class="ra-pill ra-pill-green">Active Hiring</span>
                         <?php elseif ($apps > 0): ?>
                             <span class="ra-pill ra-pill-blue">Under Review</span>
                         <?php else: ?>
@@ -85,9 +79,7 @@
                         <?php endif; ?>
                     </td>
                     <td>
-                        <span class="ra-rating-badge">
-                            <span class="material-symbols-outlined">star</span> <?= ($hired > 0) ? $mentorRating : '4.5' ?>
-                        </span>
+                        <strong><?= $hireRate ?></strong>
                     </td>
                 </tr>
                 <?php endforeach; ?>

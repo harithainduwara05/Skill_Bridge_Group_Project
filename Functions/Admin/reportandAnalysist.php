@@ -26,18 +26,18 @@ include "../../Includes/dash_header.php";
                 $CardDetails = [
                     "cardIcons"    => ["school", "apartment", "task_alt", "verified_user"],
                     "iconColors"   => ["blue", "purple", "green", "amber"],
-                    "cardLabels"   => ["Placed Students", "Active Industry Partners", "Industry Projects", "Grievance Resolution"],
+                    "cardLabels"   => ["Placed Students", "Partner Companies", "Industry Projects", "Complaints Resolved"],
                     "cardValues"   => [
                         number_format($placedStudentsCount ?? 0), 
-                        number_format($activeCompaniesCount ?? 0) . " Companies", 
-                        number_format($totalProjectsCount ?? 0) . " Projects", 
-                        ($resolutionRate ?? 100) . "% Resolved"
+                        number_format($activeCompaniesCount ?? 0), 
+                        number_format($totalProjectsCount ?? 0), 
+                        ($resolutionRate ?? 100) . "%"
                     ],
                     "valueIds"     => ["raKpiPlaced", "raKpiCompanies", "raKpiProjects", "raKpiResolution"],
                     "subtexts"     => [
                         ($placementRate ?? 0) . "% Placement Rate", 
-                        number_format($activeDrivesCount ?? 0) . " Active Drives", 
-                        number_format($reviewProjectsCount ?? 0) . " In Supervisor Review", 
+                        number_format($activeDrivesCount ?? 0) . " Active Internships", 
+                        number_format($reviewProjectsCount ?? 0) . " Under Review", 
                         number_format($openComplaintsCount ?? 0) . " Open in Queue"
                     ],
                     "subtextIcons" => ["verified", "work", "pending_actions", "report_problem"],

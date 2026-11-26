@@ -133,10 +133,10 @@
 .ra-btn-export {
     height: 38px;
     padding: 0 18px;
-    background: linear-gradient(135deg, #0b2246 0%, #1e3a8a 100%);
+    background: var(--ra-primary);
     color: #ffffff;
     border: none;
-    border-radius: var(--ra-radius-md);
+    border-radius: var(--ra-radius-sm);
     font-size: 13px;
     font-weight: 600;
     font-family: inherit;
@@ -144,14 +144,11 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(11, 34, 70, 0.18);
-    transition: all 0.25s ease;
+    transition: background-color 0.2s ease;
 }
 
 .ra-btn-export:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 15px rgba(11, 34, 70, 0.28);
-    background: linear-gradient(135deg, #102d5b 0%, #2563eb 100%);
+    background: var(--ra-primary-light);
 }
 
 .ra-btn-export .material-symbols-outlined {
@@ -937,7 +934,7 @@
 
 .ra-format-cards {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr;
     gap: 10px;
 }
 
@@ -1023,5 +1020,31 @@
     .ra-header-actions {
         width: 100%;
         justify-content: space-between;
+    }
+}
+
+/* Print / PDF Export: Show all paginated university rows and hide navigation/controls */
+@media print {
+    .sidebar,
+    .top-header,
+    .sidebar-backdrop,
+    .user-pagination,
+    .ra-header-actions,
+    .ra-tabs-bar,
+    .ra-modal-backdrop,
+    .ra-toast {
+        display: none !important;
+    }
+    .content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    .ra-container {
+        max-width: 100% !important;
+        padding: 12px !important;
+    }
+    .ra-uni-row {
+        display: table-row !important;
     }
 }

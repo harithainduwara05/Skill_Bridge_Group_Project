@@ -33,6 +33,24 @@ class ReportAnalyticsManagement extends AdminDB
         return (int) $this->runCount("SELECT COUNT(*) FROM complain WHERE LOWER(status) NOT IN ('resolved', 'dismissed')");
     }
 
+    public function getAverageTimeToOffer(): string
+    {
+        $sql = "
+            SELECT ROUND(AVG(GREATEST(0, DATEDIFF(ii.interview_date, ia.applied_date))), 1) AS avg_days
+            FROM internship_applications ia
+            INNER JOIN internship_interviews ii ON ia.application_id = ii.application_id
+            WHERE LOWER(ia.status) = 'accepted'
+              AND ia.applied_date IS NOT NULL
+              AND ii.interview_date IS NOT NULL
+        ";
+        $res = @$this->runQuery($sql);
+        $row = $res ? $res->fetch_assoc() : null;
+        if ($row && $row['avg_days'] !== null) {
+            return $row['avg_days'] . ' Days';
+        }
+        return 'N/A';
+    }
+
     public function getUniversityBenchmarks(): array
     {
         $sql = "
@@ -213,8 +231,8 @@ class ReportAnalyticsManagement extends AdminDB
 
     public function getPeriodDataBreakdown(): array
     {
-        $comps = number_format($this->getCount('company')) . ' Companies';
-        $drives = number_format($this->getActiveDriveCount()) . ' Active Drives';
+        $comps = number_format($this->getCount('company'));
+        $drives = number_format($this->getActiveDriveCount()) . ' Active Internships';
         $velocity = $this->getHiringVelocityData();
         $labels = array_column($velocity, 'm_label');
         $appsArr = array_map('intval', array_column($velocity, 'apps'));
@@ -245,9 +263,9 @@ class ReportAnalyticsManagement extends AdminDB
                 'placementRate'  => $pRate . '% Placement Rate',
                 'companies'      => $comps,
                 'drives'         => $drives,
-                'projects'       => number_format((int)($projRow['total'] ?? 0)) . ' Projects',
-                'projectReview'  => number_format((int)($projRow['in_review'] ?? 0)) . ' In Supervisor Review',
-                'resolution'     => $rRate . '% Resolved',
+                'projects'       => number_format((int)($projRow['total'] ?? 0)),
+                'projectReview'  => number_format((int)($projRow['in_review'] ?? 0)) . ' Under Review',
+                'resolution'     => $rRate . '%',
                 'complaintOpen'  => number_format($totComp - $resComp) . ' Open in Queue',
                 'monthlyLabels'  => $labels,
                 'applications'   => $appsArr,

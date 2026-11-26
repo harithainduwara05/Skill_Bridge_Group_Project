@@ -159,7 +159,7 @@ const AdminCore = {
         const page = Math.min(Math.max(1, currentPage), totalPages);
 
         // Hide all table rows first
-        const allRows = tableBody.querySelectorAll('tr[data-id], tr.pm-data-row, tr.im-data-row, tr.cm-data-row, tr.univ-row, tr.user-row');
+        const allRows = tableBody.querySelectorAll('tr[data-id], tr.pm-data-row, tr.im-data-row, tr.cm-data-row, tr.univ-row, tr.user-row, tr.ra-uni-row');
         allRows.forEach(r => r.style.display = 'none');
 
         // Show only current page rows

@@ -6,9 +6,8 @@
         <div class="ra-chart-header">
             <div>
                 <h3>Top In-Demand Technical Skills</h3>
-                <p>Most requested competencies across open industry internship drives.</p>
+                <p>Most requested skills across active projects and internships.</p>
             </div>
-            <span class="ra-badge-pill">2026 Tech Index</span>
         </div>
 
         <div class="ra-skills-list">
@@ -35,9 +34,8 @@
         <div class="ra-chart-header">
             <div>
                 <h3>Application Conversion Funnel</h3>
-                <p>End-to-end recruitment funnel conversion rate from submission to hired.</p>
+                <p>Application progress from submission to placement.</p>
             </div>
-            <span class="ra-badge-pill">Funnel Health</span>
         </div>
 
         <div class="ra-funnel-grid">
@@ -53,15 +51,15 @@
             <?php endif; ?>
         </div>
 
-        <div style="margin-top: 20px; padding: 14px 16px; background: #f8fafc; border: 1px dashed var(--ra-border); border-radius: var(--ra-radius-md); display: flex; align-items: center; justify-content: space-between;">
+        <div style="margin-top: 20px; padding: 14px 16px; background: #f8fafc; border: 1px solid var(--ra-border); border-radius: var(--ra-radius-md); display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span class="material-symbols-outlined" style="color: #2563eb; font-size: 22px;">speed</span>
                 <div>
-                    <strong style="font-size: 13px; color: var(--ra-text-main); display: block;">Average Time-to-Offer</strong>
-                    <span style="font-size: 12px; color: var(--ra-text-muted);">From first candidate application to contract offer issuance</span>
+                    <strong style="font-size: 13px; color: var(--ra-text-main); display: block;">Average Time-to-Interview</strong>
+                    <span style="font-size: 12px; color: var(--ra-text-muted);">Average days from application to scheduled interview</span>
                 </div>
             </div>
-            <span style="font-size: 15px; font-weight: 800; color: #0b2246;">11.4 Days</span>
+            <span style="font-size: 15px; font-weight: 700; color: #0b2246;"><?= htmlspecialchars($avgTimeToOffer ?? 'N/A') ?></span>
         </div>
     </div>
 

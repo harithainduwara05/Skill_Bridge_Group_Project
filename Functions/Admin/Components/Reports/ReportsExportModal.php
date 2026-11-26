@@ -22,17 +22,9 @@
             </div>
 
             <div class="ra-form-group">
-                <label>Select Export File Format</label>
+                <label>Export File Format</label>
                 <div class="ra-format-cards">
-                    <div class="ra-format-option active" data-format="PDF">
-                        <span class="material-symbols-outlined" style="color: #dc2626;">picture_as_pdf</span>
-                        <span>PDF Document</span>
-                    </div>
-                    <div class="ra-format-option" data-format="XLSX">
-                        <span class="material-symbols-outlined" style="color: #16a34a;">table_view</span>
-                        <span>Excel (.xlsx)</span>
-                    </div>
-                    <div class="ra-format-option" data-format="CSV">
+                    <div class="ra-format-option active" data-format="CSV">
                         <span class="material-symbols-outlined" style="color: #2563eb;">description</span>
                         <span>CSV Sheet</span>
                     </div>
@@ -42,22 +34,11 @@
             <div class="ra-form-group">
                 <label for="raReportTimeframe">Time Horizon</label>
                 <select id="raReportTimeframe" class="ra-form-select">
-                    <option value="30d">Current Month (September 2026)</option>
-                    <option value="quarter">Third Quarter (Q3 2026)</option>
-                    <option value="ytd">Year to Date (Jan - Sep 2026)</option>
-                    <option value="lifetime">Full Lifetime Historical Data</option>
+                    <option value="30d">Last 30 Days (<?= date('F Y') ?>)</option>
+                    <option value="quarter">Last 90 Days (Quarter)</option>
+                    <option value="ytd">Year to Date (<?= date('Y') ?>)</option>
+                    <option value="lifetime">All Time Historical Data</option>
                 </select>
-            </div>
-
-            <div style="background: #f8fafc; border: 1px solid var(--ra-border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px;">
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #334155; cursor: pointer;">
-                    <input type="checkbox" checked style="accent-color: #2563eb; width: 16px; height: 16px;">
-                    Include high-resolution graphical charts and visual summaries
-                </label>
-                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; color: #334155; cursor: pointer;">
-                    <input type="checkbox" checked style="accent-color: #2563eb; width: 16px; height: 16px;">
-                    Anonymize student private contact details in export
-                </label>
             </div>
 
         </div>

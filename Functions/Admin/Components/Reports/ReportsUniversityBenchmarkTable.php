@@ -2,10 +2,9 @@
 <div class="ra-table-card" id="secTableUnis">
     <div class="ra-table-header">
         <div>
-            <h3>Top Partner Universities Performance Benchmark</h3>
-            <p>Comparative metrics on candidate quality, project completion, and student hiring percentage.</p>
+            <h3>Partner Universities</h3>
+            <p>Student enrolment, projects hosted, and placement performance by university.</p>
         </div>
-        <span class="ra-badge-pill">Institutes Audit</span>
     </div>
 
     <div class="ra-table-responsive">
@@ -14,14 +13,14 @@
                 <tr>
                     <th>University / Institute</th>
                     <th>Enrolled Students</th>
-                    <th>Verification Rate</th>
-                    <th>Active Interns</th>
-                    <th>Projects Completed</th>
+                    <th>Status</th>
+                    <th>Placed Students</th>
+                    <th>Projects Hosted</th>
                     <th>Placement %</th>
                     <th>Rating</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="raUniTableBody">
             <?php if (!empty($universityBenchmarks)): ?>
                 <?php foreach ($universityBenchmarks as $idx => $uni): 
                     $uName = htmlspecialchars($uni['University'] ?? 'Partner University');
@@ -32,39 +31,25 @@
                     $uniClass = 'uni-ucsc';
                     $initials = 'UN';
                     $rating = '5.0';
-                    $ratePill = 'ra-pill-green';
 
                     if (strpos($uLower, 'colombo') !== false || strpos($uLower, 'ucsc') !== false) {
                         $uniClass = 'uni-ucsc';
                         $initials = 'UC';
-                        $rating = '5.0';
-                        $pRate = '96.4%';
                     } elseif (strpos($uLower, 'moratuwa') !== false) {
                         $uniClass = 'uni-moratuwa';
                         $initials = 'UM';
-                        $rating = '4.9';
-                        $pRate = '94.8%';
                     } elseif (strpos($uLower, 'kelaniya') !== false) {
                         $uniClass = 'uni-kln';
                         $initials = 'KL';
-                        $rating = '4.8';
-                        $pRate = '91.2%';
                     } elseif (strpos($uLower, 'sliit') !== false) {
                         $uniClass = 'uni-sliit';
                         $initials = 'SL';
-                        $rating = '4.6';
-                        $pRate = '87.5%';
-                        $ratePill = 'ra-pill-blue';
                     } elseif (strpos($uLower, 'peradeniya') !== false) {
                         $uniClass = 'uni-moratuwa';
                         $initials = 'UP';
-                        $rating = '4.9';
-                        $pRate = '93.5%';
                     } elseif (strpos($uLower, 'jayewardenepura') !== false) {
                         $uniClass = 'uni-kln';
                         $initials = 'SJ';
-                        $rating = '4.8';
-                        $pRate = '92.0%';
                     } else {
                         $initials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $uName), 0, 2)) ?: 'UN';
                     }
@@ -79,7 +64,7 @@
                     elseif ($uRate > 0) $rating = '4.5';
                     else $rating = $uStudents > 0 ? '4.0' : '-';
                 ?>
-                <tr>
+                <tr class="ra-uni-row" style="<?= $idx >= 3 ? 'display: none;' : '' ?>">
                     <td>
                         <div class="ra-entity-cell">
                             <div class="ra-entity-icon <?= $uniClass ?>"><?= $initials ?></div>
@@ -118,4 +103,14 @@
             </tbody>
         </table>
     </div>
+
+    <?php
+        $entityLabel = 'universities';
+        $paginationInfoId = 'raUniPaginationInfo';
+        $paginationControlsId = 'raUniPaginationControls';
+        $alwaysShow = true;
+        $perPage = 3;
+        $totalRecords = count($universityBenchmarks ?? []);
+        include dirname(__DIR__) . "/Common/Pagination.php";
+    ?>
 </div>

@@ -96,5 +96,6 @@ $hiringVelocity       = $reportsDB->getHiringVelocityData();
 $donutDistribution    = $reportsDB->getStudentEnrolmentDistribution();
 $topSkills            = $reportsDB->getTopInDemandSkills(5);
 $recruitmentFunnel    = $reportsDB->getRecruitmentFunnelData();
+$avgTimeToOffer       = $reportsDB->getAverageTimeToOffer();
 $periodDataBreakdown  = $reportsDB->getPeriodDataBreakdown();
 ?>
