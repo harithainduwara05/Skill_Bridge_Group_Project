@@ -10,6 +10,10 @@
     box-sizing: border-box;
 }
 
+.cv-print-sheet {
+    display: none;
+}
+
 /* =====================================
    HEADER
 ===================================== */
@@ -349,7 +353,9 @@
     height: 86px;
     border-radius: 10px;
     object-fit: cover;
+    background: #e2e8f0;
     border: 2px solid #e2e8f0;
+    display: block;
 }
 
 .profile-upload button {
@@ -704,6 +710,7 @@
     background: #ffffff;
     margin: 0 auto;
     display: flex;
+    flex-direction: row;
     border-radius: 10px;
     overflow: hidden;
     box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
@@ -733,7 +740,7 @@
     height: 138px;
     border-radius: 14px;
     object-fit: cover;
-    background: #d1d5db;
+    background: #eff6ff;
     display: block;
 }
 
@@ -815,6 +822,7 @@
 
 .cv-content {
     flex: 1;
+    min-width: 0;
     padding: 36px 40px;
     background: #ffffff;
     box-sizing: border-box;
@@ -846,6 +854,10 @@
     margin-top: 8px;
     font-size: 12.5px;
     color: #6b7280;
+}
+
+.cv-inline-skills-block {
+    display: none;
 }
 
 .cv-section-block {
@@ -938,8 +950,12 @@
     display: none;
 }
 
+.cv-document.tpl-classic .cv-inline-skills-block {
+    display: block;
+}
+
 .cv-document.tpl-classic .cv-content {
-    padding: 0;
+    padding: 0 0 28px;
 }
 
 .cv-document.tpl-classic .cv-main-header {
@@ -975,6 +991,10 @@
 
 .cv-document.tpl-minimal .cv-sidebar {
     display: none;
+}
+
+.cv-document.tpl-minimal .cv-inline-skills-block {
+    display: block;
 }
 
 .cv-document.tpl-minimal .cv-inline-meta {
@@ -1038,32 +1058,198 @@
 }
 
 /* =====================================
-   PRINT CV
+   SINGLE-PAGE PRINT EXPORT
 ===================================== */
 
+@page {
+    size: A4 portrait;
+    margin: 5mm;
+}
+
 @media print {
+    html,
+    body {
+        width: 210mm !important;
+        height: 297mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        overflow: hidden !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    body > *:not(.main-wrapper),
     .sidebar,
-    .cv-builder-header,
-    .template-section,
-    .editor-panel,
-    .preview-header,
+    .top-header,
+    .dash-header,
+    .builder-ui,
     .save-toast,
-    .footer {
+    .footer,
+    footer,
+    nav,
+    .sb-policy-backdrop {
         display: none !important;
     }
 
-    .cv-builder-page {
-        padding: 0;
+    .main-wrapper,
+    main.content.cv-builder-page {
+        display: block !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 100% !important;
+        background: #ffffff !important;
+        overflow: hidden !important;
     }
 
-    .preview-panel {
-        background: #ffffff;
-        padding: 0;
+    .cv-print-sheet {
+        display: block !important;
+        width: 100% !important;
+        height: 286mm !important;
+        max-height: 286mm !important;
+        margin: 0 auto !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
     }
 
-    .cv-document {
-        box-shadow: none;
-        width: 100%;
+    .cv-print-sheet .cv-document {
+        display: flex !important;
+        flex-direction: row !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: 0 !important;
+        height: 100% !important;
+        max-height: 286mm !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        overflow: hidden !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        page-break-after: avoid !important;
+    }
+
+    .cv-print-sheet .cv-document.tpl-classic,
+    .cv-print-sheet .cv-document.tpl-minimal {
+        display: block !important;
+    }
+
+    .cv-print-sheet .cv-sidebar {
+        width: 215px !important;
+        min-width: 215px !important;
+        max-width: 215px !important;
+        padding: 16px 14px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .cv-print-sheet .cv-photo-frame {
+        margin-bottom: 10px !important;
+    }
+
+    .cv-print-sheet .cv-sidebar img {
+        width: 78px !important;
+        height: 86px !important;
+        border-radius: 8px !important;
+    }
+
+    .cv-print-sheet .sidebar-section {
+        margin-top: 10px !important;
+    }
+
+    .cv-print-sheet .sidebar-section h4 {
+        font-size: 10px !important;
+        margin-bottom: 5px !important;
+        padding-bottom: 3px !important;
+    }
+
+    .cv-print-sheet .achievement-entry {
+        margin-bottom: 6px !important;
+    }
+
+    .cv-print-sheet .achievement-entry strong {
+        font-size: 10.5px !important;
+    }
+
+    .cv-print-sheet .achievement-entry p,
+    .cv-print-sheet .sidebar-contact p {
+        font-size: 10px !important;
+        line-height: 1.3 !important;
+        margin: 2px 0 !important;
+    }
+
+    .cv-print-sheet .cv-skill-tag,
+    .cv-print-sheet .cv-project-chip {
+        font-size: 9.5px !important;
+        padding: 2px 6px !important;
+    }
+
+    .cv-print-sheet .sidebar-contact {
+        padding-top: 8px !important;
+    }
+
+    .cv-print-sheet .cv-content {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 18px 22px !important;
+    }
+
+    .cv-print-sheet .cv-main-header {
+        margin-bottom: 10px !important;
+    }
+
+    .cv-print-sheet .cv-main-header h1 {
+        font-size: 20px !important;
+    }
+
+    .cv-print-sheet .cv-role-subtitle {
+        font-size: 11.5px !important;
+    }
+
+    .cv-print-sheet .cv-section-block {
+        margin-top: 10px !important;
+    }
+
+    .cv-print-sheet .cv-section-block h2 {
+        font-size: 11px !important;
+        margin-bottom: 6px !important;
+        padding-bottom: 3px !important;
+    }
+
+    .cv-print-sheet .cv-section-block > p,
+    .cv-print-sheet .timeline-body p {
+        font-size: 10.5px !important;
+        line-height: 1.35 !important;
+        margin-bottom: 3px !important;
+    }
+
+    .cv-print-sheet .timeline-list {
+        gap: 6px !important;
+    }
+
+    .cv-print-sheet .timeline-item {
+        padding-left: 12px !important;
+    }
+
+    .cv-print-sheet .timeline-body h3 {
+        font-size: 11.5px !important;
+    }
+
+    .cv-print-sheet .timeline-sub {
+        font-size: 10px !important;
+        margin: 1px 0 2px !important;
+    }
+
+    .cv-print-sheet .cv-document.tpl-classic .cv-main-header {
+        padding: 16px 22px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .cv-print-sheet .cv-document.tpl-classic .cv-section-block {
+        padding: 0 22px !important;
     }
 }
 

@@ -476,401 +476,417 @@ include __DIR__ . '/../../Includes/dash_header.php';
 ?>
 
 <main class="content cv-builder-page" data-csrf="<?= cvEsc($cvCsrf) ?>">
-    <section class="cv-builder-header">
-        <div>
-            <h1>Create Your Professional CV</h1>
-            <p>Choose a standard CV template, drag in completed portfolio projects, and export a clean PDF.</p>
-        </div>
+    <div class="builder-ui">
+        <section class="cv-builder-header">
+            <div>
+                <h1>Create Your Professional CV</h1>
+                <p>Choose a standard CV template, drag in completed portfolio projects, and export a clean single-page PDF.</p>
+            </div>
 
-        <div class="cv-header-actions">
-            <button type="button" class="save-cv-btn" id="saveCvBtn">
-                <i class="fa-solid fa-floppy-disk"></i> Save Changes
-            </button>
-            <button type="button" class="export-cv-btn" id="exportCvBtn">
-                <i class="fa-solid fa-file-pdf"></i> Export CV
-            </button>
-        </div>
-    </section>
+            <div class="cv-header-actions">
+                <button type="button" class="save-cv-btn" id="saveCvBtn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
+                </button>
+                <button type="button" class="export-cv-btn" id="exportCvBtn">
+                    <i class="fa-solid fa-file-pdf"></i> Export CV
+                </button>
+            </div>
+        </section>
 
-    <!-- STANDARDIZED CV TEMPLATES -->
-    <section class="template-section">
-        <div class="section-header">
-            <h2>Choose CV Template</h2>
-            <p>Select a standard resume structure for your live preview and export.</p>
-        </div>
+        <!-- STANDARDIZED CV TEMPLATES -->
+        <section class="template-section">
+            <div class="section-header">
+                <h2>Choose CV Template</h2>
+                <p>Select a standard resume structure for your live preview and export.</p>
+            </div>
 
-        <div class="template-grid" id="templateGrid">
-            <div class="template-card <?= $activeTemplate === 'modern' ? 'active' : '' ?>" data-template="modern">
-                <div class="cv-tpl-box cv-tpl-box-charcoal">
-                    <div class="cv-tpl-left">
-                        <div class="cv-tpl-avatar"></div>
-                        <div class="cv-tpl-pill"></div>
-                        <div class="cv-tpl-pill short"></div>
+            <div class="template-grid" id="templateGrid">
+                <div class="template-card <?= $activeTemplate === 'modern' ? 'active' : '' ?>" data-template="modern">
+                    <div class="cv-tpl-box cv-tpl-box-charcoal">
+                        <div class="cv-tpl-left">
+                            <div class="cv-tpl-avatar"></div>
+                            <div class="cv-tpl-pill"></div>
+                            <div class="cv-tpl-pill short"></div>
+                        </div>
+                        <div class="cv-tpl-right">
+                            <div class="cv-tpl-bar dark"></div>
+                            <div class="cv-tpl-bar muted"></div>
+                            <div class="cv-tpl-panel"></div>
+                            <div class="cv-tpl-bar"></div>
+                        </div>
                     </div>
-                    <div class="cv-tpl-right">
+                    <h3>Charcoal Sidebar</h3>
+                    <p>Dark sidebar with portrait, achievements, amber skill tags, and timeline projects.</p>
+                </div>
+
+                <div class="template-card <?= $activeTemplate === 'classic' ? 'active' : '' ?>" data-template="classic">
+                    <div class="cv-tpl-box cv-tpl-box-classic">
+                        <div class="cv-tpl-banner">
+                            <div class="cv-tpl-bar light"></div>
+                            <div class="cv-tpl-bar gold"></div>
+                        </div>
+                        <div class="cv-tpl-cols">
+                            <div class="cv-tpl-col">
+                                <div class="cv-tpl-bar"></div>
+                                <div class="cv-tpl-bar short"></div>
+                            </div>
+                            <div class="cv-tpl-col wide">
+                                <div class="cv-tpl-bar"></div>
+                                <div class="cv-tpl-panel"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <h3>Executive Classic</h3>
+                    <p>Traditional header banner with structured sections for formal applications.</p>
+                </div>
+
+                <div class="template-card <?= $activeTemplate === 'minimal' ? 'active' : '' ?>" data-template="minimal">
+                    <div class="cv-tpl-box cv-tpl-box-minimal">
                         <div class="cv-tpl-bar dark"></div>
-                        <div class="cv-tpl-bar muted"></div>
-                        <div class="cv-tpl-panel"></div>
+                        <div class="cv-tpl-divider"></div>
+                        <div class="cv-tpl-bar"></div>
+                        <div class="cv-tpl-bar short"></div>
+                        <div class="cv-tpl-divider"></div>
                         <div class="cv-tpl-bar"></div>
                     </div>
-                </div>
-                <h3>Charcoal Sidebar</h3>
-                <p>Dark sidebar with portrait, achievements, amber skill tags, and timeline projects.</p>
-            </div>
-
-            <div class="template-card <?= $activeTemplate === 'classic' ? 'active' : '' ?>" data-template="classic">
-                <div class="cv-tpl-box cv-tpl-box-classic">
-                    <div class="cv-tpl-banner">
-                        <div class="cv-tpl-bar light"></div>
-                        <div class="cv-tpl-bar gold"></div>
-                    </div>
-                    <div class="cv-tpl-cols">
-                        <div class="cv-tpl-col">
-                            <div class="cv-tpl-bar"></div>
-                            <div class="cv-tpl-bar short"></div>
-                        </div>
-                        <div class="cv-tpl-col wide">
-                            <div class="cv-tpl-bar"></div>
-                            <div class="cv-tpl-panel"></div>
-                        </div>
-                    </div>
-                </div>
-                <h3>Executive Classic</h3>
-                <p>Traditional header banner with structured sections for formal applications.</p>
-            </div>
-
-            <div class="template-card <?= $activeTemplate === 'minimal' ? 'active' : '' ?>" data-template="minimal">
-                <div class="cv-tpl-box cv-tpl-box-minimal">
-                    <div class="cv-tpl-bar dark"></div>
-                    <div class="cv-tpl-divider"></div>
-                    <div class="cv-tpl-bar"></div>
-                    <div class="cv-tpl-bar short"></div>
-                    <div class="cv-tpl-divider"></div>
-                    <div class="cv-tpl-bar"></div>
-                </div>
-                <h3>Clean Minimal</h3>
-                <p>Editorial single-column CV emphasizing clarity, whitespace, and projects.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="builder-layout">
-        <div class="editor-panel">
-            <section class="builder-card">
-                <div class="card-title">
-                    <i class="fa-solid fa-user"></i>
-                    <h2>Personal &amp; Profile Details</h2>
-                </div>
-
-                <div class="profile-upload">
-                    <img id="profilePreview" src="<?= cvEsc($avatarSrc) ?>" alt="Profile photo">
-                    <div>
-                        <input type="file" id="profileUpload" accept="image/*" hidden>
-                        <button type="button" id="changePhotoBtn">Change Photo</button>
-                        <p>Preview a custom photo for export</p>
-                    </div>
-                </div>
-
-                <div class="form-grid">
-                    <div>
-                        <label for="resumeTitle">CV Title</label>
-                        <input type="text" id="resumeTitle" value="<?= cvEsc((string) ($savedResume['resume_title'] ?? '')) ?>" placeholder="e.g. Software Engineer CV">
-                    </div>
-
-                    <div>
-                        <label for="fullName">Full Name</label>
-                        <input type="text" id="fullName" value="<?= cvEsc((string) ($student['Name'] ?? '')) ?>">
-                    </div>
-
-                    <div>
-                        <label for="professionalTitle">Job / Role Title</label>
-                        <input type="text" id="professionalTitle" value="<?= cvEsc((string) ($student['degree'] ?? '')) ?>">
-                    </div>
-
-                    <div>
-                        <label for="emailField">Email</label>
-                        <input type="email" id="emailField" readonly value="<?= cvEsc((string) ($student['Email'] ?? $email)) ?>">
-                    </div>
-
-                    <div>
-                        <label for="phoneField">Phone Number</label>
-                        <input type="text" id="phoneField" placeholder="Enter phone number">
-                    </div>
-
-                    <div>
-                        <label for="locationField">City / Location</label>
-                        <input type="text" id="locationField" placeholder="Enter city or location">
-                    </div>
-
-                    <div>
-                        <label for="universityField">Institution / University</label>
-                        <input type="text" id="universityField" readonly value="<?= cvEsc((string) ($student['University'] ?? '')) ?>">
-                    </div>
-
-                    <div>
-                        <label for="linkedinField">LinkedIn</label>
-                        <input type="text" id="linkedinField" value="<?= cvEsc((string) ($student['linkedin'] ?? '')) ?>">
-                    </div>
-
-                    <div>
-                        <label for="githubField">GitHub</label>
-                        <input type="text" id="githubField" value="<?= cvEsc((string) ($student['github'] ?? '')) ?>">
-                    </div>
-
-                    <div>
-                        <label for="websiteField">Website / Portfolio</label>
-                        <input type="text" id="websiteField" value="<?= cvEsc((string) ($student['website'] ?? '')) ?>">
-                    </div>
-                </div>
-
-                <div style="margin-top: 16px;">
-                    <label for="summaryInput">Profile Summary</label>
-                    <textarea id="summaryInput" rows="4" placeholder="Write a concise summary of who you are, your strengths, and what you bring..."><?= cvEsc($summaryText) ?></textarea>
-                </div>
-            </section>
-
-            <!-- SKILLS DRAG & DROP -->
-            <section class="builder-card">
-                <div class="card-title">
-                    <i class="fa-solid fa-code"></i>
-                    <h2>Skills</h2>
-                </div>
-                <p class="helper-text">Drag skills into Selected Skills or click a skill to add/remove it.</p>
-
-                <div class="skills-builder">
-                    <div class="available-skills">
-                        <h3>Available Skills</h3>
-                        <div class="skill-list" id="availableSkillsList">
-                            <?php foreach ($skills as $sk): ?>
-                                <?php $sid = (int) $sk['id']; ?>
-                                <div class="drag-skill"
-                                     draggable="true"
-                                     data-skill-id="<?= $sid ?>"
-                                     data-skill-name="<?= cvEsc((string) $sk['skill_name']) ?>">
-                                    <?= cvEsc((string) $sk['skill_name']) ?>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <div class="selected-skills">
-                        <h3>Selected Skills</h3>
-                        <div class="skill-drop-zone" id="skillDropZone">
-                            <?php foreach ($skills as $sk): ?>
-                                <?php $sid = (int) $sk['id']; ?>
-                                <?php if (in_array($sid, $savedSkillIds, true)): ?>
-                                    <span class="selected-skill"
-                                          data-skill-id="<?= $sid ?>"
-                                          data-skill-name="<?= cvEsc((string) $sk['skill_name']) ?>">
-                                        <span><?= cvEsc((string) $sk['skill_name']) ?></span>
-                                        <button type="button" class="remove-skill-btn" aria-label="Remove skill">&times;</button>
-                                    </span>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- COMPLETED PORTFOLIO PROJECTS DRAG & DROP -->
-            <section class="builder-card">
-                <div class="card-title">
-                    <i class="fa-solid fa-folder-open"></i>
-                    <h2>Completed Portfolio Projects</h2>
-                </div>
-                <p class="helper-text">Drag your <strong>Completed</strong> portfolio projects into the CV Projects drop zone below.</p>
-
-                <div class="cv-projects-builder">
-                    <div class="available-projects-box">
-                        <h3>Completed Projects</h3>
-                        <div class="cv-project-source-list" id="completedProjectsSource">
-                            <?php if (empty($completedProjects)): ?>
-                                <p class="empty-source-msg">No completed portfolio projects found yet. Mark a project as <strong>Completed</strong> in your Portfolio to drag it into your CV.</p>
-                            <?php else: ?>
-                                <?php foreach ($completedProjects as $proj): ?>
-                                    <?php $pid = (int) $proj['id']; ?>
-                                    <div class="draggable-project-card"
-                                         draggable="true"
-                                         data-project-id="<?= $pid ?>"
-                                         data-project-title="<?= cvEsc((string) $proj['title']) ?>"
-                                         data-project-status="<?= cvEsc((string) $proj['status']) ?>"
-                                         data-project-period="<?= cvEsc((string) $proj['period']) ?>"
-                                         data-project-desc="<?= cvEsc((string) $proj['description']) ?>"
-                                         data-project-repo="<?= cvEsc((string) $proj['repo_url']) ?>">
-                                        <div class="drag-project-top">
-                                            <span class="drag-grip"><i class="fa-solid fa-grip-vertical"></i></span>
-                                            <span class="completed-pill">Completed</span>
-                                        </div>
-                                        <h4><?= cvEsc((string) $proj['title']) ?></h4>
-                                        <?php if (!empty($proj['description'])): ?>
-                                            <p><?= cvEsc(mb_strimwidth((string) $proj['description'], 0, 110, '...')) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="selected-projects-box">
-                        <h3>Included in CV (Drop Completed Projects Here)</h3>
-                        <div class="project-drop-zone" id="projectDropZone">
-                            <?php foreach ($projects as $proj): ?>
-                                <?php
-                                $pid = (int) $proj['id'];
-                                if (in_array($pid, $savedProjectIds, true)):
-                                ?>
-                                    <div class="selected-project-item"
-                                         data-project-id="<?= $pid ?>"
-                                         data-project-title="<?= cvEsc((string) $proj['title']) ?>"
-                                         data-project-status="<?= cvEsc((string) $proj['status']) ?>"
-                                         data-project-period="<?= cvEsc((string) $proj['period']) ?>"
-                                         data-project-desc="<?= cvEsc((string) $proj['description']) ?>"
-                                         data-project-repo="<?= cvEsc((string) $proj['repo_url']) ?>">
-                                        <div class="selected-project-info">
-                                            <strong><?= cvEsc((string) $proj['title']) ?></strong>
-                                            <?php if (!empty($proj['description'])): ?>
-                                                <small><?= cvEsc(mb_strimwidth((string) $proj['description'], 0, 95, '...')) ?></small>
-                                            <?php endif; ?>
-                                        </div>
-                                        <button type="button" class="remove-project-btn" aria-label="Remove project">&times;</button>
-                                    </div>
-                                <?php endif; ?>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- LIVE CV PREVIEW -->
-        <div class="preview-panel">
-            <div class="preview-header">
-                <h3>Live CV Preview</h3>
-                <div class="zoom-controls">
-                    <button type="button" id="zoomOutBtn">-</button>
-                    <span id="zoomLevel">100%</span>
-                    <button type="button" id="zoomInBtn">+</button>
+                    <h3>Clean Minimal</h3>
+                    <p>Editorial single-column CV emphasizing clarity, whitespace, and projects.</p>
                 </div>
             </div>
+        </section>
 
-            <div class="cv-preview-wrapper">
-                <div id="cvPreview" class="cv-document tpl-<?= cvEsc($activeTemplate) ?>">
-                    <aside class="cv-sidebar">
-                        <div class="cv-photo-frame">
-                            <img id="previewPhoto" src="<?= cvEsc($avatarSrc) ?>" alt="Student photo">
+        <section class="builder-layout">
+            <div class="editor-panel">
+                <section class="builder-card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-user"></i>
+                        <h2>Personal &amp; Profile Details</h2>
+                    </div>
+
+                    <div class="profile-upload">
+                        <img id="editorPhotoPreview" src="<?= cvEsc($avatarSrc) ?>" alt="Profile photo">
+                        <div>
+                            <input type="file" id="profileUpload" accept="image/*" hidden>
+                            <button type="button" id="changePhotoBtn">Change Photo</button>
+                            <p>Preview a custom photo for export</p>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div>
+                            <label for="resumeTitle">CV Title</label>
+                            <input type="text" id="resumeTitle" value="<?= cvEsc((string) ($savedResume['resume_title'] ?? '')) ?>" placeholder="e.g. Software Engineer CV">
                         </div>
 
-                        <div class="sidebar-section">
-                            <h4>ACHIEVEMENTS</h4>
-                            <?php if (!empty($achievements)): ?>
-                                <?php foreach ($achievements as $ach): ?>
-                                    <div class="achievement-entry">
-                                        <strong><?= cvEsc((string) $ach['title']) ?></strong>
-                                        <?php if (!empty($ach['detail'])): ?>
-                                            <p><?= cvEsc((string) $ach['detail']) ?></p>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <div class="achievement-entry">
-                                    <strong>Completed Portfolio Milestones</strong>
-                                    <p>Delivered verified academic and team software projects.</p>
-                                </div>
-                            <?php endif; ?>
+                        <div>
+                            <label for="fullName">Full Name</label>
+                            <input type="text" id="fullName" value="<?= cvEsc((string) ($student['Name'] ?? '')) ?>">
                         </div>
 
-                        <div class="sidebar-section">
-                            <h4>SKILLS</h4>
-                            <div id="previewSkills" class="sidebar-skill-pills">
+                        <div>
+                            <label for="professionalTitle">Job / Role Title</label>
+                            <input type="text" id="professionalTitle" value="<?= cvEsc((string) ($student['degree'] ?? '')) ?>">
+                        </div>
+
+                        <div>
+                            <label for="emailField">Email</label>
+                            <input type="email" id="emailField" readonly value="<?= cvEsc((string) ($student['Email'] ?? $email)) ?>">
+                        </div>
+
+                        <div>
+                            <label for="phoneField">Phone Number</label>
+                            <input type="text" id="phoneField" placeholder="Enter phone number">
+                        </div>
+
+                        <div>
+                            <label for="locationField">City / Location</label>
+                            <input type="text" id="locationField" placeholder="Enter city or location">
+                        </div>
+
+                        <div>
+                            <label for="universityField">Institution / University</label>
+                            <input type="text" id="universityField" readonly value="<?= cvEsc((string) ($student['University'] ?? '')) ?>">
+                        </div>
+
+                        <div>
+                            <label for="linkedinField">LinkedIn</label>
+                            <input type="text" id="linkedinField" value="<?= cvEsc((string) ($student['linkedin'] ?? '')) ?>">
+                        </div>
+
+                        <div>
+                            <label for="githubField">GitHub</label>
+                            <input type="text" id="githubField" value="<?= cvEsc((string) ($student['github'] ?? '')) ?>">
+                        </div>
+
+                        <div>
+                            <label for="websiteField">Website / Portfolio</label>
+                            <input type="text" id="websiteField" value="<?= cvEsc((string) ($student['website'] ?? '')) ?>">
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <label for="summaryInput">Profile Summary</label>
+                        <textarea id="summaryInput" rows="4" placeholder="Write a concise summary of who you are, your strengths, and what you bring..."><?= cvEsc($summaryText) ?></textarea>
+                    </div>
+                </section>
+
+                <!-- SKILLS DRAG & DROP -->
+                <section class="builder-card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-code"></i>
+                        <h2>Skills</h2>
+                    </div>
+                    <p class="helper-text">Drag skills into Selected Skills or click a skill to add/remove it.</p>
+
+                    <div class="skills-builder">
+                        <div class="available-skills">
+                            <h3>Available Skills</h3>
+                            <div class="skill-list" id="availableSkillsList">
                                 <?php foreach ($skills as $sk): ?>
-                                    <?php if (in_array((int) $sk['id'], $savedSkillIds, true)): ?>
-                                        <span class="cv-skill-tag" data-preview-skill-id="<?= (int) $sk['id'] ?>"><?= cvEsc((string) $sk['skill_name']) ?></span>
+                                    <?php $sid = (int) $sk['id']; ?>
+                                    <div class="drag-skill"
+                                         draggable="true"
+                                         data-skill-id="<?= $sid ?>"
+                                         data-skill-name="<?= cvEsc((string) $sk['skill_name']) ?>">
+                                        <?= cvEsc((string) $sk['skill_name']) ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+
+                        <div class="selected-skills">
+                            <h3>Selected Skills</h3>
+                            <div class="skill-drop-zone" id="skillDropZone">
+                                <?php foreach ($skills as $sk): ?>
+                                    <?php $sid = (int) $sk['id']; ?>
+                                    <?php if (in_array($sid, $savedSkillIds, true)): ?>
+                                        <span class="selected-skill"
+                                              data-skill-id="<?= $sid ?>"
+                                              data-skill-name="<?= cvEsc((string) $sk['skill_name']) ?>">
+                                            <span><?= cvEsc((string) $sk['skill_name']) ?></span>
+                                            <button type="button" class="remove-skill-btn" aria-label="Remove skill">&times;</button>
+                                        </span>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div class="sidebar-section sidebar-contact">
-                            <h4>CONTACT</h4>
-                            <p id="previewLocationRow" hidden><i class="fa-solid fa-house"></i> <span id="previewLocation"></span></p>
-                            <p id="previewPhoneRow" hidden><i class="fa-solid fa-phone"></i> <span id="previewPhone"></span></p>
-                            <p><i class="fa-regular fa-envelope"></i> <span id="previewEmail"><?= cvEsc((string) ($student['Email'] ?? $email)) ?></span></p>
-                            <p id="previewLinkedinRow" <?= empty($student['linkedin']) ? 'hidden' : '' ?>><i class="fa-brands fa-linkedin"></i> <span id="previewLinkedin"><?= cvEsc((string) ($student['linkedin'] ?? '')) ?></span></p>
-                            <p id="previewGithubRow" <?= empty($student['github']) ? 'hidden' : '' ?>><i class="fa-brands fa-github"></i> <span id="previewGithub"><?= cvEsc((string) ($student['github'] ?? '')) ?></span></p>
-                        </div>
-                    </aside>
+                <!-- COMPLETED PORTFOLIO PROJECTS DRAG & DROP -->
+                <section class="builder-card">
+                    <div class="card-title">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <h2>Completed Portfolio Projects</h2>
+                    </div>
+                    <p class="helper-text">Drag your <strong>Completed</strong> portfolio projects into the CV Projects drop zone below.</p>
 
-                    <div class="cv-content">
-                        <header class="cv-main-header">
-                            <h1 id="previewName"><?= cvEsc((string) ($student['Name'] ?? 'Full name')) ?></h1>
-                            <p id="previewTitle" class="cv-role-subtitle"><?= cvEsc((string) ($student['degree'] ?? 'Your job title')) ?></p>
-                            <div class="cv-inline-meta">
-                                <span id="previewInlineEmail"><?= cvEsc((string) ($student['Email'] ?? $email)) ?></span>
-                                <span id="previewInlinePhone"></span>
-                                <span id="previewInlineLocation"></span>
+                    <div class="cv-projects-builder">
+                        <div class="available-projects-box">
+                            <h3>Completed Projects</h3>
+                            <div class="cv-project-source-list" id="completedProjectsSource">
+                                <?php if (empty($completedProjects)): ?>
+                                    <p class="empty-source-msg">No completed portfolio projects found yet. Mark a project as <strong>Completed</strong> in your Portfolio to drag it into your CV.</p>
+                                <?php else: ?>
+                                    <?php foreach ($completedProjects as $proj): ?>
+                                        <?php $pid = (int) $proj['id']; ?>
+                                        <div class="draggable-project-card"
+                                             draggable="true"
+                                             data-project-id="<?= $pid ?>"
+                                             data-project-title="<?= cvEsc((string) $proj['title']) ?>"
+                                             data-project-status="<?= cvEsc((string) $proj['status']) ?>"
+                                             data-project-period="<?= cvEsc((string) $proj['period']) ?>"
+                                             data-project-desc="<?= cvEsc((string) $proj['description']) ?>"
+                                             data-project-repo="<?= cvEsc((string) $proj['repo_url']) ?>">
+                                            <div class="drag-project-top">
+                                                <span class="drag-grip"><i class="fa-solid fa-grip-vertical"></i></span>
+                                                <span class="completed-pill">Completed</span>
+                                            </div>
+                                            <h4><?= cvEsc((string) $proj['title']) ?></h4>
+                                            <?php if (!empty($proj['description'])): ?>
+                                                <p><?= cvEsc(mb_strimwidth((string) $proj['description'], 0, 110, '...')) ?></p>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </div>
-                        </header>
+                        </div>
 
-                        <section class="cv-section-block">
-                            <h2>PROFILE</h2>
-                            <p id="previewSummary"><?= nl2br(cvEsc($summaryText)) ?></p>
-                        </section>
-
-                        <section class="cv-section-block">
-                            <h2>COMPLETED PROJECTS</h2>
-                            <div id="previewProjects" class="timeline-list">
+                        <div class="selected-projects-box">
+                            <h3>Included in CV (Drop Completed Projects Here)</h3>
+                            <div class="project-drop-zone" id="projectDropZone">
                                 <?php foreach ($projects as $proj): ?>
-                                    <?php if (in_array((int) $proj['id'], $savedProjectIds, true)): ?>
-                                        <div class="timeline-item" data-preview-project-id="<?= (int) $proj['id'] ?>">
-                                            <div class="timeline-marker"></div>
-                                            <div class="timeline-body">
-                                                <h3><?= cvEsc((string) $proj['title']) ?></h3>
-                                                <div class="timeline-sub">
-                                                    <span><?= cvEsc((string) $proj['status']) ?></span>
-                                                    <?php if (!empty($proj['period'])): ?>
-                                                        <span>| <?= cvEsc((string) $proj['period']) ?></span>
-                                                    <?php endif; ?>
-                                                </div>
+                                    <?php
+                                    $pid = (int) $proj['id'];
+                                    if (in_array($pid, $savedProjectIds, true)):
+                                    ?>
+                                        <div class="selected-project-item"
+                                             data-project-id="<?= $pid ?>"
+                                             data-project-title="<?= cvEsc((string) $proj['title']) ?>"
+                                             data-project-status="<?= cvEsc((string) $proj['status']) ?>"
+                                             data-project-period="<?= cvEsc((string) $proj['period']) ?>"
+                                             data-project-desc="<?= cvEsc((string) $proj['description']) ?>"
+                                             data-project-repo="<?= cvEsc((string) $proj['repo_url']) ?>">
+                                            <div class="selected-project-info">
+                                                <strong><?= cvEsc((string) $proj['title']) ?></strong>
                                                 <?php if (!empty($proj['description'])): ?>
-                                                    <p><?= cvEsc((string) $proj['description']) ?></p>
-                                                <?php endif; ?>
-                                                <?php if (!empty($proj['repo_url'])): ?>
-                                                    <div class="timeline-tags">
-                                                        <span class="cv-project-chip"><?= cvEsc((string) $proj['repo_url']) ?></span>
-                                                    </div>
+                                                    <small><?= cvEsc(mb_strimwidth((string) $proj['description'], 0, 95, '...')) ?></small>
                                                 <?php endif; ?>
                                             </div>
+                                            <button type="button" class="remove-project-btn" aria-label="Remove project">&times;</button>
                                         </div>
                                     <?php endif; ?>
                                 <?php endforeach; ?>
                             </div>
-                        </section>
+                        </div>
+                    </div>
+                </section>
+            </div>
 
-                        <section class="cv-section-block">
-                            <h2>EDUCATION</h2>
-                            <div class="timeline-list">
-                                <div class="timeline-item">
-                                    <div class="timeline-marker"></div>
-                                    <div class="timeline-body">
-                                        <h3 id="previewDegree"><?= cvEsc((string) ($student['degree'] ?? 'Degree or Course')) ?></h3>
-                                        <div class="timeline-sub">
-                                            <span id="previewUniversity"><?= cvEsc((string) ($student['University'] ?? '')) ?></span>
-                                            <?php if (!empty($student['year'])): ?>
-                                                <span id="previewYear">| Year <?= cvEsc((string) $student['year']) ?></span>
+            <!-- LIVE CV PREVIEW -->
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <h3>Live CV Preview</h3>
+                    <div class="zoom-controls">
+                        <button type="button" id="zoomOutBtn">-</button>
+                        <span id="zoomLevel">100%</span>
+                        <button type="button" id="zoomInBtn">+</button>
+                    </div>
+                </div>
+
+                <div class="cv-preview-wrapper">
+                    <div id="cvPreview" class="cv-document tpl-<?= cvEsc($activeTemplate) ?>">
+                        <aside class="cv-sidebar">
+                            <div class="cv-photo-frame">
+                                <img id="previewPhoto" src="<?= cvEsc($avatarSrc) ?>" alt="Student photo">
+                            </div>
+
+                            <div class="sidebar-section">
+                                <h4>ACHIEVEMENTS</h4>
+                                <?php if (!empty($achievements)): ?>
+                                    <?php foreach ($achievements as $ach): ?>
+                                        <div class="achievement-entry">
+                                            <strong><?= cvEsc((string) $ach['title']) ?></strong>
+                                            <?php if (!empty($ach['detail'])): ?>
+                                                <p><?= cvEsc((string) $ach['detail']) ?></p>
                                             <?php endif; ?>
                                         </div>
-                                        <div class="timeline-tags">
-                                            <span class="cv-project-chip" id="previewWebsite"><?= cvEsc((string) ($student['website'] ?? 'Academic Profile')) ?></span>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <div class="achievement-entry">
+                                        <strong>Completed Portfolio Milestones</strong>
+                                        <p>Delivered verified academic and team software projects.</p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <div class="sidebar-section">
+                                <h4>SKILLS</h4>
+                                <div id="previewSkills" class="sidebar-skill-pills">
+                                    <?php foreach ($skills as $sk): ?>
+                                        <?php if (in_array((int) $sk['id'], $savedSkillIds, true)): ?>
+                                            <span class="cv-skill-tag" data-preview-skill-id="<?= (int) $sk['id'] ?>"><?= cvEsc((string) $sk['skill_name']) ?></span>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-section sidebar-contact">
+                                <h4>CONTACT</h4>
+                                <p id="previewLocationRow" style="display:none;"><i class="fa-solid fa-house"></i> <span id="previewLocation"></span></p>
+                                <p id="previewPhoneRow" style="display:none;"><i class="fa-solid fa-phone"></i> <span id="previewPhone"></span></p>
+                                <p><i class="fa-regular fa-envelope"></i> <span id="previewEmail"><?= cvEsc((string) ($student['Email'] ?? $email)) ?></span></p>
+                                <p id="previewLinkedinRow" style="<?= empty($student['linkedin']) ? 'display:none;' : '' ?>"><i class="fa-brands fa-linkedin"></i> <span id="previewLinkedin"><?= cvEsc((string) ($student['linkedin'] ?? '')) ?></span></p>
+                                <p id="previewGithubRow" style="<?= empty($student['github']) ? 'display:none;' : '' ?>"><i class="fa-brands fa-github"></i> <span id="previewGithub"><?= cvEsc((string) ($student['github'] ?? '')) ?></span></p>
+                            </div>
+                        </aside>
+
+                        <div class="cv-content">
+                            <header class="cv-main-header">
+                                <h1 id="previewName"><?= cvEsc((string) ($student['Name'] ?? 'Full name')) ?></h1>
+                                <p id="previewTitle" class="cv-role-subtitle"><?= cvEsc((string) ($student['degree'] ?? 'Your job title')) ?></p>
+                                <div class="cv-inline-meta">
+                                    <span id="previewInlineEmail"><?= cvEsc((string) ($student['Email'] ?? $email)) ?></span>
+                                    <span id="previewInlinePhone"></span>
+                                    <span id="previewInlineLocation"></span>
+                                </div>
+                            </header>
+
+                            <section class="cv-section-block">
+                                <h2>PROFILE</h2>
+                                <p id="previewSummary"><?= nl2br(cvEsc($summaryText)) ?></p>
+                            </section>
+
+                            <section class="cv-section-block">
+                                <h2>COMPLETED PROJECTS</h2>
+                                <div id="previewProjects" class="timeline-list">
+                                    <?php foreach ($projects as $proj): ?>
+                                        <?php if (in_array((int) $proj['id'], $savedProjectIds, true)): ?>
+                                            <div class="timeline-item" data-preview-project-id="<?= (int) $proj['id'] ?>">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-body">
+                                                    <h3><?= cvEsc((string) $proj['title']) ?></h3>
+                                                    <div class="timeline-sub">
+                                                        <span><?= cvEsc((string) $proj['status']) ?></span>
+                                                        <?php if (!empty($proj['period'])): ?>
+                                                            <span>| <?= cvEsc((string) $proj['period']) ?></span>
+                                                        <?php endif; ?>
+                                                    </div>
+                                                    <?php if (!empty($proj['description'])): ?>
+                                                        <p><?= cvEsc((string) $proj['description']) ?></p>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($proj['repo_url'])): ?>
+                                                        <div class="timeline-tags">
+                                                            <span class="cv-project-chip"><?= cvEsc((string) $proj['repo_url']) ?></span>
+                                                        </div>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </section>
+
+                            <section class="cv-section-block cv-inline-skills-block">
+                                <h2>SKILLS</h2>
+                                <div id="previewInlineSkills" class="sidebar-skill-pills">
+                                    <?php foreach ($skills as $sk): ?>
+                                        <?php if (in_array((int) $sk['id'], $savedSkillIds, true)): ?>
+                                            <span class="cv-skill-tag"><?= cvEsc((string) $sk['skill_name']) ?></span>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </div>
+                            </section>
+
+                            <section class="cv-section-block">
+                                <h2>EDUCATION</h2>
+                                <div class="timeline-list">
+                                    <div class="timeline-item">
+                                        <div class="timeline-marker"></div>
+                                        <div class="timeline-body">
+                                            <h3 id="previewDegree"><?= cvEsc((string) ($student['degree'] ?? 'Degree or Course')) ?></h3>
+                                            <div class="timeline-sub">
+                                                <span id="previewUniversity"><?= cvEsc((string) ($student['University'] ?? '')) ?></span>
+                                                <?php if (!empty($student['year'])): ?>
+                                                    <span id="previewYear">| Year <?= cvEsc((string) $student['year']) ?></span>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="timeline-tags">
+                                                <span class="cv-project-chip" id="previewWebsite"><?= cvEsc((string) ($student['website'] ?? 'Academic Profile')) ?></span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </section>
+                            </section>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </div>
+
+    <!-- ISOLATED SINGLE-PAGE PRINT TARGET -->
+    <div id="cvPrintSheet" class="cv-print-sheet" aria-hidden="true"></div>
 
     <div id="saveToast" class="save-toast" role="status">
         <span id="saveToastText">CV saved successfully.</span>
@@ -883,6 +899,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const pageEl = document.querySelector(".cv-builder-page");
     const csrfToken = pageEl ? (pageEl.getAttribute("data-csrf") || "") : "";
     const cvPreview = document.getElementById("cvPreview");
+    const cvPrintSheet = document.getElementById("cvPrintSheet");
 
     function bindTextMirror(inputId, targetIds) {
         const input = document.getElementById(inputId);
@@ -910,7 +927,7 @@ document.addEventListener("DOMContentLoaded", function () {
         phoneInput.addEventListener("input", function () {
             const v = this.value.trim();
             if (phoneSpan) phoneSpan.textContent = v;
-            if (phoneRow) phoneRow.hidden = v === "";
+            if (phoneRow) phoneRow.style.display = v === "" ? "none" : "flex";
             if (inlinePhone) inlinePhone.textContent = v ? ("• " + v) : "";
         });
     }
@@ -923,7 +940,7 @@ document.addEventListener("DOMContentLoaded", function () {
         locInput.addEventListener("input", function () {
             const v = this.value.trim();
             if (locSpan) locSpan.textContent = v;
-            if (locRow) locRow.hidden = v === "";
+            if (locRow) locRow.style.display = v === "" ? "none" : "flex";
             if (inlineLoc) inlineLoc.textContent = v ? ("• " + v) : "";
         });
     }
@@ -936,7 +953,7 @@ document.addEventListener("DOMContentLoaded", function () {
         inp.addEventListener("input", function () {
             const v = this.value.trim();
             if (sp) sp.textContent = v;
-            if (row) row.hidden = v === "";
+            if (row) row.style.display = v === "" ? "none" : "flex";
         });
     }
 
@@ -955,7 +972,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Photo preview
     const photoInput = document.getElementById("profileUpload");
     const changePhotoBtn = document.getElementById("changePhotoBtn");
-    const profilePreview = document.getElementById("profilePreview");
+    const editorPhotoPreview = document.getElementById("editorPhotoPreview");
     const previewPhoto = document.getElementById("previewPhoto");
     if (changePhotoBtn && photoInput) {
         changePhotoBtn.addEventListener("click", function () {
@@ -970,7 +987,7 @@ document.addEventListener("DOMContentLoaded", function () {
             reader.onload = function (ev) {
                 const src = ev.target && ev.target.result ? String(ev.target.result) : "";
                 if (src) {
-                    if (profilePreview) profilePreview.src = src;
+                    if (editorPhotoPreview) editorPhotoPreview.src = src;
                     if (previewPhoto) previewPhoto.src = src;
                 }
             };
@@ -996,18 +1013,21 @@ document.addEventListener("DOMContentLoaded", function () {
     // Skills drag-and-drop & preview sync
     const skillDropZone = document.getElementById("skillDropZone");
     const previewSkills = document.getElementById("previewSkills");
+    const previewInlineSkills = document.getElementById("previewInlineSkills");
     let draggedSkill = null;
 
     function syncSkillPreview() {
-        if (!previewSkills || !skillDropZone) return;
+        if (!skillDropZone) return;
         const selected = Array.from(skillDropZone.querySelectorAll(".selected-skill"));
-        previewSkills.innerHTML = selected.map(function (el) {
+        const html = selected.map(function (el) {
             const name = el.getAttribute("data-skill-name") || "";
             const span = document.createElement("span");
             span.className = "cv-skill-tag";
             span.textContent = name;
             return span.outerHTML;
         }).join("");
+        if (previewSkills) previewSkills.innerHTML = html;
+        if (previewInlineSkills) previewInlineSkills.innerHTML = html;
     }
 
     function addSkillToSelected(skillId, skillName) {
@@ -1329,11 +1349,35 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // Export CV via print dialog
+    // Export single-page CV cleanly via print
     const exportBtn = document.getElementById("exportCvBtn");
-    if (exportBtn) {
+    if (exportBtn && cvPreview && cvPrintSheet) {
         exportBtn.addEventListener("click", function () {
+            const clone = cvPreview.cloneNode(true);
+            clone.removeAttribute("id");
+            clone.style.transform = "none";
+
+            const srcImg = cvPreview.querySelector("img");
+            const dstImg = clone.querySelector("img");
+            if (srcImg && dstImg && srcImg.src) {
+                dstImg.src = srcImg.src;
+            }
+
+            cvPrintSheet.innerHTML = "";
+            cvPrintSheet.appendChild(clone);
+
+            const prevTitle = document.title;
+            const personName = (document.getElementById("fullName")?.value || "Student_CV").trim();
+            document.title = personName.replace(/[^a-zA-Z0-9_-]+/g, "_") + "_CV";
+
+            const cleanup = function () {
+                document.title = prevTitle;
+                cvPrintSheet.innerHTML = "";
+                window.removeEventListener("afterprint", cleanup);
+            };
+            window.addEventListener("afterprint", cleanup);
             window.print();
+            setTimeout(cleanup, 1000);
         });
     }
 });
