@@ -2,526 +2,422 @@
    SAVED INTERNSHIPS PAGE
 ===================================== */
 
-.saved-internship-page{
-    padding:25px 35px;
-    max-width:1300px;
-    width:100%;
-    margin:auto;
-    box-sizing:border-box;
-    background:#f7f8fb;
-    animation:fadePage .5s ease;
+.saved-internship-page {
+    padding: 25px 35px;
+    max-width: 1300px;
+    width: 100%;
+    margin: auto;
+    box-sizing: border-box;
+    background: #f7f8fb;
+    animation: fadePage 0.5s ease;
 }
-
 
 /* =====================================
    HEADER
 ===================================== */
 
-.saved-header{
-    margin-bottom:30px;
+.saved-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 18px;
+    padding-top: 15px;
+    margin-bottom: 30px;
 }
 
-
-.breadcrumb{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:18px;
-    font-size:14px;
-    font-weight:600;
+.saved-header .breadcrumb {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 18px;
+    font-size: 16px;
+    font-weight: 700;
 }
 
-
-.breadcrumb a{
-    color:#082544;
-    text-decoration:none;
+.saved-header .breadcrumb a {
+    color: #082544;
+    text-decoration: none;
 }
 
-
-.breadcrumb a:hover{
-    color:#ff8a00;
+.saved-header .breadcrumb a:hover {
+    color: #ff8a00;
 }
 
-
-.breadcrumb span{
-    color:#98a2b3;
+.saved-header .breadcrumb span {
+    color: #98a2b3;
 }
 
-
-.breadcrumb strong{
-    color:#667085;
+.saved-header .breadcrumb strong {
+    color: #667085;
 }
 
-
-.saved-header h1{
-    margin:0;
-    color:#082544;
-    font-size:26px;
-    font-weight:700;
+.saved-header h1 {
+    margin: 0;
+    color: #082544;
+    font-size: 26px;
+    font-weight: 700;
 }
 
-
-.saved-header p{
-    margin-top:10px;
-    color:#667085;
-    font-size:15px;
+.saved-header p {
+    margin-top: 8px;
+    color: #667085;
+    font-size: 14px;
 }
 
+.btn-secondary {
+    height: 44px;
+    padding: 0 20px;
+    border: 1.5px solid #082544;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #082544;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: 0.25s ease;
+}
 
+.btn-secondary:hover {
+    background: #082544;
+    color: #ffffff;
+}
 
 /* =====================================
-   GRID
+   COMPACT FLOATING TOAST
 ===================================== */
 
-.saved-grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:22px;
+.internship-toast {
+    position: fixed;
+    top: 85px !important;
+    right: 24px !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    z-index: 10000;
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px 16px;
+    border: 1.5px solid #86efac;
+    border-radius: 14px;
+    background: #ecfdf5;
+    color: #065f46;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.35;
 }
 
+.internship-toast i {
+    display: none;
+}
 
+.internship-toast.error {
+    border-color: #fca5a5;
+    background: #fef2f2;
+    color: #991b1b;
+}
+
+.internship-toast button {
+    margin-left: 6px;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0 2px;
+}
 
 /* =====================================
-   CARD
+   GRID & CARDS
 ===================================== */
 
-.saved-card{
-
-    background:white;
-
-box-shadow: 0 5px 20px rgba(0, 0, 0, .06);
-
-
-    border-radius:16px;
-
-    padding:25px;
-
-    height:520px;
-
-    display:flex;
-
-    flex-direction:column;
-
-    box-sizing:border-box;
-
-    transition:.3s;
-
+.saved-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 22px;
 }
 
-
-.saved-card:hover{
-
-    transform:translateY(-1px);
-
-    box-shadow:
-    0 18px 35px rgba(8,37,68,.12);
-
+.empty-saved-state {
+    grid-column: 1 / -1;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 40px 24px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
 }
 
+.empty-saved-state a {
+    color: #082544;
+    font-weight: 700;
+}
 
+.saved-card {
+    background: #ffffff;
+    border: 1px solid #e4e7ec;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    padding: 24px;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.saved-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(8, 37, 68, 0.09);
+}
+
+/* TOP SECTION */
+
+.saved-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.company-logo {
+    width: 76px;
+    height: 76px;
+    background: #eef2f7;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #082544;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    flex-shrink: 0;
+}
+
+.status-badge {
+    background: #dcfce7;
+    color: #15803d;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* CONTENT */
+
+.saved-card h2 {
+    color: #082544;
+    font-size: 20px;
+    line-height: 1.35;
+    margin: 0 0 8px;
+    min-height: 54px;
+}
+
+.saved-card h3 {
+    color: #475569;
+    font-size: 16px;
+    margin: 0 0 10px;
+    font-weight: 700;
+}
+
+.location {
+    color: #667085;
+    font-size: 13.5px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* SKILLS */
+
+.skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 16px;
+    min-height: 36px;
+}
+
+.skill-tags span {
+    background: #eef2f7;
+    color: #344054;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* INFO */
+
+.saved-info {
+    margin-top: auto;
+    padding-top: 18px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    box-sizing: border-box;
+}
+
+.saved-info div {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.saved-info small {
+    color: #667085;
+    font-size: 12px;
+}
+
+.saved-info strong {
+    color: #082544;
+    font-size: 15px;
+}
 
 /* =====================================
-   TOP SECTION
+   ACTION BUTTONS (MATCHES SAVED PROJECTS)
 ===================================== */
 
-
-.saved-card-top{
-
-    display:flex;
-
-    justify-content:space-between;
-
-    align-items:center;
-
-    margin-bottom:25px;
-
+.saved-internship-page .saved-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 10px;
+    margin-top: 20px;
+    width: 100%;
 }
 
-
-
-.company-logo{
-
-    width:90px;
-
-    height:90px;
-
-    background:#eef2f7;
-
-    border-radius:14px;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-    color:#082544;
-
-    font-size:32px;
-
-    font-weight:800;
-
-    letter-spacing:2px;
-
+.saved-internship-page .saved-actions .btn-outline,
+.saved-internship-page .saved-actions .btn-primary,
+.saved-internship-page .saved-actions .status-pill {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 120px;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 9px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    box-sizing: border-box;
+    transition: 0.25s ease;
 }
 
-
-
-.status-badge{
-
-    background:#dcfce7;
-
-    color:#15803d;
-
-    padding:7px 15px;
-
-    border-radius:20px;
-
-    font-size:12px;
-
-    font-weight:700;
-
+.saved-internship-page .saved-actions .btn-outline {
+    border: 1.5px solid #082544;
+    color: #082544;
+    background: #ffffff;
 }
 
-
-
-/* =====================================
-   CONTENT
-===================================== */
-
-
-.saved-card h2{
-
-    color:#082544;
-
-    font-size:20px;
-
-    line-height:1.35;
-
-    margin:0 0 8px;
-
-    min-height:55px;
-
+.saved-internship-page .saved-actions .btn-outline:hover {
+    background: #082544;
+    color: #ffffff;
 }
 
-
-
-.saved-card h3{
-
-    color:#475569;
-
-    font-size:17px;
-
-    margin:0 0 12px;
-
-    font-weight:600;
-
+.saved-internship-page .saved-actions .btn-primary {
+    background: #ff8a00;
+    color: #ffffff;
+    border: none;
 }
 
-
-
-.location{
-
-    color:#667085;
-
-    font-size:14px;
-
-    margin:0;
-
+.saved-internship-page .saved-actions .btn-primary:hover {
+    background: #e87900;
 }
 
-
-
-/* =====================================
-   SKILLS
-===================================== */
-
-
-.skill-tags{
-
-    display:flex;
-
-    flex-wrap:wrap;
-
-    gap:8px;
-
-    margin-top:18px;
-
-    height:45px;
-
-    overflow:hidden;
-
+.saved-internship-page .saved-actions .status-pill.is-applied {
+    background: #dcfce7;
+    color: #15803d;
+    border: 1px solid #bbf7d0;
 }
 
-
-
-.skill-tags span{
-
-    background:#eef2f7;
-
-    color:#344054;
-
-    padding:7px 12px;
-
-    border-radius:20px;
-
-    font-size:12px;
-
-    height:max-content;
-
+.saved-internship-page .saved-actions .status-pill.is-closed {
+    background: #fee2e2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
 }
 
-
-
-/* =====================================
-   INFO
-===================================== */
-
-
-.saved-info{
-
-    margin-top:auto;
-
-    padding-top:20px;
-
-    height:65px;
-
-    border-top:1px solid #e5e7eb;
-
-    display:flex;
-
-    justify-content:space-between;
-
-    box-sizing:border-box;
-
+.saved-internship-page .saved-actions .remove-form {
+    flex: 1 1 100%;
+    margin: 0;
+    display: flex;
 }
 
-
-
-.saved-info div{
-
-    display:flex;
-
-    flex-direction:column;
-
-    gap:5px;
-
+.saved-internship-page .saved-actions .remove-btn {
+    width: 100%;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 9px;
+    border: 1.5px solid #dc2626;
+    background: #ffffff;
+    color: #dc2626;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: 0.25s ease;
 }
 
-
-
-.saved-info small{
-
-    color:#667085;
-
-    font-size:12px;
-
+.saved-internship-page .saved-actions .remove-btn:hover {
+    background: #dc2626;
+    color: #ffffff;
 }
-
-
-
-.saved-info strong{
-
-    color:#082544;
-
-    font-size:15px;
-
-}
-
-
-
-/* =====================================
-   ACTION BUTTONS
-===================================== */
-
-
-.saved-actions{
-
-    display:flex;
-
-    gap:12px;
-
-    margin-top:22px;
-
-    height:45px;
-
-}
-
-
-
-.view-btn,
-.apply-btn{
-
-    flex:1;
-
-    height:45px;
-
-    border-radius:9px;
-
-    display:flex;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:8px;
-
-    font-size:14px;
-
-    font-weight:700;
-
-    text-decoration:none;
-
-    white-space:nowrap;
-
-    transition:.3s;
-
-}
-
-
-
-.view-btn{
-
-    border:1px solid #082544;
-
-    color:#082544;
-
-    background:white;
-
-}
-
-
-
-.view-btn:hover{
-
-    background:#082544;
-
-    color:white;
-
-}
-
-
-
-.apply-btn{
-    margin-top: -1px;
-    background:#ff8a00;
-
-    color:white;
-
-}
-
-
-
-.apply-btn:hover{
-
-    background:#e87900;
-
-    transform:translateY(-2px);
-
-}
-
-
-
-/* =====================================
-   EMPTY STATE
-===================================== */
-
-
-.empty-saved{
-
-    background:white;
-
-    border:1px solid #dfe3eb;
-
-    border-radius:15px;
-
-    padding:50px;
-
-    text-align:center;
-
-    color:#667085;
-
-}
-
-
-
 
 /* =====================================
    ANIMATION
 ===================================== */
 
-
-@keyframes fadePage{
-
-    from{
-        opacity:0;
-        transform:translateY(10px);
+@keyframes fadePage {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
-
-    to{
-        opacity:1;
-        transform:none;
+    to {
+        opacity: 1;
+        transform: none;
     }
-
 }
-
-
 
 /* =====================================
    RESPONSIVE
 ===================================== */
 
-
-@media(max-width:1100px){
-
-    .saved-grid{
-
-        grid-template-columns:repeat(2,1fr);
-
+@media (max-width: 1050px) {
+    .saved-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
 }
 
-
-
-@media(max-width:700px){
-
-    .saved-internship-page{
-
-        padding:20px;
-
+@media (max-width: 700px) {
+    .saved-internship-page {
+        padding: 20px;
     }
 
-
-    .saved-grid{
-
-        grid-template-columns:1fr;
-
+    .saved-grid {
+        grid-template-columns: 1fr;
     }
-
-
-    .saved-card{
-
-        height:auto;
-        min-height:520px;
-
-    }
-
-
-    .saved-actions{
-
-        flex-direction:column;
-
-        height:auto;
-
-    }
-
-
-    .view-btn,
-    .apply-btn{
-
-        width:100%;
-
-    }
-
 }
