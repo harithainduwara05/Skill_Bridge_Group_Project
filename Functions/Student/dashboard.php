@@ -1,6 +1,6 @@
 <?php
     error_reporting(E_ALL);
-    ini_set('display_errors',1);
+    ini_set('display_errors', 1);
 
     include "../../Config/db.php";
     include "../../Session/Session.php";
@@ -11,12 +11,12 @@
     require_login();
 
     $user = current_user();
-    if(!$user){
+    if (!$user) {
         die("Session expired");
     }
 
     $email = $user['Email'] ?? $user['email'] ?? null;
-    if(!validateStudentYear($email)){
+    if (!validateStudentYear($email)) {
         die("<h2 style='color:red;text-align:center;margin-top:100px;'> Access Denied</h2>
         <p style='text-align:center;'>Invalid student batch. Only Year 1 - Year 4 students can access SkillBridge.</p>");
     }
@@ -25,7 +25,7 @@
 
     // Student details
     $student = $studentManager->getStudent($email);
-    if(!$student){
+    if (!$student) {
         die("Student profile not found");
     }
 
@@ -37,22 +37,21 @@
     $student['active_teams'] = $studentManager->getActiveTeamCount($email);
 
     // Skills
-    $skills = array_slice($studentManager->getSkills($email),0,6);
+    $skills = array_slice($studentManager->getSkills($email), 0, 6);
 
     // Projects
     $projects = $studentManager->getProjects($email);
 
     // Internships
-    if(canApplyInternship($email)){
+    if (canApplyInternship($email)) {
         $internships = $studentManager->getRecommendedInternships();
-    }
-    else{
-        $internships=[];
+    } else {
+        $internships = [];
     }
 
     // Notifications
-    $notifications = $studentManager->getNotifications($email);
-    $completion = calculateProfileCompletion($student,$student['skills'],$student['certificates'],$student['projects']);
+    $notifications = $studentManager->getNotifications($email, 3);
+    $completion = calculateProfileCompletion($student, $student['skills'], $student['certificates'], $student['projects']);
 
     $pageTitle = "Student Dashboard | SkillBridge";
     $extra_css = '
@@ -63,7 +62,7 @@
     include "../../Includes/dash_header.php";
 ?>
 
-<div class = "container">
+<div class="container">
     <!-- HEADER -->
     <div class="header">
         <div>
@@ -104,7 +103,7 @@
             $student_initial = $student_name !== '' ? strtoupper(mb_substr($student_name, 0, 1)) : 'S';
             ?>
             <div class="dashboard-avatar">
-                <?php if(!empty($student_img_src)): ?>
+                <?php if (!empty($student_img_src)): ?>
                     <img src="<?php echo htmlspecialchars($student_img_src, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($student['Name'], ENT_QUOTES, 'UTF-8'); ?>" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
                     <div class="default-avatar-placeholder" style="display:none;"><span><?php echo htmlspecialchars($student_initial); ?></span></div>
                 <?php else: ?>
@@ -176,24 +175,24 @@
                 <a href="skills.php" class="manage-skills">Manage Skills →</a>
             </div>
             <div class="skills">
-                <?php foreach($skills as $skill){ ?>
+                <?php foreach ($skills as $skill) { ?>
                 <div class="skill-card">
                     <h5><?php echo htmlspecialchars($skill['skill_name']); ?></h5>
                     <p><?php echo htmlspecialchars($skill['level']); ?></p>
                     <div class="progress">
                         <div style="width:
                             <?php
-                                if($skill['level']=="Expert") {echo "95";}
-                                elseif($skill['level']=="Advanced") {echo "85";}
-                                elseif($skill['level']=="Intermediate") {echo "70";}
-                                else {echo "50";}
+                                if ($skill['level'] == "Expert") { echo "95"; }
+                                elseif ($skill['level'] == "Advanced") { echo "85"; }
+                                elseif ($skill['level'] == "Intermediate") { echo "70"; }
+                                else { echo "50"; }
                             ?>%">
                         </div>
                     </div>
                 </div>
                 <?php } ?>
-            </div>  
-        </div>  
+            </div>
+        </div>
 
         <!-- UPDATES -->
         <div class="box updates-box">
@@ -202,19 +201,26 @@
                 <a href="notifications.php" class="view-all-btn">View All →</a>
             </div>
 
-            <?php foreach($notifications as $notification){ ?>
+            <?php
+                $updateCount = 0;
+                foreach (is_array($notifications) ? $notifications : [] as $notification) {
+                    if ($updateCount >= 3) {
+                        break;
+                    }
+                    $updateCount++;
+            ?>
                 <div class="update-item">
                 <?php
                     $type = strtolower(trim($notification['type'] ?? ''));
                     $title = strtolower($notification['title'] ?? '');
 
-                    if($type == "application" || str_contains($title,"application")){
+                    if ($type == "application" || str_contains($title, "application")) {
                         $iconClass = "blue";
                         $icon = "application.png";
-                    } elseif($type == "project" || str_contains($title,"project")){
+                    } elseif ($type == "project" || str_contains($title, "project")) {
                         $iconClass = "green";
                         $icon = "projects.svg";
-                    } elseif($type == "skill" || str_contains($title,"skill")){
+                    } elseif ($type == "skill" || str_contains($title, "skill")) {
                         $iconClass = "orange";
                         $icon = "skills.png";
                     } else {
@@ -230,7 +236,7 @@
                     <p><?php echo htmlspecialchars($notification['message']); ?></p>
                     <span>
                         <?php
-                            if(!empty($notification['created_at'])){
+                            if (!empty($notification['created_at'])) {
                                 $date = new DateTime($notification['created_at']);
                                 echo $date->format("d M Y");
                             }
@@ -238,8 +244,8 @@
                     </span>
                 </div>
             </div>
-        <?php } ?>
-        </div> 
+            <?php } ?>
+        </div>
     </div>
 
     <!-- Bottom Section -->
@@ -250,17 +256,17 @@
                 <h2>Recent Projects</h2>
                 <a href="teams.php" class="view-all-btn">See All Projects</a>
             </div>
-            <?php foreach($projects as $project){ ?>
+            <?php foreach ($projects as $project) { ?>
             <?php
                 $progressVal = (int)($project['progress'] ?? 0);
                 $statusVal = trim((string)($project['status'] ?? ''));
                 if ($progressVal === 100) {
                     $statusVal = 'Completed';
                 }
-                
+
                 $teamId = (int)($project['team_id'] ?? 0);
                 $projectId = (int)($project['id'] ?? 0);
-                
+
                 if ($teamId > 0) {
                     $viewLink = "view_team.php?id={$teamId}";
                 } else {
@@ -280,7 +286,7 @@
                 <div class="project-details">
                     <h4><?php echo htmlspecialchars($project['title'] ?? ''); ?></h4>
                     <p>Organization: <?php echo htmlspecialchars($project['organization'] ?? $project['company'] ?? 'N/A'); ?></p>
-                    <p>Role: <?php echo htmlspecialchars($project['team'] ?? $project['role'] ?? 'N/A');?></p>
+                    <p>Role: <?php echo htmlspecialchars($project['team'] ?? $project['role'] ?? 'N/A'); ?></p>
                 </div>
 
                 <!-- COLUMN 3 : PROGRESS -->
@@ -304,14 +310,14 @@
                     </a>
                 </div>
             </div>
-        <?php } ?>
+            <?php } ?>
         </div>
 
         <!-- Recommended Internships -->
-        <?php if(canApplyInternship($email)){ ?>
+        <?php if (canApplyInternship($email)) { ?>
         <div class="recommended-box">
             <h2>Recommended For You</h2>
-            <?php foreach($internships as $internship){ ?>
+            <?php foreach ($internships as $internship) { ?>
             <div class="intern-card">
                 <div class="intern-title">
                     <h3><?php echo htmlspecialchars($internship['title']); ?></h3>
