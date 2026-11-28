@@ -96,14 +96,14 @@
 
 .internship-toast {
     position: fixed;
-    top: 84px;
-    right: 24px;
-    left: auto;
-    width: fit-content;
-    max-width: min(340px, calc(100vw - 32px));
-    z-index: 10020;
+    top: 85px !important;
+    right: 24px !important;
+    left: auto !important;
+    width: auto !important;
+    max-width: calc(100vw - 32px) !important;
+    z-index: 10000;
     display: inline-flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 10px;
     padding: 10px 16px;
     border: 1.5px solid #86efac;

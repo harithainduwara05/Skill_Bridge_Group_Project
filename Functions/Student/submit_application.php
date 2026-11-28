@@ -75,12 +75,33 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if (!in_array($ext, ['pdf', 'doc', 'docx'], true)) {
                 throw new InvalidArgumentException('Resume must be a PDF, DOC, or DOCX file.');
             }
-            $uploadDir = __DIR__ . '/../../Assets/Uploads/internship_resumes/';
-            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
-                throw new RuntimeException('Unable to create resume upload directory.');
+
+            $projectRoot = dirname(__DIR__, 2);
+            $uploadsBase = $projectRoot . DIRECTORY_SEPARATOR . 'Assets' . DIRECTORY_SEPARATOR . 'Uploads';
+            $uploadDir = $uploadsBase . DIRECTORY_SEPARATOR . 'internship_resumes';
+
+            if (!is_dir($uploadsBase)) {
+                @mkdir($uploadsBase, 0777, true);
             }
+            if (!is_dir($uploadDir)) {
+                @mkdir($uploadDir, 0777, true);
+            }
+            clearstatcache(true, $uploadDir);
+
+            if (!is_dir($uploadDir)) {
+                throw new RuntimeException('Unable to create resume upload directory. Check permissions on Assets/Uploads.');
+            }
+            if (!is_writable($uploadDir)) {
+                @chmod($uploadDir, 0777);
+                clearstatcache(true, $uploadDir);
+                if (!is_writable($uploadDir)) {
+                    throw new RuntimeException('Resume upload directory is not writable by the web server.');
+                }
+            }
+
             $storedName = 'resume_' . (int) $id . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $ext;
-            if (!move_uploaded_file((string) $file['tmp_name'], $uploadDir . $storedName)) {
+            $targetFile = $uploadDir . DIRECTORY_SEPARATOR . $storedName;
+            if (!move_uploaded_file((string) $file['tmp_name'], $targetFile)) {
                 throw new RuntimeException('Failed to store uploaded resume.');
             }
             $uploadedPath = 'Assets/Uploads/internship_resumes/' . $storedName;
@@ -90,8 +111,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         header('Location: applications.php?applied=1', true, 303);
         exit;
     } catch (Throwable $e) {
-        if ($uploadedPath && is_file(__DIR__ . '/../../' . $uploadedPath)) {
-            @unlink(__DIR__ . '/../../' . $uploadedPath);
+        if ($uploadedPath && is_file(dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $uploadedPath))) {
+            @unlink(dirname(__DIR__, 2) . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $uploadedPath));
         }
         error_log('Submit internship application error: ' . $e->getMessage());
         $errorMsg = $e->getMessage();
@@ -151,7 +172,7 @@ include __DIR__ . '/../../Includes/dash_header.php';
                 <h2><i class="fa-solid fa-briefcase"></i> Professional Information</h2>
 
                 <label for="relevant_experience">Relevant Experience *</label>
-                <textarea id="relevant_experience" name="relevant_experience" rows="5" placeholder="Describe your academic projects, coursework, or prior experience." required><?= appEsc($formData['relevant_experience']) ?></textarea>
+                <textarea id="relevant_experience" name="relevant_experience" rows="5" placeholder="Describe your previous projects, experience, or prior experience." required><?= appEsc($formData['relevant_experience']) ?></textarea>
 
                 <label for="selection_rationale">Why should we select you? *</label>
                 <textarea id="selection_rationale" name="selection_rationale" rows="5" placeholder="Explain your strengths and what you will bring to the team." required><?= appEsc($formData['selection_rationale']) ?></textarea>
@@ -174,11 +195,11 @@ include __DIR__ . '/../../Includes/dash_header.php';
             <section class="upload-card">
                 <h2><i class="fa-solid fa-paperclip"></i> Resume / CV</h2>
                 <p>Attach your resume (PDF, DOC, or DOCX, max 10MB).</p>
-                <div class="upload-box">
+                <div class="upload-box" id="resumeDropBox">
                     <i class="fa-solid fa-cloud-arrow-up"></i>
-                    <strong>Choose Resume File</strong>
-                    <small>PDF, DOC, DOCX up to 10MB</small>
-                    <input type="file" name="resume_file" accept=".pdf,.doc,.docx,application/pdf">
+                    <strong id="resumeUploadLabel">Choose Resume File</strong>
+                    <small id="resumeUploadHint">PDF, DOC, DOCX up to 10MB</small>
+                    <input type="file" id="resumeFileInput" name="resume_file" accept=".pdf,.doc,.docx,application/pdf">
                 </div>
             </section>
 
@@ -204,5 +225,26 @@ include __DIR__ . '/../../Includes/dash_header.php';
         </div>
     </form>
 </main>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const fileInput = document.getElementById("resumeFileInput");
+    const labelEl = document.getElementById("resumeUploadLabel");
+    const hintEl = document.getElementById("resumeUploadHint");
+    if (fileInput && labelEl && hintEl) {
+        fileInput.addEventListener("change", function () {
+            if (this.files && this.files.length > 0) {
+                const f = this.files[0];
+                const mb = (f.size / (1024 * 1024)).toFixed(2);
+                labelEl.textContent = f.name;
+                hintEl.textContent = mb + " MB selected";
+            } else {
+                labelEl.textContent = "Choose Resume File";
+                hintEl.textContent = "PDF, DOC, DOCX up to 10MB";
+            }
+        });
+    }
+});
+</script>
 
 <?php include __DIR__ . '/../../Includes/dash_footer.php'; ?>
