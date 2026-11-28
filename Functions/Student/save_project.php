@@ -10,8 +10,8 @@ try {
 }
 $pageTitle = 'Saved Projects | SkillBridge';
 $extra_css = '<link rel="stylesheet" href="../../Assets/CSS/Student/dashboard.css">'
-    . '<link rel="stylesheet" href="../../Assets/CSS/Student/projects.css">'
-    . '<link rel="stylesheet" href="../../Assets/CSS/Student/saved_projects.css">';
+    . '<link rel="stylesheet" href="../../Assets/CSS/Student/projects.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Student/projects.css') . '">'
+    . '<link rel="stylesheet" href="../../Assets/CSS/Student/saved_projects.css?v=' . filemtime(__DIR__ . '/../../Assets/CSS/Student/saved_projects.css') . '">';
 include __DIR__ . '/../../Includes/student_sidebar.php';
 include __DIR__ . '/../../Includes/dash_header.php';
 $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'project5.jpg'];
@@ -53,7 +53,9 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                         <?php else: ?>
                             <a class="btn-outline" href="view_project.php?id=<?= $id ?>">View Details</a>
                             <?php if (!$isApplied): ?>
-                                <a class="btn-primary" href="proposal.php?project_id=<?= $id ?>" style="height:42px;padding:0 14px;border-radius:9px;font-size:13px;">Apply Now</a>
+                                <a class="btn-primary" href="proposal.php?project_id=<?= $id ?>">Apply Now</a>
+                            <?php else: ?>
+                                <span class="btn-applied-status is-applied">Applied</span>
                             <?php endif; ?>
                         <?php endif; ?>
                         <form method="post" action="project_action.php">

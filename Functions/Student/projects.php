@@ -19,7 +19,6 @@ $categories = $projects = $savedIds = [];
 $total = 0;
 
 try {
-    // Retrieve accurate stats directly from the repository query without overwriting active count
     $stats = $projectRepo->stats($projectEmail);
     if (isset($stats['available'], $stats['active'], $stats['completed'])) {
         $stats['available'] = (int) $stats['available'];
@@ -159,7 +158,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
                             <?php if (!$isApplied): ?>
                                 <a href="proposal.php?project_id=<?= $id ?>" class="btn-primary">Apply Now</a>
                             <?php else: ?>
-                                <span class="btn-applied-status">Applied</span>
+                                <span class="btn-applied-status is-applied">Applied</span>
                             <?php endif; ?>
                         <?php endif; ?>
                     </div>
@@ -169,7 +168,7 @@ $images = ['project1.png', 'project2.webp', 'project3.jpg', 'project4.png', 'pro
     </section>
 
     <?php if (!$projects): ?><p class="project-empty">No matching projects found.</p><?php endif; ?>
-    
+
     <?php $pages = max(1, (int) ceil($total / $limit)); ?>
     <?php if ($pages > 1): ?>
         <nav class="pagination" aria-label="Project pages">
